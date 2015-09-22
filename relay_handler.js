@@ -39,6 +39,8 @@ RelayHandler.prototype.type = 'tchannel.relay-handler';
 RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     var self = this;
 
+    // TODO: provide a by-service-name config hook?
+
     var rereq = new LazyRelayInReq(conn, reqFrame);
     var err = rereq.initRead();
     if (err) {
