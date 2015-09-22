@@ -28,7 +28,7 @@ if [ "$1" == "" ]; then
     exit 1;
 fi
 
-npm version "$VERSION"
+npm version "$1"
 
 git push origin master --tags
 
