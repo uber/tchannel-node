@@ -294,23 +294,23 @@ RelayRequest.prototype.logError = function relayRequestLogError(err, codeName) {
 function logError(logger, err, codeName, extendLogInfo) {
     var level = errors.logLevel(err, codeName);
 
-    var logOptions = extendLogInfo({
+    var info = extendLogInfo({
         error: err,
         isErrorFrame: err.isErrorFrame
     });
 
     if (err.isErrorFrame) {
         if (level === 'warn') {
-            logger.warn('forwarding error frame', logOptions);
+            logger.warn('forwarding error frame', info);
         } else if (level === 'info') {
-            logger.info('forwarding expected error frame', logOptions);
+            logger.info('forwarding expected error frame', info);
         }
     } else if (level === 'error') {
-        logger.error('unexpected error while forwarding', logOptions);
+        logger.error('unexpected error while forwarding', info);
     } else if (level === 'warn') {
-        logger.warn('error while forwarding', logOptions);
+        logger.warn('error while forwarding', info);
     } else if (level === 'info') {
-        logger.info('expected error while forwarding', logOptions);
+        logger.info('expected error while forwarding', info);
     }
 }
 
