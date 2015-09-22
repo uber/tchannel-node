@@ -22,7 +22,7 @@
   "main": "channel",
   "repository": {
     "type": "git",
-    "url": "git@github.com:uber/tchannel"
+    "url": "git@github.com:uber/tchannel-node"
   },
   "dependencies": {
     "bufrw": "^0.9.25",
