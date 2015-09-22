@@ -529,7 +529,7 @@ allocCluster.test('send() with requestDefaults', 2, function t(cluster, assert) 
 
     subOne.handler.register('foo', function foo(req, res) {
         res.headers.as = 'raw';
-        res.sendOk('', req.headers.cn);
+        res.sendOk('', req.callerName);
     });
 
     subTwo.request({
