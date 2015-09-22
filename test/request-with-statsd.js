@@ -159,7 +159,7 @@ allocCluster.test('emits stats on p2p call success', {
     var serverHost = cluster.hosts[0]
         .split(':')[0]
         .replace(/\./g, '-');
-    var statsd = nullStatsd(9);
+    var statsd = nullStatsd(8);
 
     server.makeSubChannel({
         serviceName: 'reservoir'
@@ -276,7 +276,7 @@ allocCluster.test('emits stats with no connection metrics', {
 }, function t(cluster, assert) {
     var server = cluster.channels[0];
     var client = cluster.channels[1];
-    var statsd = nullStatsd(9);
+    var statsd = nullStatsd(6);
 
     server.makeSubChannel({
         serviceName: 'reservoir'
