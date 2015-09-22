@@ -143,6 +143,16 @@ TChannelAsThrift.prototype.register =
 function register(channel, name, opts, handle, spec) {
     var self = this;
 
+    // support register(endpoint, opts, handle)
+    if (typeof channel === 'string') {
+        assert(self.channel, 'channel is required for thrift.register()');
+        spec = handle;
+        handle = opts;
+        opts = name;
+        name = channel;
+        channel = self.channel;
+    }
+
     if (!self.logger) {
         self.logger = channel.logger;
     }
