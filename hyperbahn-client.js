@@ -189,13 +189,16 @@ function getClientChannel(options) {
         return null;
     }
 
-    if (self.tchannel.subChannels[options.serviceName]) {
-        return self.tchannel.subChannels[options.serviceName];
+    var channelName = options.channelName || options.serviceName;
+
+    if (self.tchannel.subChannels[channelName]) {
+        assert(false, 'HyperbahnClient cannot get client channel. ' +
+            'channel already exists: ' + channelName);
     }
 
     var channelOptions = {
         peers: self.hostPortList,
-        serviceName: options.serviceName,
+        serviceName: channelName,
         preferConnectionDirection: 'in',
         requestDefaults: {
             serviceName: options.serviceName,
