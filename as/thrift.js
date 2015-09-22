@@ -130,6 +130,15 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
     return req;
 };
 
+TChannelAsThrift.prototype.waitForIdentified =
+function waitForIdentified(options, cb) {
+    var self = this;
+
+    assert(self.channel, 'channel is required for waitForIdentified()');
+
+    return self.channel.waitForIdentified(options, cb);
+};
+
 TChannelAsThrift.prototype.register =
 function register(channel, name, opts, handle, spec) {
     var self = this;
