@@ -846,3 +846,27 @@ module.exports.logLevel = function errorLogLevel(err, codeName) {
             return 'error';
     }
 };
+
+/*  Whether we should increase peer.pending on an error frame.
+
+    On Busy & Declined we increase the pending count for a peer
+    to allow peer selection to favor less loaded peers.
+*/
+module.exports.isPendingError = function isPendingError(codeName) {
+    switch (codeName) {
+        case 'Busy':
+        case 'Declined':
+            return true;
+
+        case 'BadRequest':
+        case 'Cancelled':
+        case 'NetworkError':
+        case 'ProtocolError':
+        case 'Timeout':
+        case 'UnexpectedError':
+            return false;
+
+        default:
+            return false;
+    }
+};

@@ -428,7 +428,7 @@ TChannelPeer.prototype.countPending = function countPending() {
         var connPending = self.connections[index].ops.getPending();
 
         pending += connPending.out;
-        pending += connPending.busy;
+        pending += connPending.errors;
     }
 
     return pending;
