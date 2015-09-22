@@ -97,11 +97,10 @@ TChannelConnection.prototype.setLazyHandling = function setLazyHandling(enabled)
     // moves wholly into a `self.handler.setLazyHandling(bool)`
     if (enabled && self.mach.chunkRW !== v2.LazyFrame.RW) {
         self.mach.chunkRW = v2.LazyFrame.RW;
-        self.handler.useLazyFrames(enabled);
     } else if (!enabled && self.mach.chunkRW !== v2.Frame.RW) {
         self.mach.chunkRW = v2.Frame.RW;
-        self.handler.useLazyFrames(enabled);
     }
+    self.handler.useLazyFrames(enabled);
 };
 
 TChannelConnection.prototype.setupSocket = function setupSocket() {
