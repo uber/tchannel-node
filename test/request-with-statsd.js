@@ -87,7 +87,7 @@ allocCluster.test('emits stats on call success', {
         client.flushStats();
 
         assert.ok(res.ok, 'res should be ok');
-        assert.deepEqual(statsd._buffer._elements, [{
+        [{
             type: 'c',
             name: 'tchannel.outbound.calls.sent.inPipe.reservoir.Reservoir--get',
             value: null,
@@ -141,7 +141,15 @@ allocCluster.test('emits stats on call success', {
             value: null,
             delta: null,
             time: 500
-        }], 'stats keys/values as expected');
+        }].forEach(function eachExpectedElement(elt, i, arr) {
+            if (i === 0) {
+                assert.equal(
+                    statsd._buffer._elements.length, arr.length,
+                    'expected number of stat elements');
+            }
+            assert.deepEqual(statsd._buffer._elements[i], elt,
+                             'stat[' + i + '] keys/values as expected');
+        });
 
         assert.end();
     }
@@ -213,7 +221,7 @@ allocCluster.test('emits stats on p2p call success', {
         client.flushStats();
 
         assert.ok(res.ok, 'res should be ok');
-        assert.deepEqual(statsd._buffer._elements, [{
+        [{
             type: 'c',
             name: 'tchannel.connections.initiated.' + serverHost,
             value: null,
@@ -261,7 +269,15 @@ allocCluster.test('emits stats on p2p call success', {
             value: null,
             delta: 1,
             time: null
-        }], 'stats keys/values as expected');
+        }].forEach(function eachExpectedElement(elt, i, arr) {
+            if (i === 0) {
+                assert.equal(
+                    statsd._buffer._elements.length, arr.length,
+                    'expected number of stat elements');
+            }
+            assert.deepEqual(statsd._buffer._elements[i], elt,
+                             'stat[' + i + '] keys/values as expected');
+        });
 
         assert.end();
     }
@@ -323,7 +339,7 @@ allocCluster.test('emits stats with no connection metrics', {
         client.flushStats();
 
         assert.ok(res.ok, 'res should be ok');
-        assert.deepEqual(statsd._buffer._elements, [{
+        [{
             type: 'c',
             name: 'tchannel.outbound.calls.sent.inPipe.reservoir.Reservoir--get',
             value: null,
@@ -359,7 +375,15 @@ allocCluster.test('emits stats with no connection metrics', {
             value: null,
             delta: null,
             time: 500
-        }], 'stats keys/values as expected');
+        }].forEach(function eachExpectedElement(elt, i, arr) {
+            if (i === 0) {
+                assert.equal(
+                    statsd._buffer._elements.length, arr.length,
+                    'expected number of stat elements');
+            }
+            assert.deepEqual(statsd._buffer._elements[i], elt,
+                             'stat[' + i + '] keys/values as expected');
+        });
 
         assert.end();
     }
@@ -424,7 +448,7 @@ allocCluster.test('emits stats on call failure', {
         client.flushStats();
 
         assert.ok(res.ok === false, 'res should be not ok');
-        assert.deepEqual(statsd._buffer._elements, [{
+        [{
             type: 'c',
             name: 'tchannel.outbound.calls.sent.inPipe.reservoir.Reservoir--get',
             value: null,
@@ -484,7 +508,15 @@ allocCluster.test('emits stats on call failure', {
             value: null,
             delta: null,
             time: 500
-        }], 'stats keys/values as expected');
+        }].forEach(function eachExpectedElement(elt, i, arr) {
+            if (i === 0) {
+                assert.equal(
+                    statsd._buffer._elements.length, arr.length,
+                    'expected number of stat elements');
+            }
+            assert.deepEqual(statsd._buffer._elements[i], elt,
+                             'stat[' + i + '] keys/values as expected');
+        });
 
         assert.end();
     }
