@@ -222,7 +222,7 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
         self.codeString = codeString;
         self.message = message;
         self.channel.inboundCallsSystemErrorsStat.increment(1, {
-            'calling-service': self.inreq.headers.cn,
+            'calling-service': self.inreq.callerName,
             'service': self.inreq.serviceName,
             'endpoint': String(self.inreq.arg1),
             'type': self.codeString
@@ -252,7 +252,7 @@ TChannelOutResponse.prototype.emitFinish = function emitFinish() {
         'timing',
         latency,
         new stat.InboundCallsLatencyTags(
-            self.inreq.headers.cn,
+            self.inreq.callerName,
             self.inreq.serviceName,
             self.inreq.endpoint
         )
@@ -327,7 +327,7 @@ TChannelOutResponse.prototype.send = function send(res1, res2) {
             'counter',
             1,
             new stat.InboundCallsSuccessTags(
-                self.inreq.headers.cn,
+                self.inreq.callerName,
                 self.inreq.serviceName,
                 self.inreq.endpoint
             )
@@ -339,7 +339,7 @@ TChannelOutResponse.prototype.send = function send(res1, res2) {
             'counter',
             1,
             new stat.InboundCallsAppErrorsTags(
-                self.inreq.headers.cn,
+                self.inreq.callerName,
                 self.inreq.serviceName,
                 self.inreq.endpoint,
                 'unknown'
