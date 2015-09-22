@@ -196,7 +196,7 @@ TChannelConnectionBase.prototype.runHandler = function runHandler(req) {
         'counter',
         1,
         new stat.InboundCallsRecvdTags(
-            req.headers.cn,
+            req.callerName,
             req.serviceName,
             req.endpoint
         )
