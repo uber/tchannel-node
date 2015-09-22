@@ -222,7 +222,7 @@ TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
     if (self.outReqs.length !== 1) {
         self.channel.outboundCallsRetriesStat.increment(1, {
             'target-service': outReq.serviceName,
-            'service': outReq.headers.cn,
+            'service': outReq.callerName,
             // TODO should always be buffer
             'target-endpoint': String(self.arg1),
             'retry-count': self.outReqs.length - 1
