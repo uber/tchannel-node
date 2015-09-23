@@ -89,6 +89,15 @@ function TChannelPeer(channel, hostPort, options) {
 
 inherits(TChannelPeer, EventEmitter);
 
+TChannelPeer.prototype.extendLogInfo =
+function extendLogInfo(info) {
+    var self = this;
+
+    info.hostPort = self.hostPort;
+
+    return info;
+};
+
 TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {
     var self = this;
     if (self.preferConnectionDirection === direction) {
@@ -440,6 +449,7 @@ TChannelPeer.prototype.countPending = function countPending() {
         var connPending = self.connections[index].ops.getPending();
 
         pending += connPending.out;
+        pending += connPending.errors;
     }
 
     return pending;

@@ -237,9 +237,9 @@ function sendProtocolError(type, err) {
             'peer-host-port': self.socketRemoteAddr
         });
 
-        self.handler.sendErrorFrame({
-            id: protocolError.frameId || v2.Frame.NullId
-        }, 'ProtocolError', protocolError.message);
+        self.handler.sendErrorFrame(
+            protocolError.frameId || v2.Frame.NullId, null,
+            'ProtocolError', protocolError.message);
 
         self.resetAll(protocolError);
     } else if (type === 'write') {
@@ -608,15 +608,10 @@ TChannelConnection.prototype.sendLazyErrorFrame =
 function sendLazyErrorFrame(reqFrame, codeString, message) {
     var self = this;
 
-    var fakeR = {
-        id: reqFrame.id,
-        tracing: null
-    };
     var res = reqFrame.bodyRW.lazy.readService(reqFrame);
-    if (!res.err) {
-        fakeR.tracing = res.value;
-    }
-    self.handler.sendErrorFrame(fakeR, codeString, message);
+    self.handler.sendErrorFrame(
+        reqFrame.id, res.err ? null : res.value,
+        codeString, message);
 };
 
 module.exports = TChannelConnection;

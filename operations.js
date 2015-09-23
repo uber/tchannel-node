@@ -42,7 +42,8 @@ function Operations(opts) {
     self.connectionStalePeriod = opts.connectionStalePeriod;
 
     self.connection = opts.connection;
-    self.destroyed = false; // TODO need this?
+    // TODO need this?
+    self.destroyed = false;
 
     self.requests = {
         in: Object.create(null),
@@ -50,7 +51,8 @@ function Operations(opts) {
     };
     self.pending = {
         in: 0,
-        out: 0
+        out: 0,
+        errors: 0
     };
     self.lastTimeoutTime = 0;
 }
@@ -66,7 +68,7 @@ Operations.prototype.extendLogInfo = function extendLogInfo(info) {
     return info;
 };
 
-function OperationTombstone(operations, id, time, req) {
+function OperationTombstone(operations, id, time, req, context) {
     var self = this;
 
     self.type = 'tchannel.operation.tombstone';
@@ -79,8 +81,13 @@ function OperationTombstone(operations, id, time, req) {
     self.timeHeapHandle = null;
     self.destroyed = false;
     self.serviceName = req.serviceName;
-    self.callerName = req.headers.cn;
+    self.callerName = req.callerName;
     self.endpoint = req.endpoint;
+
+    self.isPendingError = false;
+    if (context && context.isErrorFrame) {
+        self.isPendingError = errors.isPendingError(context.codeName);
+    }
 }
 
 OperationTombstone.prototype.extendLogInfo = function extendLogInfo(info) {
@@ -130,6 +137,9 @@ OperationTombstone.prototype.onTimeout = function onTimeout(now) {
     if (self.operations &&
         self.operations.requests.out[self.id] === self) {
         delete self.operations.requests.out[self.id];
+        if (self.isPendingError) {
+            self.operations.pending.errors--;
+        }
         self.operations = null;
     } else {
         self.logger.warn('mismatched expired operation tombstone', self.extendLogInfo({}));
@@ -282,13 +292,19 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
             serviceName: req.serviceName,
             endpoint: req.endpoint,
             socketRemoteAddr: req.remoteAddr,
-            callerName: req.headers.cn
+            callerName: req.callerName
         });
     }
 
-    var tombstone = new OperationTombstone(self, id, self.timers.now(), req);
+    var tombstone = new OperationTombstone(
+        self, id, self.timers.now(), req, context
+    );
     self.requests.out[id] = tombstone;
     tombstone.timeHeapHandle = self.connection.channel.timeHeap.update(tombstone, tombstone.time);
+
+    if (tombstone.isPendingError) {
+        self.pending.errors++;
+    }
 
     req.operations = null;
     self.pending.out--;
@@ -419,6 +435,9 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                     opKey: id
                 }));
                 delete ops[id];
+                if (op.isPendingError) {
+                    op.pending.errors--;
+                }
                 op.operations = null;
                 op.timeHeapHandle.cancel();
                 op.timeHeapHandle = null;
@@ -432,6 +451,9 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                     heapLastRun: heap.lastRun
                 }));
                 delete ops[id];
+                if (op.isPendingError) {
+                    op.pending.errors--;
+                }
                 op.operations = null;
                 op.timeHeapHandle.cancel();
                 op.timeHeapHandle = null;

@@ -252,7 +252,7 @@ TChannelV2Handler.prototype.handleCallRequest = function handleCallRequest(reqFr
         'counter',
         reqFrame.size,
         new stat.InboundRequestSizeTags(
-            req.headers.cn,
+            req.callerName,
             req.serviceName,
             req.endpoint
         )
@@ -383,7 +383,7 @@ TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(res
         'counter',
         resFrame.size,
         new stat.InboundResponseSizeTags(
-            req ? req.headers.cn : '',
+            req ? req.callerName : '',
             req ? req.serviceName : '',
             req ? req.endpoint : ''
         )
@@ -431,7 +431,7 @@ TChannelV2Handler.prototype.handleCallRequestCont = function handleCallRequestCo
         'counter',
         reqFrame.size,
         new stat.InboundRequestSizeTags(
-            req.headers.cn,
+            req.callerName,
             req.serviceName,
             req.endpoint
         )
@@ -462,7 +462,7 @@ TChannelV2Handler.prototype.handleCallResponseCont = function handleCallResponse
         'counter',
         resFrame.size,
         new stat.InboundResponseSizeTags(
-            req ? req.headers.cn : '',
+            req ? req.callerName : '',
             req ? req.serviceName : '',
             req ? req.endpoint : ''
         )
@@ -619,7 +619,7 @@ function sendCallRequestFrame(req, flags, args) {
         req.id, reqBody, null,
         'tchannel.outbound.request.size', new stat.OutboundRequestSizeTags(
             req.serviceName,
-            req.headers.cn,
+            req.callerName,
             req.endpoint
         ));
 
@@ -654,7 +654,7 @@ function verifyCallRequestFrame(req, args) {
         } else {
             self.logger.error('Expected "as" header to be set for request', {
                 arg1: req.endpoint,
-                callerName: req.headers && req.headers.cn,
+                callerName: req.callerName,
                 remoteName: self.remoteName,
                 serviceName: req.serviceName,
                 socketRemoteAddr: self.connection.socketRemoteAddr
@@ -662,7 +662,7 @@ function verifyCallRequestFrame(req, args) {
         }
     }
 
-    if (!req.headers || !req.headers.cn) {
+    if (!req.callerName) {
         if (self.requireCn) {
             return errors.OutCnHeaderRequired();
         } else {
@@ -699,7 +699,7 @@ function sendCallResponseFrame(res, flags, args) {
         res.id, resBody, null,
         'tchannel.outbound.response.size', new stat.OutboundResponseSizeTags(
             req.serviceName,
-            req.headers.cn,
+            req.callerName,
             req.endpoint
         ));
 };
@@ -736,7 +736,7 @@ TChannelV2Handler.prototype.sendCallRequestContFrame = function sendCallRequestC
         req.id, reqBody, req.checksum,
         'tchannel.outbound.request.size', new stat.OutboundRequestSizeTags(
             req ? req.serviceName : '',
-            req ? req.headers.cn : '',
+            req ? req.callerName : '',
             req ? req.endpoint : ''
         ));
 };
@@ -754,7 +754,7 @@ TChannelV2Handler.prototype.sendCallResponseContFrame = function sendCallRespons
         res.id, resBody, res.checksum,
         'tchannel.outbound.response.size', new stat.OutboundResponseSizeTags(
             req.serviceName,
-            req.headers.cn,
+            req.callerName,
             req.endpoint
         ));
 };
@@ -803,7 +803,7 @@ TChannelV2Handler.prototype.sendPingReponse = function sendPingReponse(res) {
     self.pushFrame(resFrame);
 };
 
-TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(r, codeString, message) {
+TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing, codeString, message) {
     var self = this;
     var code = v2.ErrorResponse.Codes[codeString];
     if (code === undefined) {
@@ -813,8 +813,8 @@ TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(r, codeStri
         code = v2.ErrorResponse.Codes.UnexpectedError;
         message = 'UNKNOWN CODE(' + codeString + '): ' + message;
     }
-    var errBody = new v2.ErrorResponse(code, r.tracing, message);
-    var errFrame = new v2.Frame(r.id, errBody);
+    var errBody = new v2.ErrorResponse(code, tracing, message);
+    var errFrame = new v2.Frame(id, errBody);
     self.pushFrame(errFrame);
 };
 

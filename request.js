@@ -63,6 +63,7 @@ function TChannelRequest(options) {
     self.trackPending = self.options.trackPending || false;
 
     self.serviceName = options.serviceName || '';
+    self.callerName = options.headers && options.headers.cn || '';
     // so that as-foo can punch req.headers.X
     self.headers = self.options.headers;
 
@@ -221,7 +222,7 @@ TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
     if (self.outReqs.length !== 1) {
         self.channel.outboundCallsRetriesStat.increment(1, {
             'target-service': outReq.serviceName,
-            'service': outReq.headers.cn,
+            'service': outReq.callerName,
             // TODO should always be buffer
             'target-endpoint': String(self.arg1),
             'retry-count': self.outReqs.length - 1
