@@ -408,6 +408,187 @@ allocCluster.test('sending requests to servers with declined over time', {
     }
 });
 
+allocCluster.test('sending requests to servers with busy', {
+    numPeers: 26
+}, function t(cluster, assert) {
+    var client = cluster.channels[0];
+
+    var numPeers = 25;
+    var numRequests = 800;
+    var numExpectedReqs = numRequests / numPeers;
+
+    var hosts = cluster.channels.slice(1).map(function hp(c) {
+        return c.hostPort;
+    });
+
+    cluster.channels.slice(1).forEach(function each(chan, i) {
+        if (i === 0) {
+            makeErrorServer(chan, i, 'Busy');
+        } else {
+            makeServer(chan, i);
+        }
+    });
+
+    var batchClient = new BatchClient(client, hosts, {
+        retryFlags: {
+            never: true
+        }
+    });
+
+    batchClient.warmUp(onWarmedup);
+
+    function onWarmedup(err1) {
+        assert.ifError(err1, 'expect no initialize error');
+
+        batchClient.sendRequests({
+            totalRequests: numRequests,
+            batchSize: 15
+        }, onResults);
+    }
+
+    function onResults(err, data) {
+        assert.ifError(err, 'expect no batch error');
+        assert.equal(data.errors.length, 0, 'expected no client error');
+
+        var results = data.results;
+
+        var byServer = {};
+        for (var j = 0; j < results.length; j++) {
+            var result = results[j];
+            var body;
+
+            if (result.response) {
+                body = String(result.response.arg3);
+            } else {
+                body = String(result.error.message);
+            }
+
+            if (!byServer[body]) {
+                byServer[body] = 0;
+            }
+
+            byServer[body]++;
+        }
+
+        var keys = Object.keys(byServer);
+        assert.equal(keys.length, numPeers, 'expected 25 servers');
+
+        for (var k = 0; k < keys.length; k++) {
+            var count = byServer[keys[k]];
+
+            // If its the error frame
+            if (keys[k].indexOf('oops') === 0) {
+                assert.equal(count, 1,
+                    'count (' + count + ') for ' + keys[k] +
+                    ' is === 1');
+            } else {
+                assert.ok(count >= numExpectedReqs * 0.5,
+                    'count (' + count + ') for ' + keys[k] +
+                        ' is >= ' + numExpectedReqs * 0.5);
+                assert.ok(count <= numExpectedReqs * 1.5,
+                    'count (' + count + ') for ' + keys[k] +
+                        ' is <= ' + numExpectedReqs * 1.5);
+            }
+        }
+        assert.end();
+    }
+});
+
+allocCluster.test('sending requests to servers with busy over time', {
+    numPeers: 26
+}, function t(cluster, assert) {
+    var client = cluster.channels[0];
+
+    var numPeers = 25;
+    var batchSize = 20;
+    var numRequests = 800;
+    var batchDelay = 40;
+    var numExpectedReqs = numRequests / numPeers;
+
+    var hosts = cluster.channels.slice(1).map(function hp(c) {
+        return c.hostPort;
+    });
+
+    cluster.channels.slice(1).forEach(function each(chan, i) {
+        if (i === 0) {
+            makeErrorServer(chan, i, 'Busy');
+        } else {
+            makeServer(chan, i);
+        }
+    });
+
+    var batchClient = new BatchClient(client, hosts, {
+        retryFlags: {
+            never: true
+        }
+    });
+
+    batchClient.warmUp(onWarmedup);
+
+    function onWarmedup(err1) {
+        assert.ifError(err1, 'expect no initialize error');
+
+        batchClient.sendRequests({
+            totalRequests: numRequests,
+            batchSize: batchSize,
+            delay: batchDelay
+        }, onResults);
+    }
+
+    function onResults(err, data) {
+        assert.ifError(err, 'expect no batch error');
+        assert.equal(data.errors.length, 0, 'expected no client error');
+
+        var results = data.results;
+
+        var EXPECTED_ERROR = Math.ceil(
+            (numRequests / batchSize) * (batchDelay / 1000)
+        );
+
+        var byServer = {};
+        for (var j = 0; j < results.length; j++) {
+            var result = results[j];
+            var body;
+
+            if (result.response) {
+                body = String(result.response.arg3);
+            } else {
+                body = String(result.error.message);
+            }
+
+            if (!byServer[body]) {
+                byServer[body] = 0;
+            }
+
+            byServer[body]++;
+        }
+
+        var keys = Object.keys(byServer);
+        assert.equal(keys.length, numPeers, 'expected 25 servers');
+
+        for (var k = 0; k < keys.length; k++) {
+            var count = byServer[keys[k]];
+
+            // If its the error frame
+            if (keys[k].indexOf('oops') === 0) {
+                // One gets in at t=0, t=1000, t=2000
+                // This is because tombstone = 500ms ttl + 500ms offset.
+                assert.equal(count, EXPECTED_ERROR,
+                    'count (' + count + ') for ' + keys[k] +
+                    ' is === ' + EXPECTED_ERROR);
+            } else {
+                assert.ok(count >= numExpectedReqs * 0.5,
+                    'count (' + count + ') for ' + keys[k] +
+                        ' is >= ' + numExpectedReqs * 0.5);
+                assert.ok(count <= numExpectedReqs * 1.5,
+                    'count (' + count + ') for ' + keys[k] +
+                        ' is <= ' + numExpectedReqs * 1.5);
+            }
+        }
+        assert.end();
+    }
+});
+
 function makeServer(channel, index) {
     var chanNum = index + 1;
 
