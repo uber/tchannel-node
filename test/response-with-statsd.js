@@ -144,7 +144,7 @@ allocCluster.test('emits stats on response ok', {
     }
 });
 
-allocCluster.test('emits stats on response not ok', {
+allocCluster.test('emits stats on response notOk', {
     numPeers: 2,
     channelOptions: {
         timers: timers,
@@ -205,7 +205,7 @@ allocCluster.test('emits stats on response not ok', {
 
         server.flushStats();
 
-        assert.equal(res.ok, false, 'res should be not ok');
+        assert.equal(res.ok, false, 'res should be notOk');
         assert.deepEqual(statsd._buffer._elements, [{
             type: 'c',
             name: 'tchannel.connections.accepted.' + clientHost,

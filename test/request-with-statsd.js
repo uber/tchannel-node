@@ -447,7 +447,7 @@ allocCluster.test('emits stats on call failure', {
 
         client.flushStats();
 
-        assert.ok(res.ok === false, 'res should be not ok');
+        assert.ok(res.ok === false, 'res should be notOk');
         [{
             type: 'c',
             name: 'tchannel.outbound.calls.sent.inPipe.reservoir.Reservoir--get',

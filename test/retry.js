@@ -182,7 +182,7 @@ allocCluster.test('request application retries', {
         assert.ok(
             req.outReqs[0].res &&
             !req.outReqs[0].res.ok,
-            'expected first res not ok');
+            'expected first res notOk');
         assert.equal(
             req.outReqs[0].res &&
             String(req.outReqs[0].res.arg3),
@@ -306,7 +306,7 @@ allocCluster.test('retryFlags work', {
                     'tchannel.timeout',
                     'expected first timeout error');
 
-                assert.ok(res.ok, 'expected to have not ok');
+                assert.ok(res.ok, 'expected to have notOk');
                 assert.ok(req.outReqs[1].res, 'expected to have 2nd response');
                 assert.equal(String(arg3), 'HI', 'got expected response');
 
