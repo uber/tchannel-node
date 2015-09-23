@@ -169,6 +169,7 @@ allocCluster.test('drain server with a few incoming (with exempt service)', {
     setupTestClients(cluster, ['a', 'b'], runTest);
     setupServiceServer(server, 'a', 5);
     setupServiceServer(server, 'b', 5);
+    server.drainExempt = drainExemptB;
 
     function runTest(err, gotClients) {
         if (err) {
@@ -210,7 +211,7 @@ allocCluster.test('drain server with a few incoming (with exempt service)', {
         assert.equal(finishCount, 2, 'requests have not finished');
 
         finishCount++;
-        server.drain('testdown', drainExemptB, drained);
+        server.drain('testdown', drained);
 
         finishCount++;
         collectParallel(clients.a, sendOne, checkSendsDone('service:a', checkADecline, finish));
@@ -452,6 +453,7 @@ allocCluster.test('drain client with a few outgoing (with exempt service)', {
     setupTestClients(cluster, ['a', 'b'], runTest);
     setupServiceServer(server, 'a', 5);
     setupServiceServer(server, 'b', 5);
+    drainClient.drainExempt = drainExemptB;
 
     cluster.logger.whitelist('info', 'resetting connection');
     // cluster.logger.whitelist('info', 'ignoring outresponse.send on a closed connection');
@@ -496,7 +498,7 @@ allocCluster.test('drain client with a few outgoing (with exempt service)', {
         assert.equal(finishCount, 2, 'requests have not finished');
 
         finishCount++;
-        drainClient.drain('testdown', drainExemptB, drained);
+        drainClient.drain('testdown', drained);
 
         finishCount++;
         collectParallel(clients.a, sendOne, checkSendsDone('service:a', checkADecline, finish));

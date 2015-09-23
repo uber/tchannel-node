@@ -33,7 +33,6 @@ function Operations(opts) {
 
     EventEmitter.call(self);
     self.draining = false;
-    self.drainExempt = null;
     self.drainEvent = self.defineEvent('drain');
 
     self.timers = opts.timers;
@@ -263,8 +262,9 @@ Operations.prototype._isCollDrained = function _isCollDrained(coll) {
     for (var id in coll) {
         var op = coll[id];
         if (!(op instanceof OperationTombstone) &&
-            !op.drained &&
-            !(self.drainExempt && self.drainExempt(op))
+            !op.drained && !(
+                self.connection.channel.drainExempt &&
+                self.connection.channel.drainExempt(op))
         ) {
             return false;
         }

@@ -404,7 +404,7 @@ TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
     var conn = new TChannelConnection(chan, socket, 'out', self.hostPort);
 
     if (chan.draining) {
-        conn.drain(chan.drainReason, chan.drainExempt, null);
+        conn.drain(chan.drainReason, null);
     }
 
     self.allocConnectionEvent.emit(self, conn);

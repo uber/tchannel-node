@@ -332,7 +332,7 @@ TChannel.prototype.setLazyHandling = function setLazyHandling(enabled) {
     }
 };
 
-TChannel.prototype.drain = function drain(reason, exempt, callback) {
+TChannel.prototype.drain = function drain(reason, callback) {
     var self = this;
 
     // TODO: we could do this by defaulting and/or forcing you into an
@@ -342,14 +342,8 @@ TChannel.prototype.drain = function drain(reason, exempt, callback) {
     assert(!self.topChannel, 'sub channel draining not supported');
     assert(!self.draining, 'channel already draining');
 
-    if (callback === undefined) {
-        callback = exempt;
-        exempt = null;
-    }
-
     self.draining = true;
     self.drainReason = reason;
-    self.drainExempt = exempt;
 
     var drained = CountedReadySignal(1);
     drained(callback);
@@ -362,7 +356,7 @@ TChannel.prototype.drain = function drain(reason, exempt, callback) {
 
     function drainEachConn(conn) {
         drained.counter++;
-        conn.drain(self.drainReason, self.drainExempt, drained.signal);
+        conn.drain(self.drainReason, drained.signal);
     }
 };
 
@@ -429,7 +423,7 @@ TChannel.prototype.onServerSocketConnection = function onServerSocketConnection(
     var conn = new TChannelConnection(chan, sock, 'in', socketRemoteAddr);
 
     if (self.draining) {
-        conn.drain(self.drainReason, self.drainExempt, null);
+        conn.drain(self.drainReason, null);
     }
 
     conn.errorEvent.on(onConnectionError);
