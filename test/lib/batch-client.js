@@ -21,8 +21,9 @@
 'use strict';
 
 var parallel = require('run-parallel');
+var setTimeout = require('timers').setTimeout;
 
-function BatchClient(channel, hosts) {
+function BatchClient(channel, hosts, options) {
     if (!(this instanceof BatchClient)) {
         return new BatchClient(channel, hosts);
     }
@@ -31,6 +32,8 @@ function BatchClient(channel, hosts) {
 
     self.channel = channel;
     self.hosts = hosts;
+
+    self.retryFlags = options && options.retryFlags;
 
     self.subChannel = self.channel.makeSubChannel({
         serviceName: 'server',
@@ -65,6 +68,7 @@ BatchClient.prototype.sendRequests = function sendRequests(options, callback) {
             serviceName: 'server',
             hasNoParent: true,
             timeout: 500,
+            retryFlags: self.retryFlags,
             headers: {
                 cn: 'client',
                 as: 'raw'
@@ -96,7 +100,7 @@ BatchClient.prototype.sendRequests = function sendRequests(options, callback) {
             // assert.ifError(err2, 'expect no req err');
 
             resultList = resultList.concat(results);
-            loop();
+            setTimeout(loop, options.delay || 1);
         }
     }());
 
