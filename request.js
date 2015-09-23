@@ -63,6 +63,7 @@ function TChannelRequest(options) {
     self.trackPending = self.options.trackPending || false;
 
     self.serviceName = options.serviceName || '';
+    self.callerName = options.headers && options.headers.cn || '';
     // so that as-foo can punch req.headers.X
     self.headers = self.options.headers;
 
