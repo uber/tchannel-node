@@ -74,7 +74,7 @@ V2OutResponse.prototype._sendError =
 V2StreamingOutResponse.prototype._sendError =
 function _sendError(codeString, message) {
     var self = this;
-    self.handler.sendErrorFrame(self, codeString, message);
+    self.handler.sendErrorFrame(self.id, self.tracing, codeString, message);
 };
 
 module.exports.OutResponse = V2OutResponse;

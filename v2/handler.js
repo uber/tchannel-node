@@ -803,7 +803,7 @@ TChannelV2Handler.prototype.sendPingReponse = function sendPingReponse(res) {
     self.pushFrame(resFrame);
 };
 
-TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(r, codeString, message) {
+TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing, codeString, message) {
     var self = this;
     var code = v2.ErrorResponse.Codes[codeString];
     if (code === undefined) {
@@ -813,8 +813,8 @@ TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(r, codeStri
         code = v2.ErrorResponse.Codes.UnexpectedError;
         message = 'UNKNOWN CODE(' + codeString + '): ' + message;
     }
-    var errBody = new v2.ErrorResponse(code, r.tracing, message);
-    var errFrame = new v2.Frame(r.id, errBody);
+    var errBody = new v2.ErrorResponse(code, tracing, message);
+    var errFrame = new v2.Frame(id, errBody);
     self.pushFrame(errFrame);
 };
 
