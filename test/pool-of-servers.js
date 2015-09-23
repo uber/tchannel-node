@@ -86,6 +86,85 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
     }
 });
 
+function BatchClient(channel, hosts) {
+    if (!(this instanceof BatchClient)) {
+        return new BatchClient(channel, hosts);
+    }
+
+    var self = this;
+
+    self.channel = channel;
+    self.hosts = hosts;
+
+    self.subChannel = self.channel.makeSubChannel({
+        serviceName: 'server',
+        peers: self.hosts
+    });
+}
+
+BatchClient.prototype.warmUp = function warmUp(callback) {
+    var self = this;
+
+    var waiting = [];
+    for (var l = 0; l < self.hosts.length; l++) {
+        var host = self.hosts[l];
+
+        waiting.push(self.subChannel.waitForIdentified.bind(self.subChannel, {
+            host: host
+        }));
+    }
+
+    parallel(waiting, callback);
+};
+
+BatchClient.prototype.sendRequests = function sendRequests(options, callback) {
+    var self = this;
+
+    var totalRequests = options.totalRequests;
+    var batchSize = options.batchSize;
+
+    var callReqThunks = [];
+    for (var i = 0; i < totalRequests; i++) {
+        var req = self.subChannel.request({
+            serviceName: 'server',
+            hasNoParent: true,
+            timeout: 500,
+            headers: {
+                cn: 'client',
+                as: 'raw'
+            }
+        });
+
+        callReqThunks.push(req.send.bind(req, 'foo', 'a', 'b'));
+    }
+
+    var errorList = [];
+    var resultList = [];
+    (function loop() {
+        if (callReqThunks.length === 0) {
+            return callback(null, {
+                errors: errorList,
+                results: resultList
+            });
+        }
+
+        var parts = callReqThunks.slice(0, batchSize);
+        callReqThunks = callReqThunks.slice(batchSize);
+
+        parallel(parts, onPartial);
+
+        function onPartial(err2, results) {
+            if (err2) {
+                errorList.push(err2);
+            }
+            // assert.ifError(err2, 'expect no req err');
+
+            resultList = resultList.concat(results);
+            loop();
+        }
+    }());
+};
+
 allocCluster.test('sending requests to servers over time has good distribution', {
     numPeers: 26
 }, function t(cluster, assert) {
@@ -99,70 +178,21 @@ allocCluster.test('sending requests to servers over time has good distribution',
         return c.hostPort;
     });
 
-    var clientChannel = client.makeSubChannel({
-        serviceName: 'server',
-        peers: hosts
-    });
-
     cluster.channels.slice(1).forEach(function each(chan, i) {
         makeServer(chan, i);
     });
 
-    var waiting = [];
-    for (var l = 0; l < numPeers; l++) {
-        var host = hosts[l];
+    var batchClient = new BatchClient(client, hosts);
 
-        waiting.push(clientChannel.waitForIdentified.bind(clientChannel, {
-            host: host
-        }));
-    }
-
-    parallel(waiting, onWarmedup);
+    batchClient.warmUp(onWarmedup);
 
     function onWarmedup(err1) {
         assert.ifError(err1, 'expect no initialize error');
 
-        var callReqThunks = [];
-        for (var i = 0; i < numRequests; i++) {
-            var req = clientChannel.request({
-                serviceName: 'server',
-                hasNoParent: true,
-                timeout: 500,
-                headers: {
-                    cn: 'client',
-                    as: 'raw'
-                }
-            });
-
-            callReqThunks.push(req.send.bind(req, 'foo', 'a', 'b'));
-        }
-
-        var errorList = [];
-        var resultList = [];
-        (function loop() {
-            if (callReqThunks.length === 0) {
-                return onResults(null, {
-                    errors: errorList,
-                    results: resultList
-                });
-            }
-
-            var parts = callReqThunks.slice(0, 10);
-            callReqThunks = callReqThunks.slice(10);
-
-            parallel(parts, onPartial);
-
-            function onPartial(err2, results) {
-                if (err2) {
-                    errorList.push(err2);
-                }
-                // assert.ifError(err2, 'expect no req err');
-
-                resultList = resultList.concat(results);
-                loop();
-            }
-        }());
-
+        batchClient.sendRequests({
+            totalRequests: numRequests,
+            batchSize: 10
+        }, onResults);
     }
 
     function onResults(err, data) {
