@@ -39,6 +39,7 @@ function TChannelInRequest(id, options) {
     self.timeout = options.timeout || 0;
     self.tracing = options.tracing || null;
     self.serviceName = options.serviceName || '';
+    self.callerName = options.headers && options.headers.cn || '';
     self.headers = options.headers || {};
     self.checksum = options.checksum || null;
     self.retryFlags = options.retryFlags || null;
@@ -83,7 +84,7 @@ TChannelInRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     info.requestRemoteAddr = self.remoteAddr;
     info.socketRemoteAddr = self.connection.socketRemoteAddr;
     info.serviceName = self.serviceName;
-    info.callerName = self.headers.cn;
+    info.callerName = self.callerName;
     info.requestErr = self.err;
 
     if (self.endpoint !== null) {
@@ -112,7 +113,7 @@ TChannelInRequest.prototype.setupTracing = function setupTracing(options) {
         name: '' // fill this in later
     });
 
-    self.span.annotateBinary('cn', self.headers.cn);
+    self.span.annotateBinary('cn', self.callerName);
     self.span.annotateBinary('as', self.headers.as);
     if (self.connection) {
         self.span.annotateBinary('src', self.connection.remoteName);

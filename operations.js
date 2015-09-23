@@ -79,7 +79,7 @@ function OperationTombstone(operations, id, time, req) {
     self.timeHeapHandle = null;
     self.destroyed = false;
     self.serviceName = req.serviceName;
-    self.callerName = req.headers.cn;
+    self.callerName = req.callerName;
     self.endpoint = req.endpoint;
 }
 
@@ -282,7 +282,7 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
             serviceName: req.serviceName,
             endpoint: req.endpoint,
             socketRemoteAddr: req.remoteAddr,
-            callerName: req.headers.cn
+            callerName: req.callerName
         });
     }
 

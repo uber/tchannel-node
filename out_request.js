@@ -56,6 +56,7 @@ function TChannelOutRequest(id, options) {
     self.timeout = options.timeout || 0;
     self.tracing = options.tracing || null;
     self.serviceName = options.serviceName || '';
+    self.callerName = options.headers && options.headers.cn || '';
     self.headers = options.headers || {};
     self.checksumType = options.checksumType || 0;
     self.checksum = options.checksum || null;
@@ -133,7 +134,7 @@ function emitPerAttemptErrorStat(err) {
     if (err.isErrorFrame) {
         self.channel.outboundCallsPerAttemptSystemErrorsStat.increment(1, {
             'target-service': self.serviceName,
-            'service': self.headers.cn,
+            'service': self.callerName,
             // TODO should always be buffer
             'target-endpoint': self.endpoint,
             'type': err.codeName,
@@ -142,7 +143,7 @@ function emitPerAttemptErrorStat(err) {
     } else {
         self.channel.outboundCallsPerAttemptOperationalErrorsStat.increment(1, {
             'target-service': self.serviceName,
-            'service': self.headers.cn,
+            'service': self.callerName,
             // TODO should always be buffer
             'target-endpoint': self.endpoint,
             'type': err.type || 'unknown',
@@ -158,7 +159,7 @@ function emitErrorStat(err) {
     if (err.isErrorFrame) {
         self.channel.outboundCallsSystemErrorsStat.increment(1, {
             'target-service': self.serviceName,
-            'service': self.headers.cn,
+            'service': self.callerName,
             // TODO should always be buffer
             'target-endpoint': self.endpoint,
             'type': err.codeName
@@ -166,7 +167,7 @@ function emitErrorStat(err) {
     } else {
         self.channel.outboundCallsOperationalErrorsStat.increment(1, {
             'target-service': self.serviceName,
-            'service': self.headers.cn,
+            'service': self.callerName,
             // TODO should always be buffer
             'target-endpoint': self.endpoint,
             'type': err.type || 'unknown'
@@ -187,7 +188,7 @@ function emitResponseStat(res) {
             1,
             new stat.OutboundCallsAppErrorsTags(
                 self.serviceName,
-                self.headers.cn,
+                self.callerName,
                 self.endpoint,
                 'unknown'
             )
@@ -206,7 +207,7 @@ function emitPerAttemptResponseStat(res) {
             1,
             new stat.OutboundCallsPerAttemptAppErrorsTags(
                 self.serviceName,
-                self.headers.cn,
+                self.callerName,
                 self.endpoint,
                 'unknown',
                 self.retryCount
@@ -230,7 +231,7 @@ function emitPerAttemptLatency() {
         latency,
         new stat.OutboundCallsPerAttemptLatencyTags(
             self.serviceName,
-            self.headers.cn,
+            self.callerName,
             self.endpoint,
             self.remoteAddr,
             self.retryCount
@@ -249,7 +250,7 @@ TChannelOutRequest.prototype.emitLatency = function emitLatency() {
         latency,
         new stat.OutboundCallsLatencyTags(
             self.serviceName,
-            self.headers.cn,
+            self.callerName,
             self.endpoint
         )
     ));
@@ -263,7 +264,7 @@ TChannelOutRequest.prototype.emitError = function emitError(err) {
             serviceName: self.serviceName,
             endpoint: self.endpoint,
             socketRemoteAddr: self.remoteAddr,
-            callerName: self.headers.cn,
+            callerName: self.callerName,
             oldError: self.err,
             oldResponse: !!self.res,
             error: err
@@ -310,7 +311,7 @@ TChannelOutRequest.prototype.emitResponse = function emitResponse(res) {
             serviceName: self.serviceName,
             endpoint: self.endpoint,
             socketRemoteAddr: self.remoteAddr,
-            callerName: self.headers.cn,
+            callerName: self.callerName,
             oldError: self.err,
             oldResponse: !!self.res
         });
@@ -442,7 +443,7 @@ TChannelOutRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
 
     if (self.span) {
         self.span.annotateBinary('as', self.headers.as);
-        self.span.annotateBinary('cn', self.headers.cn);
+        self.span.annotateBinary('cn', self.callerName);
     }
 
     if (self.logical === false && self.retryCount === 0) {
@@ -467,7 +468,7 @@ function emitOutboundCallsSent() {
         1,
         new stat.OutboundCallsSentTags(
             self.serviceName,
-            self.headers.cn,
+            self.callerName,
             self.endpoint
         )
     ));
@@ -542,7 +543,7 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
             serviceName: self.serviceName,
             endpoint: self.endpoint,
             socketRemoteAddr: self.remoteAddr,
-            callerName: self.headers.cn,
+            callerName: self.callerName,
 
             oldError: self.err,
             oldResponse: !!self.res,
@@ -579,7 +580,7 @@ function emitOutboundCallsSuccess(request) {
         1,
         new stat.OutboundCallsSuccessTags(
             request.serviceName,
-            request.headers.cn,
+            request.callerName,
             request.endpoint
         )
     ));
