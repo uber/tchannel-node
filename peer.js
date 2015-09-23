@@ -462,4 +462,12 @@ TChannelPeer.prototype.getScore = function getScore() {
     return self.handler.getScore();
 };
 
+TChannelPeer.prototype.extendLogInfo = function extendLogInfo(info) {
+    var self = this;
+    self.channel.extendLogInfo(info);
+    info.hostPort = self.hostPort;
+    info.pendingIdentified = self.pendingIdentified;
+    return info;
+};
+
 module.exports = TChannelPeer;
