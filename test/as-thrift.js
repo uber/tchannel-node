@@ -111,7 +111,7 @@ allocCluster.test('sending using request()', {
     });
 });
 
-allocCluster.test('send and receive a not ok', {
+allocCluster.test('send and receive a notOk', {
     numPeers: 2
 }, function t(cluster, assert) {
     var tchannelAsThrift = makeTChannelThriftServer(cluster, {
@@ -138,7 +138,7 @@ allocCluster.test('send and receive a not ok', {
     });
 });
 
-allocCluster.test('send and receive a typed not ok', {
+allocCluster.test('send and receive a typed notOk', {
     numPeers: 2
 }, function t(cluster, assert) {
     var tchannelAsThrift = makeTChannelThriftServer(cluster, {

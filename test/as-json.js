@@ -100,7 +100,7 @@ allocCluster.test('sending using request()', {
     });
 });
 
-allocCluster.test('getting a not ok response', {
+allocCluster.test('getting a notOk response', {
     numPeers: 2
 }, function t(cluster, assert) {
     var tchannelJSON = makeTChannelJSONServer(cluster, {

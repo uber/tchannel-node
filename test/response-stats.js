@@ -188,7 +188,7 @@ allocCluster.test('emits response stats with ok', {
     }
 });
 
-allocCluster.test('emits response stats with not ok', {
+allocCluster.test('emits response stats with notOk', {
     numPeers: 2,
     channelOptions: {
         statTags: {
@@ -243,7 +243,7 @@ allocCluster.test('emits response stats with not ok', {
 
         server.flushStats();
 
-        assert.equal(res.ok, false, 'res should be not ok');
+        assert.equal(res.ok, false, 'res should be notOk');
         assert.deepEqual(stats, [{
             name: 'tchannel.connections.accepted',
             type: 'counter',
