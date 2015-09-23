@@ -187,7 +187,7 @@ TChannelPeer.prototype.getInConnection = function getInConnection(preferIdentifi
     var candidate = null;
     for (var i = 0; i < self.connections.length; i++) {
         var conn = self.connections[i];
-        if (conn.closing) continue;
+        if (conn.closing || conn.draining) continue;
         if (!preferIdentified) return conn; // user doesn't care, take first incoming
         if (conn.remoteName) return conn; // user wanted an identified channel, and we found one
         if (!candidate) candidate = conn; // we'll fallback to returning this if we can't find an identified one
@@ -205,7 +205,7 @@ TChannelPeer.prototype.getOutConnection = function getOutConnection(preferIdenti
     var candidate = null;
     for (var i = self.connections.length - 1; i >= 0; i--) {
         var conn = self.connections[i];
-        if (conn.closing) continue;
+        if (conn.closing || conn.draining) continue;
         if (!preferIdentified) return conn; // user doesn't care, take last outgoing
         if (conn.remoteName) return conn; // user wanted an identified channel, and we found one
         if (!candidate) candidate = conn; // we'll fallback to returning this if we can't find an identified one
