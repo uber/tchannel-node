@@ -24,9 +24,11 @@ var extend = require('xtend');
 var CountedReadySignal = require('ready-signal/counted');
 var test = require('tape');
 var util = require('util');
-var TChannel = require('../../channel.js');
 var parallel = require('run-parallel');
 var debugLogtron = require('debug-logtron');
+
+var TChannel = require('../../channel.js');
+var CollapsedAssert = require('./collapsed-assert.js');
 
 module.exports = allocCluster;
 
@@ -190,7 +192,10 @@ function clusterTester(opts, t) {
         allocCluster(opts).ready(function clusterReady(cluster) {
             assert.once('end', function testEnded() {
                 if (!opts.skipEmptyCheck) {
-                    cluster.assertEmptyState(assert);
+                    var collapsedAssert = CollapsedAssert();
+
+                    cluster.assertEmptyState(collapsedAssert);
+                    collapsedAssert.report(assert, 'cluster has an empty state');
                 }
                 cluster.destroy();
             });
