@@ -263,9 +263,12 @@ TChannelConnection.prototype.onWriteError = function onWriteError(err) {
 TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
     var self = this;
 
-    if (err) {
-        self.resetAll(err);
+    // TODO: why is err optional?
+    if (!err) {
+        return;
     }
+
+    self.resetAll(err);
 };
 
 TChannelConnection.prototype.handlePingResponse = function handlePingResponse(resFrame) {
