@@ -295,19 +295,24 @@ allocCluster.test('sending requests to servers with declined', {
         for (var k = 0; k < keys.length; k++) {
             var count = byServer[keys[k]];
 
+            var lower = null;
+            var upper = null;
+
             // If its the error frame
             if (keys[k].indexOf('oops') === 0) {
-                assert.equal(count, 1,
-                    'count (' + count + ') for ' + keys[k] +
-                    ' is === 1');
+                lower = 1;
+                upper = 2;
             } else {
-                assert.ok(count >= numExpectedReqs * 0.5,
-                    'count (' + count + ') for ' + keys[k] +
-                        ' is >= ' + numExpectedReqs * 0.5);
-                assert.ok(count <= numExpectedReqs * 1.5,
-                    'count (' + count + ') for ' + keys[k] +
-                        ' is <= ' + numExpectedReqs * 1.5);
+                lower = numExpectedReqs * 0.5;
+                upper = numExpectedReqs * 1.5;
             }
+
+            assert.ok(count >= lower,
+                'count (' + count + ') for ' + keys[k] +
+                    ' is >= ' + lower);
+            assert.ok(count <= upper,
+                'count (' + count + ') for ' + keys[k] +
+                    ' is <= ' + upper);
         }
         assert.end();
     }
@@ -479,19 +484,24 @@ allocCluster.test('sending requests to servers with busy', {
         for (var k = 0; k < keys.length; k++) {
             var count = byServer[keys[k]];
 
+            var lower = null;
+            var upper = null;
+
             // If its the error frame
             if (keys[k].indexOf('oops') === 0) {
-                assert.equal(count, 1,
-                    'count (' + count + ') for ' + keys[k] +
-                    ' is === 1');
+                lower = 1;
+                upper = 2;
             } else {
-                assert.ok(count >= numExpectedReqs * 0.5,
-                    'count (' + count + ') for ' + keys[k] +
-                        ' is >= ' + numExpectedReqs * 0.5);
-                assert.ok(count <= numExpectedReqs * 1.5,
-                    'count (' + count + ') for ' + keys[k] +
-                        ' is <= ' + numExpectedReqs * 1.5);
+                lower = numExpectedReqs * 0.5;
+                upper = numExpectedReqs * 1.5;
             }
+
+            assert.ok(count >= lower,
+                'count (' + count + ') for ' + keys[k] +
+                    ' is >= ' + lower);
+            assert.ok(count <= upper,
+                'count (' + count + ') for ' + keys[k] +
+                    ' is <= ' + upper);
         }
         assert.end();
     }
