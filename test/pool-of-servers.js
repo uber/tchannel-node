@@ -24,7 +24,7 @@ var parallel = require('run-parallel');
 
 var allocCluster = require('./lib/alloc-cluster.js');
 
-allocCluster.test('request().send() to a pool of servers', {
+allocCluster.test('sending requests to servers synchronously has perfect distribution', {
     numPeers: 5
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
@@ -86,7 +86,7 @@ allocCluster.test('request().send() to a pool of servers', {
     }
 });
 
-allocCluster.test('request().send() to a pool of servers', {
+allocCluster.test('sending requests to servers over time has good distribution', {
     numPeers: 26
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
@@ -137,10 +137,14 @@ allocCluster.test('request().send() to a pool of servers', {
             callReqThunks.push(req.send.bind(req, 'foo', 'a', 'b'));
         }
 
+        var errorList = [];
         var resultList = [];
         (function loop() {
             if (callReqThunks.length === 0) {
-                return onResults(null, resultList);
+                return onResults(null, {
+                    errors: errorList,
+                    results: resultList
+                });
             }
 
             var parts = callReqThunks.slice(0, 10);
@@ -149,7 +153,10 @@ allocCluster.test('request().send() to a pool of servers', {
             parallel(parts, onPartial);
 
             function onPartial(err2, results) {
-                assert.ifError(err2, 'expect no req err');
+                if (err2) {
+                    errorList.push(err2);
+                }
+                // assert.ifError(err2, 'expect no req err');
 
                 resultList = resultList.concat(results);
                 loop();
@@ -158,8 +165,11 @@ allocCluster.test('request().send() to a pool of servers', {
 
     }
 
-    function onResults(err, results) {
-        assert.ifError(err, 'expect no req err');
+    function onResults(err, data) {
+        assert.ifError(err, 'expect no batch error');
+        assert.equal(data.errors.length, 0, 'expected no client error');
+
+        var results = data.results;
 
         var byServer = {};
         for (var j = 0; j < results.length; j++) {
