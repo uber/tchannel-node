@@ -37,6 +37,15 @@ function TChannelPeersBase(channel, options) {
 
 inherits(TChannelPeersBase, EventEmitter);
 
+TChannelPeersBase.prototype.extendLogInfo =
+function extendLogInfo(info) {
+    var self = this;
+
+    info = self.channel.extendLogInfo(info);
+
+    return info;
+};
+
 TChannelPeersBase.prototype.close = function close(peers, callback) {
     var self = this;
 

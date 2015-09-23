@@ -89,6 +89,15 @@ function TChannelPeer(channel, hostPort, options) {
 
 inherits(TChannelPeer, EventEmitter);
 
+TChannelPeer.prototype.extendLogInfo =
+function extendLogInfo(info) {
+    var self = this;
+
+    info.hostPort = self.hostPort;
+
+    return info;
+};
+
 TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {
     var self = this;
     if (self.preferConnectionDirection === direction) {
