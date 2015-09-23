@@ -264,6 +264,7 @@ function sendRequest(opts, endpoint, cb) {
         timeout: (opts && opts.timeout) || self.defaultTimeout,
         hasNoParent: true,
         trace: false,
+        retryLimit: 1,
         headers: {
             cn: self.callerName
         }
