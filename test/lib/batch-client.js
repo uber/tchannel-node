@@ -71,7 +71,7 @@ BatchClient.prototype.sendRequests = function sendRequests(options, callback) {
             }
         });
 
-        callReqThunks.push(req.send.bind(req, 'foo', 'a', 'b'));
+        callReqThunks.push(makeThunk(req));
     }
 
     var errorList = [];
@@ -99,6 +99,25 @@ BatchClient.prototype.sendRequests = function sendRequests(options, callback) {
             loop();
         }
     }());
+
+    function makeThunk(request) {
+        return thunk;
+
+        function thunk(cb) {
+            request.send('foo', 'a', 'b', onResponse);
+
+            function onResponse(err, resp) {
+                if (err && !err.isErrorFrame) {
+                    return cb(err);
+                }
+
+                cb(null, {
+                    error: err || null,
+                    response: resp || null
+                });
+            }
+        }
+    }
 };
 
 module.exports = BatchClient;

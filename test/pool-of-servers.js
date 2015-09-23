@@ -125,8 +125,83 @@ allocCluster.test('sending requests to servers over time has good distribution',
 
         var byServer = {};
         for (var j = 0; j < results.length; j++) {
-            var res = results[j];
-            var body = String(res.arg3);
+            var res = results[j].response;
+            var body = String(res && res.arg3);
+
+            if (!byServer[body]) {
+                byServer[body] = 0;
+            }
+
+            byServer[body]++;
+        }
+
+        var keys = Object.keys(byServer);
+        assert.equal(keys.length, numPeers, 'expected 25 servers');
+
+        for (var k = 0; k < keys.length; k++) {
+            var count = byServer[keys[k]];
+
+            assert.ok(count >= numExpectedReqs * 0.5,
+                'count (' + count + ') for ' + keys[k] +
+                    ' is >= ' + numExpectedReqs * 0.5);
+            assert.ok(count <= numExpectedReqs * 1.5,
+                'count (' + count + ') for ' + keys[k] +
+                    ' is <= ' + numExpectedReqs * 1.5);
+        }
+        assert.end();
+    }
+});
+
+allocCluster.test('sending requests to servers with bad request', {
+    numPeers: 26
+}, function t(cluster, assert) {
+    var client = cluster.channels[0];
+
+    var numPeers = 25;
+    var numRequests = 800;
+    var numExpectedReqs = numRequests / numPeers;
+
+    var hosts = cluster.channels.slice(1).map(function hp(c) {
+        return c.hostPort;
+    });
+
+    cluster.channels.slice(1).forEach(function each(chan, i) {
+        if (i === 0) {
+            makeErrorServer(chan, i, 'BadRequest');
+        } else {
+            makeServer(chan, i);
+        }
+    });
+
+    var batchClient = new BatchClient(client, hosts);
+
+    batchClient.warmUp(onWarmedup);
+
+    function onWarmedup(err1) {
+        assert.ifError(err1, 'expect no initialize error');
+
+        batchClient.sendRequests({
+            totalRequests: numRequests,
+            batchSize: 10
+        }, onResults);
+    }
+
+    function onResults(err, data) {
+        assert.ifError(err, 'expect no batch error');
+        assert.equal(data.errors.length, 0, 'expected no client error');
+
+        var results = data.results;
+
+        var byServer = {};
+        for (var j = 0; j < results.length; j++) {
+            var result = results[j];
+            var body;
+
+            if (result.response) {
+                body = String(result.response.arg3);
+            } else {
+                body = String(result.error.message);
+            }
 
             if (!byServer[body]) {
                 byServer[body] = 0;
@@ -162,5 +237,17 @@ function makeServer(channel, index) {
     serverChan.register('foo', function foo(req, res, arg2, arg3) {
         res.headers.as = 'raw';
         res.sendOk(arg2, arg3 + ' served by ' + chanNum);
+    });
+}
+
+function makeErrorServer(channel, index, codeName) {
+    var chanNum = index + 1;
+
+    var serverChan = channel.makeSubChannel({
+        serviceName: 'server'
+    });
+
+    serverChan.register('foo', function foo(req, res, arg2, arg3) {
+        res.sendError(codeName, 'oops from ' + chanNum);
     });
 }
