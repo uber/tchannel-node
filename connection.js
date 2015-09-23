@@ -663,4 +663,24 @@ function sendLazyErrorFrame(reqFrame, codeString, message) {
         codeString, message);
 };
 
+TChannelConnection.prototype._drain =
+function _drain(reason, exempt) {
+    var self = this;
+
+    TChannelConnectionBase.prototype._drain.call(self, reason, exempt);
+
+    if (self.remoteName) {
+        sendDrainingFrame();
+    } else {
+        self.identifiedEvent.on(sendDrainingFrame);
+    }
+
+    function sendDrainingFrame() {
+        self.handler.sendErrorFrame(
+            v2.Frame.NullId, null,
+            'Declined',
+            'draining: ' + self.drainReason);
+    }
+};
+
 module.exports = TChannelConnection;
