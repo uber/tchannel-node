@@ -348,13 +348,14 @@ TChannelConnection.prototype.ping = function ping() {
 TChannelConnection.prototype.onCallError = function onCallError(err) {
     var self = this;
 
-    var req = self.ops.getOutReq(err.originalId);
+    var id = err.originalId;
+    var req = self.ops.getOutReq(id);
 
     if (req && req.res) {
         req.res.errorEvent.emit(req.res, err);
     } else {
         // Only popOutReq if there is no call response object yet
-        req = self.ops.popOutReq(err.originalId, err);
+        req = self.ops.popOutReq(id, err);
         if (!req) {
             return;
         }
