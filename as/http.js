@@ -58,6 +58,94 @@ HTTPResArg2.RW = bufrw.Struct(HTTPResArg2, {
     headerPairs: headerRW       // numHeaders:2 (headerName~2 headerValue~2){numHeaders}
 });
 
+// per RFC2616
+HTTPReqArg2.prototype.getHeaders =
+HTTPResArg2.prototype.getHeaders =
+function getHeaders() {
+    var self = this;
+    var headers = {};
+    for (var i = 0; i < self.headerPairs.length; i++) {
+        var pair = self.headerPairs[i];
+        var key = pair[0];
+        var val = pair[1];
+        key = key.toLowerCase();
+        switch (key) {
+            case 'set-cookie':
+                if (headers[key] !== undefined) {
+                    headers[key].push(val);
+                } else {
+                    headers[key] = [val];
+                }
+                break;
+            case 'content-type':
+            case 'content-length':
+            case 'user-agent':
+            case 'referer':
+            case 'host':
+            case 'authorization':
+            case 'proxy-authorization':
+            case 'if-modified-since':
+            case 'if-unmodified-since':
+            case 'from':
+            case 'location':
+            case 'max-forwards':
+                // drop duplicates
+                if (headers[key] === undefined) {
+                    headers[key] = val;
+                }
+                break;
+            default:
+                // make comma-separated list
+                if (headers[key] !== undefined) {
+                    headers[key] += ', ' + val;
+                } else {
+                    headers[key] = val;
+                }
+        }
+    }
+    return headers;
+};
+
+HTTPReqArg2.prototype.setHeaders =
+HTTPResArg2.prototype.setHeaders =
+function setHeaders(headers) {
+    var self = this;
+    self.headerPairs = [];
+    var keys = Object.keys(headers);
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var val = headers[key];
+        switch (key) {
+            case 'set-cookie':
+                for (var j = 0; j < val.length; j++) {
+                    self.headerPairs.push([key, val[j]]);
+                }
+                break;
+            case 'content-type':
+            case 'content-length':
+            case 'user-agent':
+            case 'referer':
+            case 'host':
+            case 'authorization':
+            case 'proxy-authorization':
+            case 'if-modified-since':
+            case 'if-unmodified-since':
+            case 'from':
+            case 'location':
+            case 'max-forwards':
+                // no duplicates
+                self.headerPairs.push([key, val]);
+                break;
+            default:
+                // prase comma-separated list
+                val = val.split(', ');
+                for (var k = 0; k < val.length; k++) {
+                    self.headerPairs.push([key, val[k]]);
+                }
+        }
+    }
+};
+
 function TChannelHTTP(options) {
     if (!(this instanceof TChannelHTTP)) {
         return new TChannelHTTP(options);
@@ -76,7 +164,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, options, callback
     }
 
     var head = new HTTPReqArg2(hreq.method, hreq.url);
-    head.headerPairs = self._toBufferHeader(hreq.headers);
+    head.setHeaders(hreq.headers);
 
     var arg1 = ''; // TODO: left empty for now, could compute circuit names heuristically
     var arg2res = bufrw.toBufferResult(HTTPReqArg2.RW, head);
@@ -156,7 +244,7 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, c
     // TODO: map http response codes onto error frames and application errors
     var self = this;
     var head = new HTTPResArg2(hres.statusCode, hres.statusMessage);
-    head.headerPairs = self._toBufferHeader(hres.headers);
+    head.setHeaders(hres.headers);
     var arg2res = bufrw.toBufferResult(HTTPResArg2.RW, head);
     if (arg2res.err) {
         self.logger.error('Buffer write for arg2 failed', {
@@ -233,7 +321,7 @@ TChannelHTTP.prototype.forwardToTChannel = function forwardToTChannel(tchannel, 
         if (err) {
             self._sendHTTPError(hres, err);
         } else {
-            var headers = self._fromBufferHeader(head.headerPairs);
+            var headers = head.getHeaders();
             // work-arround a node issue where default statusMessage is missing
             // from the client side when server side set as optional parameter
             if (head.message) {
@@ -263,7 +351,7 @@ TChannelHTTP.prototype._sendHTTPError = function _sendHTTPError(hres, error) {
 TChannelHTTP.prototype.forwardToHTTP = function forwardToHTTP(tchannel, options, inreq, outres, callback) {
     var self = this;
     self.logger = self.logger || tchannel.logger;
-    var headers = self._fromBufferHeader(inreq.head.headerPairs);
+    var headers = inreq.head.getHeaders();
     options = extend(options, {
         method: inreq.head.method,
         path: inreq.head.url,
@@ -329,89 +417,6 @@ TChannelHTTP.prototype._forwardToNodeHTTP = function _forwardToNodeHTTP(options,
             callback(err);
         }
     }
-};
-
-// per RFC2616
-TChannelHTTP.prototype._fromBufferHeader = function _fromBufferHeader(bufrwHeaders) {
-    var httpHeaders = {};
-    for (var i = 0; i < bufrwHeaders.length; i++) {
-        var pair = bufrwHeaders[i];
-        var key = pair[0];
-        var val = pair[1];
-        key = key.toLowerCase();
-        switch (key) {
-            case 'set-cookie':
-                if (httpHeaders[key] !== undefined) {
-                    httpHeaders[key].push(val);
-                } else {
-                    httpHeaders[key] = [val];
-                }
-                break;
-            case 'content-type':
-            case 'content-length':
-            case 'user-agent':
-            case 'referer':
-            case 'host':
-            case 'authorization':
-            case 'proxy-authorization':
-            case 'if-modified-since':
-            case 'if-unmodified-since':
-            case 'from':
-            case 'location':
-            case 'max-forwards':
-                // drop duplicates
-                if (httpHeaders[key] === undefined) {
-                    httpHeaders[key] = val;
-                }
-                break;
-            default:
-                // make comma-separated list
-                if (httpHeaders[key] !== undefined) {
-                    httpHeaders[key] += ', ' + val;
-                } else {
-                    httpHeaders[key] = val;
-                }
-        }
-    }
-    return httpHeaders;
-};
-
-TChannelHTTP.prototype._toBufferHeader = function _toBufferHeader(httpHeaders) {
-    var bufrwHeaders = [];
-    var keys = Object.keys(httpHeaders);
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        var val = httpHeaders[key];
-        switch (key) {
-            case 'set-cookie':
-                for (var j = 0; j < val.length; j++) {
-                    bufrwHeaders.push([key, val[j]]);
-                }
-                break;
-            case 'content-type':
-            case 'content-length':
-            case 'user-agent':
-            case 'referer':
-            case 'host':
-            case 'authorization':
-            case 'proxy-authorization':
-            case 'if-modified-since':
-            case 'if-unmodified-since':
-            case 'from':
-            case 'location':
-            case 'max-forwards':
-                // no duplicates
-                bufrwHeaders.push([key, val]);
-                break;
-            default:
-                // prase comma-separated list
-                val = val.split(', ');
-                for (var k = 0; k < val.length; k++) {
-                    bufrwHeaders.push([key, val[k]]);
-                }
-        }
-    }
-    return bufrwHeaders;
 };
 
 function AsHTTPHandler(asHTTP, channel, handler) {
