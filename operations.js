@@ -436,7 +436,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 }));
                 delete ops[id];
                 if (op.isPendingError) {
-                    op.pending.errors--;
+                    self.pending.errors--;
                 }
                 op.operations = null;
                 op.timeHeapHandle.cancel();
@@ -452,7 +452,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 }));
                 delete ops[id];
                 if (op.isPendingError) {
-                    op.pending.errors--;
+                    self.pending.errors--;
                 }
                 op.operations = null;
                 op.timeHeapHandle.cancel();
