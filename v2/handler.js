@@ -52,7 +52,7 @@ function TChannelV2Handler(options) {
     EventEmitter.call(self);
     self.errorEvent = self.defineEvent('error');
     self.errorFrameEvent = self.defineEvent('errorFrame');
-    self.callIncomingErrorEvent = self.defineEvent('callIncomingError');
+    self.callIncomingErrorFrameEvent = self.defineEvent('callIncomingErrorFrame');
     self.callIncomingRequestEvent = self.defineEvent('callIncomingRequest');
     self.callIncomingResponseEvent = self.defineEvent('callIncomingResponse');
     self.cancelEvent = self.defineEvent('cancel');
@@ -501,7 +501,7 @@ TChannelV2Handler.prototype.handleError = function handleError(errFrame, callbac
 
     delete self.streamingReq[errFrame.id];
     delete self.streamingRes[errFrame.id];
-    self.callIncomingErrorEvent.emit(self, errFrame);
+    self.callIncomingErrorFrameEvent.emit(self, errFrame);
 };
 
 TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame) {

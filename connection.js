@@ -166,7 +166,7 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
     self.handler.callIncomingRequestEvent.on(onCallRequest);
     self.handler.callIncomingResponseEvent.on(onCallResponse);
     self.handler.pingIncomingResponseEvent.on(onPingResponse);
-    self.handler.callIncomingErrorEvent.on(onCallError);
+    self.handler.callIncomingErrorFrameEvent.on(onCallErrorFrame);
 
     // TODO: restore dumping from old:
     // var stream = self.socket;
@@ -216,8 +216,8 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
         self.handlePingResponse(res);
     }
 
-    function onCallError(errFrame) {
-        self.onCallError(errFrame);
+    function onCallErrorFrame(errFrame) {
+        self.onCallErrorFrame(errFrame);
     }
 };
 
@@ -345,7 +345,8 @@ TChannelConnection.prototype.ping = function ping() {
     return self.handler.sendPingRequest();
 };
 
-TChannelConnection.prototype.onCallError = function onCallError(errFrame) {
+TChannelConnection.prototype.onCallErrorFrame =
+function onCallErrorFrame(errFrame) {
     var self = this;
 
     var id = errFrame.id;
