@@ -492,18 +492,16 @@ TChannelV2Handler.prototype.handlePingResponse = function handlePingResponse(pin
 TChannelV2Handler.prototype.handleError = function handleError(errFrame, callback) {
     var self = this;
 
-    var id = errFrame.id;
-    var code = errFrame.body.code;
-    var message = String(errFrame.body.message);
-    var err = v2.ErrorResponse.CodeErrors[code]({
-        originalId: id,
-        message: message
+    var codeErrType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    var err = codeErrType({
+        originalId: errFrame.id,
+        message: String(errFrame.body.message)
     });
 
-    delete self.streamingReq[id];
-    delete self.streamingRes[id];
+    delete self.streamingReq[errFrame.id];
+    delete self.streamingRes[errFrame.id];
 
-    if (id === v2.Frame.NullId) {
+    if (errFrame.id === v2.Frame.NullId) {
         // fatal error not associated with a prior frame
         self.errorEvent.emit(self, err);
     } else {
