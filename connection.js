@@ -216,8 +216,8 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
         self.handlePingResponse(res);
     }
 
-    function onCallError(err) {
-        self.onCallError(err);
+    function onCallError(errFrame) {
+        self.onCallError(errFrame);
     }
 };
 
@@ -345,11 +345,17 @@ TChannelConnection.prototype.ping = function ping() {
     return self.handler.sendPingRequest();
 };
 
-TChannelConnection.prototype.onCallError = function onCallError(err) {
+TChannelConnection.prototype.onCallError = function onCallError(errFrame) {
     var self = this;
 
-    var id = err.originalId;
+    var id = errFrame.id;
     var req = self.ops.getOutReq(id);
+
+    var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    var err = codeErrorType({
+        originalId: id,
+        message: String(errFrame.body.message)
+    });
 
     if (req) {
         if (req.res) {

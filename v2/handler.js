@@ -501,11 +501,7 @@ TChannelV2Handler.prototype.handleError = function handleError(errFrame, callbac
 
     delete self.streamingReq[errFrame.id];
     delete self.streamingRes[errFrame.id];
-    var codeErrType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
-    self.callIncomingErrorEvent.emit(self, codeErrType({
-        originalId: errFrame.id,
-        message: String(errFrame.body.message)
-    }));
+    self.callIncomingErrorEvent.emit(self, errFrame);
 };
 
 TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame) {
