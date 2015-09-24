@@ -82,6 +82,17 @@ function TChannelV2Handler(options) {
 
     self.requireAs = self.options.requireAs === false ? false : true;
     self.requireCn = self.options.requireCn === false ? false : true;
+
+    self.boundOnReqError = onReqError;
+    self.boundOnResError = onResError;
+
+    function onReqError(err, req) {
+        self.onReqError(err, req);
+    }
+
+    function onResError(err, res) {
+        self.onResError(err, res);
+    }
 }
 
 util.inherits(TChannelV2Handler, EventEmitter);
@@ -885,11 +896,7 @@ TChannelV2Handler.prototype.buildInRequest = function buildInRequest(reqFrame) {
         req = new InRequest(reqFrame.id, opts);
     }
 
-    req.errorEvent.on(onReqError);
-
-    function onReqError(err) {
-        self.onReqError(err, req);
-    }
+    req.errorEvent.on(self.boundOnReqError);
 
     return req;
 };
@@ -919,25 +926,6 @@ TChannelV2Handler.prototype.onResError = function onResError(err, res) {
     req.errorEvent.emit(req, err);
 };
 
-/*jshint maxparams:10*/
-function InRequestOptions(
-    channel, timeout, tracing, serviceName, headers, checksum,
-    retryFlags, connection, hostPort, tracer
-) {
-    var self = this;
-
-    self.channel = channel;
-    self.timeout = timeout;
-    self.tracing = tracing;
-    self.serviceName = serviceName;
-    self.headers = headers;
-    self.checksum = checksum;
-    self.retryFlags = retryFlags;
-    self.connection = connection;
-    self.hostPort = hostPort;
-    self.tracer = tracer;
-}
-
 TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame) {
     var self = this;
 
@@ -958,11 +946,26 @@ TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame)
         res = new InResponse(resFrame.id, opts);
     }
 
-    res.errorEvent.on(onResError);
-
-    function onResError(err) {
-        self.onResError(err, res);
-    }
+    res.errorEvent.on(self.boundOnResError);
 
     return res;
 };
+
+/*jshint maxparams:10*/
+function InRequestOptions(
+    channel, timeout, tracing, serviceName, headers, checksum,
+    retryFlags, connection, hostPort, tracer
+) {
+    var self = this;
+
+    self.channel = channel;
+    self.timeout = timeout;
+    self.tracing = tracing;
+    self.serviceName = serviceName;
+    self.headers = headers;
+    self.checksum = checksum;
+    self.retryFlags = retryFlags;
+    self.connection = connection;
+    self.hostPort = hostPort;
+    self.tracer = tracer;
+}
