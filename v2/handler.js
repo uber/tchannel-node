@@ -498,15 +498,14 @@ TChannelV2Handler.prototype.handleError = function handleError(errFrame, callbac
         message: String(errFrame.body.message)
     });
 
-    delete self.streamingReq[errFrame.id];
-    delete self.streamingRes[errFrame.id];
-
     if (errFrame.id === v2.Frame.NullId) {
         // fatal error not associated with a prior frame
         self.errorEvent.emit(self, err);
         return;
     }
 
+    delete self.streamingReq[errFrame.id];
+    delete self.streamingRes[errFrame.id];
     self.callIncomingErrorEvent.emit(self, err);
 };
 
