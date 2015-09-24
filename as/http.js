@@ -26,6 +26,8 @@ var extend = require('xtend');
 var extendInto = require('xtend/mutable');
 var errors = require('../errors.js');
 var getRawBody = require('raw-body');
+var MockRequest = require('uber-hammock').Request;
+var MockResponse = require('uber-hammock').Response;
 
 var headerRW = bufrw.Repeat(bufrw.UInt16BE,
     bufrw.Series(bufrw.str2, bufrw.str2));
@@ -346,6 +348,34 @@ TChannelHTTP.prototype._sendHTTPError = function _sendHTTPError(hres, error) {
 
     hres.writeHead(httpInfo.statusCode, httpInfo.statusMessage);
     hres.end(error.message);
+};
+
+TChannelHTTP.prototype.runHTTPHandler =
+function runHTTPHandler(tchannel, inreq, outres, handler) {
+    var self = this;
+    self.logger = self.logger || tchannel.logger;
+
+    var httpReq = new MockRequest({
+        method: inreq.head.method,
+        url: inreq.head.url,
+        headers: inreq.head.headerPairs.getHeaders()
+    });
+    var httpRes = new MockResponse(responseDone);
+
+    if (inreq.streamed) {
+        inreq.arg3.pipe(httpReq);
+    } else {
+        httpReq.end(inreq.arg3);
+    }
+    handler(httpReq, httpRes);
+
+    function responseDone(err, res) {
+        if (err) {
+            outres.sendError(err);
+            return;
+        }
+        outres.sendResponse(res, res.body);
+    }
 };
 
 TChannelHTTP.prototype.forwardToHTTP = function forwardToHTTP(tchannel, options, inreq, outres, callback) {
