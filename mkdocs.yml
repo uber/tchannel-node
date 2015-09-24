@@ -2,7 +2,11 @@ site_name: TChannel Node
 repo_url: https://github.com/uber/tchannel-node
 
 pages:
-- Home: index.md
+- Home: README.md
+- TChannel: channel.md
+- Sub Channels: sub-channels.md
+- Hyperbahn: hyperbahn.md
+- As Thrift: as-thrift.md
 # - Specification: protocol.md
 # - HTTP over TChannel: http.md
 # - JSON over TChannel:  json.md
