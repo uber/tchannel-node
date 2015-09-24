@@ -288,20 +288,18 @@ TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
     case v2.ErrorResponse.Codes.Timeout:
     case v2.ErrorResponse.Codes.UnexpectedError:
     case v2.ErrorResponse.Codes.Unhealthy:
-        self.logger.warn('unhandled error frame', self.extendLogInfo({
-            id: errFrame.id,
-            errorCode: errFrame.body.code,
-            errorCodeName: v2.ErrorResponse.CodeNames[errFrame.body.code],
-            errorTracing: errFrame.body.tracing,
-            errorMessage: errFrame.body.message
-        }));
+        logUnhandled(v2.ErrorResponse.CodeNames[errFrame.body.code]);
         return;
 
     default:
+        logUnhandled('unknown');
+    }
+
+    function logUnhandled(codeName) {
         self.logger.warn('unhandled error frame', self.extendLogInfo({
             id: errFrame.id,
             errorCode: errFrame.body.code,
-            errorCodeName: 'unknown',
+            errorCodeName: codeName,
             errorTracing: errFrame.body.tracing,
             errorMessage: errFrame.body.message
         }));
