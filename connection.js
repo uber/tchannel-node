@@ -270,11 +270,42 @@ TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
 
     // TODO: too coupled to v2
 
-    var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
-    self.resetAll(codeErrorType({
-        originalId: errFrame.id,
-        message: String(errFrame.body.message)
-    }));
+    switch (errFrame.body.code) {
+
+    case v2.ErrorResponse.Codes.ProtocolError:
+        var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+        self.resetAll(codeErrorType({
+            originalId: errFrame.id,
+            message: String(errFrame.body.message)
+        }));
+        return;
+
+    case v2.ErrorResponse.Codes.BadRequest:
+    case v2.ErrorResponse.Codes.Busy:
+    case v2.ErrorResponse.Codes.Cancelled:
+    case v2.ErrorResponse.Codes.Declined:
+    case v2.ErrorResponse.Codes.NetworkError:
+    case v2.ErrorResponse.Codes.Timeout:
+    case v2.ErrorResponse.Codes.UnexpectedError:
+    case v2.ErrorResponse.Codes.Unhealthy:
+        self.logger.warn('unhandled error frame', self.extendLogInfo({
+            id: errFrame.id,
+            errorCode: errFrame.body.code,
+            errorCodeName: v2.ErrorResponse.CodeNames,
+            errorTracing: errFrame.body.tracing,
+            errorMessage: errFrame.body.message
+        }));
+        return;
+
+    default:
+        self.logger.warn('unhandled error frame', self.extendLogInfo({
+            id: errFrame.id,
+            errorCode: errFrame.body.code,
+            errorCodeName: 'unknown',
+            errorTracing: errFrame.body.tracing,
+            errorMessage: errFrame.body.message
+        }));
+    }
 };
 
 TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
