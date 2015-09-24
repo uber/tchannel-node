@@ -155,7 +155,7 @@ TChannelRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
         self.hookupCallback(callback);
     }
     self.start = self.channel.timers.now();
-    self.resendSanity = self.limit + 1;
+    self.resendSanity = self.limit;
 
     TChannelOutRequest.prototype.emitOutboundCallsSent.call(self);
 
@@ -271,7 +271,7 @@ TChannelRequest.prototype.onSubreqResponse = function onSubreqResponse(res) {
 
 TChannelRequest.prototype.deferResend = function deferResend() {
     var self = this;
-    if (--self.resendSanity <= 0) {
+    if (--self.resendSanity < 0) {
         self.emitError(errors.RequestRetryLimitExceeded({
             limit: self.limit
         }));
@@ -320,7 +320,7 @@ TChannelRequest.prototype.checkTimeout = function checkTimeout(err, res) {
 TChannelRequest.prototype.shouldRetryError = function shouldRetryError(err) {
     var self = this;
 
-    if (self.outReqs.length >= self.limit) {
+    if (self.outReqs.length > self.limit) {
         return false;
     }
 
