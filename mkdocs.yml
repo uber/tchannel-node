@@ -2,7 +2,8 @@ site_name: TChannel Node
 repo_url: https://github.com/uber/tchannel-node
 
 pages:
-- Home: index.md
+- Home: README.md
+- Guide: GUIDE.md
 - TChannel: channel.md
 - Sub Channels: sub-channels.md
 - Hyperbahn: hyperbahn.md
