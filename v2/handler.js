@@ -82,6 +82,17 @@ function TChannelV2Handler(options) {
 
     self.requireAs = self.options.requireAs === false ? false : true;
     self.requireCn = self.options.requireCn === false ? false : true;
+
+    self.boundOnReqError = onReqError;
+    self.boundOnResError = onResError;
+
+    function onReqError(err, req) {
+        self.onReqError(err, req);
+    }
+
+    function onResError(err, res) {
+        self.onResError(err, res);
+    }
 }
 
 util.inherits(TChannelV2Handler, EventEmitter);
@@ -885,11 +896,7 @@ TChannelV2Handler.prototype.buildInRequest = function buildInRequest(reqFrame) {
         req = new InRequest(reqFrame.id, opts);
     }
 
-    req.errorEvent.on(onReqError);
-
-    function onReqError(err) {
-        self.onReqError(err, req);
-    }
+    req.errorEvent.on(self.boundOnReqError);
 
     return req;
 };
@@ -939,11 +946,7 @@ TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame)
         res = new InResponse(resFrame.id, opts);
     }
 
-    res.errorEvent.on(onResError);
-
-    function onResError(err) {
-        self.onResError(err, res);
-    }
+    res.errorEvent.on(self.boundOnResError);
 
     return res;
 };
