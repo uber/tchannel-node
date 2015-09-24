@@ -51,6 +51,7 @@ function TChannelV2Handler(options) {
     var self = this;
     EventEmitter.call(self);
     self.errorEvent = self.defineEvent('error');
+    self.errorFrameEvent = self.defineEvent('errorFrame');
     self.callIncomingErrorEvent = self.defineEvent('callIncomingError');
     self.callIncomingRequestEvent = self.defineEvent('callIncomingRequest');
     self.callIncomingResponseEvent = self.defineEvent('callIncomingResponse');
@@ -492,21 +493,19 @@ TChannelV2Handler.prototype.handlePingResponse = function handlePingResponse(pin
 TChannelV2Handler.prototype.handleError = function handleError(errFrame, callback) {
     var self = this;
 
-    var codeErrType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
-    var err = codeErrType({
-        originalId: errFrame.id,
-        message: String(errFrame.body.message)
-    });
-
     if (errFrame.id === v2.Frame.NullId) {
-        // fatal error not associated with a prior frame
-        self.errorEvent.emit(self, err);
+        // error frame not associated with a prior frame
+        self.errorFrameEvent.emit(self, errFrame);
         return;
     }
 
     delete self.streamingReq[errFrame.id];
     delete self.streamingRes[errFrame.id];
-    self.callIncomingErrorEvent.emit(self, err);
+    var codeErrType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    self.callIncomingErrorEvent.emit(self, codeErrType({
+        originalId: errFrame.id,
+        message: String(errFrame.body.message)
+    }));
 };
 
 TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame) {

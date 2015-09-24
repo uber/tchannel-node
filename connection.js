@@ -162,6 +162,7 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 
     self.handler.writeErrorEvent.on(onWriteError);
     self.handler.errorEvent.on(onHandlerError);
+    self.handler.errorFrameEvent.on(onErrorFrame);
     self.handler.callIncomingRequestEvent.on(onCallRequest);
     self.handler.callIncomingResponseEvent.on(onCallResponse);
     self.handler.pingIncomingResponseEvent.on(onPingResponse);
@@ -193,6 +194,10 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 
     function onHandlerError(err) {
         self.onHandlerError(err);
+    }
+
+    function onErrorFrame(errFrame) {
+        self.onErrorFrame(errFrame);
     }
 
     function handleReadFrame(frame) {
@@ -258,6 +263,18 @@ TChannelConnection.prototype.onWriteError = function onWriteError(err) {
     var self = this;
 
     self.sendProtocolError('write', err);
+};
+
+TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
+    var self = this;
+
+    // TODO: too coupled to v2
+
+    var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    self.resetAll(codeErrorType({
+        originalId: errFrame.id,
+        message: String(errFrame.body.message)
+    }));
 };
 
 TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
