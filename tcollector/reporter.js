@@ -147,7 +147,6 @@ function report(span, opts, callback) {
             shardKey: span.traceid.toString('base64')
         },
         serviceName: 'tcollector',
-        retryLimit: 1,
         retryFlags: {never: true}
     });
 

@@ -154,8 +154,7 @@ allocCluster.test('requests will timeout per attempt', {
                     cn: 'wat'
                 },
                 timeout: 3000,
-                timeoutPerAttempt: 1000,
-                retryLimit: 1
+                timeoutPerAttempt: 1000
             })
             .send('/timeout', 'h', 'b', onTimeout);
 
@@ -250,7 +249,7 @@ allocCluster.test('requests can succeed after timeout per attempt', {
                 },
                 timeout: 3000,
                 timeoutPerAttempt: 1000,
-                retryLimit: 2
+                retryLimit: 1
             });
         req.send('/timeout', 'h', 'b', done);
     }
