@@ -380,6 +380,8 @@ function unadvertise(opts) {
     timers.clearTimeout(self._advertisementTimer);
     timers.clearTimeout(self.advertisementTimeoutTimer);
     self.latestAdvertisementResult = null;
+    self.state = States.UNADVERTISED;
+    self.emit('unadvertised');
     function unadvertiseInternalCb(error, result) {
         if (error) {
             self.logger.warn('HyperbahnClient: unadvertisement failure', {
@@ -389,8 +391,6 @@ function unadvertise(opts) {
             });
             return;
         }
-        self.state = States.UNADVERTISED;
-        self.emit('unadvertised');
     }
 };
 
