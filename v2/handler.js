@@ -504,9 +504,10 @@ TChannelV2Handler.prototype.handleError = function handleError(errFrame, callbac
     if (errFrame.id === v2.Frame.NullId) {
         // fatal error not associated with a prior frame
         self.errorEvent.emit(self, err);
-    } else {
-        self.callIncomingErrorEvent.emit(self, err);
+        return;
     }
+
+    self.callIncomingErrorEvent.emit(self, err);
 };
 
 TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame) {
