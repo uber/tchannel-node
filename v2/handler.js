@@ -51,7 +51,8 @@ function TChannelV2Handler(options) {
     var self = this;
     EventEmitter.call(self);
     self.errorEvent = self.defineEvent('error');
-    self.callIncomingErrorEvent = self.defineEvent('callIncomingError');
+    self.errorFrameEvent = self.defineEvent('errorFrame');
+    self.callIncomingErrorFrameEvent = self.defineEvent('callIncomingErrorFrame');
     self.callIncomingRequestEvent = self.defineEvent('callIncomingRequest');
     self.callIncomingResponseEvent = self.defineEvent('callIncomingResponse');
     self.cancelEvent = self.defineEvent('cancel');
@@ -503,23 +504,15 @@ TChannelV2Handler.prototype.handlePingResponse = function handlePingResponse(pin
 TChannelV2Handler.prototype.handleError = function handleError(errFrame, callback) {
     var self = this;
 
-    var id = errFrame.id;
-    var code = errFrame.body.code;
-    var message = String(errFrame.body.message);
-    var err = v2.ErrorResponse.CodeErrors[code]({
-        originalId: id,
-        message: message
-    });
-
-    delete self.streamingReq[id];
-    delete self.streamingRes[id];
-
-    if (id === v2.Frame.NullId) {
-        // fatal error not associated with a prior frame
-        self.errorEvent.emit(self, err);
-    } else {
-        self.callIncomingErrorEvent.emit(self, err);
+    if (errFrame.id === v2.Frame.NullId) {
+        // error frame not associated with a prior frame
+        self.errorFrameEvent.emit(self, errFrame);
+        return;
     }
+
+    delete self.streamingReq[errFrame.id];
+    delete self.streamingRes[errFrame.id];
+    self.callIncomingErrorFrameEvent.emit(self, errFrame);
 };
 
 TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame) {

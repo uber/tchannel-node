@@ -162,10 +162,11 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 
     self.handler.writeErrorEvent.on(onWriteError);
     self.handler.errorEvent.on(onHandlerError);
+    self.handler.errorFrameEvent.on(onErrorFrame);
     self.handler.callIncomingRequestEvent.on(onCallRequest);
     self.handler.callIncomingResponseEvent.on(onCallResponse);
     self.handler.pingIncomingResponseEvent.on(onPingResponse);
-    self.handler.callIncomingErrorEvent.on(onCallError);
+    self.handler.callIncomingErrorFrameEvent.on(onCallErrorFrame);
 
     // TODO: restore dumping from old:
     // var stream = self.socket;
@@ -195,6 +196,10 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
         self.onHandlerError(err);
     }
 
+    function onErrorFrame(errFrame) {
+        self.onErrorFrame(errFrame);
+    }
+
     function handleReadFrame(frame) {
         self.handleReadFrame(frame);
     }
@@ -211,8 +216,8 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
         self.handlePingResponse(res);
     }
 
-    function onCallError(err) {
-        self.onCallError(err);
+    function onCallErrorFrame(errFrame) {
+        self.onCallErrorFrame(errFrame);
     }
 };
 
@@ -260,12 +265,21 @@ TChannelConnection.prototype.onWriteError = function onWriteError(err) {
     self.sendProtocolError('write', err);
 };
 
-TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
+TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
     var self = this;
 
-    if (err) {
-        self.resetAll(err);
-    }
+    // TODO: too coupled to v2
+
+    var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    self.resetAll(codeErrorType({
+        originalId: errFrame.id,
+        message: String(errFrame.body.message)
+    }));
+};
+
+TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
+    var self = this;
+    self.resetAll(err);
 };
 
 TChannelConnection.prototype.handlePingResponse = function handlePingResponse(resFrame) {
@@ -331,21 +345,27 @@ TChannelConnection.prototype.ping = function ping() {
     return self.handler.sendPingRequest();
 };
 
-TChannelConnection.prototype.onCallError = function onCallError(err) {
+TChannelConnection.prototype.onCallErrorFrame =
+function onCallErrorFrame(errFrame) {
     var self = this;
 
-    var req = self.ops.getOutReq(err.originalId);
+    var id = errFrame.id;
+    var req = self.ops.getOutReq(id);
 
-    if (req && req.res) {
-        req.res.errorEvent.emit(req.res, err);
-    } else {
-        // Only popOutReq if there is no call response object yet
-        req = self.ops.popOutReq(err.originalId, err);
-        if (!req) {
-            return;
+    var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    var err = codeErrorType({
+        originalId: id,
+        message: String(errFrame.body.message)
+    });
+
+    if (req) {
+        if (req.res) {
+            req.res.errorEvent.emit(req.res, err);
+        } else {
+            // Only popOutReq if there is no call response object yet
+            req = self.ops.popOutReq(id, err);
+            req.emitError(err);
         }
-
-        req.emitError(err);
     }
 };
 
