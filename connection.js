@@ -351,16 +351,14 @@ TChannelConnection.prototype.onCallError = function onCallError(err) {
     var id = err.originalId;
     var req = self.ops.getOutReq(id);
 
-    if (req && req.res) {
-        req.res.errorEvent.emit(req.res, err);
-    } else {
-        // Only popOutReq if there is no call response object yet
-        req = self.ops.popOutReq(id, err);
-        if (!req) {
-            return;
+    if (req) {
+        if (req.res) {
+            req.res.errorEvent.emit(req.res, err);
+        } else {
+            // Only popOutReq if there is no call response object yet
+            req = self.ops.popOutReq(id, err);
+            req.emitError(err);
         }
-
-        req.emitError(err);
     }
 };
 
