@@ -4,16 +4,16 @@ The tchannel documentation is spread out in multiple parts
 
 ## Read the Node GUIDE
 
-Check out our [GUIDE](./GUIDE)
+Check out our [GUIDE](./GUIDE.md)
 
 ## Core topics
 
 The following documents are core to tchannel
 
- - [channel](./channel)
- - [sub-channels](./sub-channels)
- - [hyperbahn](./hyperbahn)
- - [as-thrift](./as-thrift)
+ - [channel](./channel.md)
+ - [sub-channels](./sub-channels.md)
+ - [hyperbahn](./hyperbahn.md)
+ - [as-thrift](./as-thrift.md)
 
 
 ## Extra topics
@@ -21,9 +21,9 @@ The following documents are core to tchannel
 The following documents give more details for other use cases
 that are available.
 
- - [as-json](./as-json)
- - [errors](./errors)
- - [peer-to-peer](./peer-to-peer)
- - [statsd](./statsd)
- - [streaming](./streaming)
+ - [as-json](./as-json.md)
+ - [errors](./errors.md)
+ - [peer-to-peer](./peer-to-peer.md)
+ - [statsd](./statsd.md)
+ - [streaming](./streaming.md)
 
