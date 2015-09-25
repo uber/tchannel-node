@@ -66,17 +66,13 @@ function TChannelAsThrift(opts) {
         'channel must be provided with isHealthy');
 
     if (self.isHealthy) {
-        fs.readFile(path.join(__dirname, 'meta.thrift'), 'utf8', registerHealthCheck);
+        var thriftSource = fs.readFileSync(
+            path.join(__dirname, 'meta.thrift'), 'utf8'
+        );
+        registerHealthCheck(thriftSource);
     }
 
-    function registerHealthCheck(err, source) {
-        if (err) {
-            self.channel.logger.error('failed to read meta.thrift file', {
-                error: err
-            });
-            return;
-        }
-
+    function registerHealthCheck(source) {
         self.thriftSource = opts.source;
         var metaSpec = new thriftrw.Thrift({
             source: source
