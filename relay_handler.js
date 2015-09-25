@@ -413,6 +413,7 @@ function checkTimeout() {
         if (elapsed > self.timeout) {
             self.timedOut = true;
             // TODO: send cancel?
+            // TODO: lighter interface that doesn't create an error to send a frame
             self.inreq.onError(errors.RequestTimeoutError({
                 id: self.id,
                 start: self.start,
