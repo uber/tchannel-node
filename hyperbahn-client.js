@@ -89,6 +89,7 @@ function HyperbahnClient(options) {
 
     EventEmitter.call(this);
 
+    assert(options && options.tchannel, 'Must pass in a tchannel');
     assert(options && options.tchannel && !options.tchannel.topChannel,
         'Must pass in top level tchannel');
     assert(options.tchannel.tracer, 'Top channel must have trace enabled');
