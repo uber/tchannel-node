@@ -24,6 +24,7 @@ var bufrw = require('bufrw');
 var WriteResult = bufrw.WriteResult;
 var ReadResult = bufrw.ReadResult;
 var TypedError = require('error/typed');
+var Frame = require('./frame');
 var Tracing = require('./tracing');
 
 var errors = require('../errors');
@@ -171,6 +172,24 @@ ErrorResponse.RW.lazy = {};
 
 ErrorResponse.RW.lazy.isFrameTerminal = function isFrameTerminal() {
     return true;
+};
+
+ErrorResponse.RW.lazy.codeOffset = Frame.Overhead;
+ErrorResponse.RW.lazy.readCode = function readCode(frame) {
+    // code:1
+    return bufrw.UInt8.readFrom(frame.buffer, ErrorResponse.RW.lazy.codeOffset);
+};
+
+ErrorResponse.RW.lazy.tracingOffset = ErrorResponse.RW.lazy.codeOffset + 1;
+ErrorResponse.RW.lazy.readTracing = function readTracing(frame) {
+    // tracing:25
+    return Tracing.RW.readFrom(frame.buffer, ErrorResponse.RW.lazy.tracingOffset);
+};
+
+ErrorResponse.RW.lazy.mesasgeOffset = ErrorResponse.RW.lazy.tracingOffset + 25;
+ErrorResponse.RW.lazy.readMessage = function readMessage(frame) {
+    // mesasge~2
+    return bufrw.str2.readFrom(frame.buffer, ErrorResponse.RW.lazy.mesasgeOffset);
 };
 
 module.exports = ErrorResponse;

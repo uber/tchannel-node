@@ -337,11 +337,28 @@ test('ErrorResponse.RW.lazy', function t(assert) {
     assert.deepEqual(lazyFrame.buffer.parent, buf.parent,
         'frame carries a slice into the original read buffer');
 
-    // validate call req lazy reading
+    // validate error res lazy reading
+    assertReadRes(
+        v2.ErrorResponse.RW.lazy.readCode(lazyFrame),
+        v2.ErrorResponse.Codes.Busy,
+        'ErrorResponsequest.RW.lazy.readCode');
+    assertReadRes(
+        v2.ErrorResponse.RW.lazy.readTracing(lazyFrame),
+        tracing,
+        'ErrorResponsequest.RW.lazy.readTracing');
+    assertReadRes(
+        v2.ErrorResponse.RW.lazy.readMessage(lazyFrame),
+        "mess",
+        'ErrorResponsequest.RW.lazy.readMessage');
     assert.equal(
         v2.ErrorResponse.RW.lazy.isFrameTerminal(lazyFrame),
         !(frame.body.flags & v2.CallFlags.Fragment),
         'ErrorResponse.RW.lazy.isFrameTerminal');
 
     assert.end();
+
+    function assertReadRes(res, value, desc) {
+        assert.ifError(res.err, 'no error from ' + desc);
+        assert.deepEqual(res.value, value, 'expected value from ' + desc);
+    }
 });
