@@ -451,9 +451,10 @@ allocCluster.test('drain client with a few outgoing (with exempt service)', {
     var finishCount = 0;
     var reqN = 0;
     setupTestClients(cluster, ['a', 'b'], runTest);
+    drainClient.drainExempt = drainExemptB;
     setupServiceServer(server, 'a', 5);
     setupServiceServer(server, 'b', 5);
-    drainClient.drainExempt = drainExemptB;
+    server.drainExempt = drainExemptB;
 
     cluster.logger.whitelist('info', 'resetting connection');
     // cluster.logger.whitelist('info', 'ignoring outresponse.send on a closed connection');

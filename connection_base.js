@@ -93,9 +93,7 @@ TChannelConnectionBase.prototype.drain =
 function drain(reason, callback) {
     var self = this;
 
-    self.draining = true;
-    self.drainReason = reason;
-    self.ops.draining = true;
+    self._drain(reason);
 
     if (callback) {
         if (self.ops.hasDrained()) {
@@ -104,6 +102,15 @@ function drain(reason, callback) {
             self.ops.drainEvent.on(callback);
         }
     }
+};
+
+TChannelConnectionBase.prototype._drain =
+function _drain(reason) {
+    var self = this;
+
+    self.draining = true;
+    self.drainReason = reason;
+    self.ops.draining = true;
 };
 
 // create a request

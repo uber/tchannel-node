@@ -280,10 +280,22 @@ TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
         }));
         return;
 
+    case v2.ErrorResponse.Codes.Declined:
+        var match = /^draining:\s*(.+)$/.exec(errFrame.body.message);
+        if (match) {
+            self.draining = true;
+            self.drainReason = 'remote draining: ' + match[1];
+            // TODO:
+            // - info log?
+            // - invaliadet peer score?
+            return;
+        }
+        logUnhandled(v2.ErrorResponse.CodeNames[errFrame.body.code]);
+        break;
+
     case v2.ErrorResponse.Codes.BadRequest:
     case v2.ErrorResponse.Codes.Busy:
     case v2.ErrorResponse.Codes.Cancelled:
-    case v2.ErrorResponse.Codes.Declined:
     case v2.ErrorResponse.Codes.NetworkError:
     case v2.ErrorResponse.Codes.Timeout:
     case v2.ErrorResponse.Codes.UnexpectedError:
@@ -661,6 +673,26 @@ function sendLazyErrorFrame(reqFrame, codeString, message) {
     self.handler.sendErrorFrame(
         reqFrame.id, res.err ? null : res.value,
         codeString, message);
+};
+
+TChannelConnection.prototype._drain =
+function _drain(reason, exempt) {
+    var self = this;
+
+    TChannelConnectionBase.prototype._drain.call(self, reason, exempt);
+
+    if (self.remoteName) {
+        sendDrainingFrame();
+    } else {
+        self.identifiedEvent.on(sendDrainingFrame);
+    }
+
+    function sendDrainingFrame() {
+        self.handler.sendErrorFrame(
+            v2.Frame.NullId, null,
+            'Declined',
+            'draining: ' + self.drainReason);
+    }
 };
 
 module.exports = TChannelConnection;
