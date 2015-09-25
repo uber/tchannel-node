@@ -30,6 +30,7 @@ function RelayHandler(channel, circuits) {
     var self = this;
     self.channel = channel;
     self.circuits = circuits || null;
+    self.logger = self.channel.logger;
 }
 
 RelayHandler.prototype.type = 'tchannel.relay-handler';
@@ -59,7 +60,7 @@ RelayHandler.prototype._handleRequest = function _handleRequest(req, buildRes) {
 
     // TODO add this back in a performant way ??
     // if (rereq) {
-    //     self.channel.logger.error('relay request already exists for incoming request', {
+    //     self.logger.error('relay request already exists for incoming request', {
     //         inReqId: req.id,
     //         priorInResId: rereq.inres && rereq.inres.id,
     //         priorOutResId: rereq.outres && rereq.outres.id,
@@ -80,7 +81,7 @@ RelayHandler.prototype._handleRequest = function _handleRequest(req, buildRes) {
         // TODO: allow for customization of this message so hyperbahn can
         // augment it with things like "at entry node", "at exit node", etc
         buildRes().sendError('Declined', 'no peer available for request');
-        self.channel.logger.warn('no relay peer available', req.extendLogInfo({}));
+        self.logger.warn('no relay peer available', req.extendLogInfo({}));
         return;
     }
 
