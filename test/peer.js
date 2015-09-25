@@ -21,8 +21,6 @@
 'use strict';
 
 var allocCluster = require('./lib/alloc-cluster.js');
-var TChannelConnection = require('../connection.js');
-var net = require('net');
 
 allocCluster.test('peer should use the identified connection', {
     numPeers: 2
