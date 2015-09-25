@@ -88,3 +88,6 @@ require('./v2/ping.js');
 require('./v2/error_response.js');
 require('./v2/args.js');
 require('./v2/lazy_frame.js');
+
+require('./hyperbahn-client/constructor.js');
+require('./hyperbahn-client/sub-channel.js');
