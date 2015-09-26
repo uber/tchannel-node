@@ -164,9 +164,9 @@ TChannelPeer.prototype.close = function close(callback) {
 
     var counter = self.connections.length;
     if (counter) {
-        self.connections.forEach(function eachConn(conn) {
-            conn.close(onClose);
-        });
+        for (var i = counter - 1; i >= 0; i--) {
+            self.connections[i].close(onClose);
+        }
     } else {
         callback(null);
     }

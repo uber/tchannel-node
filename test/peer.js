@@ -105,3 +105,41 @@ allocCluster.test('peer should return the latest connection when none is identif
     server.close();
     assert.end();
 });
+
+allocCluster.test('peer close should not leak connections', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var server = cluster.channels[0];
+    var client = cluster.channels[1];
+    var serverHost = cluster.hosts[0];
+
+    server.makeSubChannel({
+        serviceName: 'server'
+    });
+
+    var subClient = client.makeSubChannel({
+        serviceName: 'server',
+        peers: [server.hostPort]
+    });
+
+    var peer = subClient.peers.get(serverHost);
+    var connection = peer.connect();
+    connection.identifiedEvent.on(onIdentified);
+    function onIdentified() {
+        peer = server.peers.values()[0];
+        var socket = peer.makeOutSocket();
+        var conn = peer.makeOutConnection(socket);
+        peer.addConnection(conn);
+        var count = 2;
+        peer.removeConnectionEvent.on(function onClose() {
+            count--;
+        });
+
+        peer.close(function onClose() {
+            assert.equals(0, count, 'both connections should be closed');
+            client.close();
+            server.close();
+            assert.end();
+        });
+    }
+});
