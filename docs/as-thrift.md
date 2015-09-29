@@ -9,11 +9,11 @@ to handle encoding and decoding for you
 
 ## Thrift example
 
-`thrift/service.thrift`:
+`thrift/echo.thrift`:
 
 ```thrift
 struct EchoResult {
-    1: string value
+    1: required string value
 }
 
 service Echo  {
@@ -31,20 +31,21 @@ var TChannel = require('tchannel');
 var fs = require('fs');
 var path = require('path');
 
-var server = TChannel({
-    serviceName: 'server'
-});
+var server = TChannel({serviceName: 'server'});
+
 var client = TChannel();
+var echoChannel = client.makeSubChannel({
+    serviceName: 'echo',
+    peers: ['127.0.0.1:4040']
+});
+var thriftSource = fs.readFileSync(path.join(__dirname, 'echo.thrift'), 'utf8');
 var tchannelThrift = TChannelThrift({
-    channel: client,
-    source: fs.readFileSync(
-        path.join(__dirname, 'thrift', 'service.thrift'), 'utf8'
-    )
+    channel: echoChannel,
+    source: thriftSource
 });
 
 var context = {};
-
-tchannelThrift.register(server, 'echo', context, echo);
+tchannelThrift.register(server, 'Echo::echo', context, echo);
 function echo(context, req, head, body, callback) {
     callback(null, {
         ok: true,
@@ -54,25 +55,28 @@ function echo(context, req, head, body, callback) {
 }
 
 server.listen(4040, '127.0.0.1', onListening);
-
 function onListening() {
     tchannelThrift.request({
-        serviceName: 'server',
-        host: '127.0.0.1:4040'
+        serviceName: 'echo',
+        headers: {
+            cn: 'echo'
+        },
+        hasNoParent: true
     }).send('Echo::echo', {
         someHeader: 'headerValue'
     }, {
         value: 'some-string'
     }, onResponse);
 
-    function onResponse(err, resp) {
+    function onResponse(err, res) {
         if (err) {
             console.log('got error', err);
         } else {
-            console.log('got resp', resp);
+            console.log('got response', res);
         }
 
         server.close();
+        client.close();
     }
 }
 ```
