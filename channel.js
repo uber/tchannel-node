@@ -561,6 +561,7 @@ TChannel.prototype.listen = function listen(port, host, callback) {
     //   available ephemeral port
     // - 127.0.0.1 is a valid host, primarily for testing
     var self = this;
+    assert(!self.topChannel, 'TChannel must listen on top channel');
     assert(!self.listened, 'TChannel can only listen once');
     assert(typeof host === 'string', 'TChannel requires host argument');
     assert(typeof port === 'number', 'TChannel must listen with numeric port');
