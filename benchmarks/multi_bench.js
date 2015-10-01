@@ -174,7 +174,7 @@ Test.prototype.newClient = function newClient(id, callback) {
         peers: [DESTINATION_SERVER]
     });
     client.createTime = Date.now();
-    client.listen(port, '127.0.0.1', function listened(err) {
+    clientChan.listen(port, '127.0.0.1', function listened(err) {
         if (err) {
             return callback(err);
         }
