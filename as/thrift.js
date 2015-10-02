@@ -82,14 +82,6 @@ function TChannelAsThrift(opts) {
     }
 }
 
-function TChannelThriftRequest(options) {
-    var self = this;
-
-    self.channel = options.channel;
-    self.reqOptions = options.reqOptions;
-    self.tchannelThrift = options.tchannelThrift;
-}
-
 function health(self, req, head, body, callback) {
     var status = self.isHealthy();
     assert(status && typeof status.ok === 'boolean', 'status must have ok field');
@@ -111,14 +103,6 @@ function thriftIDL(self, req, head, body, callback) {
         body: self.thriftSource
     });
 }
-
-TChannelThriftRequest.prototype.send =
-function send(endpoint, head, body, callback) {
-    var self = this;
-
-    var outreq = self.channel.request(self.reqOptions);
-    self.tchannelThrift.send(outreq, endpoint, head, body, callback);
-};
 
 TChannelAsThrift.prototype.request = function request(reqOptions) {
     var self = this;
@@ -281,17 +265,6 @@ function send(request, endpoint, outHead, outBody, callback) {
     }
 };
 
-function TChannelThriftResponse(response, parseResult) {
-    var self = this;
-
-    self.ok = response.ok;
-    self.head = parseResult.head;
-    self.body = null;
-    self.headers = response.headers;
-    self.body = parseResult.body;
-    self.typeName = parseResult.typeName;
-}
-
 TChannelAsThrift.prototype._parse = function parse(opts) {
     var self = this;
     var spec = opts.spec || self.spec;
@@ -430,6 +403,33 @@ TChannelAsThrift.prototype._stringify = function stringify(opts) {
         head: headRes.value,
         body: bodyRes.value
     });
+};
+
+function TChannelThriftResponse(response, parseResult) {
+    var self = this;
+
+    self.ok = response.ok;
+    self.head = parseResult.head;
+    self.body = null;
+    self.headers = response.headers;
+    self.body = parseResult.body;
+    self.typeName = parseResult.typeName;
+}
+
+function TChannelThriftRequest(options) {
+    var self = this;
+
+    self.channel = options.channel;
+    self.reqOptions = options.reqOptions;
+    self.tchannelThrift = options.tchannelThrift;
+}
+
+TChannelThriftRequest.prototype.send =
+function send(endpoint, head, body, callback) {
+    var self = this;
+
+    var outreq = self.channel.request(self.reqOptions);
+    self.tchannelThrift.send(outreq, endpoint, head, body, callback);
 };
 
 // TODO proper Thriftify result union that reifies as the selected field.
