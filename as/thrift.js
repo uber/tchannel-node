@@ -146,6 +146,8 @@ function register(channel, name, opts, handle, spec) {
     // support register(endpoint, opts, handle)
     if (typeof channel === 'string') {
         assert(self.channel, 'channel is required for thrift.register()');
+        assert(spec === undefined, 'must have only 4 arguments');
+
         spec = handle;
         handle = opts;
         opts = name;
