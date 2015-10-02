@@ -26,15 +26,15 @@ var path = require('path');
 var TChannel = require('../../');
 var HyperbahnClient = require('../../hyperbahn/index.js');
 
-test('calling getThriftCodec', function t(assert) {
+test('calling getThrift', function t(assert) {
     var hypeClient = makeHyperbahnClient();
     var hypeServer = makeHyperbahnClient();
 
-    var thriftClient = hypeClient.getThriftCodecSync({
+    var thriftClient = hypeClient.getThriftSync({
         serviceName: 'foo',
         thriftFile: path.join(__dirname, '..', 'anechoic-chamber.thrift')
     });
-    var thriftServer = hypeServer.getThriftCodecSync({
+    var thriftServer = hypeServer.getThriftSync({
         serviceName: 'foo',
         thriftFile: path.join(__dirname, '..', 'anechoic-chamber.thrift')
     });

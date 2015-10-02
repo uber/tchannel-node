@@ -176,8 +176,8 @@ HyperbahnClient.prototype.setReportTracing = function setReportTracing(bool) {
     self.reportTracing = bool;
 };
 
-HyperbahnClient.prototype.getThriftCodecSync =
-function getThriftCodecSync(options) {
+HyperbahnClient.prototype.getThriftSync =
+function getThriftSync(options) {
     var self = this;
 
     assert(options && options.serviceName, 'must pass serviceName');
