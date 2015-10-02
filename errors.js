@@ -857,6 +857,7 @@ module.exports.isPendingError = function isPendingError(codeName) {
     switch (codeName) {
         case 'Busy':
         case 'Declined':
+        case 'Unhealthy':
             return true;
 
         case 'BadRequest':
