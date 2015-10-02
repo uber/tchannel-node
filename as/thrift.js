@@ -82,28 +82,6 @@ function TChannelAsThrift(opts) {
     }
 }
 
-function health(self, req, head, body, callback) {
-    var status = self.isHealthy();
-    assert(status && typeof status.ok === 'boolean', 'status must have ok field');
-    assert(status && (status.ok || typeof status.message === 'string'),
-        'status.message must be provided when status.ok === false');
-
-    return callback(null, {
-        ok: true,
-        body: {
-            ok: status.ok,
-            message: status.message
-        }
-    });
-}
-
-function thriftIDL(self, req, head, body, callback) {
-    return callback(null, {
-        ok: true,
-        body: self.thriftSource
-    });
-}
-
 TChannelAsThrift.prototype.request = function request(reqOptions) {
     var self = this;
 
@@ -431,6 +409,28 @@ function send(endpoint, head, body, callback) {
     var outreq = self.channel.request(self.reqOptions);
     self.tchannelThrift.send(outreq, endpoint, head, body, callback);
 };
+
+function health(self, req, head, body, callback) {
+    var status = self.isHealthy();
+    assert(status && typeof status.ok === 'boolean', 'status must have ok field');
+    assert(status && (status.ok || typeof status.message === 'string'),
+        'status.message must be provided when status.ok === false');
+
+    return callback(null, {
+        ok: true,
+        body: {
+            ok: status.ok,
+            message: status.message
+        }
+    });
+}
+
+function thriftIDL(self, req, head, body, callback) {
+    return callback(null, {
+        ok: true,
+        body: self.thriftSource
+    });
+}
 
 // TODO proper Thriftify result union that reifies as the selected field.
 function onlyKey(object) {
