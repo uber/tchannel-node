@@ -28,8 +28,9 @@ var Result = require('bufrw/result');
 var thriftrw = require('thriftrw');
 
 var errors = require('../errors.js');
-
 var HeaderRW = require('../v2/header.js').header2;
+
+var metaThriftFile = path.join(__dirname, 'meta.thrift');
 
 module.exports = TChannelAsThrift;
 
@@ -43,8 +44,9 @@ function TChannelAsThrift(opts) {
     assert(opts && typeof opts.source === 'string',
         'must pass source as an argument');
 
+    self.thriftSource = opts.source;
     self.spec = new thriftrw.Thrift({
-        source: opts.source,
+        source: self.thriftSource,
         strict: opts.strict
     });
 
@@ -65,22 +67,50 @@ function TChannelAsThrift(opts) {
     assert(!self.isHealthy || self.channel,
         'channel must be provided with isHealthy');
 
-    if (self.isHealthy) {
-        var thriftSource = fs.readFileSync(
-            path.join(__dirname, 'meta.thrift'), 'utf8'
-        );
-        registerHealthCheck(thriftSource);
-    }
-
-    function registerHealthCheck(source) {
-        self.thriftSource = opts.source;
-        var metaSpec = new thriftrw.Thrift({
-            source: source
-        });
-        self.register(self.channel, 'Meta::health', self, health, metaSpec);
-        self.register(self.channel, 'Meta::thriftIDL', self, thriftIDL, metaSpec);
+    var loadMetaAsync = opts.loadMetaAsync !== undefined ?
+        opts.loadMetaAsync : true;
+    if (self.isHealthy && loadMetaAsync) {
+        self.registerHealthAsync();
     }
 }
+
+TChannelAsThrift.prototype.registerHealthAsync =
+function registerHealthAsync() {
+    var self = this;
+
+    fs.readFile(metaThriftFile, 'utf8', onFile);
+
+    function onFile(err, thriftSource) {
+        if (err) {
+            self.channel.logger.fatal('failed to read meta.thrift file', {
+                error: err
+            });
+            return;
+        }
+
+        self.registerMeta(thriftSource);
+    }
+};
+
+TChannelAsThrift.prototype.registerHealthSync =
+function registerHealthSync() {
+    var self = this;
+
+    var thriftSource = fs.readFileSync(metaThriftFile, 'utf8');
+    self.registerMeta(thriftSource);
+};
+
+TChannelAsThrift.prototype.registerMeta =
+function registerMeta(metaSource) {
+    var self = this;
+
+    var metaSpec = new thriftrw.Thrift({
+        source: metaSource
+    });
+
+    self.register(self.channel, 'Meta::health', self, health, metaSpec);
+    self.register(self.channel, 'Meta::thriftIDL', self, thriftIDL, metaSpec);
+};
 
 TChannelAsThrift.prototype.request = function request(reqOptions) {
     var self = this;

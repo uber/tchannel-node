@@ -185,8 +185,10 @@ function makeTChannelThriftServer(cluster, opts) {
         source: thriftSource,
         logParseFailures: false,
         channel: cluster.channels[0].subChannels.server,
-        isHealthy: health
+        isHealthy: health,
+        loadMetaAsync: false
     });
+    tchannelAsThrift.registerHealthSync();
     tchannelAsThrift.register(server, 'Chamber::echo', options, okHandler);
 
     return tchannelAsThrift;
