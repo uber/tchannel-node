@@ -382,7 +382,7 @@ TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
 
     self._maybeInvalidateScore();
 
-    self.removeConnectionEvent.emit(self);
+    self.removeConnectionEvent.emit(self, conn);
     return ret;
 };
 
