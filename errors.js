@@ -818,6 +818,9 @@ module.exports.toHTTPCode = function toHTTPCode(codeName) {
         case 'NetworkError':
             return new HTTPInfo(500, 'TChannel Network Error');
 
+        case 'UnexpectedError':
+            return new HTTPInfo(500, 'TChannel Unexpected Error');
+
         default:
             return new HTTPInfo(500, 'Internal Server Error');
     }
