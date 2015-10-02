@@ -836,6 +836,7 @@ module.exports.logLevel = function errorLogLevel(err, codeName) {
         case 'Cancelled':
         case 'Declined':
         case 'NetworkError':
+        case 'Unhealthy':
             return 'warn';
 
         case 'BadRequest':
