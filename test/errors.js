@@ -154,6 +154,73 @@ test('all errors are classified', function t(assert) {
     assert.end();
 });
 
+var expectedErrorCodes = [
+    'BadRequest',
+    'Busy',
+    'Cancelled',
+    'Declined',
+    'NetworkError',
+    'ProtocolError',
+    'Timeout',
+    'UnexpectedError',
+    'Unhealthy'
+];
+
+test('error code classification coverage', function t(assert) {
+    var func = '';
+    var cases = null;
+
+    processLineMatches({
+        filePath: errorsPath,
+        caseRegex: /^module\.exports\.([^ ]+) *= function *([\w_\-]+)|switch *\(\s*(.+?)\s*\)|case *'(.+?)' *:/,
+        onMatch: function each(match) {
+            if (match[2]) {
+                checkFunc();
+                func = match[2];
+                cases = null;
+            } else if (func && match[3]) {
+                if (match[3] === 'codeName') { // XXX bit fragile?
+                    cases = [];
+                }
+            } else if (cases !== null && match[4]) {
+                cases.push(match[4]);
+            }
+        },
+        onFinish: finish
+    });
+
+    function checkFunc() {
+        if (!func) {
+            return;
+        }
+        if (cases === null) {
+            return;
+        }
+
+        var i;
+        var got = {};
+        for (i = 0; i < cases.length; i++) {
+            assert.ok(expectedErrorCodes.indexOf(cases[i]) !== -1,
+                      func + ' should not cover unexpected error classes: ' +
+                      cases[i]);
+            got[cases[i]] = true;
+        }
+
+        for (i = 0; i < expectedErrorCodes.length; i++) {
+            assert.ok(got[expectedErrorCodes[i]],
+                      func + ' should cover all expected error classes: ' +
+                      expectedErrorCodes[i]);
+        }
+
+    }
+
+    function finish() {
+        checkFunc();
+
+        assert.end();
+    }
+});
+
 function processLineMatches(options) {
     var inScope = false;
 

@@ -818,6 +818,9 @@ module.exports.toHTTPCode = function toHTTPCode(codeName) {
         case 'NetworkError':
             return new HTTPInfo(500, 'TChannel Network Error');
 
+        case 'UnexpectedError':
+            return new HTTPInfo(500, 'TChannel Unexpected Error');
+
         default:
             return new HTTPInfo(500, 'Internal Server Error');
     }
@@ -836,6 +839,7 @@ module.exports.logLevel = function errorLogLevel(err, codeName) {
         case 'Cancelled':
         case 'Declined':
         case 'NetworkError':
+        case 'Unhealthy':
             return 'warn';
 
         case 'BadRequest':
@@ -856,6 +860,7 @@ module.exports.isPendingError = function isPendingError(codeName) {
     switch (codeName) {
         case 'Busy':
         case 'Declined':
+        case 'Unhealthy':
             return true;
 
         case 'BadRequest':
