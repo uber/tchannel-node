@@ -28,8 +28,9 @@ var Result = require('bufrw/result');
 var thriftrw = require('thriftrw');
 
 var errors = require('../errors.js');
-
 var HeaderRW = require('../v2/header.js').header2;
+
+var metaThriftFile = path.join(__dirname, 'meta.thrift');
 
 module.exports = TChannelAsThrift;
 
@@ -43,8 +44,9 @@ function TChannelAsThrift(opts) {
     assert(opts && typeof opts.source === 'string',
         'must pass source as an argument');
 
+    self.thriftSource = opts.source;
     self.spec = new thriftrw.Thrift({
-        source: opts.source,
+        source: self.thriftSource,
         strict: opts.strict
     });
 
@@ -65,63 +67,49 @@ function TChannelAsThrift(opts) {
     assert(!self.isHealthy || self.channel,
         'channel must be provided with isHealthy');
 
-    if (self.isHealthy) {
-        fs.readFile(path.join(__dirname, 'meta.thrift'), 'utf8', registerHealthCheck);
+    var loadMetaAsync = opts.loadMetaAsync !== undefined ?
+        opts.loadMetaAsync : true;
+    if (self.isHealthy && loadMetaAsync) {
+        self.registerHealthAsync();
     }
+}
 
-    function registerHealthCheck(err, source) {
+TChannelAsThrift.prototype.registerHealthAsync =
+function registerHealthAsync() {
+    var self = this;
+
+    fs.readFile(metaThriftFile, 'utf8', onFile);
+
+    function onFile(err, thriftSource) {
         if (err) {
-            self.channel.logger.error('failed to read meta.thrift file', {
+            self.channel.logger.fatal('failed to read meta.thrift file', {
                 error: err
             });
             return;
         }
 
-        self.thriftSource = opts.source;
-        var metaSpec = new thriftrw.Thrift({
-            source: source
-        });
-        self.register(self.channel, 'Meta::health', self, health, metaSpec);
-        self.register(self.channel, 'Meta::thriftIDL', self, thriftIDL, metaSpec);
+        self.registerMeta(thriftSource);
     }
-}
+};
 
-function TChannelThriftRequest(options) {
+TChannelAsThrift.prototype.registerHealthSync =
+function registerHealthSync() {
     var self = this;
 
-    self.channel = options.channel;
-    self.reqOptions = options.reqOptions;
-    self.tchannelThrift = options.tchannelThrift;
-}
+    var thriftSource = fs.readFileSync(metaThriftFile, 'utf8');
+    self.registerMeta(thriftSource);
+};
 
-function health(self, req, head, body, callback) {
-    var status = self.isHealthy();
-    assert(status && typeof status.ok === 'boolean', 'status must have ok field');
-    assert(status && (status.ok || typeof status.message === 'string'),
-        'status.message must be provided when status.ok === false');
-
-    return callback(null, {
-        ok: true,
-        body: {
-            ok: status.ok,
-            message: status.message
-        }
-    });
-}
-
-function thriftIDL(self, req, head, body, callback) {
-    return callback(null, {
-        ok: true,
-        body: self.thriftSource
-    });
-}
-
-TChannelThriftRequest.prototype.send =
-function send(endpoint, head, body, callback) {
+TChannelAsThrift.prototype.registerMeta =
+function registerMeta(metaSource) {
     var self = this;
 
-    var outreq = self.channel.request(self.reqOptions);
-    self.tchannelThrift.send(outreq, endpoint, head, body, callback);
+    var metaSpec = new thriftrw.Thrift({
+        source: metaSource
+    });
+
+    self.register(self.channel, 'Meta::health', self, health, metaSpec);
+    self.register(self.channel, 'Meta::thriftIDL', self, thriftIDL, metaSpec);
 };
 
 TChannelAsThrift.prototype.request = function request(reqOptions) {
@@ -285,17 +273,6 @@ function send(request, endpoint, outHead, outBody, callback) {
     }
 };
 
-function TChannelThriftResponse(response, parseResult) {
-    var self = this;
-
-    self.ok = response.ok;
-    self.head = parseResult.head;
-    self.body = null;
-    self.headers = response.headers;
-    self.body = parseResult.body;
-    self.typeName = parseResult.typeName;
-}
-
 TChannelAsThrift.prototype._parse = function parse(opts) {
     var self = this;
     var spec = opts.spec || self.spec;
@@ -435,6 +412,55 @@ TChannelAsThrift.prototype._stringify = function stringify(opts) {
         body: bodyRes.value
     });
 };
+
+function TChannelThriftResponse(response, parseResult) {
+    var self = this;
+
+    self.ok = response.ok;
+    self.head = parseResult.head;
+    self.body = null;
+    self.headers = response.headers;
+    self.body = parseResult.body;
+    self.typeName = parseResult.typeName;
+}
+
+function TChannelThriftRequest(options) {
+    var self = this;
+
+    self.channel = options.channel;
+    self.reqOptions = options.reqOptions;
+    self.tchannelThrift = options.tchannelThrift;
+}
+
+TChannelThriftRequest.prototype.send =
+function send(endpoint, head, body, callback) {
+    var self = this;
+
+    var outreq = self.channel.request(self.reqOptions);
+    self.tchannelThrift.send(outreq, endpoint, head, body, callback);
+};
+
+function health(self, req, head, body, callback) {
+    var status = self.isHealthy();
+    assert(status && typeof status.ok === 'boolean', 'status must have ok field');
+    assert(status && (status.ok || typeof status.message === 'string'),
+        'status.message must be provided when status.ok === false');
+
+    return callback(null, {
+        ok: true,
+        body: {
+            ok: status.ok,
+            message: status.message
+        }
+    });
+}
+
+function thriftIDL(self, req, head, body, callback) {
+    return callback(null, {
+        ok: true,
+        body: self.thriftSource
+    });
+}
 
 // TODO proper Thriftify result union that reifies as the selected field.
 function onlyKey(object) {
