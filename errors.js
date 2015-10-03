@@ -826,6 +826,29 @@ module.exports.toHTTPCode = function toHTTPCode(codeName) {
     }
 };
 
+module.exports.isFatal = function isFatal(err, codeName) {
+    if (!codeName) {
+        codeName = module.exports.classify(err);
+    }
+    switch (codeName) {
+        case 'Busy':
+        case 'Cancelled':
+        case 'Declined':
+        case 'NetworkError':
+        case 'Timeout':
+        case 'Unhealthy':
+            return false;
+
+        case 'BadRequest':
+        case 'ProtocolError':
+        case 'UnexpectedError':
+            return true;
+
+        default:
+            return true;
+    }
+};
+
 module.exports.logLevel = function errorLogLevel(err, codeName) {
     switch (codeName) {
         case 'ProtocolError':
