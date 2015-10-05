@@ -668,10 +668,9 @@ TChannelConnection.prototype.sendLazyErrorFrame =
 function sendLazyErrorFrame(reqFrame, codeString, message) {
     var self = this;
 
-    var res = reqFrame.bodyRW.lazy.readService(reqFrame);
-    self.handler.sendErrorFrame(
-        reqFrame.id, res.err ? null : res.value,
-        codeString, message);
+    var res = reqFrame.bodyRW.lazy.readTracing(reqFrame);
+    var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
+    self.handler.sendErrorFrame(reqFrame.id, tracing, codeString, message);
 };
 
 TChannelConnection.prototype._drain =
