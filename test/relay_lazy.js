@@ -152,10 +152,7 @@ allocCluster.test('relay respects ttl', {
     var destChan = dest.makeSubChannel({
         serviceName: 'dest'
     });
-    destChan.register('echoTTL', function echoTTL(req, res) {
-        res.headers.as = 'raw';
-        res.sendOk(null, String(req.timeout));
-    });
+    destChan.register('echoTTL', echoTTL);
 
     var sourceChan = source.makeSubChannel({
         serviceName: 'dest',
@@ -254,15 +251,20 @@ allocCluster.test('relay an error frame', {
         client.close();
         assert.end();
     });
-
-    function declineError(req, res, arg2, arg3) {
-        res.sendError('Declined', 'lul');
-    }
 });
+
+function declineError(req, res, arg2, arg3) {
+    res.sendError('Declined', 'lul');
+}
 
 function echo(req, res, arg2, arg3) {
     res.headers.as = 'raw';
     res.sendOk(arg2, arg3);
+}
+
+function echoTTL(req, res) {
+    res.headers.as = 'raw';
+    res.sendOk(null, String(req.timeout));
 }
 
 function failWrap(method, assert, desc) {
