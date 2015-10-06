@@ -130,9 +130,30 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
     return req;
 };
 
+TChannelAsThrift.prototype.waitForIdentified =
+function waitForIdentified(options, cb) {
+    var self = this;
+
+    assert(self.channel, 'channel is required for waitForIdentified()');
+
+    return self.channel.waitForIdentified(options, cb);
+};
+
 TChannelAsThrift.prototype.register =
 function register(channel, name, opts, handle, spec) {
     var self = this;
+
+    // support register(endpoint, opts, handle)
+    if (typeof channel === 'string') {
+        assert(self.channel, 'channel is required for thrift.register()');
+        assert(spec === undefined, 'must have only 4 arguments');
+
+        spec = handle;
+        handle = opts;
+        opts = name;
+        name = channel;
+        channel = self.channel;
+    }
 
     if (!self.logger) {
         self.logger = channel.logger;

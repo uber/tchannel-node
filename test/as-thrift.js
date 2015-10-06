@@ -373,6 +373,89 @@ allocCluster.test('send with invalid types', {
     });
 });
 
+allocCluster.test('sending peer to peer', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var tchannelAsThrift = makeTChannelThriftServer(cluster, {
+        okResponse: true
+    });
+    var hostPort = cluster.channels[0].hostPort;
+
+    tchannelAsThrift.waitForIdentified({
+        host: hostPort
+    }, function onIdentified(err1) {
+        assert.ifError(err1, 'should have no conn error');
+
+        tchannelAsThrift.request({
+            serviceName: 'server',
+            host: hostPort,
+            hasNoParent: true
+        }).send('Chamber::echo', null, {
+            value: 10
+        }, function onResponse(err2, resp) {
+            assert.ifError(err2, 'should have no req error');
+
+            assert.ok(resp, 'expect response');
+            assert.equal(resp.body, 10, 'expect resp body');
+
+            assert.end();
+        });
+    });
+});
+
+allocCluster.test('using register() without channel', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var server = cluster.channels[0].makeSubChannel({
+        serviceName: 'server'
+    });
+
+    var serverThrift = server.TChannelAsThrift({
+        channel: server,
+        source: globalThriftText
+    });
+    serverThrift.register('Chamber::echo', {}, okHandler);
+
+    var client = cluster.channels[1].makeSubChannel({
+        serviceName: 'server',
+        peers: [
+            cluster.channels[0].hostPort
+        ],
+        requestDefaults: {
+            headers: {
+                cn: 'wat'
+            }
+        }
+    });
+
+    var clientThrift = client.TChannelAsThrift({
+        channel: client,
+        source: globalThriftText
+    });
+
+    clientThrift.request({
+        serviceName: 'server',
+        hasNoParent: true
+    }).send('Chamber::echo', null, {
+        value: 10
+    }, function onResponse(err2, resp) {
+        assert.ifError(err2, 'should have no req error');
+
+        assert.ok(resp, 'expect response');
+        assert.equal(resp.body, 10, 'expect resp body');
+
+        assert.end();
+    });
+
+    function okHandler(opts, req, head, body, cb) {
+        return cb(null, {
+            ok: true,
+            head: head,
+            body: body.value
+        });
+    }
+});
+
 function makeTChannelThriftServer(cluster, opts) {
     var server = cluster.channels[0].makeSubChannel({
         serviceName: 'server'

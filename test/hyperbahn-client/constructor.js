@@ -48,7 +48,7 @@ test('creating HyperbahnClient with new', function t(assert) {
 test('create HyperbahnClient without options', function t(assert) {
     assert.throws(function throwIt() {
         HyperbahnClient();
-    }, /Must pass in top level tchannel/);
+    }, /Must pass in a tchannel/);
 
     assert.end();
 });
@@ -56,7 +56,7 @@ test('create HyperbahnClient without options', function t(assert) {
 test('create HyperbahnClient without options.tchannel', function t(assert) {
     assert.throws(function throwIt() {
         HyperbahnClient({});
-    }, /Must pass in top level tchannel/);
+    }, /Must pass in a tchannel/);
 
     assert.end();
 });
