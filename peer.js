@@ -39,6 +39,7 @@ function TChannelPeer(channel, hostPort, options) {
         return new TChannelPeer(channel, hostPort, options);
     }
     var self = this;
+    options = options || {};
     EventEmitter.call(self);
 
     self.stateChangedEvent = self.defineEvent('stateChanged');
@@ -51,21 +52,20 @@ function TChannelPeer(channel, hostPort, options) {
     self.logger = self.channel.logger;
     self.timers = self.channel.timers;
     self.random = self.channel.random;
-    self.options = options || {};
     self.hostPort = hostPort;
     self.connections = [];
     self.pendingIdentified = 0;
     self.heapElements = [];
     self.handler = null;
 
-    self.reportInterval = self.options.reportInterval || DEFAULT_REPORT_INTERVAL;
+    self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
         self.reportTimer = self.timers.setTimeout(
             onReport, self.reportInterval
         );
     }
 
-    var direction = self.options.preferConnectionDirection || 'any';
+    var direction = options.preferConnectionDirection || 'any';
     self.setPreferConnectionDirection(direction);
 
     function onReport() {
