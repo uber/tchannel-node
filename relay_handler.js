@@ -141,6 +141,8 @@ function LazyRelayInReq(conn, reqFrame) {
     self.timeout = 0;
     self.timedOut = false;
     self.alive = true;
+    self.operations = null;
+    self.timeHeapHandle = null;
 
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
@@ -370,6 +372,8 @@ function LazyRelayOutReq(conn, inreq) {
     self.serviceName = self.inreq.serviceName;
     self.callerName = self.inreq.callerName;
     self.timeout = 0;
+    self.operations = null;
+    self.timeHeapHandle = null;
     self.timedOut = false;
 }
 
