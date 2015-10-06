@@ -357,6 +357,60 @@ allocCluster.test('relay request declines on no peer', {
     }
 });
 
+allocCluster.test('relay request handles channel close correctly', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    // TODO: address the warn logs
+
+    var relay = cluster.channels[0];
+    var source = cluster.channels[1];
+    var dest = cluster.channels[2];
+
+    relay.setLazyHandling(true);
+    var relayChan = relay.makeSubChannel({
+        serviceName: 'dest',
+        peers: [dest.hostPort]
+    });
+    relayChan.handler = new RelayHandler(relayChan);
+    relayChan.handler.handleRequest = failWrap(
+         relayChan.handler.handleRequest,
+         assert, 'handle requests eagerly');
+
+    var destChan = dest.makeSubChannel({
+        serviceName: 'dest'
+    });
+    destChan.register('killRelay', killRelay);
+
+    var sourceChan = source.makeSubChannel({
+        serviceName: 'dest',
+        peers: [relay.hostPort],
+        requestDefaults: {
+            headers: {
+                as: 'raw',
+                cn: 'wat'
+            }
+        }
+    });
+
+    sourceChan.request({
+        serviceName: 'dest',
+        hasNoParent: true,
+        timeout: 100
+    }).send('killRelay', null, null, onResponse);
+
+    function killRelay() {
+        relay.close();
+    }
+
+    function onResponse(err, res, arg2, arg3) {
+        assert.equal(err && err.type,
+                     'tchannel.connection.reset',
+                     'expected timeout error');
+        assert.notOk(res, 'expected no response');
+        assert.end();
+    }
+});
+
 function declineError(req, res, arg2, arg3) {
     res.sendError('Declined', 'lul');
 }
