@@ -256,6 +256,7 @@ allocCluster.test('relay an error frame', {
 allocCluster.test('relay request times out', {
     numPeers: 3
 }, function t(cluster, assert) {
+    // TODO: address the warn logs
     var relay = cluster.channels[0];
     var source = cluster.channels[1];
     var dest = cluster.channels[2];
