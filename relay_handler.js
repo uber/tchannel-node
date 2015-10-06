@@ -393,6 +393,13 @@ function _extendLogInfo(info) {
     return info;
 };
 
+LazyRelayOutReq.prototype.emitError =
+function emitError(err) {
+    var self = this;
+
+    self.inreq.onError(err);
+};
+
 LazyRelayOutReq.prototype.logError =
 function relayRequestlogError(err, codeName) {
     var self = this;
