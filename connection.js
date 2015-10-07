@@ -25,6 +25,7 @@ var bufrw = require('bufrw');
 var extend = require('xtend');
 var ReadMachine = require('bufrw/stream/read_machine');
 var inherits = require('util').inherits;
+var stat = require('./lib/stat.js');
 
 var v2 = require('./v2');
 var errors = require('./errors');
@@ -43,17 +44,25 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
 
     if (direction === 'out') {
         if (self.channel.emitConnectionMetrics) {
-            self.channel.connectionsInitiatedStat.increment(1, {
-                'host-port': self.channel.hostPort || '0.0.0.0:0',
-                'peer-host-port': socketRemoteAddr
-            });
+            self.channel.emitFastStat(self.channel.buildStat(
+                'tchannel.connections.initiated',
+                'counter',
+                1,
+                new stat.ConnectionsInitiatedTags(
+                    self.channel.hostPort || '0.0.0.0:0',
+                    socketRemoteAddr
+                )));
         }
     } else {
         if (self.channel.emitConnectionMetrics) {
-            self.channel.connectionsAcceptedStat.increment(1, {
-                'host-port': self.channel.hostPort,
-                'peer-host-port': socketRemoteAddr
-            });
+            self.channel.emitFastStat(self.channel.buildStat(
+                'tchannel.connections.accepted',
+                'counter',
+                1,
+                new stat.ConnectionsAcceptedTags(
+                    self.channel.hostPort,
+                    socketRemoteAddr
+                )));
         }
     }
 
@@ -236,10 +245,12 @@ function sendProtocolError(type, err) {
             frameId: err.frameId
         });
 
-        self.channel.inboundProtocolErrorsStat.increment(1, {
-            'host-port': self.channel.hostPort || '0.0.0.0:0',
-            'peer-host-port': self.socketRemoteAddr
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.inbound.protocol-errors',
+            'counter',
+            1,
+            new stat.InboundProtocolErrorsTags(self.socketRemoteAddr)
+        ));
 
         self.handler.sendErrorFrame(
             protocolError.frameId || v2.Frame.NullId, null,
@@ -554,30 +565,44 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
 
     if (!self.remoteName && self.channel.emitConnectionMetrics) {
         if (self.direction === 'out') {
-            self.channel.connectionsConnectErrorsStat.increment(1, {
-                'host-port': self.channel.hostPort || '0.0.0.0:0',
-                'peer-host-port': self.socketRemoteAddr
-            });
+            self.channel.emitFastStat(self.channel.buildStat(
+                'tchannel.connections.connect-errors',
+                'counter',
+                1,
+                new stat.ConnectionsConnectErrorsTags(
+                    self.channel.hostPort || '0.0.0.0:0',
+                    self.socketRemoteAddr
+                )));
         } else {
-            self.channel.connectionsAcceptedErrorsStat.increment(1, {
-                'host-port': self.channel.hostPort,
-                'peer-host-port': self.socketRemoteAddr
-            });
+            self.channel.emitFastStat(self.channel.buildStat(
+                'tchannel.connections.accept-errors',
+                'counter',
+                1,
+                new stat.ConnectionsAcceptErrorsTags(self.channel.hostPort)));
         }
     } else if (self.channel.emitConnectionMetrics) {
         if (err.type !== 'tchannel.socket-local-closed') {
-            self.channel.connectionsErrorsStat.increment(1, {
-                'host-port': self.channel.hostPort || '0.0.0.0:0',
-                'peer-host-port': self.remoteName,
-                'type': err.type // TODO unified error type
-            });
+            self.channel.emitFastStat(self.channel.buildStat(
+                'tchannel.connections.errors',
+                'counter',
+                1,
+                new stat.ConnectionsErrorsTags(
+                    self.remoteName,
+                    err.type // TODO unified error type
+                )
+            ));
         }
 
-        self.channel.connectionsClosedStat.increment(1, {
-            'host-port': self.channel.hostPort || '0.0.0.0:0',
-            'peer-host-port': self.remoteName,
-            'reason': err.type // TODO unified reason type
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.connections.closed',
+            'counter',
+            1,
+            new stat.ConnectionsClosedTags(
+                self.channel.hostPort || '0.0.0.0:0',
+                self.remoteName,
+                err.type // TODO unified reason type
+            )
+        ));
     }
 
     var logInfo = self.extendLogInfo({

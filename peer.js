@@ -23,6 +23,7 @@
 var assert = require('assert');
 var inherits = require('util').inherits;
 var EventEmitter = require('./lib/event_emitter');
+var stat = require('./lib/stat.js');
 var net = require('net');
 
 var TChannelConnection = require('./connection');
@@ -75,10 +76,15 @@ function TChannelPeer(channel, hostPort, options) {
 
         var count = self.countConnections('out');
         if (self.channel.emitConnectionMetrics) {
-            self.channel.connectionsActiveStat.update(count, {
-                'host-port': self.channel.hostPort,
-                'peer-host-port': self.hostPort
-            });
+            self.channel.emitFastStat(self.channel.buildStat(
+                'tchannel.connections.active',
+                'gauge',
+                count,
+                new stat.ConnectionsActiveTags(
+                    self.channel.hostPort,
+                    self.hostPort
+                )
+            ));
         }
 
         self.reportTimer = self.timers.setTimeout(

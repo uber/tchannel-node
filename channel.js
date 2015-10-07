@@ -100,16 +100,6 @@ function TChannel(options) {
     self.listeningEvent = self.defineEvent('listening');
     self.connectionEvent = self.defineEvent('connection');
 
-    self.inboundProtocolErrorsStat = self.defineCounter('tchannel.inbound.protocol-errors');
-    self.connectionsActiveStat = self.defineGauge('tchannel.connections.active');
-    self.connectionsInitiatedStat = self.defineCounter('tchannel.connections.initiated');
-    self.connectionsConnectErrorsStat = self.defineCounter('tchannel.connections.connect-errors');
-    self.connectionsAcceptedStat = self.defineCounter('tchannel.connections.accepted');
-    self.connectionsAcceptedErrorsStat = self.defineCounter('tchannel.connections.accept-errors');
-    self.connectionsErrorsStat = self.defineCounter('tchannel.connections.errors');
-    self.connectionsClosedStat = self.defineCounter('tchannel.connections.closed');
-    // self.connectionsBytesRcvdStat = self.defineCounter('connections.bytes-recvd');
-
     self.options = extend({
         useLazyHandling: false,
         timeoutCheckInterval: 100,

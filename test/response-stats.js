@@ -86,8 +86,8 @@ allocCluster.test('emits response stats with ok', {
             value: 1,
             tags:
             {
-                'host-port': serverHost,
-                'peer-host-port': clientHost,
+                hostPort: serverHost,
+                peerHostPort: clientHost,
                 app: 'server',
                 host: os.hostname(),
                 cluster: '',
@@ -250,8 +250,8 @@ allocCluster.test('emits response stats with notOk', {
             value: 1,
             tags:
             {
-                'host-port': serverHost,
-                'peer-host-port': clientHost,
+                hostPort: serverHost,
+                peerHostPort: clientHost,
                 app: 'server',
                 host: os.hostname(),
                 cluster: '',
@@ -402,7 +402,7 @@ allocCluster.test('emits response stats with error', {
 
     function onResponse(err, res, arg2, arg3) {
         server.flushStats();
-        
+
         assert.notEqual(err, null, 'err should not be null');
         assert.equal(res, null, 'res should be null');
         assert.deepEqual(stats, [{
@@ -411,8 +411,8 @@ allocCluster.test('emits response stats with error', {
             value: 1,
             tags:
             {
-                'host-port': serverHost,
-                'peer-host-port': clientHost,
+                hostPort: serverHost,
+                peerHostPort: clientHost,
                 app: 'server',
                 host: os.hostname(),
                 cluster: '',
