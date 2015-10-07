@@ -69,17 +69,6 @@ var fixture = [
         }
     },
     {
-        "name": "tchannel.relay.latency",
-        "type": "timing",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": ""
-        }
-    },
-    {
         "name": "tchannel.outbound.calls.sent",
         "type": "counter",
         "value": isNumber,
@@ -105,6 +94,17 @@ var fixture = [
             "targetService": "two",
             "service": "wat",
             "targetEndpoint": "echo"
+        }
+    },
+    {
+        "name": "tchannel.relay.latency",
+        "type": "timing",
+        "value": isNumber,
+        "tags": {
+            "app": "",
+            "host": "",
+            "cluster": "",
+            "version": ""
         }
     },
     {
