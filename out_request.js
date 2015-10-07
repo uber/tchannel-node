@@ -145,14 +145,18 @@ function emitPerAttemptErrorStat(err) {
             )
         ));
     } else {
-        self.channel.outboundCallsPerAttemptOperationalErrorsStat.increment(1, {
-            'target-service': self.serviceName,
-            'service': self.callerName,
-            // TODO should always be buffer
-            'target-endpoint': self.endpoint,
-            'type': err.type || 'unknown',
-            'retry-count': self.retryCounts
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.per-attempt.operational-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsPerAttemptOperationalErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.type || 'unknown',
+                self.retryCounts
+            )
+        ));
     }
 };
 

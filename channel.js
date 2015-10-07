@@ -105,7 +105,7 @@ function TChannel(options) {
     // self.outboundCallsSystemErrorsStat = self.defineCounter('tchannel.outbound.calls.system-errors');
     // self.outboundCallsPerAttemptSystemErrorsStat = self.defineCounter('tchannel.outbound.calls.per-attempt.system-errors');
     // self.outboundCallsOperationalErrorsStat = self.defineCounter('tchannel.outbound.calls.operational-errors');
-    self.outboundCallsPerAttemptOperationalErrorsStat = self.defineCounter('tchannel.outbound.calls.per-attempt.operational-errors');
+    // self.outboundCallsPerAttemptOperationalErrorsStat = self.defineCounter('tchannel.outbound.calls.per-attempt.operational-errors');
     // self.outboundCallsAppErrorsStat = self.defineCounter('outbound.calls.app-errors');
     // self.outboundCallsPerAttemptAppErrorsStat = self.defineCounter('outbound.calls.per-attempt.app-errors');
     self.outboundCallsRetriesStat = self.defineCounter('tchannel.outbound.calls.retries');
