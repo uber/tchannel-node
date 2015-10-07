@@ -22,6 +22,7 @@
 
 var errors = require('./errors');
 var v2 = require('./v2');
+var stat = require('./lib/stat.js');
 
 RelayHandler.RelayRequest = RelayRequest;
 
@@ -565,7 +566,7 @@ RelayRequest.prototype.onIdentified = function onIdentified() {
         'tchannel.relay.latency',
         'timing',
         elapsed,
-        {}
+        new stat.RelayLatencyTags()
     ));
 
     function onResponse(res) {
