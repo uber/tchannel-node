@@ -152,10 +152,7 @@ allocCluster.test('relay respects ttl', {
     var destChan = dest.makeSubChannel({
         serviceName: 'dest'
     });
-    destChan.register('echoTTL', function echoTTL(req, res) {
-        res.headers.as = 'raw';
-        res.sendOk(null, String(req.timeout));
-    });
+    destChan.register('echoTTL', echoTTL);
 
     var sourceChan = source.makeSubChannel({
         serviceName: 'dest',
@@ -254,15 +251,182 @@ allocCluster.test('relay an error frame', {
         client.close();
         assert.end();
     });
+});
 
-    function declineError(req, res, arg2, arg3) {
-        res.sendError('Declined', 'lul');
+allocCluster.test('relay request times out', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    // TODO: address the warn logs
+    var relay = cluster.channels[0];
+    var source = cluster.channels[1];
+    var dest = cluster.channels[2];
+
+    relay.setLazyHandling(true);
+    var relayChan = relay.makeSubChannel({
+        serviceName: 'dest',
+        peers: [dest.hostPort]
+    });
+    relayChan.handler = new RelayHandler(relayChan);
+    relayChan.handler.handleRequest = failWrap(
+         relayChan.handler.handleRequest,
+         assert, 'handle requests eagerly');
+
+    var destChan = dest.makeSubChannel({
+        serviceName: 'dest'
+    });
+    destChan.register('limbo', limbo);
+
+    var sourceChan = source.makeSubChannel({
+        serviceName: 'dest',
+        peers: [relay.hostPort],
+        requestDefaults: {
+            headers: {
+                as: 'raw',
+                cn: 'wat'
+            }
+        }
+    });
+
+    // Try to ensure a timeout in the relay by injecting delay into peer
+    // identification... still not 100% deterministic, but the test does pass
+    // always... even if it doesn't always hit the timeout path
+    var relayOutPeer = relayChan.peers.get(dest.hostPort);
+    var waitForIdentified = relayOutPeer.waitForIdentified;
+    relayOutPeer.waitForIdentified = function punchWaitForIdentified(callback) {
+        var self = this;
+
+        relay.timers.setTimeout(function delayIt() {
+            waitForIdentified.call(self, callback);
+        }, 5);
+    };
+
+    sourceChan.request({
+        serviceName: 'dest',
+        hasNoParent: true,
+        timeout: 100
+    }).send('limbo', null, null, onResponse);
+
+    function onResponse(err, res, arg2, arg3) {
+        assert.equal(err && err.type,
+                     'tchannel.request.timeout',
+                     'expected timeout error');
+        assert.notOk(res, 'expected no response');
+        assert.end();
     }
 });
+
+allocCluster.test('relay request declines on no peer', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    // TODO: address the warn logs
+    var relay = cluster.channels[0];
+    var source = cluster.channels[1];
+
+    relay.setLazyHandling(true);
+    var relayChan = relay.makeSubChannel({
+        serviceName: 'dest',
+        peers: []
+    });
+    relayChan.handler = new RelayHandler(relayChan);
+    relayChan.handler.handleRequest = failWrap(
+         relayChan.handler.handleRequest,
+         assert, 'handle requests eagerly');
+
+    var sourceChan = source.makeSubChannel({
+        serviceName: 'dest',
+        peers: [relay.hostPort],
+        requestDefaults: {
+            headers: {
+                as: 'raw',
+                cn: 'wat'
+            }
+        }
+    });
+
+    sourceChan.request({
+        serviceName: 'dest',
+        hasNoParent: true,
+        timeout: 100
+    }).send('echo', null, null, onResponse);
+
+    function onResponse(err, res, arg2, arg3) {
+        assert.equal(err && err.type,
+                     'tchannel.declined',
+                     'expected declined error');
+        assert.notOk(res, 'expected no response');
+        assert.end();
+    }
+});
+
+allocCluster.test('relay request handles channel close correctly', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    // TODO: address the warn logs
+
+    var relay = cluster.channels[0];
+    var source = cluster.channels[1];
+    var dest = cluster.channels[2];
+
+    relay.setLazyHandling(true);
+    var relayChan = relay.makeSubChannel({
+        serviceName: 'dest',
+        peers: [dest.hostPort]
+    });
+    relayChan.handler = new RelayHandler(relayChan);
+    relayChan.handler.handleRequest = failWrap(
+         relayChan.handler.handleRequest,
+         assert, 'handle requests eagerly');
+
+    var destChan = dest.makeSubChannel({
+        serviceName: 'dest'
+    });
+    destChan.register('killRelay', killRelay);
+
+    var sourceChan = source.makeSubChannel({
+        serviceName: 'dest',
+        peers: [relay.hostPort],
+        requestDefaults: {
+            headers: {
+                as: 'raw',
+                cn: 'wat'
+            }
+        }
+    });
+
+    sourceChan.request({
+        serviceName: 'dest',
+        hasNoParent: true,
+        timeout: 100
+    }).send('killRelay', null, null, onResponse);
+
+    function killRelay() {
+        relay.close();
+    }
+
+    function onResponse(err, res, arg2, arg3) {
+        assert.equal(err && err.type,
+                     'tchannel.connection.reset',
+                     'expected timeout error');
+        assert.notOk(res, 'expected no response');
+        assert.end();
+    }
+});
+
+function declineError(req, res, arg2, arg3) {
+    res.sendError('Declined', 'lul');
+}
 
 function echo(req, res, arg2, arg3) {
     res.headers.as = 'raw';
     res.sendOk(arg2, arg3);
+}
+
+function echoTTL(req, res) {
+    res.headers.as = 'raw';
+    res.sendOk(null, String(req.timeout));
+}
+
+function limbo() {
 }
 
 function failWrap(method, assert, desc) {

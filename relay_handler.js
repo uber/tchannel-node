@@ -122,7 +122,6 @@ RelayHandler.prototype._handleRequest = function _handleRequest(req, buildRes) {
 };
 
 // TODO: lazy reqs
-// - #onTimeout
 // - audit #extendLogInfo vs regular reqs
 
 function LazyRelayInReq(conn, reqFrame) {
@@ -139,8 +138,9 @@ function LazyRelayInReq(conn, reqFrame) {
     self.serviceName = '';
     self.callerName = '';
     self.timeout = 0;
-    self.timedOut = false;
     self.alive = true;
+    self.operations = null;
+    self.timeHeapHandle = null;
 
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
@@ -221,23 +221,16 @@ function relayRequestlogError(err, codeName) {
     });
 };
 
-LazyRelayInReq.prototype.checkTimeout =
-function checkTimeout() {
+LazyRelayInReq.prototype.onTimeout =
+function onTimeout(now) {
     var self = this;
-    if (!self.timedOut) {
-        var elapsed = self.conn.timers.now() - self.start;
-        if (elapsed > self.timeout) {
-            self.timedOut = true;
-            // TODO: cancel any outreq?
-            self.onError(errors.RequestTimeoutError({
-                id: self.id,
-                start: self.start,
-                elapsed: elapsed,
-                timeout: self.timeout
-            }));
-        }
-    }
-    return self.timedOut;
+
+    self.onError(errors.RequestTimeoutError({
+        id: self.id,
+        start: self.start,
+        elapsed: now - self.start,
+        timeout: self.timeout
+    }));
 };
 
 LazyRelayInReq.prototype.createOutRequest =
@@ -370,7 +363,8 @@ function LazyRelayOutReq(conn, inreq) {
     self.serviceName = self.inreq.serviceName;
     self.callerName = self.inreq.callerName;
     self.timeout = 0;
-    self.timedOut = false;
+    self.operations = null;
+    self.timeHeapHandle = null;
 }
 
 LazyRelayOutReq.prototype.type = 'tchannel.lazy.outgoing-request';
@@ -399,6 +393,13 @@ function _extendLogInfo(info) {
     return info;
 };
 
+LazyRelayOutReq.prototype.emitError =
+function emitError(err) {
+    var self = this;
+
+    self.inreq.onError(err);
+};
+
 LazyRelayOutReq.prototype.logError =
 function relayRequestlogError(err, codeName) {
     var self = this;
@@ -407,24 +408,16 @@ function relayRequestlogError(err, codeName) {
     });
 };
 
-LazyRelayOutReq.prototype.checkTimeout =
-function checkTimeout() {
+LazyRelayOutReq.prototype.onTimeout =
+function onTimeout(now) {
     var self = this;
-    if (!self.timedOut) {
-        var elapsed = self.conn.timers.now() - self.start;
-        if (elapsed > self.timeout) {
-            self.timedOut = true;
-            // TODO: send cancel?
-            // TODO: lighter interface that doesn't create an error to send a frame
-            self.inreq.onError(errors.RequestTimeoutError({
-                id: self.id,
-                start: self.start,
-                elapsed: elapsed,
-                timeout: self.timeout
-            }));
-        }
-    }
-    return self.timedOut;
+
+    self.emitError(errors.RequestTimeoutError({
+        id: self.id,
+        start: self.start,
+        elapsed: now - self.start,
+        timeout: self.timeout
+    }));
 };
 
 LazyRelayOutReq.prototype.handleFrameLazily =
