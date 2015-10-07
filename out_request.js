@@ -174,13 +174,17 @@ function emitErrorStat(err) {
             )
         ));
     } else {
-        self.channel.outboundCallsOperationalErrorsStat.increment(1, {
-            'target-service': self.serviceName,
-            'service': self.callerName,
-            // TODO should always be buffer
-            'target-endpoint': self.endpoint,
-            'type': err.type || 'unknown'
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.operational-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsOperationalErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.type || 'unknown'
+            )
+        ));
     }
 };
 
