@@ -114,7 +114,7 @@ function TChannel(options) {
     // self.outboundCallsPerAttemptLatencyStat = self.defineTiming('outbound.calls.per-attempt-latency');
 
     // self.inboundCallsSuccessStat = self.defineCounter('inbound.calls.success');
-    self.inboundCallsSystemErrorsStat = self.defineCounter('tchannel.inbound.calls.system-errors');
+    // self.inboundCallsSystemErrorsStat = self.defineCounter('tchannel.inbound.calls.system-errors');
     // self.inboundCallsAppErrorsStat = self.defineCounter('inbound.calls.app-errors');
     // self.inboundCallsCancelsRequestedStat = self.defineCounter('inbound.cancels.requested');
     // self.inboundCallsCancelsHonoredStat = self.defineCounter('inbound.cancels.honored');
