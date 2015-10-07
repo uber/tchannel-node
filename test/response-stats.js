@@ -461,7 +461,7 @@ allocCluster.test('emits response stats with error', {
             type: 'counter',
             value: 1,
             tags: {
-                'calling-service': 'client',
+                callingService: 'client',
                 service: 'server',
                 endpoint: 'echo',
                 type: 'ProtocolError',
