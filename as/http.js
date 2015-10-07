@@ -186,7 +186,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, options, callback
     }
     getRawBody(hreq, {
         length: hreq.headers['content-length'],
-        limit: '1mb'
+        limit: '20mb'
     }, onRawBody);
 
     function onRawBody(err, body) {
