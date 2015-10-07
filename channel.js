@@ -76,13 +76,28 @@ var DEFAULT_RETRY_FLAGS = new RetryFlags(
     /*onTimeout*/ false
 );
 
-function StatTags(statTags) {
+function StatTags(opts) {
     var self = this;
 
-    self.app = statTags.app || '';
-    self.host = statTags.host || '';
-    self.cluster = statTags.cluster || '';
-    self.version = statTags.version || '';
+    self.app = '';
+    self.host = '';
+    self.cluster = '';
+    self.version = '';
+
+    if (opts) {
+        if (opts.app) {
+            self.app = opts.app;
+        }
+        if (opts.host) {
+            self.host = opts.host;
+        }
+        if (opts.cluster) {
+            self.cluster = opts.cluster;
+        }
+        if (opts.version) {
+            self.version = opts.version;
+        }
+    }
 }
 
 // TODO restore spying
@@ -124,7 +139,7 @@ function TChannel(options) {
     // required: 'app'
     // optional: 'host', 'cluster', 'version'
     assert(!self.options.statTags || self.options.statTags.app, 'the stats must have the "app" tag');
-    self.statTags = new StatTags(self.options.statTags || {});
+    self.statTags = new StatTags(self.options.statTags);
 
     self.statsd = self.options.statsd;
     if (self.statsd) {
