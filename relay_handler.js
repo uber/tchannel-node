@@ -66,6 +66,17 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return false;
     }
 
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.calls.recvd',
+        'counter',
+        1,
+        new stat.InboundCallsRecvdTags(
+            rereq.callerName,
+            rereq.serviceName,
+            rereq.endpoint
+        )
+    ));
+
     conn.ops.addInReq(rereq);
     rereq.createOutRequest();
     return true;
@@ -386,12 +397,43 @@ LazyRelayInReq.prototype._observeCallReqFrame =
 function _observeCallReqFrame(frame, now) {
     var self = this;
 
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.request.size',
+        'counter',
+        frame.size,
+        new stat.InboundRequestSizeTags(
+            self.callerName,
+            self.serviceName,
+            self.endpoint
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.sent',
+        'counter',
+        1,
+        new stat.OutboundCallsSentTags(
+            self.serviceName,
+            self.callerName,
+            self.endpoint
+        )
+    ));
 };
 
 LazyRelayInReq.prototype._observeCallReqContFrame =
 function _observeCallReqContFrame(frame, now) {
     var self = this;
 
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.request.size',
+        'counter',
+        frame.size,
+        new stat.InboundRequestSizeTags(
+            self.callerName,
+            self.serviceName,
+            self.endpoint
+        )
+    ));
 };
 
 function LazyRelayOutReq(conn, inreq) {
@@ -496,6 +538,17 @@ LazyRelayOutReq.prototype._observeErrorFrame =
 function _observeErrorFrame(errFrame, now) {
     var self = this;
 
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.calls.latency',
+        'timing',
+        now - self.inreq.start,
+        new stat.InboundCallsLatencyTags(
+            self.inreq.callerName,
+            self.inreq.serviceName,
+            self.inreq.endpoint
+        )
+    ));
+
     var res = errFrame.bodyRW.lazy.readCode(errFrame);
     if (res.err) {
         self.logger.error('failed to read error frame code', self.extendLogInfo({
@@ -504,6 +557,19 @@ function _observeErrorFrame(errFrame, now) {
         return;
     }
     var code = res.value;
+    var codeName = v2.ErrorResponse.CodeNames[code] || 'unknown';
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.calls.system-errors',
+        'counter',
+        1,
+        new stat.InboundCallsSystemErrorsTags(
+            self.inreq.callerName,
+            self.inreq.serviceName,
+            self.inreq.endpoint,
+            codeName
+        )
+    ));
 
     res = errFrame.bodyRW.lazy.readMessage(errFrame);
     if (res.err) {
@@ -528,12 +594,79 @@ LazyRelayOutReq.prototype._observeCallResFrame =
 function _observeCallResFrame(frame, now) {
     var self = this;
 
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.response.size',
+        'counter',
+        frame.size,
+        new stat.InboundResponseSizeTags(
+            self.inreq.callerName,
+            self.inreq.serviceName,
+            self.inreq.endpoint
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.calls.latency',
+        'timing',
+        now - self.inreq.start,
+        new stat.InboundCallsLatencyTags(
+            self.inreq.callerName,
+            self.inreq.serviceName,
+            self.inreq.endpoint
+        )
+    ));
+
+    var res = frame.bodyRW.lazy.readFlags(frame);
+    if (res.err) {
+        self.logger.error('failed to read error frame code', self.extendLogInfo({
+            error: res.err
+        }));
+        return;
+    }
+
+    var flags = res.value;
+    var ok = flags === 0;
+
+    if (ok) {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.inbound.calls.success',
+            'counter',
+            1,
+            new stat.InboundCallsSuccessTags(
+                self.inreq.callerName,
+                self.inreq.serviceName,
+                self.inreq.endpoint
+            )
+        ));
+    } else {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.inbound.calls.app-errors',
+            'counter',
+            1,
+            new stat.InboundCallsAppErrorsTags(
+                self.inreq.callerName,
+                self.inreq.serviceName,
+                self.inreq.endpoint,
+                'unknown'
+            )
+        ));
+    }
 };
 
 LazyRelayOutReq.prototype._observeCallResContFrame =
 function _observeCallResContFrame(frame, now) {
     var self = this;
 
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.inbound.response.size',
+        'counter',
+        frame.size,
+        new stat.InboundResponseSizeTags(
+            self.inreq.callerName,
+            self.inreq.serviceName,
+            self.inreq.endpoint
+        )
+    ));
 };
 
 function RelayRequest(channel, peer, inreq, buildRes) {
