@@ -262,6 +262,28 @@ test('CallResponse.RW.lazy', function t(assert) {
         Buffer(frame.body.args[0]),
         'CallResponse.RW.lazy.readArg1');
 
+    // validate lazy header reading
+    var res = v2.CallResponse.RW.lazy.readHeaders(lazyFrame);
+    assert.ifError(res.err, 'no error from v2.CallResponse.RW.lazy.readHeaders');
+    var headers = res.value;
+    if (headers) {
+        // should fail fast because no key matches length 4
+        assert.equal(
+            headers.getValue(Buffer("nope")),
+            undefined,
+            'no "nope" header key');
+        // should fail slow since all keys have length 2, but none match
+        assert.equal(
+            headers.getValue(Buffer("no")),
+            undefined,
+            'no "no" header key');
+        // should have this one
+        assert.deepEqual(
+            headers.getValue(Buffer("as")),
+            Buffer('plumber'),
+            'expected header "as" => "plumber"');
+    }
+
     assert.end();
 
     function assertReadRes(res, value, desc) {
