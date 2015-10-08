@@ -116,26 +116,33 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     return header.header1.lazyRead(frame, offset);
 };
 
-CallRequest.RW.lazy.readArg1 = function readArg1(frame) {
-    // last fixed offset
-    var offset = CallRequest.RW.lazy.serviceOffset;
+CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
+    var res = null;
+    var offset = 0;
 
     // TODO: memoize computed offsets on frame between readService, readArg1,
     // and any others
 
-    // SKIP service~1
-    var res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
-    if (res.err) {
-        return res;
-    }
-    offset = res.offset + res.value;
+    if (headers) {
+        offset = headers.offset;
+    } else {
+        // last fixed offset
+        offset = CallRequest.RW.lazy.serviceOffset;
 
-    // SKIP nh:1 (hk~1 hv~1){nh}
-    res = header.header1.lazySkip(frame, offset);
-    if (res.err) {
-        return res;
+        // SKIP service~1
+        res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
+        if (res.err) {
+            return res;
+        }
+        offset = res.offset + res.value;
+
+        // SKIP nh:1 (hk~1 hv~1){nh}
+        res = header.header1.lazySkip(frame, offset);
+        if (res.err) {
+            return res;
+        }
+        offset = res.offset;
     }
-    offset = res.offset;
 
     // SKIP csumtype:1 (csum:4){0,1}
     res = Checksum.RW.lazySkip(frame, offset);
