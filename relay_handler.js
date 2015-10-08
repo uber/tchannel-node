@@ -142,6 +142,8 @@ function LazyRelayInReq(conn, reqFrame) {
     self.alive = true;
     self.operations = null;
     self.timeHeapHandle = null;
+    self.headers = null;
+    self.endpoint = '';
 
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
@@ -165,21 +167,31 @@ LazyRelayInReq.prototype.initRead =
 function initRead() {
     var self = this;
 
+    // TODO: wrap errors in protocol read errors?
+
     var res = self.reqFrame.bodyRW.lazy.readTTL(self.reqFrame);
     if (res.err) {
-        // TODO: wrap? protocol read error?
         return res.err;
     }
     self.timeout = res.value;
 
     res = self.reqFrame.bodyRW.lazy.readService(self.reqFrame);
     if (res.err) {
-        // TODO: wrap? protocol read error?
         return res.err;
     }
     self.serviceName = res.value;
 
-    // TODO: lazy read self.callerName
+    res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
+    if (res.err) {
+        return res.err;
+    }
+    self.headers = res.value;
+
+    res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, self.headers);
+    if (res.err) {
+        return res.err;
+    }
+    self.endpoint = String(res.value);
 
     return null;
 };
