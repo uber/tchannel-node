@@ -56,15 +56,15 @@ Codes.Unhealthy = 0x08;
 Codes.ProtocolError = 0xff;
 
 var CodeNames = Object.create(null);
-CodeNames[Codes.Timeout] = 'timeout';
-CodeNames[Codes.Cancelled] = 'cancelled';
-CodeNames[Codes.Busy] = 'busy';
-CodeNames[Codes.Declined] = 'declined';
-CodeNames[Codes.UnexpectedError] = 'unexpected error';
-CodeNames[Codes.BadRequest] = 'bad request';
-CodeNames[Codes.NetworkError] = 'network error';
-CodeNames[Codes.ProtocolError] = 'protocol error';
-CodeNames[Codes.Unhealthy] = 'unhealthy';
+CodeNames[Codes.Timeout] = 'Timeout';
+CodeNames[Codes.Cancelled] = 'Cancelled';
+CodeNames[Codes.Busy] = 'Busy';
+CodeNames[Codes.Declined] = 'Declined';
+CodeNames[Codes.UnexpectedError] = 'UnexpectedError';
+CodeNames[Codes.BadRequest] = 'BadRequest';
+CodeNames[Codes.NetworkError] = 'NetworkError';
+CodeNames[Codes.ProtocolError] = 'ProtocolError';
+CodeNames[Codes.Unhealthy] = 'Unhealthy';
 
 var CodeErrors = Object.create(null);
 CodeErrors[Codes.Timeout] = TypedError({
