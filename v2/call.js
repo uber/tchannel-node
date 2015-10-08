@@ -321,6 +321,17 @@ CallResponse.RW.lazy.readTracing = function lazyReadTracing(frame) {
 
 CallResponse.RW.lazy.headersOffset = CallResponse.RW.lazy.tracingOffset + 25;
 
+CallResponse.RW.lazy.readHeaders = function readHeaders(frame) {
+    // last fixed offset
+    var offset = CallResponse.RW.lazy.headersOffset;
+
+    // TODO: memoize computed offsets on frame between readService, readArg1,
+    // and any others
+
+    // READ nh:1 (hk~1 hv~1){nh}
+    return header.header1.lazyRead(frame, offset);
+};
+
 CallResponse.RW.lazy.readArg1 = function readArg1(frame) {
     // last fixed offset
     var offset = CallResponse.RW.lazy.headersOffset;
