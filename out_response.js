@@ -60,6 +60,8 @@ function TChannelOutResponse(id, options) {
 
     self.codeString = null;
     self.message = null;
+
+    self.error = null;
 }
 
 inherits(TChannelOutResponse, EventEmitter);
@@ -121,7 +123,7 @@ TChannelOutResponse.prototype.sendParts = function sendParts(parts, isLast) {
             self.sendCallResponseContFrame(parts, isLast);
             break;
         case States.Done:
-            self.errorEvent.emit(self, errors.ResponseFrameState({
+            self.emitError(errors.ResponseFrameState({
                 attempted: 'arg parts',
                 state: 'Done'
             }));
@@ -148,7 +150,7 @@ TChannelOutResponse.prototype.sendCallResponseFrame = function sendCallResponseF
             else self.state = States.Streaming;
             break;
         case States.Streaming:
-            self.errorEvent.emit(self, errors.ResponseFrameState({
+            self.emitError(errors.ResponseFrameState({
                 attempted: 'call response',
                 state: 'Streaming'
             }));
@@ -158,7 +160,7 @@ TChannelOutResponse.prototype.sendCallResponseFrame = function sendCallResponseF
             var arg2 = args[1] || '';
             var arg3 = args[2] || '';
 
-            self.errorEvent.emit(self, errors.ResponseAlreadyDone({
+            self.emitError(errors.ResponseAlreadyDone({
                 attempted: 'call response',
                 state: self.state,
                 method: 'sendCallResponseFrame',
@@ -174,7 +176,7 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
     var self = this;
     switch (self.state) {
         case States.Initial:
-            self.errorEvent.emit(self, errors.ResponseFrameState({
+            self.emitError(errors.ResponseFrameState({
                 attempted: 'call response continuation',
                 state: 'Initial'
             }));
@@ -185,7 +187,7 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
             break;
         case States.Done:
         case States.Error:
-            self.errorEvent.emit(self, errors.ResponseAlreadyDone({
+            self.emitError(errors.ResponseAlreadyDone({
                 attempted: 'call response continuation',
                 state: self.state,
                 method: 'sendCallResponseContFrame'
@@ -206,7 +208,7 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
     }
 
     if (self.state === States.Done || self.state === States.Error) {
-        self.errorEvent.emit(self, errors.ResponseAlreadyDone({
+        self.emitError(errors.ResponseAlreadyDone({
             attempted: 'error frame',
             currentState: self.state,
             method: 'sendError',
@@ -235,6 +237,13 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
         self._sendError(codeString, message);
         self.emitFinish();
     }
+};
+
+TChannelOutResponse.prototype.emitError = function emitError(err) {
+    var self = this;
+
+    self.error = err;
+    self.errorEvent.emit(self, err);
 };
 
 TChannelOutResponse.prototype.emitFinish = function emitFinish() {
@@ -273,7 +282,7 @@ TChannelOutResponse.prototype.emitFinish = function emitFinish() {
 TChannelOutResponse.prototype.setOk = function setOk(ok) {
     var self = this;
     if (self.state !== States.Initial) {
-        self.errorEvent.emit(self, errors.ResponseAlreadyStarted({
+        self.emitError(errors.ResponseAlreadyStarted({
             state: self.state,
             method: 'setOk',
             ok: ok
