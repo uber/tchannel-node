@@ -132,23 +132,31 @@ function emitPerAttemptErrorStat(err) {
     var self = this;
 
     if (err.isErrorFrame) {
-        self.channel.outboundCallsPerAttemptSystemErrorsStat.increment(1, {
-            'target-service': self.serviceName,
-            'service': self.callerName,
-            // TODO should always be buffer
-            'target-endpoint': self.endpoint,
-            'type': err.codeName,
-            'retry-count': self.retryCount
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.system-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsSystemErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.codeName,
+                self.retryCount
+            )
+        ));
     } else {
-        self.channel.outboundCallsPerAttemptOperationalErrorsStat.increment(1, {
-            'target-service': self.serviceName,
-            'service': self.callerName,
-            // TODO should always be buffer
-            'target-endpoint': self.endpoint,
-            'type': err.type || 'unknown',
-            'retry-count': self.retryCounts
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.per-attempt.operational-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsPerAttemptOperationalErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.type || 'unknown',
+                self.retryCounts
+            )
+        ));
     }
 };
 
@@ -157,21 +165,30 @@ function emitErrorStat(err) {
     var self = this;
 
     if (err.isErrorFrame) {
-        self.channel.outboundCallsSystemErrorsStat.increment(1, {
-            'target-service': self.serviceName,
-            'service': self.callerName,
-            // TODO should always be buffer
-            'target-endpoint': self.endpoint,
-            'type': err.codeName
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.system-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsSystemErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.codeName,
+                self.retryCount
+            )
+        ));
     } else {
-        self.channel.outboundCallsOperationalErrorsStat.increment(1, {
-            'target-service': self.serviceName,
-            'service': self.callerName,
-            // TODO should always be buffer
-            'target-endpoint': self.endpoint,
-            'type': err.type || 'unknown'
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.operational-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsOperationalErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.type || 'unknown'
+            )
+        ));
     }
 };
 

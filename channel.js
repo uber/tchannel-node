@@ -76,13 +76,28 @@ var DEFAULT_RETRY_FLAGS = new RetryFlags(
     /*onTimeout*/ false
 );
 
-function StatTags(statTags) {
+function StatTags(opts) {
     var self = this;
 
-    self.app = statTags.app || '';
-    self.host = statTags.host || '';
-    self.cluster = statTags.cluster || '';
-    self.version = statTags.version || '';
+    self.app = '';
+    self.host = '';
+    self.cluster = '';
+    self.version = '';
+
+    if (opts) {
+        if (opts.app) {
+            self.app = opts.app;
+        }
+        if (opts.host) {
+            self.host = opts.host;
+        }
+        if (opts.cluster) {
+            self.cluster = opts.cluster;
+        }
+        if (opts.version) {
+            self.version = opts.version;
+        }
+    }
 }
 
 // TODO restore spying
@@ -99,38 +114,6 @@ function TChannel(options) {
     self.errorEvent = self.defineEvent('error');
     self.listeningEvent = self.defineEvent('listening');
     self.connectionEvent = self.defineEvent('connection');
-
-    // self.outboundCallsSentStat = self.defineCounter('outbound.calls.sent');
-    // self.outboundCallsSuccessStat = self.defineCounter('outbound.calls.success');
-    self.outboundCallsSystemErrorsStat = self.defineCounter('tchannel.outbound.calls.system-errors');
-    self.outboundCallsPerAttemptSystemErrorsStat = self.defineCounter('tchannel.outbound.calls.per-attempt.system-errors');
-    self.outboundCallsOperationalErrorsStat = self.defineCounter('tchannel.outbound.calls.operational-errors');
-    self.outboundCallsPerAttemptOperationalErrorsStat = self.defineCounter('tchannel.outbound.calls.per-attempt.operational-errors');
-    // self.outboundCallsAppErrorsStat = self.defineCounter('outbound.calls.app-errors');
-    // self.outboundCallsPerAttemptAppErrorsStat = self.defineCounter('outbound.calls.per-attempt.app-errors');
-    self.outboundCallsRetriesStat = self.defineCounter('tchannel.outbound.calls.retries');
-    // self.outboundResponseSizeStat = self.defineCounter('outbound.response.size');
-    // self.outboundCallsLatencyStat = self.defineTiming('outbound.calls.latency');
-    // self.outboundCallsPerAttemptLatencyStat = self.defineTiming('outbound.calls.per-attempt-latency');
-
-    // self.inboundCallsSuccessStat = self.defineCounter('inbound.calls.success');
-    self.inboundCallsSystemErrorsStat = self.defineCounter('tchannel.inbound.calls.system-errors');
-    // self.inboundCallsAppErrorsStat = self.defineCounter('inbound.calls.app-errors');
-    // self.inboundCallsCancelsRequestedStat = self.defineCounter('inbound.cancels.requested');
-    // self.inboundCallsCancelsHonoredStat = self.defineCounter('inbound.cancels.honored');
-    // self.inboundRequestSizeStat = self.defineCounter('inbound.request.size');
-    // self.inboundResponseSizeStat = self.defineCounter('inbound.response.size');
-    self.inboundProtocolErrorsStat = self.defineCounter('tchannel.inbound.protocol-errors');
-    // self.inboundCallsLatencyStat = self.defineTiming('inbound.calls.latency');
-
-    self.connectionsActiveStat = self.defineGauge('tchannel.connections.active');
-    self.connectionsInitiatedStat = self.defineCounter('tchannel.connections.initiated');
-    self.connectionsConnectErrorsStat = self.defineCounter('tchannel.connections.connect-errors');
-    self.connectionsAcceptedStat = self.defineCounter('tchannel.connections.accepted');
-    self.connectionsAcceptedErrorsStat = self.defineCounter('tchannel.connections.accept-errors');
-    self.connectionsErrorsStat = self.defineCounter('tchannel.connections.errors');
-    self.connectionsClosedStat = self.defineCounter('tchannel.connections.closed');
-    // self.connectionsBytesRcvdStat = self.defineCounter('connections.bytes-recvd');
 
     self.options = extend({
         useLazyHandling: false,
@@ -156,7 +139,7 @@ function TChannel(options) {
     // required: 'app'
     // optional: 'host', 'cluster', 'version'
     assert(!self.options.statTags || self.options.statTags.app, 'the stats must have the "app" tag');
-    self.statTags = new StatTags(self.options.statTags || {});
+    self.statTags = new StatTags(self.options.statTags);
 
     self.statsd = self.options.statsd;
     if (self.statsd) {

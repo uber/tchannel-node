@@ -29,7 +29,13 @@ var timers = TimeMock(Date.now());
 allocCluster.test('emits connection stats with success', {
     numPeers: 2,
     channelOptions: {
-        emitConnectionMetrics: true
+        emitConnectionMetrics: true,
+        statTags: {
+            app: 'server',
+            host: os.hostname(),
+            cluster: '',
+            version: ''
+        }
     }
 }, function t(cluster, assert) {
     var server = cluster.channels[0];
@@ -41,10 +47,6 @@ allocCluster.test('emits connection stats with success', {
     server.makeSubChannel({
         serviceName: 'server'
     });
-    client.statTags = client.options.statTags = {
-        app: 'server',
-        host: os.hostname()
-    };
     client.on('stat', function onStat(stat) {
         stats.push(stat);
     });
@@ -78,10 +80,12 @@ allocCluster.test('emits connection stats with success', {
             value: 1,
             tags:
             {
-                'host-port': clientHost,
-                'peer-host-port': serverHost,
+                hostPort: clientHost,
+                peerHostPort: serverHost,
                 app: 'server',
-                host: os.hostname()
+                host: os.hostname(),
+                cluster: '',
+                version: ''
            }
         }, {
             name: 'tchannel.connections.closed',
@@ -89,11 +93,13 @@ allocCluster.test('emits connection stats with success', {
             value: 1,
             tags:
             {
-                'host-port': clientHost,
-                'peer-host-port': serverHost,
+                hostPort: clientHost,
+                peerHostPort: serverHost,
                 reason: 'tchannel.socket-local-closed',
                 app: 'server',
-                host: os.hostname()
+                host: os.hostname(),
+                cluster: '',
+                version: ''
             }
         }]);
 
@@ -104,17 +110,19 @@ allocCluster.test('emits connection stats with success', {
 allocCluster.test('emits connection stats with failure', {
     numPeers: 1,
     channelOptions: {
-        emitConnectionMetrics: true
+        emitConnectionMetrics: true,
+        statTags: {
+            app: 'server',
+            host: os.hostname(),
+            cluster: '',
+            version: ''
+        }
     }
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
     var clientHost = cluster.hosts[0];
     var stats = [];
 
-    client.statTags = client.options.statTags = {
-        app: 'server',
-        host: os.hostname()
-    };
     client.on('stat', function onStat(stat) {
         stats.push(stat);
     });
@@ -147,10 +155,12 @@ allocCluster.test('emits connection stats with failure', {
                 value: 1,
                 tags:
                 {
-                    'host-port': clientHost,
-                    'peer-host-port': 'localhost:9999',
+                    hostPort: clientHost,
+                    peerHostPort: 'localhost:9999',
                     app: 'server',
-                    host: os.hostname()
+                    host: os.hostname(),
+                    cluster: '',
+                    version: ''
                }
             }, {
                 name: 'tchannel.connections.connect-errors',
@@ -158,10 +168,12 @@ allocCluster.test('emits connection stats with failure', {
                 value: 1,
                 tags:
                 {
-                    'host-port': clientHost,
-                    'peer-host-port': 'localhost:9999',
+                    hostPort: clientHost,
+                    peerHostPort: 'localhost:9999',
                     app: 'server',
-                    host: os.hostname()
+                    host: os.hostname(),
+                    cluster: '',
+                    version: ''
                }
             }]);
 
@@ -174,7 +186,13 @@ allocCluster.test('emits active connections', {
     numPeers: 2,
     channelOptions: {
         timers: timers,
-        emitConnectionMetrics: true
+        emitConnectionMetrics: true,
+        statTags: {
+            app: 'server',
+            host: os.hostname(),
+            cluster: '',
+            version: ''
+        }
     }
 }, function t(cluster, assert) {
     var server = cluster.channels[0];
@@ -186,10 +204,6 @@ allocCluster.test('emits active connections', {
     server.makeSubChannel({
         serviceName: 'server'
     });
-    client.statTags = client.options.statTags = {
-        app: 'server',
-        host: os.hostname()
-    };
     client.on('stat', function onStat(stat) {
         stats.push(stat);
     });
@@ -225,10 +239,12 @@ allocCluster.test('emits active connections', {
                 value: 1,
                 tags:
                 {
-                    'host-port': clientHost,
-                    'peer-host-port': serverHost,
+                    hostPort: clientHost,
+                    peerHostPort: serverHost,
                     app: 'server',
-                    host: os.hostname()
+                    host: os.hostname(),
+                    cluster: '',
+                    version: ''
                }
             }, {
                 name: 'tchannel.connections.active',
@@ -236,10 +252,12 @@ allocCluster.test('emits active connections', {
                 value: 1,
                 tags:
                 {
-                    'host-port': clientHost,
-                    'peer-host-port': serverHost,
+                    hostPort: clientHost,
+                    peerHostPort: serverHost,
                     app: 'server',
-                    host: os.hostname()
+                    host: os.hostname(),
+                    cluster: '',
+                    version: ''
                }
             }, {
                 name: 'tchannel.connections.closed',
@@ -247,11 +265,13 @@ allocCluster.test('emits active connections', {
                 value: 1,
                 tags:
                 {
-                    'host-port': clientHost,
-                    'peer-host-port': serverHost,
+                    hostPort: clientHost,
+                    peerHostPort: serverHost,
                     reason: 'tchannel.socket-local-closed',
                     app: 'server',
-                    host: os.hostname()
+                    host: os.hostname(),
+                    cluster: '',
+                    version: ''
                 }
             }]);
 

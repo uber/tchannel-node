@@ -221,12 +221,17 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
 
         self.codeString = codeString;
         self.message = message;
-        self.channel.inboundCallsSystemErrorsStat.increment(1, {
-            'calling-service': self.inreq.callerName,
-            'service': self.inreq.serviceName,
-            'endpoint': String(self.inreq.arg1),
-            'type': self.codeString
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.inbound.calls.system-errors',
+            'counter',
+            1,
+            new stat.InboundCallsSystemErrorsTags(
+                self.inreq.callerName,
+                self.inreq.serviceName,
+                String(self.inreq.arg1),
+                self.codeString
+            )
+        ));
         self._sendError(codeString, message);
         self.emitFinish();
     }

@@ -25,6 +25,7 @@ module.exports = TChannelRequest;
 var assert = require('assert');
 var EventEmitter = require('./lib/event_emitter');
 var inherits = require('util').inherits;
+var stat = require('./lib/stat.js');
 
 var TChannelOutRequest = require('./out_request.js');
 var RetryFlags = require('./retry-flags.js');
@@ -220,13 +221,16 @@ TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
     self.outReqs.push(outReq);
 
     if (self.outReqs.length !== 1) {
-        self.channel.outboundCallsRetriesStat.increment(1, {
-            'target-service': outReq.serviceName,
-            'service': outReq.callerName,
-            // TODO should always be buffer
-            'target-endpoint': String(self.arg1),
-            'retry-count': self.outReqs.length - 1
-        });
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.retries',
+            'counter',
+            1,
+            new stat.OutboundCallsRetriesTags(
+                outReq.serviceName,
+                outReq.callerName,
+                String(self.arg1),
+                self.outReqs.length - 1
+            )));
     }
 
     if (!self.triedRemoteAddrs) {
