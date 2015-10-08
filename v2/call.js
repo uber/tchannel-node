@@ -339,19 +339,26 @@ CallResponse.RW.lazy.readHeaders = function readHeaders(frame) {
     return header.header1.lazyRead(frame, offset);
 };
 
-CallResponse.RW.lazy.readArg1 = function readArg1(frame) {
-    // last fixed offset
-    var offset = CallResponse.RW.lazy.headersOffset;
+CallResponse.RW.lazy.readArg1 = function readArg1(frame, headers) {
+    var res = null;
+    var offset = 0;
 
-    // TODO: memoize computed offsets on frame between readService, readArg1,
-    // and any others
+    if (headers) {
+        offset = headers.offset;
+    } else {
+        // last fixed offset
+        offset = CallResponse.RW.lazy.headersOffset;
 
-    // SKIP nh:1 (hk~1 hv~1){nh}
-    var res = header.header1.lazySkip(frame, offset);
-    if (res.err) {
-        return res;
+        // TODO: memoize computed offsets on frame between readService, readArg1,
+        // and any others
+
+        // SKIP nh:1 (hk~1 hv~1){nh}
+        res = header.header1.lazySkip(frame, offset);
+        if (res.err) {
+            return res;
+        }
+        offset = res.offset;
     }
-    offset = res.offset;
 
     // SKIP csumtype:1 (csum:4){0,1}
     res = Checksum.RW.lazySkip(frame, offset);
