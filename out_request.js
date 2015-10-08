@@ -160,59 +160,6 @@ function emitPerAttemptErrorStat(err) {
     }
 };
 
-TChannelOutRequest.prototype.emitErrorStat =
-function emitErrorStat(err) {
-    var self = this;
-
-    if (err.isErrorFrame) {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.system-errors',
-            'counter',
-            1,
-            new stat.OutboundCallsSystemErrorsTags(
-                self.serviceName,
-                self.callerName,
-                self.endpoint,
-                err.codeName,
-                self.retryCount
-            )
-        ));
-    } else {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.operational-errors',
-            'counter',
-            1,
-            new stat.OutboundCallsOperationalErrorsTags(
-                self.serviceName,
-                self.callerName,
-                self.endpoint,
-                err.type || 'unknown'
-            )
-        ));
-    }
-};
-
-TChannelOutRequest.prototype.emitResponseStat =
-function emitResponseStat(res) {
-    var self = this;
-
-    if (res.ok) {
-        emitOutboundCallsSuccess(self);
-    } else {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.app-errors',
-            'counter',
-            1,
-            new stat.OutboundCallsAppErrorsTags(
-                self.serviceName,
-                self.callerName,
-                self.endpoint,
-                'unknown'
-            )
-        ));
-    }
-};
-
 TChannelOutRequest.prototype.emitPerAttemptResponseStat =
 function emitPerAttemptResponseStat(res) {
     var self = this;
@@ -232,7 +179,16 @@ function emitPerAttemptResponseStat(res) {
         ));
     // Only emit success if peer-to-peer request or relay
     } else if (self.logical === false) {
-        emitOutboundCallsSuccess(self);
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.success',
+            'counter',
+            1,
+            new stat.OutboundCallsSuccessTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint
+            )
+        ));
     }
 };
 
@@ -252,23 +208,6 @@ function emitPerAttemptLatency() {
             self.endpoint,
             self.remoteAddr,
             self.retryCount
-        )
-    ));
-};
-
-TChannelOutRequest.prototype.emitLatency = function emitLatency() {
-    var self = this;
-
-    var latency = self.end - self.start;
-
-    self.channel.emitFastStat(self.channel.buildStat(
-        'tchannel.outbound.calls.latency',
-        'timing',
-        latency,
-        new stat.OutboundCallsLatencyTags(
-            self.serviceName,
-            self.callerName,
-            self.endpoint
         )
     ));
 };
@@ -589,16 +528,3 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
         self.emitError(timeoutError);
     }
 };
-
-function emitOutboundCallsSuccess(request) {
-    request.channel.emitFastStat(request.channel.buildStat(
-        'tchannel.outbound.calls.success',
-        'counter',
-        1,
-        new stat.OutboundCallsSuccessTags(
-            request.serviceName,
-            request.callerName,
-            request.endpoint
-        )
-    ));
-}

@@ -27,7 +27,6 @@ var EventEmitter = require('./lib/event_emitter');
 var inherits = require('util').inherits;
 var stat = require('./lib/stat.js');
 
-var TChannelOutRequest = require('./out_request.js');
 var RetryFlags = require('./retry-flags.js');
 var errors = require('./errors');
 
@@ -89,11 +88,61 @@ TChannelRequest.prototype.emitError = function emitError(err) {
     if (!self.end) self.end = self.channel.timers.now();
     self.err = err;
 
-    TChannelOutRequest.prototype.emitErrorStat.call(self, err);
-    TChannelOutRequest.prototype.emitLatency.call(self);
+    self.emitErrorStat(err);
+    self.emitLatency();
 
     self.channel.services.onRequestError(self);
     self.errorEvent.emit(self, err);
+};
+
+TChannelRequest.prototype.emitErrorStat =
+function emitErrorStat(err) {
+    var self = this;
+
+    if (err.isErrorFrame) {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.system-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsSystemErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.codeName,
+                self.retryCount
+            )
+        ));
+    } else {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.operational-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsOperationalErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.type || 'unknown'
+            )
+        ));
+    }
+};
+
+TChannelRequest.prototype.emitLatency =
+function emitLatency() {
+    var self = this;
+
+    var latency = self.end - self.start;
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.latency',
+        'timing',
+        latency,
+        new stat.OutboundCallsLatencyTags(
+            self.serviceName,
+            self.callerName,
+            self.endpoint
+        )
+    ));
 };
 
 TChannelRequest.prototype.emitResponse = function emitResponse(res) {
@@ -101,11 +150,41 @@ TChannelRequest.prototype.emitResponse = function emitResponse(res) {
     if (!self.end) self.end = self.channel.timers.now();
     self.res = res;
 
-    TChannelOutRequest.prototype.emitResponseStat.call(self, res);
-    TChannelOutRequest.prototype.emitLatency.call(self);
+    self.emitResponseStat(res);
+    self.emitLatency();
 
     self.channel.services.onRequestResponse(self);
     self.responseEvent.emit(self, res);
+};
+
+TChannelRequest.prototype.emitResponseStat =
+function emitResponseStat(res) {
+    var self = this;
+
+    if (res.ok) {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.success',
+            'counter',
+            1,
+            new stat.OutboundCallsSuccessTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint
+            )
+        ));
+    } else {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.app-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsAppErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                'unknown'
+            )
+        ));
+    }
 };
 
 TChannelRequest.prototype.hookupStreamCallback = function hookupCallback(callback) {
@@ -158,10 +237,26 @@ TChannelRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
     self.start = self.channel.timers.now();
     self.resendSanity = self.limit;
 
-    TChannelOutRequest.prototype.emitOutboundCallsSent.call(self);
+    self.emitOutboundCallsSent();
 
     self.channel.services.onRequest(self);
     self.resend();
+};
+
+TChannelRequest.prototype.emitOutboundCallsSent =
+function emitOutboundCallsSent() {
+    var self = this;
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.sent',
+        'counter',
+        1,
+        new stat.OutboundCallsSentTags(
+            self.serviceName,
+            self.callerName,
+            self.endpoint
+        )
+    ));
 };
 
 TChannelRequest.prototype.resend = function resend() {
