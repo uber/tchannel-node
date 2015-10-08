@@ -45,7 +45,7 @@ function TChannelAsThrift(opts) {
         'must pass source as an argument');
 
     self.thriftSource = opts.source;
-    self.thriftFileName = opts.thriftFileName || 'service';
+    self.thriftFileName = opts.thriftFileName || 'service.thrift';
     self.spec = new thriftrw.Thrift({
         source: self.thriftSource,
         strict: opts.strict
