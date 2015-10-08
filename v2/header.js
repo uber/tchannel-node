@@ -192,6 +192,36 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
     return bufrw.ReadResult.just(offset, headers);
 };
 
+HeaderRW.prototype.lazyRead = function lazyRead(frame, offset) {
+    var self = this;
+
+    // TODO: conspire with Call(Request,Response) to memoize headers start/end
+    // offsets, maybe even start of each key?
+
+    var res = self.countrw.readFrom(frame.buffer, offset);
+    if (res.err) return res;
+    offset = res.offset;
+
+    var keyvals = new KeyVals(frame.buffer, res.value);
+    for (var i = 0; i < keyvals.length; i++) {
+        res = self.keyrw.sizerw.readFrom(frame.buffer, offset);
+        if (res.err) return res;
+        var keyOffset = res.offset;
+        var keyLength = res.value;
+        offset = res.offset + res.value;
+
+        res = self.valrw.sizerw.readFrom(frame.buffer, offset);
+        if (res.err) return res;
+        var valOffset = res.offset;
+        var valLength = res.value;
+        offset = res.offset + res.value;
+
+        keyvals.add(keyOffset, keyLength, valOffset, valLength);
+    }
+
+    return bufrw.ReadResult.just(offset, keyvals);
+};
+
 HeaderRW.prototype.lazySkip = function lazySkip(frame, offset) {
     var self = this;
 
@@ -229,3 +259,59 @@ module.exports.header2 = HeaderRW(bufrw.UInt16BE, bufrw.str2, bufrw.str2, {
     maxHeaderCount: Infinity,
     maxKeyLength: Infinity
 });
+
+function KeyVals(buffer, length) {
+    this.length = length;
+    this.buffer = buffer;
+    this.data = new Uint16Array(this.length * 4);
+    this.index = 0;
+}
+
+KeyVals.prototype.add =
+function add(keyOffset, keyLength, valOffset, valLength) {
+    if (this.index < this.data.length) {
+        this.data[this.index++] = keyOffset;
+        this.data[this.index++] = keyLength;
+        this.data[this.index++] = valOffset;
+        this.data[this.index++] = valLength;
+    }
+};
+
+KeyVals.prototype.getValue =
+function getValue(key) {
+    // assert Buffer.isBuffer(key)
+
+    for (
+        var i = 0;
+        i < this.data.length;
+        i += 4
+    ) {
+        var keyLength = this.data[i + 1];
+        if (key.length !== keyLength) {
+            continue;
+        }
+
+        var keyOffset = this.data[i];
+        var found = true;
+        for (
+            var j = 0, offset = keyOffset;
+            j < keyLength;
+            j++, offset++
+        ) {
+            if (key[j] !== this.buffer[offset]) {
+                found = false;
+                break;
+            }
+        }
+        if (found) {
+            var valOffset = this.data[i + 2];
+            var valLength = this.data[i + 3];
+            return this.buffer.slice(
+                valOffset,
+                valOffset + valLength
+            );
+        }
+    }
+
+    return undefined;
+};
