@@ -28,6 +28,9 @@ RelayHandler.RelayRequest = RelayRequest;
 
 module.exports = RelayHandler;
 
+// "constant" byte buffer used for lookup in LazyRelayInReq#initRead
+var cnBytes = Buffer('cn');
+
 function RelayHandler(channel, circuits) {
     var self = this;
     self.channel = channel;
@@ -186,6 +189,10 @@ function initRead() {
         return res.err;
     }
     self.headers = res.value;
+    var cnHeader = self.headers.getValue(cnBytes);
+    if (cnHeader !== undefined) {
+        self.callerName = String(cnHeader);
+    }
 
     res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, self.headers);
     if (res.err) {
