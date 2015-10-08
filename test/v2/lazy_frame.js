@@ -231,6 +231,10 @@ test('CallResponse.RW.lazy', function t(assert) {
         v2.CallResponse.RW.lazy.isFrameTerminal(lazyFrame),
         !(frame.body.flags & v2.CallFlags.Fragment),
         'CallResponse.RW.lazy.isFrameTerminal');
+    assertReadRes(
+        v2.CallResponse.RW.lazy.readArg1(lazyFrame),
+        Buffer(frame.body.args[0]),
+        'CallResponse.RW.lazy.readArg1');
 
     assert.end();
 
