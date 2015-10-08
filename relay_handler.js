@@ -416,6 +416,17 @@ function _observeCallReqFrame(frame, now) {
     ));
 
     self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.request.size',
+        'counter',
+        frame.size,
+        new stat.OutboundRequestSizeTags(
+            self.serviceName,
+            self.callerName,
+            self.endpoint
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.outbound.calls.sent',
         'counter',
         1,
@@ -438,6 +449,17 @@ function _observeCallReqContFrame(frame, now) {
         new stat.InboundRequestSizeTags(
             self.callerName,
             self.serviceName,
+            self.endpoint
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.request.size',
+        'counter',
+        frame.size,
+        new stat.OutboundRequestSizeTags(
+            self.serviceName,
+            self.callerName,
             self.endpoint
         )
     ));
@@ -489,6 +511,35 @@ function _extendLogInfo(info) {
 LazyRelayOutReq.prototype.emitError =
 function emitError(err) {
     var self = this;
+
+    var now = self.channel.timers.now();
+    var elapsed = now - self.start;
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.per-attempt-latency',
+        'timing',
+        elapsed,
+        new stat.OutboundCallsPerAttemptLatencyTags(
+            self.inreq.serviceName,
+            self.inreq.callerName,
+            self.inreq.endpoint,
+            self.remoteAddr,
+            0
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.per-attempt.operational-errors',
+        'counter',
+        1,
+        new stat.OutboundCallsPerAttemptOperationalErrorsTags(
+            self.inreq.serviceName,
+            self.inreq.callerName,
+            self.inreq.endpoint,
+            err.type || 'unknown',
+            0
+        )
+    ));
 
     self.inreq.onError(err);
 };
@@ -567,6 +618,19 @@ function _observeErrorFrame(errFrame, now) {
     var codeName = v2.ErrorResponse.CodeNames[code] || 'unknown';
 
     self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.system-errors',
+        'counter',
+        1,
+        new stat.OutboundCallsSystemErrorsTags(
+            self.inreq.serviceName,
+            self.inreq.callerName,
+            self.inreq.endpoint,
+            codeName,
+            0
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.inbound.calls.system-errors',
         'counter',
         1,
@@ -613,6 +677,17 @@ function _observeCallResFrame(frame, now) {
     ));
 
     self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.response.size',
+        'counter',
+        frame.size,
+        new stat.OutboundResponseSizeTags(
+            self.inreq.serviceName,
+            self.inreq.callerName,
+            self.inreq.endpoint
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.inbound.calls.latency',
         'timing',
         now - self.inreq.start,
@@ -620,6 +695,19 @@ function _observeCallResFrame(frame, now) {
             self.inreq.callerName,
             self.inreq.serviceName,
             self.inreq.endpoint
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.per-attempt-latency',
+        'timing',
+        now - self.start,
+        new stat.OutboundCallsPerAttemptLatencyTags(
+            self.inreq.serviceName,
+            self.inreq.callerName,
+            self.inreq.endpoint,
+            self.remoteAddr,
+            0
         )
     ));
 
@@ -645,6 +733,17 @@ function _observeCallResFrame(frame, now) {
                 self.inreq.endpoint
             )
         ));
+
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.success',
+            'counter',
+            1,
+            new stat.OutboundCallsSuccessTags(
+                self.inreq.serviceName,
+                self.inreq.callerName,
+                self.inreq.endpoint
+            )
+        ));
     } else {
         self.channel.emitFastStat(self.channel.buildStat(
             'tchannel.inbound.calls.app-errors',
@@ -655,6 +754,19 @@ function _observeCallResFrame(frame, now) {
                 self.inreq.serviceName,
                 self.inreq.endpoint,
                 'unknown'
+            )
+        ));
+
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.per-attempt.app-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsPerAttemptAppErrorsTags(
+                self.inreq.serviceName,
+                self.inreq.callerName,
+                self.inreq.endpoint,
+                'unknown',
+                0
             )
         ));
     }
@@ -671,6 +783,17 @@ function _observeCallResContFrame(frame, now) {
         new stat.InboundResponseSizeTags(
             self.inreq.callerName,
             self.inreq.serviceName,
+            self.inreq.endpoint
+        )
+    ));
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.response.size',
+        'counter',
+        frame.size,
+        new stat.OutboundResponseSizeTags(
+            self.inreq.serviceName,
+            self.inreq.callerName,
             self.inreq.endpoint
         )
     ));
