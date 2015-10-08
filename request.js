@@ -151,11 +151,41 @@ TChannelRequest.prototype.emitResponse = function emitResponse(res) {
     if (!self.end) self.end = self.channel.timers.now();
     self.res = res;
 
-    TChannelOutRequest.prototype.emitResponseStat.call(self, res);
+    self.emitResponseStat(res);
     self.emitLatency();
 
     self.channel.services.onRequestResponse(self);
     self.responseEvent.emit(self, res);
+};
+
+TChannelRequest.prototype.emitResponseStat =
+function emitResponseStat(res) {
+    var self = this;
+
+    if (res.ok) {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.success',
+            'counter',
+            1,
+            new stat.OutboundCallsSuccessTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint
+            )
+        ));
+    } else {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.app-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsAppErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                'unknown'
+            )
+        ));
+    }
 };
 
 TChannelRequest.prototype.hookupStreamCallback = function hookupCallback(callback) {

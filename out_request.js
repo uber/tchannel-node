@@ -160,36 +160,6 @@ function emitPerAttemptErrorStat(err) {
     }
 };
 
-TChannelOutRequest.prototype.emitResponseStat =
-function emitResponseStat(res) {
-    var self = this;
-
-    if (res.ok) {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.success',
-            'counter',
-            1,
-            new stat.OutboundCallsSuccessTags(
-                self.serviceName,
-                self.callerName,
-                self.endpoint
-            )
-        ));
-    } else {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.app-errors',
-            'counter',
-            1,
-            new stat.OutboundCallsAppErrorsTags(
-                self.serviceName,
-                self.callerName,
-                self.endpoint,
-                'unknown'
-            )
-        ));
-    }
-};
-
 TChannelOutRequest.prototype.emitPerAttemptResponseStat =
 function emitPerAttemptResponseStat(res) {
     var self = this;
