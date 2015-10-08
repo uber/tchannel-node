@@ -358,6 +358,8 @@ function handleFrameLazily(frame) {
     // - v2.Types.CallRequestCont
     var self = this;
 
+    var now = self.channel.timers.now();
+
     if (!self.alive) {
         self.logger.warn('dropping frame from dead relay request', self.extendLogInfo({}));
         return;
@@ -372,6 +374,24 @@ function handleFrameLazily(frame) {
             relayDirection: 'in'
         }));
     }
+
+    if (frame.type === v2.Types.CallRequest) {
+        self._observeCallReqFrame(frame, now);
+    } else if (frame.type === v2.Types.CallRequestCont) {
+        self._observeCallReqContFrame(frame, now);
+    }
+};
+
+LazyRelayInReq.prototype._observeCallReqFrame =
+function _observeCallReqFrame(frame, now) {
+    var self = this;
+
+};
+
+LazyRelayInReq.prototype._observeCallReqContFrame =
+function _observeCallReqContFrame(frame, now) {
+    var self = this;
+
 };
 
 function LazyRelayOutReq(conn, inreq) {
@@ -452,9 +472,7 @@ function handleFrameLazily(frame) {
     // - v2.Types.ErrorResponse
     var self = this;
 
-    if (frame.type === v2.Types.ErrorResponse) {
-        self.logForwardedError(frame);
-    }
+    var now = self.channel.timers.now();
 
     frame.setId(self.inreq.id);
     self.inreq.conn.socket.write(frame.buffer);
@@ -464,10 +482,18 @@ function handleFrameLazily(frame) {
             relayDirection: 'out'
         }));
     }
+
+    if (frame.type === v2.Types.CallResponse) {
+        self._observeCallResFrame(frame, now);
+    } else if (frame.type === v2.Types.CallResponseCont) {
+        self._observeCallResContFrame(frame, now);
+    } else if (frame.type === v2.Types.ErrorResponse) {
+        self._observeErrorFrame(frame, now);
+    }
 };
 
-LazyRelayOutReq.prototype.logForwardedError =
-function logForwardedError(errFrame) {
+LazyRelayOutReq.prototype._observeErrorFrame =
+function _observeErrorFrame(errFrame, now) {
     var self = this;
 
     var res = errFrame.bodyRW.lazy.readCode(errFrame);
@@ -496,6 +522,18 @@ function logForwardedError(errFrame) {
         message: message
     });
     self.logError(err, errors.classify(err) || 'UnexpectedError');
+};
+
+LazyRelayOutReq.prototype._observeCallResFrame =
+function _observeCallResFrame(frame, now) {
+    var self = this;
+
+};
+
+LazyRelayOutReq.prototype._observeCallResContFrame =
+function _observeCallResContFrame(frame, now) {
+    var self = this;
+
 };
 
 function RelayRequest(channel, peer, inreq, buildRes) {
