@@ -27,7 +27,6 @@ var EventEmitter = require('./lib/event_emitter');
 var inherits = require('util').inherits;
 var stat = require('./lib/stat.js');
 
-var TChannelOutRequest = require('./out_request.js');
 var RetryFlags = require('./retry-flags.js');
 var errors = require('./errors');
 
@@ -238,10 +237,26 @@ TChannelRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
     self.start = self.channel.timers.now();
     self.resendSanity = self.limit;
 
-    TChannelOutRequest.prototype.emitOutboundCallsSent.call(self);
+    self.emitOutboundCallsSent();
 
     self.channel.services.onRequest(self);
     self.resend();
+};
+
+TChannelRequest.prototype.emitOutboundCallsSent =
+function emitOutboundCallsSent() {
+    var self = this;
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.sent',
+        'counter',
+        1,
+        new stat.OutboundCallsSentTags(
+            self.serviceName,
+            self.callerName,
+            self.endpoint
+        )
+    ));
 };
 
 TChannelRequest.prototype.resend = function resend() {
