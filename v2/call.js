@@ -98,6 +98,24 @@ CallRequest.RW.lazy.readService = function lazyReadService(frame) {
     return bufrw.str1.readFrom(frame.buffer, CallRequest.RW.lazy.serviceOffset);
 };
 
+CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
+    // last fixed offset
+    var offset = CallRequest.RW.lazy.serviceOffset;
+
+    // TODO: memoize computed offsets on frame between readService, readArg1,
+    // and any others
+
+    // SKIP service~1
+    var res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
+    if (res.err) {
+        return res;
+    }
+    offset = res.offset + res.value;
+
+    // READ nh:1 (hk~1 hv~1){nh}
+    return header.header1.lazyRead(frame, offset);
+};
+
 CallRequest.RW.lazy.readArg1 = function readArg1(frame) {
     // last fixed offset
     var offset = CallRequest.RW.lazy.serviceOffset;
@@ -302,6 +320,17 @@ CallResponse.RW.lazy.readTracing = function lazyReadTracing(frame) {
 };
 
 CallResponse.RW.lazy.headersOffset = CallResponse.RW.lazy.tracingOffset + 25;
+
+CallResponse.RW.lazy.readHeaders = function readHeaders(frame) {
+    // last fixed offset
+    var offset = CallResponse.RW.lazy.headersOffset;
+
+    // TODO: memoize computed offsets on frame between readService, readArg1,
+    // and any others
+
+    // READ nh:1 (hk~1 hv~1){nh}
+    return header.header1.lazyRead(frame, offset);
+};
 
 CallResponse.RW.lazy.readArg1 = function readArg1(frame) {
     // last fixed offset

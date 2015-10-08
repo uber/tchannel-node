@@ -170,6 +170,32 @@ test('CallRequest.RW.lazy', function t(assert) {
         !(frame.body.flags & v2.CallFlags.Fragment),
         'CallRequest.RW.lazy.isFrameTerminal');
 
+    // validate lazy header reading
+    var res = v2.CallRequest.RW.lazy.readHeaders(lazyFrame);
+    assert.ifError(res.err, 'no error from v2.CallRequest.RW.lazy.readHeaders');
+    var headers = res.value;
+    if (headers) {
+        // should fail fast because no key matches length 4
+        assert.equal(
+            headers.getValue(Buffer("nope")),
+            undefined,
+            'no "nope" header key');
+        // should fail slow since all keys have length 2, but none match
+        assert.equal(
+            headers.getValue(Buffer("no")),
+            undefined,
+            'no "no" header key');
+        // should have these two
+        assert.deepEqual(
+            headers.getValue(Buffer("cn")),
+            Buffer('mario'),
+            'expected header "cn" => "mario"');
+        assert.deepEqual(
+            headers.getValue(Buffer("as")),
+            Buffer('plumber'),
+            'expected header "as" => "plumber"');
+    }
+
     // validate call req lazy writing
     var newTTL = frame.body.ttl - 15;
     assert.ifError(
@@ -235,6 +261,28 @@ test('CallResponse.RW.lazy', function t(assert) {
         v2.CallResponse.RW.lazy.readArg1(lazyFrame),
         Buffer(frame.body.args[0]),
         'CallResponse.RW.lazy.readArg1');
+
+    // validate lazy header reading
+    var res = v2.CallResponse.RW.lazy.readHeaders(lazyFrame);
+    assert.ifError(res.err, 'no error from v2.CallResponse.RW.lazy.readHeaders');
+    var headers = res.value;
+    if (headers) {
+        // should fail fast because no key matches length 4
+        assert.equal(
+            headers.getValue(Buffer("nope")),
+            undefined,
+            'no "nope" header key');
+        // should fail slow since all keys have length 2, but none match
+        assert.equal(
+            headers.getValue(Buffer("no")),
+            undefined,
+            'no "no" header key');
+        // should have this one
+        assert.deepEqual(
+            headers.getValue(Buffer("as")),
+            Buffer('plumber'),
+            'expected header "as" => "plumber"');
+    }
 
     assert.end();
 
