@@ -310,6 +310,13 @@ function onIdentified(err) {
     conn.ops.addOutReq(self.outreq);
     self.handleFrameLazily(self.reqFrame);
     self.reqFrame = null;
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.relay.latency',
+        'timing',
+        self.outreq.start - self.start,
+        new stat.RelayLatencyTags()
+    ));
 };
 
 LazyRelayInReq.prototype.updateTTL =
