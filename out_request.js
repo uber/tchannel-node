@@ -242,23 +242,6 @@ function emitPerAttemptLatency() {
     ));
 };
 
-TChannelOutRequest.prototype.emitLatency = function emitLatency() {
-    var self = this;
-
-    var latency = self.end - self.start;
-
-    self.channel.emitFastStat(self.channel.buildStat(
-        'tchannel.outbound.calls.latency',
-        'timing',
-        latency,
-        new stat.OutboundCallsLatencyTags(
-            self.serviceName,
-            self.callerName,
-            self.endpoint
-        )
-    ));
-};
-
 TChannelOutRequest.prototype.emitError = function emitError(err) {
     var self = this;
 

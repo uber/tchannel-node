@@ -90,7 +90,7 @@ TChannelRequest.prototype.emitError = function emitError(err) {
     self.err = err;
 
     self.emitErrorStat(err);
-    TChannelOutRequest.prototype.emitLatency.call(self);
+    self.emitLatency();
 
     self.channel.services.onRequestError(self);
     self.errorEvent.emit(self, err);
@@ -128,13 +128,31 @@ function emitErrorStat(err) {
     }
 };
 
+TChannelRequest.prototype.emitLatency =
+function emitLatency() {
+    var self = this;
+
+    var latency = self.end - self.start;
+
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.outbound.calls.latency',
+        'timing',
+        latency,
+        new stat.OutboundCallsLatencyTags(
+            self.serviceName,
+            self.callerName,
+            self.endpoint
+        )
+    ));
+};
+
 TChannelRequest.prototype.emitResponse = function emitResponse(res) {
     var self = this;
     if (!self.end) self.end = self.channel.timers.now();
     self.res = res;
 
     TChannelOutRequest.prototype.emitResponseStat.call(self, res);
-    TChannelOutRequest.prototype.emitLatency.call(self);
+    self.emitLatency();
 
     self.channel.services.onRequestResponse(self);
     self.responseEvent.emit(self, res);
