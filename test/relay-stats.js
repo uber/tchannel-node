@@ -39,161 +39,161 @@ function isLoHostPort(assert, value) {
     );
 }
 
-var fixture = [
-    {
-        "name": "tchannel.inbound.request.size",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "callingService": "wat",
-            "service": "two",
-            "endpoint": "echo"
+var fixture = {
+    'tchannel.inbound.calls.latency': {
+        'name': 'tchannel.inbound.calls.latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callingService': 'wat',
+            'service': 'two',
+            'endpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.inbound.calls.recvd",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "callingService": "wat",
-            "service": "two",
-            "endpoint": "echo"
+    'tchannel.inbound.calls.recvd': {
+        'name': 'tchannel.inbound.calls.recvd',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callingService': 'wat',
+            'service': 'two',
+            'endpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.outbound.calls.sent",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "targetService": "two",
-            "service": "wat",
-            "targetEndpoint": "echo"
+    'tchannel.inbound.calls.success': {
+        'name': 'tchannel.inbound.calls.success',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callingService': 'wat',
+            'service': 'two',
+            'endpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.outbound.request.size",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "targetService": "two",
-            "service": "wat",
-            "targetEndpoint": "echo"
+    'tchannel.inbound.request.size': {
+        'name': 'tchannel.inbound.request.size',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callingService': 'wat',
+            'service': 'two',
+            'endpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.relay.latency",
-        "type": "timing",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": ""
+    'tchannel.inbound.response.size': {
+        'name': 'tchannel.inbound.response.size',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callingService': 'wat',
+            'service': 'two',
+            'endpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.inbound.response.size",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "callingService": "wat",
-            "service": "two",
-            "endpoint": "echo"
+    'tchannel.outbound.calls.per-attempt-latency': {
+        'name': 'tchannel.outbound.calls.per-attempt-latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'targetService': 'two',
+            'service': 'wat',
+            'targetEndpoint': 'echo',
+            'peer': isLoHostPort,
+            'retryCount': 0
         }
     },
-    {
-        "name": "tchannel.outbound.calls.per-attempt-latency",
-        "type": "timing",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "targetService": "two",
-            "service": "wat",
-            "targetEndpoint": "echo",
-            "peer": isLoHostPort,
-            "retryCount": 0
+    'tchannel.outbound.calls.sent': {
+        'name': 'tchannel.outbound.calls.sent',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'targetService': 'two',
+            'service': 'wat',
+            'targetEndpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.outbound.calls.success",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "targetService": "two",
-            "service": "wat",
-            "targetEndpoint": "echo"
+    'tchannel.outbound.calls.success': {
+        'name': 'tchannel.outbound.calls.success',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'targetService': 'two',
+            'service': 'wat',
+            'targetEndpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.inbound.calls.success",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "callingService": "wat",
-            "service": "two",
-            "endpoint": "echo"
+    'tchannel.outbound.request.size': {
+        'name': 'tchannel.outbound.request.size',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'targetService': 'two',
+            'service': 'wat',
+            'targetEndpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.outbound.response.size",
-        "type": "counter",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "targetService": "two",
-            "service": "wat",
-            "targetEndpoint": "echo"
+    'tchannel.outbound.response.size': {
+        'name': 'tchannel.outbound.response.size',
+        'type': 'counter',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'targetService': 'two',
+            'service': 'wat',
+            'targetEndpoint': 'echo'
         }
     },
-    {
-        "name": "tchannel.inbound.calls.latency",
-        "type": "timing",
-        "value": isNumber,
-        "tags": {
-            "app": "",
-            "host": "",
-            "cluster": "",
-            "version": "",
-            "callingService": "wat",
-            "service": "two",
-            "endpoint": "echo"
+    'tchannel.relay.latency': {
+        'name': 'tchannel.relay.latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': ''
         }
     }
-];
+};
 
 allocCluster.test('relay emits latency stat', {
     numPeers: 2
@@ -246,7 +246,8 @@ allocCluster.test('relay emits latency stat', {
         process.nextTick(checkStat);
 
         function checkStat() {
-            validators.validate(assert, stats, fixture);
+            var statsByName = collectStatsByName(assert, stats);
+            validators.validate(assert, statsByName, fixture);
         }
 
         assert.end();
@@ -258,3 +259,15 @@ function echo(req, res, arg2, arg3) {
     res.sendOk(arg2, arg3);
 }
 
+function collectStatsByName(assert, stats) {
+    var byName = {};
+    for (var i = 0; i < stats.length; i++) {
+        var stat = stats[i];
+        if (byName[stat.name]) {
+            assert.fail('duplicate stat ' + stat.name);
+        } else {
+            byName[stat.name] = stat;
+        }
+    }
+    return byName;
+}
