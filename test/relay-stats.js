@@ -202,6 +202,7 @@ allocCluster.test('relay emits latency stat', {
     var two = cluster.channels[1];
     var stats = [];
 
+    one.setLazyHandling(false);
     one.on('stat', function onStat(stat) {
         stats.push(stat);
     });
