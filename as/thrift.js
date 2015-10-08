@@ -45,6 +45,7 @@ function TChannelAsThrift(opts) {
         'must pass source as an argument');
 
     self.thriftSource = opts.source;
+    self.thriftFileName = opts.thriftFileName || 'service';
     self.spec = new thriftrw.Thrift({
         source: self.thriftSource,
         strict: opts.strict
@@ -477,9 +478,14 @@ function health(self, req, head, body, callback) {
 }
 
 function thriftIDL(self, req, head, body, callback) {
+    var idls = {};
+    idls[self.thriftFileName] = self.thriftSource;
     return callback(null, {
         ok: true,
-        body: self.thriftSource
+        body: {
+            idls: idls,
+            entryPoint: self.thriftFileName
+        }
     });
 }
 
