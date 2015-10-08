@@ -140,7 +140,8 @@ allocCluster.test('meta returns thrift IDL for the service', {
         }
 
         assert.ok(res && res.ok, 'res should be ok');
-        assert.equals(res.body, thriftSource, 'expected IDL should be returned');
+        assert.equals(res.body.entryPoint, 'service.thrift', 'expect entryPoint to be service.thrift');
+        assert.equals(res.body.idls['service.thrift'], thriftSource, 'expected IDL should be returned');
         assert.end();
     });
 });
