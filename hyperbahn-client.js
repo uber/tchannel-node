@@ -22,6 +22,7 @@
 
 var assert = require('assert');
 var fs = require('fs');
+var path = require('path');
 var TypedError = require('error/typed');
 var WrappedError = require('error/wrapped');
 var timers = require('timers');
@@ -188,6 +189,7 @@ function getThriftSync(options) {
 
     return channel.TChannelAsThrift({
         source: thriftSource,
+        thriftFileName: path.basename(options.thriftFile),
         strict: options.strict,
         logger: options.logger,
         bossMode: options.bossMode,

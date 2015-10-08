@@ -39,6 +39,9 @@ test('calling getThrift', function t(assert) {
         thriftFile: path.join(__dirname, '..', 'anechoic-chamber.thrift')
     });
 
+    assert.equal(thriftClient.thriftFileName, 'anechoic-chamber.thrift', 'client gets the expected thrift file name');
+    assert.equal(thriftServer.thriftFileName, 'anechoic-chamber.thrift', 'server gets the expected thrift file name');
+
     thriftServer.register('Chamber::echo', {}, echo);
 
     var counter = 2;
