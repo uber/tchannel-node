@@ -219,6 +219,8 @@ HeaderRW.prototype.lazyRead = function lazyRead(frame, offset) {
         keyvals.add(keyOffset, keyLength, valOffset, valLength);
     }
 
+    keyvals.offset = offset;
+
     return bufrw.ReadResult.just(offset, keyvals);
 };
 
@@ -265,6 +267,7 @@ function KeyVals(buffer, length) {
     this.buffer = buffer;
     this.data = new Uint16Array(this.length * 4);
     this.index = 0;
+    this.offset = 0;
 }
 
 KeyVals.prototype.add =
