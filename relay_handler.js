@@ -397,6 +397,7 @@ function handleFrameLazily(frame) {
         self._observeCallReqFrame(frame, now);
     } else if (frame.type === v2.Types.CallRequestCont) {
         self._observeCallReqContFrame(frame, now);
+    // } else { TODO: log
     }
 };
 
@@ -589,6 +590,7 @@ function handleFrameLazily(frame) {
         self._observeCallResContFrame(frame, now);
     } else if (frame.type === v2.Types.ErrorResponse) {
         self._observeErrorFrame(frame, now);
+    // } else { TODO: log
     }
 };
 
