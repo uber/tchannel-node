@@ -160,38 +160,6 @@ function emitPerAttemptErrorStat(err) {
     }
 };
 
-TChannelOutRequest.prototype.emitErrorStat =
-function emitErrorStat(err) {
-    var self = this;
-
-    if (err.isErrorFrame) {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.system-errors',
-            'counter',
-            1,
-            new stat.OutboundCallsSystemErrorsTags(
-                self.serviceName,
-                self.callerName,
-                self.endpoint,
-                err.codeName,
-                self.retryCount
-            )
-        ));
-    } else {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.operational-errors',
-            'counter',
-            1,
-            new stat.OutboundCallsOperationalErrorsTags(
-                self.serviceName,
-                self.callerName,
-                self.endpoint,
-                err.type || 'unknown'
-            )
-        ));
-    }
-};
-
 TChannelOutRequest.prototype.emitResponseStat =
 function emitResponseStat(res) {
     var self = this;

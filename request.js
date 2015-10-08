@@ -89,11 +89,43 @@ TChannelRequest.prototype.emitError = function emitError(err) {
     if (!self.end) self.end = self.channel.timers.now();
     self.err = err;
 
-    TChannelOutRequest.prototype.emitErrorStat.call(self, err);
+    self.emitErrorStat(err);
     TChannelOutRequest.prototype.emitLatency.call(self);
 
     self.channel.services.onRequestError(self);
     self.errorEvent.emit(self, err);
+};
+
+TChannelRequest.prototype.emitErrorStat =
+function emitErrorStat(err) {
+    var self = this;
+
+    if (err.isErrorFrame) {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.system-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsSystemErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.codeName,
+                self.retryCount
+            )
+        ));
+    } else {
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.outbound.calls.operational-errors',
+            'counter',
+            1,
+            new stat.OutboundCallsOperationalErrorsTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                err.type || 'unknown'
+            )
+        ));
+    }
 };
 
 TChannelRequest.prototype.emitResponse = function emitResponse(res) {
