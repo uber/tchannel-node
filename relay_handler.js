@@ -217,6 +217,8 @@ function _extendLogInfo(info) {
     info.inRemoteAddr = self.remoteAddr;
     info.inRequestId = self.id;
     info.serviceName = self.serviceName;
+    info.callerName = self.callerName;
+    info.endpoint = self.endpoint;
 
     // TODO: why not full peer.extendLogInfo
     if (self.peer) {
@@ -649,11 +651,6 @@ RelayRequest.prototype.onError = function onError(err) {
     var self = this;
 
     if (self.error) {
-        // TODO: verify
-        // remoteAddr: self.inreq.remoteAddr,
-        // serviceName: self.inreq.serviceName,
-        // endpoint: self.inreq.endpoint,
-        // callerName: self.inreq.callerName,
         self.logger.warn('Unexpected double onError', self.inreq.extendLogInfo({
             error: err,
             oldError: self.error
