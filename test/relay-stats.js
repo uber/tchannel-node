@@ -195,7 +195,7 @@ var fixture = {
     }
 };
 
-allocCluster.test('relay emits latency stat', {
+allocCluster.test('relay emits expected stats', {
     numPeers: 2
 }, function t(cluster, assert) {
     var one = cluster.channels[0];
