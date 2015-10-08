@@ -194,6 +194,11 @@ test('CallRequest.RW.lazy', function t(assert) {
             headers.getValue(Buffer("as")),
             Buffer('plumber'),
             'expected header "as" => "plumber"');
+        // readArg1 can re-use readHeaders work
+        assertReadRes(
+            v2.CallRequest.RW.lazy.readArg1(lazyFrame, headers),
+            Buffer(frame.body.args[0]),
+            'CallRequest.RW.lazy.readArg1, with headers');
     }
 
     // validate call req lazy writing
@@ -282,6 +287,11 @@ test('CallResponse.RW.lazy', function t(assert) {
             headers.getValue(Buffer("as")),
             Buffer('plumber'),
             'expected header "as" => "plumber"');
+        // readArg1 can re-use readHeaders work
+        assertReadRes(
+            v2.CallResponse.RW.lazy.readArg1(lazyFrame, headers),
+            Buffer(frame.body.args[0]),
+            'CallResponse.RW.lazy.readArg1, with headers');
     }
 
     assert.end();
