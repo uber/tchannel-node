@@ -102,7 +102,8 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame) {
     // last fixed offset
     var offset = CallRequest.RW.lazy.serviceOffset;
 
-    // TODO: memoize computed offsets on frame between readService, readArg1, and any others
+    // TODO: memoize computed offsets on frame between readService, readArg1,
+    // and any others
 
     // SKIP service~1
     var res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
