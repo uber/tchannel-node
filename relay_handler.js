@@ -380,7 +380,7 @@ function LazyRelayOutReq(conn, inreq) {
     self.channel = conn.channel;
     self.conn = conn;
     self.start = conn.timers.now();
-    self.remoetAddr = conn.remoteName;
+    self.remoteAddr = conn.remoteName;
     self.logger = conn.logger;
     self.inreq = inreq;
     self.id = self.conn.nextFrameId();
