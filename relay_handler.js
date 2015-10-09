@@ -377,8 +377,6 @@ function handleFrameLazily(frame) {
     // - v2.Types.CallRequestCont
     var self = this;
 
-    var now = self.channel.timers.now();
-
     if (!self.alive) {
         self.logger.warn('dropping frame from dead relay request', self.extendLogInfo({}));
         return;
@@ -394,6 +392,7 @@ function handleFrameLazily(frame) {
         }));
     }
 
+    var now = self.channel.timers.now();
     if (frame.type === v2.Types.CallRequest) {
         self._observeCallReqFrame(frame, now);
     } else if (frame.type === v2.Types.CallRequestCont) {
@@ -574,8 +573,6 @@ function handleFrameLazily(frame) {
     // - v2.Types.ErrorResponse
     var self = this;
 
-    var now = self.channel.timers.now();
-
     frame.setId(self.inreq.id);
     self.inreq.conn.socket.write(frame.buffer);
     if (frame.bodyRW.lazy.isFrameTerminal(frame)) {
@@ -585,6 +582,7 @@ function handleFrameLazily(frame) {
         }));
     }
 
+    var now = self.channel.timers.now();
     if (frame.type === v2.Types.CallResponse) {
         self._observeCallResFrame(frame, now);
     } else if (frame.type === v2.Types.CallResponseCont) {
