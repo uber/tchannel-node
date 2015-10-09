@@ -85,26 +85,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
 RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     var self = this;
 
-    if (self.circuits) {
-        self._monitorRequest(req, buildRes);
-    } else {
-        self._handleRequest(req, buildRes);
-    }
-};
-
-RelayHandler.prototype._monitorRequest = function _monitorRequest(req, buildRes) {
-    var self = this;
-
-    // TODO: null-return is error / declined indication... could be clearer
-    buildRes = self.circuits.monitorRequest(req, buildRes);
-    if (buildRes) {
-        self._handleRequest(req, buildRes);
-    }
-};
-
-RelayHandler.prototype._handleRequest = function _handleRequest(req, buildRes) {
-    var self = this;
-
     // TODO add this back in a performant way ??
     // if (rereq) {
     //     self.logger.error('relay request already exists for incoming request', {
@@ -119,6 +99,19 @@ RelayHandler.prototype._handleRequest = function _handleRequest(req, buildRes) {
     //     );
     //     return;
     // }
+
+    if (self.circuits) {
+        var result = self.circuits.getCircuitForRequest(req);
+        if (result.err) {
+            var errFrame = result.err;
+            buildRes().sendError(errFrame.codeName, errFrame.message);
+            return;
+        }
+
+        var circuit = result.value;
+        req.circuit = circuit;
+        circuit.state.onRequest(req);
+    }
 
     req.forwardTrace = true;
 

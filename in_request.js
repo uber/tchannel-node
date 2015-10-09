@@ -60,6 +60,7 @@ function TChannelInRequest(id, options) {
     self.start = self.channel.timers.now();
     self.res = null;
     self.err = null;
+    self.circuit = null;
 
     if (options.tracer) {
         self.setupTracing(options);
@@ -144,6 +145,10 @@ TChannelInRequest.prototype.handleFrame = function handleFrame(parts, isLast) {
 
 TChannelInRequest.prototype.emitError = function emitError(err) {
     var self = this;
+
+    if (self.circuit) {
+        self.circuit.state.onRequestError(err);
+    }
 
     self.err = err;
     self.errorEvent.emit(self, err);
