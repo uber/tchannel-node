@@ -311,10 +311,11 @@ function onIdentified(err) {
     self.handleFrameLazily(self.reqFrame);
     self.reqFrame = null;
 
+    var now = self.channel.timers.now();
     self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.relay.latency',
         'timing',
-        self.outreq.start - self.start,
+        now - self.start,
         new stat.RelayLatencyTags()
     ));
 };
