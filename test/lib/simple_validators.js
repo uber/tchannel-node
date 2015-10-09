@@ -60,27 +60,38 @@ function validateSpans(assert, actual, expected) {
         expectedById[mapSpanToUniqueId(item)] = item;
     });
 
-    module.exports.validate(assert, actualById, expectedById);
+    validate(assert, actualById, expectedById);
 };
 
-module.exports.validate = function validate(assert, actual, expected) {
-    Object.keys(expected).forEach(function (key) {
-        var actualValue = actual[key];
-        var expectedValue = expected[key];
+module.exports.validate = validate;
+module.exports.validate1 = validate1;
 
-        if (Buffer.isBuffer(actualValue)) {
-            actualValue = actualValue.toString('hex');
-        }
-
-        if (typeof expectedValue === 'function') {
-            return expectedValue(assert, actualValue, key);
-        }
-
-        if (typeof expectedValue === 'object') {
-            return validate(assert, actualValue, expectedValue);
-        }
-
-        assert.equals(actualValue, expectedValue, "key: " + key);
+function validate(assert, actual, expected, prefix) {
+    if (prefix) {
+        prefix += '.';
+    } else {
+        prefix = '';
+    }
+    Object.keys(expected).forEach(function each(key) {
+        validate1(assert,
+            prefix + key,
+            actual && actual[key],
+            expected && expected[key]);
     });
-};
+}
 
+function validate1(assert, desc, actual, expected) {
+    if (Buffer.isBuffer(actual)) {
+        actual = actual.toString('hex');
+    }
+
+    if (typeof expected === 'function') {
+        return expected(assert, actual, desc);
+    }
+
+    if (typeof expected === 'object') {
+        return validate(assert, actual, expected, desc);
+    }
+
+    assert.equals(actual, expected, desc);
+}
