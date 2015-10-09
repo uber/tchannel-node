@@ -261,6 +261,65 @@ allocCluster.test('relay emits expected stats', {
     });
 });
 
+allocCluster.test('lazy relay emits expected stats', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var one = cluster.channels[0];
+    var two = cluster.channels[1];
+    var stats = [];
+
+    one.setLazyHandling(true);
+    one.on('stat', function onStat(stat) {
+        stats.push(stat);
+    });
+
+    var oneToTwo = one.makeSubChannel({
+        serviceName: 'two',
+        peers: [two.hostPort]
+    });
+    oneToTwo.handler = new RelayHandler(oneToTwo);
+
+    var twoSvc = two.makeSubChannel({
+        serviceName: 'two'
+    });
+    twoSvc.register('echo', echo);
+
+    var client = TChannel({
+        logger: one.logger,
+        timeoutFuzz: 0
+    });
+    var twoClient = client.makeSubChannel({
+        serviceName: 'two',
+        peers: [one.hostPort],
+        requestDefaults: {
+            serviceName: 'two',
+            headers: {
+                as: 'raw',
+                cn: 'wat'
+            }
+        }
+    });
+
+    twoClient.request({
+        hasNoParent: true
+    }).send('echo', 'foo', 'bar', function done(err, res, arg2, arg3) {
+        assert.ifError(err, 'no unexpected error');
+        assert.equal(String(arg2), 'foo', 'expected arg2');
+        assert.equal(String(arg3), 'bar', 'expected arg3');
+
+        client.close();
+
+        process.nextTick(checkStat);
+
+        function checkStat() {
+            var statsByName = collectStatsByName(assert, stats);
+            validators.validate(assert, statsByName, fixture);
+        }
+
+        assert.end();
+    });
+});
+
 function echo(req, res, arg2, arg3) {
     res.headers.as = 'raw';
     res.sendOk(arg2, arg3);
