@@ -82,7 +82,6 @@ TChannelInRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     info.requestType = self.type;
     info.requestState = States.describe(self.state);
     info.requestRemoteAddr = self.remoteAddr;
-    info.socketRemoteAddr = self.connection.socketRemoteAddr;
     info.serviceName = self.serviceName;
     info.callerName = self.callerName;
     info.requestErr = self.err;
