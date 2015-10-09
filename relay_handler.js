@@ -28,6 +28,9 @@ RelayHandler.RelayRequest = RelayRequest;
 
 module.exports = RelayHandler;
 
+// "constant" byte buffer used for lookup in LazyRelayInReq#initRead
+var cnBytes = Buffer('cn');
+
 function RelayHandler(channel, circuits) {
     var self = this;
     self.channel = channel;
@@ -142,6 +145,8 @@ function LazyRelayInReq(conn, reqFrame) {
     self.alive = true;
     self.operations = null;
     self.timeHeapHandle = null;
+    self.headers = null;
+    self.endpoint = '';
 
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
@@ -165,21 +170,35 @@ LazyRelayInReq.prototype.initRead =
 function initRead() {
     var self = this;
 
+    // TODO: wrap errors in protocol read errors?
+
     var res = self.reqFrame.bodyRW.lazy.readTTL(self.reqFrame);
     if (res.err) {
-        // TODO: wrap? protocol read error?
         return res.err;
     }
     self.timeout = res.value;
 
     res = self.reqFrame.bodyRW.lazy.readService(self.reqFrame);
     if (res.err) {
-        // TODO: wrap? protocol read error?
         return res.err;
     }
     self.serviceName = res.value;
 
-    // TODO: lazy read self.callerName
+    res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
+    if (res.err) {
+        return res.err;
+    }
+    self.headers = res.value;
+    var cnHeader = self.headers.getValue(cnBytes);
+    if (cnHeader !== undefined) {
+        self.callerName = String(cnHeader);
+    }
+
+    res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, self.headers);
+    if (res.err) {
+        return res.err;
+    }
+    self.endpoint = String(res.value);
 
     return null;
 };
@@ -205,6 +224,8 @@ function _extendLogInfo(info) {
     info.inRemoteAddr = self.remoteAddr;
     info.inRequestId = self.id;
     info.serviceName = self.serviceName;
+    info.callerName = self.callerName;
+    info.endpoint = self.endpoint;
 
     // TODO: why not full peer.extendLogInfo
     if (self.peer) {
@@ -637,11 +658,6 @@ RelayRequest.prototype.onError = function onError(err) {
     var self = this;
 
     if (self.error) {
-        // TODO: verify
-        // remoteAddr: self.inreq.remoteAddr,
-        // serviceName: self.inreq.serviceName,
-        // endpoint: self.inreq.endpoint,
-        // callerName: self.inreq.callerName,
         self.logger.warn('Unexpected double onError', self.inreq.extendLogInfo({
             error: err,
             oldError: self.error
