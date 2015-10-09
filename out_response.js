@@ -242,6 +242,10 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
 TChannelOutResponse.prototype.emitError = function emitError(err) {
     var self = this;
 
+    if (self.inreq && self.inreq.circuit) {
+        self.inreq.circuit.state.onRequestError(err);
+    }
+
     self.error = err;
     self.errorEvent.emit(self, err);
 };
@@ -274,6 +278,17 @@ TChannelOutResponse.prototype.emitFinish = function emitFinish() {
 
     if (self.span) {
         self.spanEvent.emit(self, self.span);
+    }
+
+    if (self.inreq && self.inreq.circuit) {
+        // TODO distingiush res.ok?
+        // note that incoming requests do not have responseEvent and clear out
+        // their response upon finish.
+        if (errors.isUnhealthy(self.codeString)) {
+            self.inreq.circuit.state.onRequestUnhealthy();
+        } else {
+            self.inreq.circuit.state.onRequestHealthy();
+        }
     }
 
     self.finishEvent.emit(self);
