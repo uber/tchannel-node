@@ -334,8 +334,9 @@ TChannelHTTP.prototype.setHandler = function register(tchannel, handler) {
 
 TChannelHTTP.prototype.forwardToTChannel = function forwardToTChannel(tchannel, hreq, hres, requestOptions, callback) {
     var self = this;
-    var start = self.channel.timers.now();
+    self.channel = self.channel || tchannel;
     self.logger = self.logger || tchannel.logger;
+    var start = self.channel.timers.now();
     // TODO: more http state machine integration
 
     var options = tchannel.requestOptions(extendInto({
