@@ -40,14 +40,6 @@ var bench = path.join(__dirname, 'multi_bench.js');
 
 process.stderr.setMaxListeners(Infinity);
 
-var SERVER_PORT = 7100;
-var TRACE_SERVER_PORT = 7039;
-var RELAY_SERVER_PORT = 7038;
-var RELAY_TRACE_PORT = 7037;
-var STATSD_PORT = 7036;
-var INSTANCE_COUNT = 72;
-var CLIENT_PORT = 7041;
-
 module.exports = BenchmarkRunner;
 
 function BenchmarkRunner(opts) {
@@ -66,6 +58,14 @@ function BenchmarkRunner(opts) {
     self.benchProcs = [];
     self.benchCounter = 0;
     self.fileStream = null;
+
+    var SERVER_PORT = 7100;
+    var TRACE_SERVER_PORT = 7039;
+    var RELAY_SERVER_PORT = 7038;
+    var RELAY_TRACE_PORT = 7037;
+    var STATSD_PORT = 7036;
+    var INSTANCE_COUNT = 72;
+    var CLIENT_PORT = 7041;
 
     self.instanceCount = INSTANCE_COUNT;
     self.ports = {
@@ -165,7 +165,7 @@ BenchmarkRunner.prototype.startStatsd = function startStatsd() {
     var self = this;
 
     self.statsdServer = dgram.createSocket('udp4');
-    self.statsdServer.bind(STATSD_PORT);
+    self.statsdServer.bind(self.ports.statsdPort);
 };
 
 BenchmarkRunner.prototype.startServer =
@@ -182,6 +182,7 @@ function startServer(serverPort, instances) {
         self.opts.trace ? '--trace' : '--no-trace',
         '--traceRelayHostPort', '127.0.0.1:' + self.ports.relayTraceServerPort,
         '--port', String(serverPort),
+        '--statsdPort', String(self.ports.statsdPort),
         '--instances', String(instances),
         '--pingOverhead', noOverhead ? 'none' : 'norm:10,5',
         '--setOverhead', noOverhead ? 'none' : 'norm:200,20',
@@ -255,6 +256,7 @@ function startClient(clientPort) {
     var args = self.opts['--'];
     args = args.concat([
         '--benchPort', String(self.ports.serverPort),
+        '--relayServerPort', String(self.ports.relayServerPort),
         '--clientPort', String(clientPort),
         '--instanceNumber', String(self.benchCounter)
     ]);

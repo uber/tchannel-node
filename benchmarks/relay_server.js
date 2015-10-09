@@ -26,8 +26,7 @@ var process = require('process');
 var assert = require('assert');
 
 var TChannel = require('../channel.js');
-var ServiceProxy = require('../hyperbahn/service_proxy.js');
-var FakeEgressNodes = require('../test/lib/fake-egress-nodes.js');
+var RelayHandler = require('../relay_handler.js');
 
 var argv = parseArgs(process.argv.slice(2), {
     boolean: ['trace']
@@ -83,18 +82,18 @@ function RelayServer(opts) {
     //     interval: 5000,
     // })).run();
 
-    self.relay.handler = ServiceProxy({
-        channel: self.relay,
-        egressNodes: FakeEgressNodes({
-            hostPort: opts.type === 'bench-relay' ?
-                benchRelayHostPort : opts.type === 'trace-relay' ?
-                traceRelayHostPort : null,
-            topology: {
-                'benchmark': [benchRelayHostPort],
-                'tcollector': [traceRelayHostPort]
-            }
-        })
-    });
+    // self.relay.handler = ServiceProxy({
+    //     channel: self.relay,
+    //     egressNodes: FakeEgressNodes({
+    //         hostPort: opts.type === 'bench-relay' ?
+    //             benchRelayHostPort : opts.type === 'trace-relay' ?
+    //             traceRelayHostPort : null,
+    //         topology: {
+    //             'benchmark': [benchRelayHostPort],
+    //             'tcollector': [traceRelayHostPort]
+    //         }
+    //     })
+    // });
 
     self.serviceName = opts.type === 'bench-relay' ? 'benchmark' :
         opts.type === 'trace-relay' ? 'tcollector' :
@@ -106,10 +105,14 @@ function RelayServer(opts) {
         opts.type === 'trace-relay' ? opts.tracePort :
         null;
 
+    self.relaySubChan = self.relay.makeSubChannel({
+        serviceName: self.serviceName
+    });
+    self.relaySubChan.handler = new RelayHandler(self.relaySubChan);
+
     self.type = opts.type;
     self.instances = opts.instances;
 
-    self.relay.handler.createServiceChannel(self.serviceName);
     self.relay.listen(self.port, '127.0.0.1', onListen);
 
     function onListen() {
@@ -125,9 +128,10 @@ RelayServer.prototype.connect = function connect() {
     for (var i = 0; i < self.instances; i++) {
         var targetHostPort = '127.0.0.1:' + (basePort + i);
 
-        var peer = self.relay.handler.getServicePeer(
-            self.serviceName, targetHostPort
-        );
+        // var peer = self.relay.handler.getServicePeer(
+        //     self.serviceName, targetHostPort
+        // );
+        var peer = self.relaySubChan.peers.add(targetHostPort);
         peer.connect();
     }
 };

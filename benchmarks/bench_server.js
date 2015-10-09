@@ -40,6 +40,8 @@ var argv = parseArgs(process.argv.slice(2), {
     }
 });
 
+var SERVER_HOST = '127.0.0.1';
+
 assert(argv.port, 'port needed');
 assert(argv.instances, 'instances needed');
 
@@ -54,6 +56,7 @@ if (argv.trace) {
 }
 
 var INSTANCES = parseInt(argv.instances, 10);
+var STATS_PORT = parseInt(argv.statsdPort, 10);
 
 function BenchServer(port) {
     if (!(this instanceof BenchServer)) {
@@ -71,7 +74,7 @@ function BenchServer(port) {
         emitConnectionMetrics: false,
         statsd: new Statsd({
             host: '127.0.0.1',
-            port: 7036
+            port: STATS_PORT
         })
     });
 
@@ -160,7 +163,7 @@ BenchServer.prototype.registerEndpoints = function registerEndpoints() {
 BenchServer.prototype.listen = function listen() {
     var self = this;
 
-    self.server.listen(self.port, '127.0.0.1');
+    self.server.listen(self.port, SERVER_HOST);
 };
 
 for (var i = 0; i < INSTANCES; i++) {
