@@ -31,6 +31,7 @@ allocCluster.test('send lazy relay requests', {
     var two = cluster.channels[1];
 
     one.setLazyHandling(true);
+    one.setLazyRelaying(true);
     var oneToTwo = one.makeSubChannel({
         serviceName: 'two',
         peers: [two.hostPort]
@@ -80,6 +81,7 @@ allocCluster.test('send relay with tiny timeout', {
     var two = cluster.channels[1];
 
     one.setLazyHandling(true);
+    one.setLazyRelaying(true);
     var oneToTwo = one.makeSubChannel({
         serviceName: 'two',
         peers: [two.hostPort]
@@ -140,6 +142,7 @@ allocCluster.test('relay respects ttl', {
     var dest = cluster.channels[2];
 
     relay.setLazyHandling(true);
+    relay.setLazyRelaying(true);
     var relayChan = relay.makeSubChannel({
         serviceName: 'dest',
         peers: [dest.hostPort]
@@ -193,6 +196,7 @@ allocCluster.test('relay an error frame', {
     var four = cluster.channels[3];
 
     one.setLazyHandling(true);
+    one.setLazyRelaying(true);
     var oneToTwo = one.makeSubChannel({
         serviceName: 'two',
         peers: [two.hostPort, three.hostPort]
@@ -203,6 +207,7 @@ allocCluster.test('relay an error frame', {
          assert, 'handle requests eagerly');
 
     four.setLazyHandling(true);
+    four.setLazyRelaying(true);
     var fourToTwo = four.makeSubChannel({
         serviceName: 'two',
         peers: [two.hostPort, three.hostPort]
@@ -262,6 +267,7 @@ allocCluster.test('relay request times out', {
     var dest = cluster.channels[2];
 
     relay.setLazyHandling(true);
+    relay.setLazyRelaying(true);
     var relayChan = relay.makeSubChannel({
         serviceName: 'dest',
         peers: [dest.hostPort]
@@ -324,6 +330,7 @@ allocCluster.test('relay request declines on no peer', {
     var source = cluster.channels[1];
 
     relay.setLazyHandling(true);
+    relay.setLazyRelaying(true);
     var relayChan = relay.makeSubChannel({
         serviceName: 'dest',
         peers: []
@@ -369,6 +376,7 @@ allocCluster.test('relay request handles channel close correctly', {
     var dest = cluster.channels[2];
 
     relay.setLazyHandling(true);
+    relay.setLazyRelaying(true);
     var relayChan = relay.makeSubChannel({
         serviceName: 'dest',
         peers: [dest.hostPort]
