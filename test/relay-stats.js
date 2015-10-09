@@ -29,14 +29,21 @@ function isNumber(assert, value) {
     assert.ok(typeof value === 'number', 'expected number');
 }
 
-function isLoHostPort(assert, value) {
+function isLoHostPort(assert, value, key) {
+    var desc = key + ' value=' + JSON.stringify(value);
+
+    if (typeof value !== 'string') {
+        assert.fail(desc + ': expected a string value');
+        return;
+    }
+
     var parts = value.split(':');
-    assert.ok(parts.length === 2, 'value ' + value + ' splits into two parts');
-    assert.ok(parts[0] === '127.0.0.1', value + ' is a lo host:port');
-    assert.ok(
-        parseInt(parts[1]).toString() === parts[1],
-        value + ' has number port'
-    );
+    assert.ok(parts.length === 2,
+              desc + ': should split into two parts');
+    assert.ok(parts[0] === '127.0.0.1',
+              desc + ': is a lo host:port');
+    assert.ok(parseInt(parts[1]).toString() === parts[1],
+              desc + ': has number port');
 }
 
 var fixture = {
