@@ -117,6 +117,7 @@ function TChannel(options) {
 
     self.options = extend({
         useLazyHandling: false,
+        useLazyRelaying: false,
         timeoutCheckInterval: 100,
         timeoutFuzz: 100,
         connectionStalePeriod: CONN_STALE_PERIOD,
@@ -312,6 +313,25 @@ TChannel.prototype.setLazyHandling = function setLazyHandling(enabled) {
 
     function updateEachConn(conn) {
         conn.setLazyHandling(enabled);
+    }
+};
+
+TChannel.prototype.setLazyRelaying = function setLazyRelaying(enabled) {
+    var self = this;
+
+    if (self.topChannel) {
+        self.topChannel.setLazyRelaying(enabled);
+        return;
+    }
+
+    self.options.useLazyRelaying = enabled;
+
+    var keys = Object.keys(self.subChannels);
+    for (var i = 0; i < keys.length; i++) {
+        var subChan = self.subChannels[keys[i]];
+        if (subChan.handler.type === 'tchannel.relay-handler') {
+            subChan.handler.lazyEnabled = enabled;
+        }
     }
 };
 
