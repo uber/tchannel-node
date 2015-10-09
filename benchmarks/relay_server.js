@@ -59,8 +59,8 @@ function RelayServer(opts) {
     assert('trace' in opts, 'trace is a required options');
     assert('debug' in opts, 'debug is a required options');
 
-    var benchRelayHostPort = '127.0.0.1:' + opts.benchRelayPort;
-    var traceRelayHostPort = '127.0.0.1:' + opts.traceRelayPort;
+    // var benchRelayHostPort = '127.0.0.1:' + opts.benchRelayPort;
+    // var traceRelayHostPort = '127.0.0.1:' + opts.traceRelayPort;
 
     self.relay = TChannel({
         statTags: {
