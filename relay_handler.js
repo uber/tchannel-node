@@ -131,9 +131,10 @@ RelayHandler.prototype._handleRequest = function _handleRequest(req, buildRes) {
 function LazyRelayInReq(conn, reqFrame) {
     var self = this;
 
+    self.channel = conn.channel;
+    self.conn = conn;
     self.start = conn.timers.now();
     self.remoteAddr = conn.remoteName;
-    self.conn = conn;
     self.logger = conn.logger;
     self.peer = null;
     self.outreq = null;
@@ -376,9 +377,10 @@ function handleFrameLazily(frame) {
 function LazyRelayOutReq(conn, inreq) {
     var self = this;
 
-    self.start = conn.timers.now();
-    self.remoetAddr = conn.remoteName;
+    self.channel = conn.channel;
     self.conn = conn;
+    self.start = conn.timers.now();
+    self.remoteAddr = conn.remoteName;
     self.logger = conn.logger;
     self.inreq = inreq;
     self.id = self.conn.nextFrameId();
