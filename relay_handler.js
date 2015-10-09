@@ -101,7 +101,7 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     // }
 
     if (self.circuits) {
-        var result = self.circuits.getCircuitForReq(req);
+        var result = self.circuits.getCircuitForRequest(req);
         if (result.err) {
             var errFrame = result.err;
             buildRes().sendError(errFrame.codeName, errFrame.message);
