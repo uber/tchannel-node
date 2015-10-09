@@ -36,6 +36,7 @@ function RelayHandler(channel, circuits) {
     self.channel = channel;
     self.circuits = circuits || null;
     self.logger = self.channel.logger;
+    self.lazyEnabled = self.channel.options.useLazyRelaying;
 }
 
 RelayHandler.prototype.type = 'tchannel.relay-handler';
@@ -43,7 +44,9 @@ RelayHandler.prototype.type = 'tchannel.relay-handler';
 RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     var self = this;
 
-    // TODO: provide a by-service-name config hook?
+    if (!self.lazyEnabled) {
+        return false;
+    }
 
     var rereq = new LazyRelayInReq(conn, reqFrame);
     var err = rereq.initRead();
