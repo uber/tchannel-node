@@ -402,6 +402,7 @@ function onCallErrorFrame(errFrame) {
 
     var id = errFrame.id;
     var req = self.ops.getOutReq(id);
+    // TODO: req could rarely be a lazy req, then maybe call req.handleFrameLazily
 
     var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
     var err = codeErrorType({
