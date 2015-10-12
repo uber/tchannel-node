@@ -64,9 +64,8 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
 
     if (self.circuits) {
         self.logger.warn(
-            'circuit breaking for lazy relaying isn\'t implemented', {
-                serviceName: self.channel.serviceName
-            });
+            'circuit breaking for lazy relaying isn\'t implemented',
+            rereq.extendLogInfo({}));
         return false;
     }
 
