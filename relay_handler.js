@@ -272,7 +272,12 @@ function createOutRequest() {
         return;
     }
 
-    self.peer.waitForIdentified(self.boundOnIdentified);
+    var conn = chooseRelayPeerConnection(self.peer);
+    if (conn && conn.remoteName && !conn.closing) {
+        self.forwardTo(conn);
+    } else {
+        self.peer.waitForIdentified(self.boundOnIdentified);
+    }
 };
 
 LazyRelayInReq.prototype.onIdentified =
