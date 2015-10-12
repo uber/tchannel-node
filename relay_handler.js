@@ -69,6 +69,9 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return false;
     }
 
+    conn.ops.addInReq(rereq);
+    rereq.createOutRequest();
+
     self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.inbound.calls.recvd',
         'counter',
@@ -80,8 +83,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         )
     ));
 
-    conn.ops.addInReq(rereq);
-    rereq.createOutRequest();
     return true;
 };
 
