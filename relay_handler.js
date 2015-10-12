@@ -272,7 +272,12 @@ function createOutRequest() {
         return;
     }
 
-    self.peer.waitForIdentified(self.boundOnIdentified);
+    var conn = chooseRelayPeerConnection(self.peer);
+    if (conn && conn.remoteName && !conn.closing) {
+        self.forwardTo(conn);
+    } else {
+        self.peer.waitForIdentified(self.boundOnIdentified);
+    }
 };
 
 LazyRelayInReq.prototype.onIdentified =
@@ -293,6 +298,13 @@ function onIdentified(err) {
         // most likely
         self.logger.warn('onIdentified called on closing connection', self.extendLogInfo({}));
     }
+
+    self.forwardTo(conn);
+};
+
+LazyRelayInReq.prototype.forwardTo =
+function forwardTo(conn) {
+    var self = this;
 
     self.outreq = new LazyRelayOutReq(conn, self);
 
