@@ -194,7 +194,14 @@ function initRead() {
     }
     self.serviceName = res.value;
 
-    res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
+    return self.observabilityRead();
+};
+
+LazyRelayInReq.prototype.observabilityRead =
+function observabilityRead() {
+    var self = this;
+
+    var res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
     if (res.err) {
         return res.err;
     }
