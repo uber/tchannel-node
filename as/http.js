@@ -183,8 +183,9 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
 
     treq.headers.as = 'http';
     if (treq.streamed) {
+        var req = treq.sendStreams(arg1, arg2, hreq, onStreamResponse);
         self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.http-handler.request-build-latency',
+            'tchannel.http-handler.egress.request-build-latency',
             'timing',
             self.channel.timers.now() - start,
             new stat.HTTPHanlderBuildLatencyTags(
@@ -193,7 +194,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
                 treq.streamed
             )
         ));
-        return treq.sendStreams(arg1, arg2, hreq, onStreamResponse);
+        return req;
     }
     getRawBody(hreq, {
         length: hreq.headers['content-length'],
@@ -205,8 +206,9 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
             callback(err, null, null, null);
             return err;
         }
+        var req = treq.send(arg1, arg2, body, onResponse);
         self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.http-handler.request-build-latency',
+            'tchannel.http-handler.egress.request-build-latency',
             'timing',
             self.channel.timers.now() - start,
             new stat.HTTPHanlderBuildLatencyTags(
@@ -215,7 +217,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
                 treq.streamed
             )
         ));
-        return treq.send(arg1, arg2, body, onResponse);
+        return req;
     }
 
     function onResponse(err, tres, arg2, arg3) {
@@ -256,8 +258,13 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
             });
             callback(fromBufferErr, null, null, null);
         } else {
+            if (tres.streamed) {
+                callback(null, arg2res.value, tres.arg3, null);
+            } else {
+                callback(null, arg2res.value, null, tres.arg3);
+            }
             self.channel.emitFastStat(self.channel.buildStat(
-                'tchannel.outbound.http-handler.response-build-latency',
+                'tchannel.http-handler.egress.response-build-latency',
                 'timing',
                 self.channel.timers.now() - start,
                 new stat.HTTPHanlderBuildLatencyTags(
@@ -266,11 +273,6 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
                     treq.streamed
                 )
             ));
-            if (tres.streamed) {
-                callback(null, arg2res.value, tres.arg3, null);
-            } else {
-                callback(null, arg2res.value, null, tres.arg3);
-            }
         }
     }
 };
@@ -294,12 +296,6 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, s
     }
     var arg2 = arg2res.value;
     if (body) {
-        self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.inbound.http-handler.response-build-latency',
-            'timing',
-            self.channel.timers.now() - start,
-            statTags
-        ));
         buildResponse({
             streamed: false,
             headers: {
@@ -307,21 +303,29 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, s
             }
         }).sendOk(arg2, body);
         callback(null);
+        self.channel.emitFastStat(self.channel.buildStat(
+            'tchannel.http-handler.ingress.response-build-latency',
+            'timing',
+            self.channel.timers.now() - start,
+            statTags
+        ));
         return null;
     }
 
-    self.channel.emitFastStat(self.channel.buildStat(
-        'tchannel.inbound.http-handler.response-build-latency',
-        'timing',
-        self.channel.timers.now() - start,
-        statTags
-    ));
-    return buildResponse({
+
+    var res = buildResponse({
         streamed: true,
         headers: {
             as: 'http'
         }
     }).sendStreams(arg2, hres, callback);
+    self.channel.emitFastStat(self.channel.buildStat(
+        'tchannel.http-handler.ingress.response-build-latency',
+        'timing',
+        self.channel.timers.now() - start,
+        statTags
+    ));
+    return res;
 };
 
 TChannelHTTP.prototype.setHandler = function register(tchannel, handler) {
@@ -433,8 +437,10 @@ TChannelHTTP.prototype._forwardToLBPool = function _forwardToLBPool(options, inr
             callback(err);
             return;
         }
+        outres.sendResponse(res, body);
+        callback(null);
         self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.inbound.http-handler.service-call-latency',
+            'tchannel.http-handler.ingress.service-call-latency',
             'timing',
             self.channel.timers.now() - start,
             new stat.HTTPHanlderBuildLatencyTags(
@@ -443,8 +449,6 @@ TChannelHTTP.prototype._forwardToLBPool = function _forwardToLBPool(options, inr
                 false
             )
         ));
-        outres.sendResponse(res, body);
-        callback(null);
     }
 };
 
@@ -465,8 +469,10 @@ TChannelHTTP.prototype._forwardToNodeHTTP = function _forwardToNodeHTTP(options,
     function onResponse(inres) {
         if (!sent) {
             sent = true;
+            outres.sendResponse(inres);
+            callback(null);
             self.channel.emitFastStat(self.channel.buildStat(
-                'tchannel.inbound.http-handler.service-call-latency',
+                'tchannel.http-handler.ingress.service-call-latency',
                 'timing',
                 self.channel.timers.now() - start,
                 new stat.HTTPHanlderBuildLatencyTags(
@@ -475,8 +481,6 @@ TChannelHTTP.prototype._forwardToNodeHTTP = function _forwardToNodeHTTP(options,
                     true
                 )
             ));
-            outres.sendResponse(inres);
-            callback(null);
         }
     }
 
@@ -561,7 +565,7 @@ AsHTTPHandler.prototype.handleRequest = function handleRequest(req, buildRespons
         };
 
         self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.inbound.http-handler.request-build-latency',
+            'tchannel.http-handler.ingress.request-build-latency',
             'timing',
             self.channel.timers.now() - start,
             new stat.HTTPHanlderBuildLatencyTags(
