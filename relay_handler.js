@@ -294,6 +294,13 @@ function onIdentified(err) {
         self.logger.warn('onIdentified called on closing connection', self.extendLogInfo({}));
     }
 
+    self.forwardTo(conn);
+};
+
+LazyRelayInReq.prototype.forwardTo =
+function forwardTo(conn) {
+    var self = this;
+
     self.outreq = new LazyRelayOutReq(conn, self);
 
     var ttl = self.updateTTL(self.outreq.start);
