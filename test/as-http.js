@@ -30,9 +30,83 @@ var test = require('tape');
 var TChannelHTTP = require('../as/http.js');
 var allocCluster = require('./lib/alloc-cluster.js');
 var LBPool = require('lb_pool').Pool;
+var validators = require('./lib/simple_validators');
+
+function isNumber(assert, value) {
+    assert.ok(typeof value === 'number', 'expected number');
+}
+
+var fixture = {
+    'tchannel.http-handler.egress.request-build-latency': {
+        'name': 'tchannel.http-handler.egress.request-build-latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callerName': 'wat',
+            'targetService': 'test_http'
+        }
+    },
+    'tchannel.http-handler.egress.response-build-latency': {
+        'name': 'tchannel.http-handler.egress.response-build-latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callerName': 'wat',
+            'targetService': 'test_http'
+        }
+    },
+    'tchannel.http-handler.ingress.request-build-latency': {
+        'name': 'tchannel.http-handler.ingress.request-build-latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callerName': 'wat',
+            'targetService': 'test_http'
+        }
+    },
+    'tchannel.http-handler.ingress.response-build-latency': {
+        'name': 'tchannel.http-handler.ingress.response-build-latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callerName': 'wat',
+            'targetService': 'test_http'
+        }
+    },
+    'tchannel.http-handler.ingress.service-call-latency': {
+        'name': 'tchannel.http-handler.ingress.service-call-latency',
+        'type': 'timing',
+        'value': isNumber,
+        'tags': {
+            'app': '',
+            'host': '',
+            'cluster': '',
+            'version': '',
+            'callerName': 'wat',
+            'targetService': 'test_http'
+        }
+    },
+};
 
 allocHTTPTest('as/http can bridge a service using node http (streaming)', {
-    onServiceRequest: handleTestHTTPRequest
+    onServiceRequest: handleTestHTTPRequest,
+    verifyStats: true
 }, function t(cluster, assert) {
 
     var egressHost = cluster.httpEgress.address().address + ':' +
@@ -108,7 +182,8 @@ allocHTTPTest('as/http can bridge a service using node http (streaming)', {
 
 allocHTTPTest('as/http can bridge a service using lbpool (non-streaming)', {
     onServiceRequest: handleTestHTTPRequest,
-    enableLBPool: true
+    enableLBPool: true,
+    verifyStats: true
 }, function t(cluster, assert) {
 
     var egressHost = cluster.httpEgress.address().address + ':' +
@@ -303,6 +378,13 @@ function allocHTTPBridge(opts) {
     cluster.ingressChan = cluster.ingressServer.makeSubChannel(chanOpts);
     cluster.egressChan = cluster.egressServer.makeSubChannel(chanOpts);
 
+    if (opts.verifyStats) {
+        cluster.stats = [];
+        cluster.ingressServer.on('stat', function onStat(stat) {
+            cluster.stats.push(stat);
+        });
+    }
+
     cluster.httpEgress.on('request', onEgressRequest);
 
     cluster.requestOptions = {
@@ -372,6 +454,15 @@ function allocHTTPBridge(opts) {
         cluster.httpEgress.close(closed.signal);
         cluster.httpService.close(closed.signal);
         if (opts.lbpool) opts.lbpool.close();
+
+        if (opts.verifyStats) {
+            process.nextTick(checkStat);
+        }
+
+        function checkStat() {
+            var statsByName = collectStatsByName(opts.assert, cluster.stats);
+            validators.validate(opts.assert, statsByName, fixture);
+        }
         if (callback) closed(callback);
     }
 
@@ -436,4 +527,13 @@ function allocHTTPServer(onRequest, callback) {
     function onListening() {
         callback();
     }
+}
+
+function collectStatsByName(assert, stats) {
+    var byName = {};
+    for (var i = 0; i < stats.length; i++) {
+        var stat = stats[i];
+        byName[stat.name] = stat;
+    }
+    return byName;
 }
