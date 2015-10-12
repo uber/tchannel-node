@@ -83,6 +83,8 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         )
     ));
 
+    rereq.reqFrame = null;
+
     return true;
 };
 
@@ -317,7 +319,6 @@ function forwardTo(conn) {
     self.outreq.timeout = ttl;
     conn.ops.addOutReq(self.outreq);
     self.handleFrameLazily(self.reqFrame);
-    self.reqFrame = null;
 
     var now = self.channel.timers.now();
     self.channel.emitFastStat(self.channel.buildStat(
