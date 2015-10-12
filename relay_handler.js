@@ -154,7 +154,6 @@ function LazyRelayInReq(conn, reqFrame) {
     self.alive = true;
     self.operations = null;
     self.timeHeapHandle = null;
-    self.headers = null;
     self.endpoint = '';
 
     self.boundExtendLogInfo = extendLogInfo;
@@ -197,13 +196,13 @@ function initRead() {
     if (res.err) {
         return res.err;
     }
-    self.headers = res.value;
-    var cnHeader = self.headers.getValue(cnBytes);
+    var headers = res.value;
+    var cnHeader = headers.getValue(cnBytes);
     if (cnHeader !== undefined) {
         self.callerName = String(cnHeader);
     }
 
-    res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, self.headers);
+    res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, headers);
     if (res.err) {
         return res.err;
     }
