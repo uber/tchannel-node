@@ -20,11 +20,7 @@
 
 'use strict';
 
-var parallel = require('run-parallel');
-var Buffer = require('buffer').Buffer;
 var allocCluster = require('./lib/alloc-cluster.js');
-var EndpointHandler = require('../endpoint-handler');
-var TChannel = require('../channel.js');
 
 allocCluster.test('large arg3 on utf8 non-English characters', 2, function t(cluster, assert) {
     var one = cluster.channels[0];
