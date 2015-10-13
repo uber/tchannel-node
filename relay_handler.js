@@ -55,15 +55,7 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return true;
     }
 
-    err = rereq.observabilityRead();
-    if (err) {
-        // NOTE: request already sent, so just note any problem and #moveon
-        self.logger.warn(
-            'error reading lazy frame observability fields',
-            self.extendLogInfo({
-                error: err
-            }));
-    }
+    rereq.observabilityRead();
 
     rereq.peer = self.channel.peers.choosePeer(null);
     if (!rereq.peer) {
@@ -213,13 +205,20 @@ function observabilityRead() {
     var self = this;
 
     if (self.observabilityReadDone || !self.reqFrame) {
-        return null;
+        return;
     }
     self.observabilityReadDone = true;
 
+    // NOTE: request already sent, so just note any problem and #moveon
+
     var res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
     if (res.err) {
-        return res.err;
+        self.logger.warn(
+            'error reading lazy frame headers for observability',
+            self.extendLogInfo({
+                error: res.err
+            }));
+        return;
     }
     var headers = res.value;
     var cnHeader = headers.getValue(cnBytes);
@@ -229,11 +228,14 @@ function observabilityRead() {
 
     res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, headers);
     if (res.err) {
-        return res.err;
+        self.logger.warn(
+            'error reading lazy frame arg1 for observability',
+            self.extendLogInfo({
+                error: res.err
+            }));
+        return;
     }
     self.endpoint = String(res.value);
-
-    return null;
 };
 
 LazyRelayInReq.prototype.extendLogInfo =
