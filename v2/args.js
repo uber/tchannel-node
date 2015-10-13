@@ -170,8 +170,7 @@ ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(body, buffer, of
 
     do {
         var arg = body.args[i] || Buffer(0);
-        if (!Buffer.isBuffer(arg) &&
-            buffer.length < offset + Buffer.byteLength(arg, 'utf8')) {
+        if (!Buffer.isBuffer(arg)) {
             arg = new Buffer(arg);
         }
         var min = self.overhead + arg.length ? 1 : 0;
