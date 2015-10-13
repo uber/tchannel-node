@@ -55,8 +55,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return true;
     }
 
-    rereq.observabilityRead();
-
     rereq.peer = self.channel.peers.choosePeer(null);
     if (!rereq.peer) {
         rereq.sendErrorFrame('Declined', 'no peer available for request');
@@ -73,6 +71,8 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
 
     conn.ops.addInReq(rereq);
     rereq.createOutRequest();
+
+    rereq.observabilityRead();
 
     self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.inbound.calls.recvd',
@@ -255,6 +255,10 @@ LazyRelayInReq.prototype._extendLogInfo =
 function _extendLogInfo(info) {
     var self = this;
 
+    if (!self.observabilityReadDone && self.reqFrame) {
+        self.observabilityRead();
+    }
+
     info.requestType = self.type;
     info.inRemoteAddr = self.remoteAddr;
     info.inRequestId = self.id;
@@ -426,6 +430,7 @@ function handleFrameLazily(frame) {
         }));
     }
 
+    self.observabilityRead();
     if (frame.type === v2.Types.CallRequest) {
         self._observeCallReqFrame(frame);
     } else if (frame.type === v2.Types.CallRequestCont) {
@@ -546,6 +551,8 @@ LazyRelayOutReq.prototype.emitError =
 function emitError(err) {
     var self = this;
 
+    self.observabilityRead();
+
     var now = self.channel.timers.now();
     var elapsed = now - self.start;
 
@@ -615,6 +622,7 @@ function handleFrameLazily(frame) {
         }));
     }
 
+    self.inreq.observabilityRead();
     var now = self.channel.timers.now();
     if (frame.type === v2.Types.CallResponse) {
         self._observeCallResFrame(frame, now);
