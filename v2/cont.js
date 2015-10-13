@@ -51,7 +51,7 @@ CallRequestCont.RW.lazy.readFlags = function readFlags(frame) {
 
 CallRequestCont.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
     var flags = CallRequestCont.RW.lazy.readFlags(frame);
-    var frag = flags & CallFlags.Fragment;
+    var frag = flags.value & CallFlags.Fragment;
     return !frag;
 };
 
@@ -134,7 +134,7 @@ CallResponseCont.RW.lazy.readFlags = function readFlags(frame) {
 
 CallResponseCont.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
     var flags = CallResponseCont.RW.lazy.readFlags(frame);
-    var frag = flags & CallFlags.Fragment;
+    var frag = flags.value & CallFlags.Fragment;
     return !frag;
 };
 
