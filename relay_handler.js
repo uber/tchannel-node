@@ -400,17 +400,16 @@ function handleFrameLazily(frame) {
         }));
     }
 
-    var now = self.channel.timers.now();
     if (frame.type === v2.Types.CallRequest) {
-        self._observeCallReqFrame(frame, now);
+        self._observeCallReqFrame(frame);
     } else if (frame.type === v2.Types.CallRequestCont) {
-        self._observeCallReqContFrame(frame, now);
+        self._observeCallReqContFrame(frame);
     // } else { TODO: log
     }
 };
 
 LazyRelayInReq.prototype._observeCallReqFrame =
-function _observeCallReqFrame(frame, now) {
+function _observeCallReqFrame(frame) {
     var self = this;
 
     self.channel.emitFastStat(self.channel.buildStat(
@@ -448,7 +447,7 @@ function _observeCallReqFrame(frame, now) {
 };
 
 LazyRelayInReq.prototype._observeCallReqContFrame =
-function _observeCallReqContFrame(frame, now) {
+function _observeCallReqContFrame(frame) {
     var self = this;
 
     self.channel.emitFastStat(self.channel.buildStat(
