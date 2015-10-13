@@ -157,6 +157,7 @@ function LazyRelayInReq(conn, reqFrame) {
     self.operations = null;
     self.timeHeapHandle = null;
     self.endpoint = '';
+    self.observabilityReadDone = false;
 
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
@@ -200,6 +201,11 @@ function initRead() {
 LazyRelayInReq.prototype.observabilityRead =
 function observabilityRead() {
     var self = this;
+
+    if (self.observabilityReadDone || !self.reqFrame) {
+        return null;
+    }
+    self.observabilityReadDone = true;
 
     var res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
     if (res.err) {
