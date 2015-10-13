@@ -63,11 +63,14 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     }
 
     if (self.circuits) {
-        self.logger.warn('circuit breaking for lazy realying isn\'t implemented', {
-            serviceName: self.channel.serviceName
-        });
+        self.logger.warn(
+            'circuit breaking for lazy relaying isn\'t implemented',
+            rereq.extendLogInfo({}));
         return false;
     }
+
+    conn.ops.addInReq(rereq);
+    rereq.createOutRequest();
 
     self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.inbound.calls.recvd',
@@ -80,8 +83,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         )
     ));
 
-    conn.ops.addInReq(rereq);
-    rereq.createOutRequest();
     return true;
 };
 
@@ -153,7 +154,6 @@ function LazyRelayInReq(conn, reqFrame) {
     self.alive = true;
     self.operations = null;
     self.timeHeapHandle = null;
-    self.headers = null;
     self.endpoint = '';
 
     self.boundExtendLogInfo = extendLogInfo;
@@ -196,13 +196,13 @@ function initRead() {
     if (res.err) {
         return res.err;
     }
-    self.headers = res.value;
-    var cnHeader = self.headers.getValue(cnBytes);
+    var headers = res.value;
+    var cnHeader = headers.getValue(cnBytes);
     if (cnHeader !== undefined) {
         self.callerName = String(cnHeader);
     }
 
-    res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, self.headers);
+    res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, headers);
     if (res.err) {
         return res.err;
     }
@@ -400,17 +400,16 @@ function handleFrameLazily(frame) {
         }));
     }
 
-    var now = self.channel.timers.now();
     if (frame.type === v2.Types.CallRequest) {
-        self._observeCallReqFrame(frame, now);
+        self._observeCallReqFrame(frame);
     } else if (frame.type === v2.Types.CallRequestCont) {
-        self._observeCallReqContFrame(frame, now);
+        self._observeCallReqContFrame(frame);
     // } else { TODO: log
     }
 };
 
 LazyRelayInReq.prototype._observeCallReqFrame =
-function _observeCallReqFrame(frame, now) {
+function _observeCallReqFrame(frame) {
     var self = this;
 
     self.channel.emitFastStat(self.channel.buildStat(
@@ -448,7 +447,7 @@ function _observeCallReqFrame(frame, now) {
 };
 
 LazyRelayInReq.prototype._observeCallReqContFrame =
-function _observeCallReqContFrame(frame, now) {
+function _observeCallReqContFrame(frame) {
     var self = this;
 
     self.channel.emitFastStat(self.channel.buildStat(
