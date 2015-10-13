@@ -26,6 +26,7 @@ require('./argstream.js');
 require('./safe-quit.js');
 require('./timeouts.js');
 require('./send.js');
+require('./large-send.js');
 require('./retry.js');
 require('./relay.js');
 require('./relay_lazy.js');
