@@ -55,6 +55,16 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return true;
     }
 
+    err = rereq.observabilityRead();
+    if (err) {
+        // NOTE: request already sent, so just note any problem and #moveon
+        self.logger.warn(
+            'error reading lazy frame observability fields',
+            self.extendLogInfo({
+                error: err
+            }));
+    }
+
     rereq.peer = self.channel.peers.choosePeer(null);
     if (!rereq.peer) {
         rereq.sendErrorFrame('Declined', 'no peer available for request');
@@ -195,7 +205,7 @@ function initRead() {
     }
     self.serviceName = res.value;
 
-    return self.observabilityRead();
+    return null;
 };
 
 LazyRelayInReq.prototype.observabilityRead =
