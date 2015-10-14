@@ -848,8 +848,10 @@ TChannel.prototype._request = function _request(opts) {
 };
 
 TChannel.prototype.quit = // to provide backward compatibility.
-TChannel.prototype.close = function close(callback) {
+TChannel.prototype.close =
+function close(callback) {
     var self = this;
+
     assert(!self.destroyed, 'TChannel double close');
     self.destroyed = true;
 
