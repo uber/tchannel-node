@@ -20,6 +20,7 @@
 
 'use strict';
 
+var fs = require('fs');
 var extend = require('xtend');
 var CountedReadySignal = require('ready-signal/counted');
 var test = require('tape');
@@ -29,6 +30,24 @@ var debugLogtron = require('debug-logtron');
 
 var TChannel = require('../../channel.js');
 var CollapsedAssert = require('./collapsed-assert.js');
+
+var defaultChannelOptions = {};
+if (process.env.TCHANNEL_TEST_CONFIG) {
+    defaultChannelOptions = JSON.parse(
+        fs.readFileSync(process.env.TCHANNEL_TEST_CONFIG, 'utf8'));
+    JSON.stringify(defaultChannelOptions, null, 4)
+        .split('\n')
+        .forEach(function each(line, i) {
+            if (i === 0) {
+                console.log(
+                    '# allocCluster using default channel config from %s: %s',
+                    process.env.TCHANNEL_TEST_CONFIG,
+                    line);
+            } else {
+                console.log('# %s', line);
+            }
+        });
+}
 
 module.exports = allocCluster;
 
@@ -57,7 +76,7 @@ function allocCluster(opts) {
         logger: logger,
         timeoutFuzz: 0,
         traceSample: 1
-    }, opts.channelOptions || opts);
+    }, defaultChannelOptions, opts.channelOptions || opts);
 
     for (var i = 0; i < opts.numPeers; i++) {
         createChannel(i);
