@@ -227,7 +227,7 @@ Test.prototype.stopClients = function stopClients() {
     var count = 1;
     this.clients.forEach(function each(client) {
         count++;
-        client.quit(closed);
+        (client.topChannel || client).quit(closed);
     });
     closed();
 
