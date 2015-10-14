@@ -855,6 +855,13 @@ function close(callback) {
     assert(!self.destroyed, 'TChannel double close');
     self.destroyed = true;
 
+    self._close(callback);
+};
+
+TChannel.prototype._close =
+function _close(callback) {
+    var self = this;
+
     var counter = 1;
 
     if (self.sanityTimer) {
@@ -885,8 +892,9 @@ function close(callback) {
         serviceNames.forEach(function each(serviceName) {
             var svcchan = self.subChannels[serviceName];
             if (!svcchan.destroyed) {
+                svcchan.destroyed = true;
                 counter++;
-                svcchan.close(onClose);
+                svcchan._close(onClose);
             }
         });
     }
