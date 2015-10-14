@@ -852,6 +852,8 @@ TChannel.prototype.close =
 function close(callback) {
     var self = this;
 
+    assert(!self.topChannel, 'cannot close sub-TChannel');
+
     assert(!self.destroyed, 'TChannel double close');
     self.destroyed = true;
 
