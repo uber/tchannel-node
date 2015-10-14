@@ -891,7 +891,10 @@ TChannel.prototype.close = function close(callback) {
         self.timers.clearTimeout(self.batchStatTimer);
     }
 
+    counter++;
     self.peers.close(onClose);
+
+    onClose();
 
     function closeServerSocket() {
         self.serverSocket.once('close', onClose);
