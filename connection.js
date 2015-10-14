@@ -691,13 +691,21 @@ InitOperation.prototype.onTimeout = function onTimeout(now) {
     self.connection.resetAll(err);
 };
 
-TChannelConnection.prototype.sendLazyErrorFrame =
-function sendLazyErrorFrame(reqFrame, codeString, message) {
+TChannelConnection.prototype.sendLazyErrorFrameForReq =
+function sendLazyErrorFrameForReq(reqFrame, codeString, message) {
     var self = this;
 
     var res = reqFrame.bodyRW.lazy.readTracing(reqFrame);
     var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
-    self.handler.sendErrorFrame(reqFrame.id, tracing, codeString, message);
+
+    self.sendLazyErrorFrame(reqFrame.id, tracing, codeString, message);
+};
+
+TChannelConnection.prototype.sendLazyErrorFrame =
+function sendLazyErrorFrame(id, tracing, codeString, message) {
+    var self = this;
+
+    self.handler.sendErrorFrame(id, tracing, codeString, message);
 };
 
 TChannelConnection.prototype._drain =

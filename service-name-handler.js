@@ -52,7 +52,7 @@ TChannelServiceNameHandler.prototype.handleLazily = function handleLazily(conn, 
             error: res.err
         }));
         // TODO: protocol error instead?
-        conn.sendLazyErrorFrame(reqFrame, 'BadRequest', 'failed to read serviceName');
+        conn.sendLazyErrorFrameForReq(reqFrame, 'BadRequest', 'failed to read serviceName');
         return false;
     }
 
@@ -61,7 +61,7 @@ TChannelServiceNameHandler.prototype.handleLazily = function handleLazily(conn, 
         // TODO: reqFrame.extendLogInfo would be nice, especially if it added
         // things like callerName and arg1
         self.channel.logger.warn('missing service name in lazy frame', conn.extendLogInfo({}));
-        conn.sendLazyErrorFrame(reqFrame, 'BadRequest', 'missing serviceName');
+        conn.sendLazyErrorFrameForReq(reqFrame, 'BadRequest', 'missing serviceName');
         return false;
     }
 

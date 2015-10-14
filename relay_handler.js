@@ -375,7 +375,7 @@ function onError(err) {
 LazyRelayInReq.prototype.sendErrorFrame =
 function sendErrorFrame(codeName, message) {
     var self = this;
-    self.conn.sendLazyErrorFrame(self.reqFrame, codeName, message);
+    self.conn.sendLazyErrorFrameForReq(self.reqFrame, codeName, message);
 };
 
 LazyRelayInReq.prototype.handleFrameLazily =
