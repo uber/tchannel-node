@@ -63,10 +63,14 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     }
 
     if (self.circuits) {
-        self.logger.warn(
-            'circuit breaking for lazy relaying isn\'t implemented',
-            rereq.extendLogInfo({}));
-        return false;
+        var circuit = self.circuits.getCircuit(rereq.callerName, rereq.serviceName, rereq.endpoint);
+        if (!circuit.state.shouldRequest()) {
+            rereq.sendErrorFrame('Declined', 'Service is not healthy');
+            return true;
+        }
+
+        rereq.circuit = circuit;
+        circuit.state.onRequest(rereq);
     }
 
     conn.ops.addInReq(rereq);
@@ -105,16 +109,15 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     // }
 
     if (self.circuits) {
-        var result = self.circuits.getCircuitForRequest(req);
-        if (result.err) {
-            var errFrame = result.err;
-            buildRes().sendError(errFrame.codeName, errFrame.message);
+        var circuit = self.circuits.getCircuit(req.headers.cn || 'no-cn', req.serviceName, String(req.arg1));
+        if (!circuit.state.shouldRequest()) {
+            buildRes().sendError('Declined', 'Service is not healthy');
             return;
         }
 
-        var circuit = result.value;
         req.circuit = circuit;
         circuit.state.onRequest(req);
+
     }
 
     req.forwardTrace = true;
@@ -155,6 +158,8 @@ function LazyRelayInReq(conn, reqFrame) {
     self.operations = null;
     self.timeHeapHandle = null;
     self.endpoint = '';
+    self.error = null;
+    self.tracing = null;
 
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
@@ -207,6 +212,10 @@ function initRead() {
         return res.err;
     }
     self.endpoint = String(res.value);
+
+    res = self.reqFrame.bodyRW.lazy.readTracing(self.reqFrame);
+    var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
+    self.tracing = tracing;
 
     return null;
 };
@@ -354,13 +363,18 @@ LazyRelayInReq.prototype.onError =
 function onError(err) {
     var self = this;
 
-    if (!self.alive) {
+    if (!self.alive && self.error) {
         self.logger.warn('dropping error from dead relay request', self.extendLogInfo({
             error: err
         }));
         return;
     }
 
+    if (self.circuit) {
+        self.circuit.state.onRequestError(err);
+    }
+
+    self.error = err;
     self.alive = false;
     var codeName = errors.classify(err) || 'UnexpectedError';
     self.sendErrorFrame(codeName, err.message);
@@ -375,7 +389,7 @@ function onError(err) {
 LazyRelayInReq.prototype.sendErrorFrame =
 function sendErrorFrame(codeName, message) {
     var self = this;
-    self.conn.sendLazyErrorFrameForReq(self.reqFrame, codeName, message);
+    self.conn.sendLazyErrorFrame(self.id, self.tracing, codeName, message);
 };
 
 LazyRelayInReq.prototype.handleFrameLazily =
@@ -549,6 +563,10 @@ function emitError(err) {
         )
     ));
 
+    if (self.inreq.circuit) {
+        self.inreq.circuit.state.onRequestError(err);
+    }
+
     self.inreq.onError(err);
 };
 
@@ -624,6 +642,14 @@ function _observeErrorFrame(errFrame, now) {
     }
     var code = res.value;
     var codeName = v2.ErrorResponse.CodeNames[code] || 'unknown';
+
+    if (self.inreq.circuit) {
+        if (errors.isUnhealthy(codeName)) {
+            self.inreq.circuit.state.onRequestUnhealthy();
+        } else {
+            self.inreq.circuit.state.onRequestHealthy();
+        }
+    }
 
     self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.outbound.calls.system-errors',
@@ -718,6 +744,10 @@ function _observeCallResFrame(frame, now) {
             0
         )
     ));
+
+    if (self.inreq.circuit) {
+        self.inreq.circuit.state.onRequestHealthy();
+    }
 
     var res = frame.bodyRW.lazy.readFlags(frame);
     if (res.err) {
