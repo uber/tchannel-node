@@ -224,15 +224,18 @@ Test.prototype.fillPipeline = function fillPipeline() {
 Test.prototype.stopClients = function stopClients() {
     var self = this;
 
-    this.clients.forEach(function each(client, pos) {
-        if (pos === self.clients.length - 1) {
-            client.quit(function done() {
-                self.callback();
-            });
-        } else {
-            client.quit();
-        }
+    var count = 1;
+    this.clients.forEach(function each(client) {
+        count++;
+        client.quit(closed);
     });
+    closed();
+
+    function closed() {
+        if (--count <= 0) {
+            self.callback();
+        }
+    }
 };
 
 Test.prototype.sendNext = function sendNext() {
