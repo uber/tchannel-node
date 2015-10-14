@@ -644,7 +644,7 @@ function _observeErrorFrame(errFrame, now) {
     var code = res.value;
     var codeName = v2.ErrorResponse.CodeNames[code] || 'unknown';
 
-    if (self.inreq && self.inreq.circuit) {
+    if (self.inreq.circuit) {
         if (errors.isUnhealthy(codeName)) {
             self.inreq.circuit.state.onRequestUnhealthy();
         } else {
@@ -746,7 +746,7 @@ function _observeCallResFrame(frame, now) {
         )
     ));
 
-    if (self.inreq && self.inreq.circuit) {
+    if (self.inreq.circuit) {
         self.inreq.circuit.state.onRequestHealthy();
     }
 
