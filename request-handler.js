@@ -54,8 +54,12 @@ RequestCallbackHandler.prototype.handleRequest = function handleRequest(req, bui
     var res;
     if (req.streamed) {
         req.withArg23(function onArg23(err, arg2, arg3) {
+            if (req.res && req.res.responseAlreadyDone()) {
+                return;
+            }
+
             res = buildResponse({streamed: false});
-            return self.callback.call(self.thisp, req, res, arg2, arg3);
+            self.callback.call(self.thisp, req, res, arg2, arg3);
         });
     } else {
         res = buildResponse({streamed: false});

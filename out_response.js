@@ -195,6 +195,32 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
     }
 };
 
+TChannelOutResponse.prototype.responseAlreadyDone = function responseAlreadyDone() {
+    var self = this;
+
+    if (self.state === States.Done || self.state === States.Error) {
+        var errorEvent = self.errorEvent || {};
+        var listener = !!errorEvent.listener;
+        var listeners = 0;
+        if (errorEvent.listeners && errorEvent.listeners.length) {
+            listeners = errorEvent.listeners.length;
+        }
+
+        self.logger.error('responseAlreadyDone detected!!', {
+            currentState: self.state,
+            codeString: self.codeString,
+            errMessage: self.message,
+            callerName: self.inreq ? self.inreq.callerName : 'NA',
+            serviceName: self.inreq ? self.inreq.serviceName : 'NA',
+            listener: listener,
+            listeners: listeners
+        });
+        return true;
+    } else {
+        return false;
+    }
+};
+
 TChannelOutResponse.prototype.sendError = function sendError(codeString, message) {
     var self = this;
 
