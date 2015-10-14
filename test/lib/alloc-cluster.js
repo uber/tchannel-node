@@ -20,7 +20,6 @@
 
 'use strict';
 
-var fs = require('fs');
 var extend = require('xtend');
 var CountedReadySignal = require('ready-signal/counted');
 var test = require('tape');
@@ -31,10 +30,13 @@ var debugLogtron = require('debug-logtron');
 var TChannel = require('../../channel.js');
 var CollapsedAssert = require('./collapsed-assert.js');
 
+var loadConfig = require('./load_config.js');
+
 var defaultChannelOptions = {};
 if (process.env.TCHANNEL_TEST_CONFIG) {
-    defaultChannelOptions = JSON.parse(
-        fs.readFileSync(process.env.TCHANNEL_TEST_CONFIG, 'utf8'));
+
+    defaultChannelOptions = loadConfig(process.env.TCHANNEL_TEST_CONFIG);
+
     JSON.stringify(defaultChannelOptions, null, 4)
         .split('\n')
         .forEach(function each(line, i) {
