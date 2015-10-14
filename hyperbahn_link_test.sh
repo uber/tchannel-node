@@ -2,7 +2,7 @@
 set -e
 
 if [ -z "$1" ]; then
-    dest_dir=$(mktemp -d)
+    dest_dir=$(mktemp -d -t tchannel.XXXXXX)
     git clone https://github.com/uber/hyperbahn "$dest_dir"
 else
     dest_dir=$1
