@@ -3,5 +3,8 @@ node_js:
   - "0.10"
 before_install: npm i npm@latest -g
 env:
-- TCHANNEL_TEST_CONFIG=
-script: npm run travis && npm run hyperbahn-link-test
+# NOTE: node_js has no support for varying the test script thru build matrix,
+# so for now we just drive it by env:
+- TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
+- TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=hyperbahn-link-test
+script: npm run $NPM_TEST_SCRIPT
