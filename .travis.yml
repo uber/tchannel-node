@@ -9,6 +9,8 @@ env:
 - TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=hyperbahn-link-test
 - TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=travis
 - TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=hyperbahn-link-test
+- TCHANNEL_TEST_CONFIG=test/config/with_peer_heap.json NPM_TEST_SCRIPT=travis
+- TCHANNEL_TEST_CONFIG=test/config/with_peer_heap.json NPM_TEST_SCRIPT=hyperbahn-link-test
 - TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=tcurl-link-test
 
 script: npm run $NPM_TEST_SCRIPT
