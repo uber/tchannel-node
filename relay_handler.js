@@ -109,16 +109,15 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     // }
 
     if (self.circuits) {
-        var result = self.circuits.getCircuitForRequest(req);
-        if (result.err) {
-            var errFrame = result.err;
-            buildRes().sendError(errFrame.codeName, errFrame.message);
+        var circuit = self.circuits.getCircuit(req.headers.cn || 'no-cn', req.serviceName, String(req.arg1));
+        if (!circuit.state.shouldRequest()) {
+            buildRes().sendError('Declined', 'Service is not healthy');
             return;
         }
 
-        var circuit = result.value;
         req.circuit = circuit;
         circuit.state.onRequest(req);
+
     }
 
     req.forwardTrace = true;
