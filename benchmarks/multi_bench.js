@@ -174,7 +174,7 @@ Test.prototype.newClient = function newClient(id, callback) {
         peers: [DESTINATION_SERVER]
     });
     client.createTime = Date.now();
-    client.listen(port, '127.0.0.1', function listened(err) {
+    clientChan.listen(port, '127.0.0.1', function listened(err) {
         if (err) {
             return callback(err);
         }
@@ -224,15 +224,18 @@ Test.prototype.fillPipeline = function fillPipeline() {
 Test.prototype.stopClients = function stopClients() {
     var self = this;
 
-    this.clients.forEach(function each(client, pos) {
-        if (pos === self.clients.length - 1) {
-            client.quit(function done() {
-                self.callback();
-            });
-        } else {
-            client.quit();
-        }
+    var count = 1;
+    this.clients.forEach(function each(client) {
+        count++;
+        (client.topChannel || client).quit(closed);
     });
+    closed();
+
+    function closed() {
+        if (--count <= 0) {
+            self.callback();
+        }
+    }
 };
 
 Test.prototype.sendNext = function sendNext() {
