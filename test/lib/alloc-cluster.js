@@ -176,10 +176,6 @@ function allocCluster(opts) {
         chan.listen(port, host);
         cluster.channels[i] = chan;
 
-
-        chan.setLazyRelaying(true);
-        chan.setLazyHandling(true);
-
         function chanReady() {
             var port = chan.address().port;
             cluster.hosts[i] = util.format('%s:%s', host, port);
