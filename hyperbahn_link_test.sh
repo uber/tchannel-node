@@ -9,9 +9,11 @@ else
 fi
 
 if [ -n "$TCHANNEL_TEST_CONFIG" ]; then
-    dest_tchannel_test_config="$dest_dir/from_tchannel_$(echo "$TCHANNEL_TEST_CONFIG" | tr '/' '_')"
-    cp -fv "$TCHANNEL_TEST_CONFIG" "$dest_tchannel_test_config"
-    TCHANNEL_TEST_CONFIG=$(basename "$dest_tchannel_test_config")
+    for part in $(eval "echo $TCHANNEL_TEST_CONFIG"); do
+        dest_part="$dest_dir/from_tchannel_$(echo "$part" | tr '/' '_')"
+        cp -fv "$part" "$dest_part"
+    done
+    TCHANNEL_TEST_CONFIG=from_tchannel_$(echo "$TCHANNEL_TEST_CONFIG" | tr '/' '_')
     export TCHANNEL_TEST_CONFIG
 fi
 
