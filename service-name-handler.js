@@ -22,6 +22,7 @@
 
 var errors = require('./errors');
 var assert = require('assert');
+var v2 = require('./v2');
 
 function TChannelServiceNameHandler(options) {
     if (!(this instanceof TChannelServiceNameHandler)) {
@@ -45,6 +46,7 @@ TChannelServiceNameHandler.prototype.type = 'tchannel.service-name-handler';
 TChannelServiceNameHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     var self = this;
 
+    var tracing;
     var res = reqFrame.bodyRW.lazy.readService(reqFrame);
     if (res.err) {
         // TODO: stat?
