@@ -213,8 +213,7 @@ TChannelOutResponse.prototype.responseAlreadyDone = function responseAlreadyDone
             callerName: self.inreq ? self.inreq.callerName : 'NA',
             serviceName: self.inreq ? self.inreq.serviceName : 'NA',
             listener: listener,
-            listeners: listeners,
-            responseObject: self
+            listeners: listeners
         });
         return true;
     } else {
