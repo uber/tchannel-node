@@ -55,21 +55,18 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
 
     parallel(callReqThunks, onResults);
 
-    function onResults(err, results) {
+    function onResults(err, responses) {
         assert.ifError(err, 'expect no req error');
 
-        var byServer = {};
-        for (var j = 0; j < results.length; j++) {
-            var res = results[j];
-            var body = String(res.arg3);
+        // TODO: one of these tests isn't like the others...
+        var results = responses.map(function each(res) {
+            return {
+                response: res,
+                error: null
+            };
+        });
 
-            if (!byServer[body]) {
-                byServer[body] = 0;
-            }
-
-            byServer[body]++;
-        }
-
+        var byServer = collectByResult(results);
         var keys = Object.keys(byServer);
         assert.equal(keys.length, 4, 'expected 4 servers');
 
@@ -111,20 +108,7 @@ allocCluster.test('sending requests to servers over time has good distribution',
         assert.ifError(err, 'expect no batch error');
         assert.equal(data.errors.length, 0, 'expected no client error');
 
-        var results = data.results;
-
-        var byServer = {};
-        for (var j = 0; j < results.length; j++) {
-            var res = results[j].response;
-            var body = String(res && res.arg3);
-
-            if (!byServer[body]) {
-                byServer[body] = 0;
-            }
-
-            byServer[body]++;
-        }
-
+        var byServer = collectByResult(data.results);
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
@@ -172,26 +156,7 @@ allocCluster.test('sending requests to servers with bad request', {
         assert.ifError(err, 'expect no batch error');
         assert.equal(data.errors.length, 0, 'expected no client error');
 
-        var results = data.results;
-
-        var byServer = {};
-        for (var j = 0; j < results.length; j++) {
-            var result = results[j];
-            var body;
-
-            if (result.response) {
-                body = String(result.response.arg3);
-            } else {
-                body = String(result.error.message);
-            }
-
-            if (!byServer[body]) {
-                byServer[body] = 0;
-            }
-
-            byServer[body]++;
-        }
-
+        var byServer = collectByResult(data.results);
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
@@ -243,26 +208,7 @@ allocCluster.test('sending requests to servers with declined', {
         assert.ifError(err, 'expect no batch error');
         assert.equal(data.errors.length, 0, 'expected no client error');
 
-        var results = data.results;
-
-        var byServer = {};
-        for (var j = 0; j < results.length; j++) {
-            var result = results[j];
-            var body;
-
-            if (result.response) {
-                body = String(result.response.arg3);
-            } else {
-                body = String(result.error.message);
-            }
-
-            if (!byServer[body]) {
-                byServer[body] = 0;
-            }
-
-            byServer[body]++;
-        }
-
+        var byServer = collectByResult(data.results);
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
@@ -329,29 +275,11 @@ allocCluster.test('sending requests to servers with declined over time', {
         assert.ifError(err, 'expect no batch error');
         assert.equal(data.errors.length, 0, 'expected no client error');
 
-        var results = data.results;
-
         var EXPECTED_ERROR = Math.ceil(
             (numRequests / batchSize) * (batchDelay / 1000)
         );
 
-        var byServer = {};
-        for (var j = 0; j < results.length; j++) {
-            var result = results[j];
-            var body;
-
-            if (result.response) {
-                body = String(result.response.arg3);
-            } else {
-                body = String(result.error.message);
-            }
-
-            if (!byServer[body]) {
-                byServer[body] = 0;
-            }
-
-            byServer[body]++;
-        }
+        var byServer = collectByResult(data.results);
 
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
@@ -416,25 +344,7 @@ allocCluster.test('sending requests to servers with busy', {
         assert.ifError(err, 'expect no batch error');
         assert.equal(data.errors.length, 0, 'expected no client error');
 
-        var results = data.results;
-
-        var byServer = {};
-        for (var j = 0; j < results.length; j++) {
-            var result = results[j];
-            var body;
-
-            if (result.response) {
-                body = String(result.response.arg3);
-            } else {
-                body = String(result.error.message);
-            }
-
-            if (!byServer[body]) {
-                byServer[body] = 0;
-            }
-
-            byServer[body]++;
-        }
+        var byServer = collectByResult(data.results);
 
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
@@ -502,30 +412,11 @@ allocCluster.test('sending requests to servers with busy over time', {
         assert.ifError(err, 'expect no batch error');
         assert.equal(data.errors.length, 0, 'expected no client error');
 
-        var results = data.results;
-
         var EXPECTED_ERROR = Math.ceil(
             (numRequests / batchSize) * (batchDelay / 1000)
         );
 
-        var byServer = {};
-        for (var j = 0; j < results.length; j++) {
-            var result = results[j];
-            var body;
-
-            if (result.response) {
-                body = String(result.response.arg3);
-            } else {
-                body = String(result.error.message);
-            }
-
-            if (!byServer[body]) {
-                byServer[body] = 0;
-            }
-
-            byServer[body]++;
-        }
-
+        var byServer = collectByResult(data.results);
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
@@ -582,4 +473,25 @@ function makeErrorServer(channel, index, codeName) {
 
 function getHostPort(c) {
     return c.hostPort;
+}
+
+function collectByResult(results) {
+    var byKey = {};
+    for (var j = 0; j < results.length; j++) {
+        var res = results[j];
+
+        var key = '';
+        if (res && res.response) {
+            key = String(res.response.arg3);
+        } else if (res && res.error) {
+            key = String(res.error.message);
+        }
+
+        if (!byKey[key]) {
+            byKey[key] = 1;
+        } else {
+            byKey[key]++;
+        }
+    }
+    return byKey;
 }
