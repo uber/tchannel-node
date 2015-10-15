@@ -36,9 +36,7 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
         peers: servers.map(getHostPort)
     });
 
-    servers.forEach(function each(chan, i) {
-        makeServer(chan, i);
-    });
+    servers.forEach(makeServer);
 
     var callReqThunks = [];
     for (var i = 0; i < 200; i++) {
@@ -96,9 +94,7 @@ allocCluster.test('sending requests to servers over time has good distribution',
 
     var batchClient = new BatchClient(client, servers.map(getHostPort));
 
-    servers.forEach(function each(chan, i) {
-        makeServer(chan, i);
-    });
+    servers.forEach(makeServer);
 
     batchClient.warmUp(onWarmedup);
 
@@ -159,9 +155,7 @@ allocCluster.test('sending requests to servers with bad request', {
     var batchClient = new BatchClient(client, servers.map(getHostPort));
 
     makeErrorServer(servers.shift(), 0, 'BadRequest');
-    servers.forEach(function each(chan, i) {
-        makeServer(chan, i);
-    });
+    servers.forEach(makeServer);
 
     batchClient.warmUp(onWarmedup);
 
@@ -232,9 +226,7 @@ allocCluster.test('sending requests to servers with declined', {
     });
 
     makeErrorServer(servers.shift(), 0, 'Declined');
-    servers.forEach(function each(chan, i) {
-        makeServer(chan, i);
-    });
+    servers.forEach(makeServer);
 
     batchClient.warmUp(onWarmedup);
 
@@ -319,9 +311,7 @@ allocCluster.test('sending requests to servers with declined over time', {
     });
 
     makeErrorServer(servers.shift(), 0, 'Declined');
-    servers.forEach(function each(chan, i) {
-        makeServer(chan, i);
-    });
+    servers.forEach(makeServer);
 
     batchClient.warmUp(onWarmedup);
 
@@ -409,9 +399,7 @@ allocCluster.test('sending requests to servers with busy', {
     });
 
     makeErrorServer(servers.shift(), 0, 'Busy');
-    servers.forEach(function each(chan, i) {
-        makeServer(chan, i);
-    });
+    servers.forEach(makeServer);
 
     batchClient.warmUp(onWarmedup);
 
@@ -496,9 +484,7 @@ allocCluster.test('sending requests to servers with busy over time', {
     });
 
     makeErrorServer(servers.shift(), 0, 'Busy');
-    servers.forEach(function each(chan, i) {
-        makeServer(chan, i);
-    });
+    servers.forEach(makeServer);
 
     batchClient.warmUp(onWarmedup);
 
