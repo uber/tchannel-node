@@ -29,15 +29,16 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
     numPeers: 5
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
+    var servers = cluster.channels.slice(1);
 
-    var hosts = cluster.channels.slice(1).map(getHostPort);
+    var hosts = servers.map(getHostPort);
 
     var clientChannel = client.makeSubChannel({
         serviceName: 'server',
         peers: hosts
     });
 
-    cluster.channels.slice(1).forEach(function each(chan, i) {
+    servers.forEach(function each(chan, i) {
         makeServer(chan, i);
     });
 
@@ -89,16 +90,17 @@ allocCluster.test('sending requests to servers over time has good distribution',
     numPeers: 26
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
+    var servers = cluster.channels.slice(1);
 
     var numPeers = 25;
     var numRequests = 800;
     var numExpectedReqs = numRequests / numPeers;
 
-    var hosts = cluster.channels.slice(1).map(getHostPort);
+    var hosts = servers.map(getHostPort);
 
     var batchClient = new BatchClient(client, hosts);
 
-    cluster.channels.slice(1).forEach(function each(chan, i) {
+    servers.forEach(function each(chan, i) {
         makeServer(chan, i);
     });
 
@@ -152,16 +154,17 @@ allocCluster.test('sending requests to servers with bad request', {
     numPeers: 26
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
+    var servers = cluster.channels.slice(1);
 
     var numPeers = 25;
     var numRequests = 800;
     var numExpectedReqs = numRequests / numPeers;
 
-    var hosts = cluster.channels.slice(1).map(getHostPort);
+    var hosts = servers.map(getHostPort);
 
     var batchClient = new BatchClient(client, hosts);
 
-    cluster.channels.slice(1).forEach(function each(chan, i) {
+    servers.forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'BadRequest');
         } else {
@@ -225,12 +228,13 @@ allocCluster.test('sending requests to servers with declined', {
     numPeers: 26
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
+    var servers = cluster.channels.slice(1);
 
     var numPeers = 25;
     var numRequests = 800;
     var numExpectedReqs = numRequests / numPeers;
 
-    var hosts = cluster.channels.slice(1).map(getHostPort);
+    var hosts = servers.map(getHostPort);
 
     var batchClient = new BatchClient(client, hosts, {
         retryFlags: {
@@ -238,7 +242,7 @@ allocCluster.test('sending requests to servers with declined', {
         }
     });
 
-    cluster.channels.slice(1).forEach(function each(chan, i) {
+    servers.forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Declined');
         } else {
@@ -314,6 +318,7 @@ allocCluster.test('sending requests to servers with declined over time', {
     numPeers: 26
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
+    var servers = cluster.channels.slice(1);
 
     var numPeers = 25;
     var batchSize = 20;
@@ -321,7 +326,7 @@ allocCluster.test('sending requests to servers with declined over time', {
     var batchDelay = 40;
     var numExpectedReqs = numRequests / numPeers;
 
-    var hosts = cluster.channels.slice(1).map(getHostPort);
+    var hosts = servers.map(getHostPort);
 
     var batchClient = new BatchClient(client, hosts, {
         retryFlags: {
@@ -329,7 +334,7 @@ allocCluster.test('sending requests to servers with declined over time', {
         }
     });
 
-    cluster.channels.slice(1).forEach(function each(chan, i) {
+    servers.forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Declined');
         } else {
@@ -410,12 +415,13 @@ allocCluster.test('sending requests to servers with busy', {
     numPeers: 26
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
+    var servers = cluster.channels.slice(1);
 
     var numPeers = 25;
     var numRequests = 800;
     var numExpectedReqs = numRequests / numPeers;
 
-    var hosts = cluster.channels.slice(1).map(getHostPort);
+    var hosts = servers.map(getHostPort);
 
     var batchClient = new BatchClient(client, hosts, {
         retryFlags: {
@@ -423,7 +429,7 @@ allocCluster.test('sending requests to servers with busy', {
         }
     });
 
-    cluster.channels.slice(1).forEach(function each(chan, i) {
+    servers.forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Busy');
         } else {
@@ -499,6 +505,7 @@ allocCluster.test('sending requests to servers with busy over time', {
     numPeers: 26
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
+    var servers = cluster.channels.slice(1);
 
     var numPeers = 25;
     var batchSize = 20;
@@ -506,7 +513,7 @@ allocCluster.test('sending requests to servers with busy over time', {
     var batchDelay = 40;
     var numExpectedReqs = numRequests / numPeers;
 
-    var hosts = cluster.channels.slice(1).map(getHostPort);
+    var hosts = servers.map(getHostPort);
 
     var batchClient = new BatchClient(client, hosts, {
         retryFlags: {
@@ -514,7 +521,7 @@ allocCluster.test('sending requests to servers with busy over time', {
         }
     });
 
-    cluster.channels.slice(1).forEach(function each(chan, i) {
+    servers.forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Busy');
         } else {
