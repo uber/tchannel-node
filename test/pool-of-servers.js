@@ -448,7 +448,7 @@ function collectByResult(results) {
 }
 
 function verifyCountsWithinRange(assert, byServer, expectedRange) {
-    var keys = Object.keys(byServer);
+    var keys = Object.keys(byServer).sort(sortByLastTokenNumeric);
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
         var count = byServer[key];
@@ -457,4 +457,25 @@ function verifyCountsWithinRange(assert, byServer, expectedRange) {
         assert.ok(count >= range[0], desc + ' is >= ' + range[0]);
         assert.ok(count <= range[1], desc + ' is <= ' + range[1]);
     }
+}
+
+var lastToken = /(\w+)$/;
+
+function sortByLastTokenNumeric(sa, sb) {
+    var ma = lastToken.exec(sa);
+    var mb = lastToken.exec(sb);
+    var a = ma ? parseInt(ma[1]) : NaN;
+    var b = mb ? parseInt(mb[1]) : NaN;
+
+    if (isNaN(a)) {
+        if (isNaN(b)) {
+            return 0;
+        } else {
+            return -1;
+        }
+    } else if (isNaN(b)) {
+        return 1;
+    }
+
+    return a - b;
 }
