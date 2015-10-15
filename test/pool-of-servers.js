@@ -82,7 +82,10 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
 });
 
 allocCluster.test('sending requests to servers over time has good distribution', {
-    numPeers: 26
+    numPeers: 26,
+    channelOptions: {
+        observePeerScoreEvents: debug
+    }
 }, function t(cluster, assert) {
     setup(cluster, assert, []);
 
