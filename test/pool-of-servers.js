@@ -96,11 +96,11 @@ allocCluster.test('sending requests to servers over time has good distribution',
 
     var hosts = cluster.channels.slice(1).map(getHostPort);
 
+    var batchClient = new BatchClient(client, hosts);
+
     cluster.channels.slice(1).forEach(function each(chan, i) {
         makeServer(chan, i);
     });
-
-    var batchClient = new BatchClient(client, hosts);
 
     batchClient.warmUp(onWarmedup);
 
@@ -159,6 +159,8 @@ allocCluster.test('sending requests to servers with bad request', {
 
     var hosts = cluster.channels.slice(1).map(getHostPort);
 
+    var batchClient = new BatchClient(client, hosts);
+
     cluster.channels.slice(1).forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'BadRequest');
@@ -166,8 +168,6 @@ allocCluster.test('sending requests to servers with bad request', {
             makeServer(chan, i);
         }
     });
-
-    var batchClient = new BatchClient(client, hosts);
 
     batchClient.warmUp(onWarmedup);
 
@@ -232,17 +232,17 @@ allocCluster.test('sending requests to servers with declined', {
 
     var hosts = cluster.channels.slice(1).map(getHostPort);
 
+    var batchClient = new BatchClient(client, hosts, {
+        retryFlags: {
+            never: true
+        }
+    });
+
     cluster.channels.slice(1).forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Declined');
         } else {
             makeServer(chan, i);
-        }
-    });
-
-    var batchClient = new BatchClient(client, hosts, {
-        retryFlags: {
-            never: true
         }
     });
 
@@ -323,17 +323,17 @@ allocCluster.test('sending requests to servers with declined over time', {
 
     var hosts = cluster.channels.slice(1).map(getHostPort);
 
+    var batchClient = new BatchClient(client, hosts, {
+        retryFlags: {
+            never: true
+        }
+    });
+
     cluster.channels.slice(1).forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Declined');
         } else {
             makeServer(chan, i);
-        }
-    });
-
-    var batchClient = new BatchClient(client, hosts, {
-        retryFlags: {
-            never: true
         }
     });
 
@@ -417,17 +417,17 @@ allocCluster.test('sending requests to servers with busy', {
 
     var hosts = cluster.channels.slice(1).map(getHostPort);
 
+    var batchClient = new BatchClient(client, hosts, {
+        retryFlags: {
+            never: true
+        }
+    });
+
     cluster.channels.slice(1).forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Busy');
         } else {
             makeServer(chan, i);
-        }
-    });
-
-    var batchClient = new BatchClient(client, hosts, {
-        retryFlags: {
-            never: true
         }
     });
 
@@ -508,17 +508,17 @@ allocCluster.test('sending requests to servers with busy over time', {
 
     var hosts = cluster.channels.slice(1).map(getHostPort);
 
+    var batchClient = new BatchClient(client, hosts, {
+        retryFlags: {
+            never: true
+        }
+    });
+
     cluster.channels.slice(1).forEach(function each(chan, i) {
         if (i === 0) {
             makeErrorServer(chan, i, 'Busy');
         } else {
             makeServer(chan, i);
-        }
-    });
-
-    var batchClient = new BatchClient(client, hosts, {
-        retryFlags: {
-            never: true
         }
     });
 
