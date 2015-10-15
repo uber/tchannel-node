@@ -20,18 +20,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set -e
+given_or_clone()
+{
+    if [ -z "$1" ]; then
+        TCHANNEL_TEST_DIR=$(mktemp -d -t tchannel.XXXXXX)
+        git clone "$2" "$TCHANNEL_TEST_DIR"
+    else
+        TCHANNEL_TEST_DIR=$1
+    fi
+}
 
-source test/lib/link_test.sh
-
-given_or_clone "$1" https://github.com/uber/hyperbahn
-
-copy_test_config
-
-npm link
-
-cd "$TCHANNEL_TEST_DIR"
-
-npm install
-npm link tchannel
-npm run test-ci
+function copy_test_config()
+{
+    if [ -n "$TCHANNEL_TEST_CONFIG" ]; then
+        for part in $(eval "echo $TCHANNEL_TEST_CONFIG"); do
+            dest_part="$TCHANNEL_TEST_DIR/from_tchannel_$(echo "$part" | tr '/' '_')"
+            cp -fv "$part" "$dest_part"
+        done
+        TCHANNEL_TEST_CONFIG=from_tchannel_$(echo "$TCHANNEL_TEST_CONFIG" | tr '/' '_')
+        export TCHANNEL_TEST_CONFIG
+    fi
+}
