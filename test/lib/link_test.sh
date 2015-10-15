@@ -23,7 +23,8 @@
 given_or_clone()
 {
     if [ -z "$1" ]; then
-        TCHANNEL_TEST_DIR=$(mktemp -d -t tchannel.XXXXXX)
+        name=$(basename "$2")
+        TCHANNEL_TEST_DIR=$(mktemp -d -t tchannel-link-"$name".XXXXXX)
         git clone "$2" "$TCHANNEL_TEST_DIR"
     else
         TCHANNEL_TEST_DIR=$1
