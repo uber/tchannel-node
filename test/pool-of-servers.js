@@ -112,16 +112,13 @@ allocCluster.test('sending requests to servers over time has good distribution',
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
-        for (var k = 0; k < keys.length; k++) {
-            var count = byServer[keys[k]];
+        verifyCountsWithinRange(assert, byServer, function expectedBalance(key) {
+            return [
+                numExpectedReqs * 0.5,
+                numExpectedReqs * 1.5
+            ];
+        });
 
-            assert.ok(count >= numExpectedReqs * 0.5,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is >= ' + numExpectedReqs * 0.5);
-            assert.ok(count <= numExpectedReqs * 1.5,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is <= ' + numExpectedReqs * 1.5);
-        }
         assert.end();
     }
 });
@@ -160,16 +157,13 @@ allocCluster.test('sending requests to servers with bad request', {
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
-        for (var k = 0; k < keys.length; k++) {
-            var count = byServer[keys[k]];
+        verifyCountsWithinRange(byServer, function expectedBalance(key) {
+            return [
+                numExpectedReqs * 0.5,
+                numExpectedReqs * 1.5
+            ];
+        });
 
-            assert.ok(count >= numExpectedReqs * 0.5,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is >= ' + numExpectedReqs * 0.5);
-            assert.ok(count <= numExpectedReqs * 1.5,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is <= ' + numExpectedReqs * 1.5);
-        }
         assert.end();
     }
 });
@@ -212,28 +206,16 @@ allocCluster.test('sending requests to servers with declined', {
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
-        for (var k = 0; k < keys.length; k++) {
-            var count = byServer[keys[k]];
-
-            var lower = null;
-            var upper = null;
-
+        verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
-            if (keys[k].indexOf('oops') === 0) {
-                lower = 1;
-                upper = 2;
+            if (key.indexOf('oops') === 0) {
+                return [1, 2];
             } else {
-                lower = numExpectedReqs * 0.5;
-                upper = numExpectedReqs * 1.5;
+                return [numExpectedReqs * 0.5,
+                        numExpectedReqs * 1.5];
             }
+        });
 
-            assert.ok(count >= lower,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is >= ' + lower);
-            assert.ok(count <= upper,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is <= ' + upper);
-        }
         assert.end();
     }
 });
@@ -284,28 +266,17 @@ allocCluster.test('sending requests to servers with declined over time', {
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
-        for (var k = 0; k < keys.length; k++) {
-            var count = byServer[keys[k]];
-
-            var lower = null;
-            var upper = null;
-
+        verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
-            if (keys[k].indexOf('oops') === 0) {
-                lower = EXPECTED_ERROR;
-                upper = EXPECTED_ERROR + 1;
+            if (key.indexOf('oops') === 0) {
+                return [EXPECTED_ERROR,
+                        EXPECTED_ERROR + 1];
             } else {
-                lower = numExpectedReqs * 0.5;
-                upper = numExpectedReqs * 1.5;
+                return [numExpectedReqs * 0.5,
+                        numExpectedReqs * 1.5];
             }
+        });
 
-            assert.ok(count >= lower,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is >= ' + lower);
-            assert.ok(count <= upper,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is <= ' + upper);
-        }
         assert.end();
     }
 });
@@ -349,28 +320,16 @@ allocCluster.test('sending requests to servers with busy', {
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
-        for (var k = 0; k < keys.length; k++) {
-            var count = byServer[keys[k]];
-
-            var lower = null;
-            var upper = null;
-
+        verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
-            if (keys[k].indexOf('oops') === 0) {
-                lower = 1;
-                upper = 2;
+            if (key.indexOf('oops') === 0) {
+                return [1, 2];
             } else {
-                lower = numExpectedReqs * 0.5;
-                upper = numExpectedReqs * 1.5;
+                return [numExpectedReqs * 0.5,
+                        numExpectedReqs * 1.5];
             }
+        });
 
-            assert.ok(count >= lower,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is >= ' + lower);
-            assert.ok(count <= upper,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is <= ' + upper);
-        }
         assert.end();
     }
 });
@@ -420,28 +379,17 @@ allocCluster.test('sending requests to servers with busy over time', {
         var keys = Object.keys(byServer);
         assert.equal(keys.length, numPeers, 'expected 25 servers');
 
-        for (var k = 0; k < keys.length; k++) {
-            var count = byServer[keys[k]];
-
-            var lower = null;
-            var upper = null;
-
+        verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
-            if (keys[k].indexOf('oops') === 0) {
-                lower = EXPECTED_ERROR;
-                upper = EXPECTED_ERROR + 1;
+            if (key.indexOf('oops') === 0) {
+                return [EXPECTED_ERROR,
+                        EXPECTED_ERROR + 1];
             } else {
-                lower = numExpectedReqs * 0.5;
-                upper = numExpectedReqs * 1.5;
+                return [numExpectedReqs * 0.5,
+                        numExpectedReqs * 1.5];
             }
+        });
 
-            assert.ok(count >= lower,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is >= ' + lower);
-            assert.ok(count <= upper,
-                'count (' + count + ') for ' + keys[k] +
-                    ' is <= ' + upper);
-        }
         assert.end();
     }
 });
@@ -494,4 +442,16 @@ function collectByResult(results) {
         }
     }
     return byKey;
+}
+
+function verifyCountsWithinRange(assert, byServer, expectedRange) {
+    var keys = Object.keys(byServer);
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var count = byServer[key];
+        var range = expectedRange(key);
+        var desc = 'count (' + count + ') for ' + key;
+        assert.ok(count >= range[0], desc + ' is >= ' + range[0]);
+        assert.ok(count <= range[1], desc + ' is <= ' + range[1]);
+    }
 }
