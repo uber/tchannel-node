@@ -158,12 +158,9 @@ allocCluster.test('sending requests to servers with bad request', {
 
     var batchClient = new BatchClient(client, servers.map(getHostPort));
 
+    makeErrorServer(servers.shift(), 0, 'BadRequest');
     servers.forEach(function each(chan, i) {
-        if (i === 0) {
-            makeErrorServer(chan, i, 'BadRequest');
-        } else {
-            makeServer(chan, i);
-        }
+        makeServer(chan, i);
     });
 
     batchClient.warmUp(onWarmedup);
@@ -234,12 +231,9 @@ allocCluster.test('sending requests to servers with declined', {
         }
     });
 
+    makeErrorServer(servers.shift(), 0, 'Declined');
     servers.forEach(function each(chan, i) {
-        if (i === 0) {
-            makeErrorServer(chan, i, 'Declined');
-        } else {
-            makeServer(chan, i);
-        }
+        makeServer(chan, i);
     });
 
     batchClient.warmUp(onWarmedup);
@@ -324,12 +318,9 @@ allocCluster.test('sending requests to servers with declined over time', {
         }
     });
 
+    makeErrorServer(servers.shift(), 0, 'Declined');
     servers.forEach(function each(chan, i) {
-        if (i === 0) {
-            makeErrorServer(chan, i, 'Declined');
-        } else {
-            makeServer(chan, i);
-        }
+        makeServer(chan, i);
     });
 
     batchClient.warmUp(onWarmedup);
@@ -417,12 +408,9 @@ allocCluster.test('sending requests to servers with busy', {
         }
     });
 
+    makeErrorServer(servers.shift(), 0, 'Busy');
     servers.forEach(function each(chan, i) {
-        if (i === 0) {
-            makeErrorServer(chan, i, 'Busy');
-        } else {
-            makeServer(chan, i);
-        }
+        makeServer(chan, i);
     });
 
     batchClient.warmUp(onWarmedup);
@@ -507,12 +495,9 @@ allocCluster.test('sending requests to servers with busy over time', {
         }
     });
 
+    makeErrorServer(servers.shift(), 0, 'Busy');
     servers.forEach(function each(chan, i) {
-        if (i === 0) {
-            makeErrorServer(chan, i, 'Busy');
-        } else {
-            makeServer(chan, i);
-        }
+        makeServer(chan, i);
     });
 
     batchClient.warmUp(onWarmedup);
