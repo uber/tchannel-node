@@ -233,7 +233,7 @@ TChannelOutRequest.prototype.emitError = function emitError(err) {
     self.emitPerAttemptLatency();
     self.emitPerAttemptErrorStat(err);
 
-    self.peer.invalidateScore();
+    self.peer.invalidateScore('outreq.emitError');
 
     self.errorEvent.emit(self, err);
 };
@@ -260,7 +260,7 @@ TChannelOutRequest.prototype.extendLogInfo = function extendLogInfo(info) {
 TChannelOutRequest.prototype.emitResponse = function emitResponse(res) {
     var self = this;
 
-    self.peer.invalidateScore();
+    self.peer.invalidateScore('outreq.emitResponse');
 
     if (self.end) {
         self.channel.logger.warn('Unexpected response after end for OutRequest', {

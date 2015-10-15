@@ -133,7 +133,7 @@ TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnecti
         self.setScoreStrategy(NoPreference);
     }
 
-    self.invalidateScore();
+    self.invalidateScore('setPreferConnectionDirection');
 };
 
 TChannelPeer.prototype.setScoreStrategy = function setScoreStrategy(ScoreStrategy) {
@@ -302,7 +302,7 @@ function _waitForIdentified(conn, callback) {
     conn.errorEvent.on(onConnectionError);
     conn.closeEvent.on(onConnectionClose);
     conn.identifiedEvent.on(onIdentified);
-    self.invalidateScore();
+    self.invalidateScore('waitForIdentified');
 
     function onConnectionError(err) {
         finish(err);
@@ -321,7 +321,7 @@ function _waitForIdentified(conn, callback) {
         conn.errorEvent.removeListener(onConnectionError);
         conn.closeEvent.removeListener(onConnectionClose);
         conn.identifiedEvent.removeListener(onIdentified);
-        self.invalidateScore();
+        self.invalidateScore('waitForIdentified > finish');
         callback(err);
     }
 };
@@ -344,7 +344,7 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     conn.errorEvent.on(self.boundOnConnectionError);
     conn.closeEvent.on(self.boundOnConnectionClose);
 
-    self._maybeInvalidateScore();
+    self._maybeInvalidateScore('addConnection');
     if (!conn.remoteName) {
         // TODO: could optimize if handler had a way of saying "would a new
         // identified connection change your Tier?"
@@ -359,7 +359,7 @@ function onIdentified(conn) {
     var self = this;
 
     conn.identifiedEvent.removeListener(self.boundOnIdentified);
-    self._maybeInvalidateScore();
+    self._maybeInvalidateScore('addConnection > onIdentified');
 };
 
 TChannelPeer.prototype.onConnectionError =
@@ -414,7 +414,7 @@ TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
         ret = self.connections.splice(index, 1)[0];
     }
 
-    self._maybeInvalidateScore();
+    self._maybeInvalidateScore('removeConnection');
 
     self.removeConnectionEvent.emit(self, conn);
     return ret;
@@ -493,11 +493,12 @@ TChannelPeer.prototype.countPending = function countPending() {
 // - on identified
 
 // Called on connection change event
-TChannelPeer.prototype._maybeInvalidateScore = function _maybeInvalidateScore() {
+TChannelPeer.prototype._maybeInvalidateScore =
+function _maybeInvalidateScore(reason) {
     var self = this;
 
     if (self.handler.getTier() !== self.handler.lastTier) {
-        self.invalidateScore();
+        self.invalidateScore(reason);
     }
 };
 
