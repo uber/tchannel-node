@@ -31,6 +31,8 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
     var client = cluster.channels[0];
     var servers = cluster.channels.slice(1);
 
+    var numPeers = 4;
+
     var clientChannel = client.makeSubChannel({
         serviceName: 'server',
         peers: servers.map(getHostPort)
@@ -68,7 +70,8 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
 
         var byServer = collectByResult(results);
         var keys = Object.keys(byServer);
-        assert.equal(keys.length, 4, 'expected 4 servers');
+        assert.equal(keys.length, numPeers,
+                     'expected ' + numPeers + ' servers');
 
         for (var k = 0; k < keys.length; k++) {
             var count = byServer[keys[k]];
@@ -109,8 +112,8 @@ allocCluster.test('sending requests to servers over time has good distribution',
         assert.equal(data.errors.length, 0, 'expected no client error');
 
         var byServer = collectByResult(data.results);
-        var keys = Object.keys(byServer);
-        assert.equal(keys.length, numPeers, 'expected 25 servers');
+        assert.equal(Object.keys(byServer).length, numPeers,
+                     'expected ' + numPeers + ' servers');
 
         verifyCountsWithinRange(assert, byServer, function expectedBalance(key) {
             return [
@@ -154,8 +157,8 @@ allocCluster.test('sending requests to servers with bad request', {
         assert.equal(data.errors.length, 0, 'expected no client error');
 
         var byServer = collectByResult(data.results);
-        var keys = Object.keys(byServer);
-        assert.equal(keys.length, numPeers, 'expected 25 servers');
+        assert.equal(Object.keys(byServer).length, numPeers,
+                     'expected ' + numPeers + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             return [
@@ -203,8 +206,8 @@ allocCluster.test('sending requests to servers with declined', {
         assert.equal(data.errors.length, 0, 'expected no client error');
 
         var byServer = collectByResult(data.results);
-        var keys = Object.keys(byServer);
-        assert.equal(keys.length, numPeers, 'expected 25 servers');
+        assert.equal(Object.keys(byServer).length, numPeers,
+                     'expected ' + numPeers + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
@@ -263,8 +266,8 @@ allocCluster.test('sending requests to servers with declined over time', {
 
         var byServer = collectByResult(data.results);
 
-        var keys = Object.keys(byServer);
-        assert.equal(keys.length, numPeers, 'expected 25 servers');
+        assert.equal(Object.keys(byServer).length, numPeers,
+                     'expected ' + numPeers + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
@@ -317,8 +320,8 @@ allocCluster.test('sending requests to servers with busy', {
 
         var byServer = collectByResult(data.results);
 
-        var keys = Object.keys(byServer);
-        assert.equal(keys.length, numPeers, 'expected 25 servers');
+        assert.equal(Object.keys(byServer).length, numPeers,
+                     'expected ' + numPeers + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
@@ -376,8 +379,8 @@ allocCluster.test('sending requests to servers with busy over time', {
         );
 
         var byServer = collectByResult(data.results);
-        var keys = Object.keys(byServer);
-        assert.equal(keys.length, numPeers, 'expected 25 servers');
+        assert.equal(Object.keys(byServer).length, numPeers,
+                     'expected ' + numPeers + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
