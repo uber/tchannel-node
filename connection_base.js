@@ -137,7 +137,7 @@ function connBaseRequest(options) {
         req.drainReason = self.drainReason;
     }
     self.ops.addOutReq(req);
-    req.peer.invalidateScore('conn.request');
+    req.peer.invalidateScore('conn.request'); // TODO: maybe only on send (or additionally)?
     return req;
 };
 
