@@ -34,6 +34,7 @@ function Operations(opts) {
     EventEmitter.call(self);
     self.draining = false;
     self.drainEvent = self.defineEvent('drain');
+    self.pendingChangeEvent = self.defineEvent('pendingChange');
 
     self.timers = opts.timers;
     self.logger = opts.logger;
@@ -125,6 +126,8 @@ OperationTombstone.prototype.destroy = function destroy(now) {
 OperationTombstone.prototype.onTimeout = function onTimeout(now) {
     var self = this;
 
+    var pendingDirty = false;
+
     if (!self.destroyed && now < self.timeout + self.time) {
         self.logger.error('tombstone timed out too early', self.extendLogInfo({
             now: now,
@@ -138,6 +141,7 @@ OperationTombstone.prototype.onTimeout = function onTimeout(now) {
         delete self.operations.requests.out[self.id];
         if (self.isPendingError) {
             self.operations.pending.errors--;
+            pendingDirty = true;
         }
         self.operations = null;
     } else {
@@ -146,6 +150,10 @@ OperationTombstone.prototype.onTimeout = function onTimeout(now) {
     }
 
     self.timeHeapHandle = null;
+
+    if (pendingDirty) {
+        self.operations.pendingChangeEvent.emit(self, self.pending);
+    }
 };
 
 Operations.prototype.checkLastTimeoutTime = function checkLastTimeoutTime(now) {
@@ -217,6 +225,8 @@ Operations.prototype.addOutReq = function addOutReq(req) {
 
     req.timeHeapHandle = self.connection.channel.timeHeap.update(req);
 
+    self.pendingChangeEvent.emit(self, self.pending);
+
     return req;
 };
 
@@ -228,6 +238,8 @@ Operations.prototype.addInReq = function addInReq(req) {
     self.pending.in++;
 
     req.timeHeapHandle = self.connection.channel.timeHeap.update(req);
+
+    self.pendingChangeEvent.emit(self, self.pending);
 
     return req;
 };
@@ -312,6 +324,8 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
         self.checkDrained();
     }
 
+    self.pendingChangeEvent.emit(self, self.pending);
+
     return req;
 };
 
@@ -360,6 +374,9 @@ Operations.prototype.popInReq = function popInReq(id) {
 
     delete self.requests.in[id];
     self.pending.in--;
+
+    self.pendingChangeEvent.emit(self, self.pending);
+
     if (self.draining) {
         self.checkDrained();
     }
@@ -404,6 +421,7 @@ Operations.prototype.sanitySweep = function sanitySweep() {
 Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
     var self = this;
 
+    var pendingDirty = false;
     var now = self.timers.now();
     var opKeys = Object.keys(ops);
     for (var i = 0; i < opKeys.length; i++) {
@@ -422,8 +440,10 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
 
             if (direction === 'in') {
                 self.popInReq(id);
+                pendingDirty = false; // since popInReq emits the event
             } else if (direction === 'out') {
                 self.popOutReq(id);
+                pendingDirty = false; // since popOutReq emits the event
             }
         } else if (op.isTombstone) {
             var heap = self.connection.channel.timeHeap;
@@ -437,6 +457,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 delete ops[id];
                 if (op.isPendingError) {
                     self.pending.errors--;
+                    pendingDirty = true;
                 }
                 op.operations = null;
                 op.timeHeapHandle.cancel();
@@ -453,11 +474,16 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 delete ops[id];
                 if (op.isPendingError) {
                     self.pending.errors--;
+                    pendingDirty = true;
                 }
                 op.operations = null;
                 op.timeHeapHandle.cancel();
                 op.timeHeapHandle = null;
             }
         }
+    }
+
+    if (pendingDirty) {
+        self.pendingChangeEvent.emit(self, self.pending);
     }
 };
