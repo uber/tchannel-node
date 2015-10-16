@@ -617,7 +617,7 @@ TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
     return conn;
 };
 
-TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() {
+TChannelPeer.prototype.pendingWeighted = function pendingWeighted() {
     // Returns a score in the range from 0 to 1, where it is preferable to use
     // a peer with a higher score over one with a lower score.
     // This range is divided among an infinite set of subranges corresponding
@@ -626,27 +626,17 @@ TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() 
     // The range (1/4, 1/2) is reserved for peers with 1 pending connections.
     // The range (1/8, 1/4) is reserved for peers with 2 pending connections.
     // Ad nauseam.
-    // Within each equivalence class, each peer receives a uniform random
-    // value.
-    //
-    // The previous score was a weighted random variable:
-    //   random() ** (1 + pending)
-    // This had the attribute that a less loaded peer was merely more likely to
-    // be chosen over a more loaded peer.
-    // We observed with the introduction of a heap, that a less favored peer
-    // would have its score less frequently re-evaluated.
-    // An emergent behavior was that scores would, over time, be squeezed
-    // toward zero and the least favored peer would remain the least favored
-    // for ever increasing durations.
-    //
-    // This remains true with this algorithm, within each equivalence class.
     var self = this;
     var pending = self.countPending();
     var max = Math.pow(0.5, pending);
     var min = max / 2;
-    var diff = max - min;
-    return min + diff * self.random();
+    return new Range(min, max);
 };
+
+function Range(min, max) {
+    this.min = min;
+    this.max = max;
+}
 
 TChannelPeer.prototype.countPending = function countPending() {
     var self = this;

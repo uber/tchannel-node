@@ -420,8 +420,10 @@ function makeServer(channel, index) {
     });
 
     serverChan.register('foo', function foo(req, res, arg2, arg3) {
-        res.headers.as = 'raw';
-        res.sendOk(arg2, arg3 + ' served by ' + chanNum);
+        channel.timers.setTimeout(function sendResponse() {
+            res.headers.as = 'raw';
+            res.sendOk(arg2, arg3 + ' served by ' + chanNum);
+        }, 2);
     });
 }
 
