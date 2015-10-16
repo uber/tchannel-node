@@ -456,11 +456,13 @@ TChannelPeer.prototype._waitForIdentified =
 function _waitForIdentified(conn, callback) {
     var self = this;
 
+    // no score invalidation needed, since #addConnection will
+    // do it if needed
+
     self.pendingIdentified++;
     conn.errorEvent.on(onConnectionError);
     conn.closeEvent.on(onConnectionClose);
     conn.identifiedEvent.on(onIdentified);
-    self.invalidateScore('waitForIdentified');
 
     function onConnectionError(err) {
         finish(err);
@@ -479,7 +481,6 @@ function _waitForIdentified(conn, callback) {
         conn.errorEvent.removeListener(onConnectionError);
         conn.closeEvent.removeListener(onConnectionClose);
         conn.identifiedEvent.removeListener(onIdentified);
-        self.invalidateScore('waitForIdentified > finish');
         callback(err);
     }
 };
