@@ -36,6 +36,8 @@ var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
 var DEFAULT_REPORT_INTERVAL = 1000;
 
 function TChannelPeer(channel, hostPort, options) {
+    assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
+
     if (!(this instanceof TChannelPeer)) {
         return new TChannelPeer(channel, hostPort, options);
     }
@@ -46,9 +48,6 @@ function TChannelPeer(channel, hostPort, options) {
     self.stateChangedEvent = self.defineEvent('stateChanged');
     self.allocConnectionEvent = self.defineEvent('allocConnection');
     self.removeConnectionEvent = self.defineEvent('removeConnection');
-
-    assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
-
     self.channel = channel;
     self.logger = self.channel.logger;
     self.timers = self.channel.timers;
