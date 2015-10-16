@@ -261,7 +261,10 @@ function TChannel(options) {
 
     function doSanitySweep() {
         self.sanityTimer = null;
-        self.sanitySweep();
+        self.sanitySweep(sweepDone);
+    }
+
+    function sweepDone() {
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
     }
 }
@@ -957,7 +960,8 @@ TChannel.prototype.emitStat = function emitStat(stat) {
     }
 };
 
-TChannel.prototype.sanitySweep = function sanitySweep() {
+TChannel.prototype.sanitySweep =
+function sanitySweep(callback) {
     var self = this;
 
     if (self.serverConnections) {
@@ -968,7 +972,7 @@ TChannel.prototype.sanitySweep = function sanitySweep() {
         }
     }
 
-    self.peers.sanitySweep();
+    self.peers.sanitySweep(callback);
 };
 
 module.exports = TChannel;

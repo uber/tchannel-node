@@ -53,7 +53,8 @@ TChannelRootPeers.prototype.close = function close(callback) {
     TChannelPeersBase.prototype.close.call(self, peers, callback);
 };
 
-TChannelRootPeers.prototype.sanitySweep = function sanitySweep() {
+TChannelRootPeers.prototype.sanitySweep =
+function sanitySweep(callback) {
     var self = this;
 
     if (self.selfPeer) {
@@ -62,7 +63,8 @@ TChannelRootPeers.prototype.sanitySweep = function sanitySweep() {
             conn.ops.sanitySweep();
         }
     }
-    TChannelPeersBase.prototype.sanitySweep.call(self);
+
+    TChannelPeersBase.prototype.sanitySweep.call(self, callback);
 };
 
 TChannelRootPeers.prototype.getSelfPeer = function getSelfPeer() {
