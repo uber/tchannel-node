@@ -27,7 +27,7 @@ var allocCluster = require('./lib/alloc-cluster.js');
 var barplot = require('./lib/barplot.js');
 var hookupPeerScoreObs = require('./lib/peer_score_obs.js');
 
-var debug = false; // TODO: less jank affordance
+var debug = true; // TODO: less jank affordance
 
 allocCluster.test('sending requests to servers synchronously has perfect distribution', {
     numPeers: 5
