@@ -142,17 +142,33 @@ TChannelPeer.prototype.setScoreStrategy = function setScoreStrategy(ScoreStrateg
     self.handler = new ScoreStrategy(self);
 };
 
-TChannelPeer.prototype.invalidateScore = function invalidateScore() {
+TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
     var self = this;
 
     if (!self.heapElements.length) {
         return;
     }
 
+    var info = self.channel.peerScoredEvent ? {
+        peer: self,
+        reason: reason || 'unknown',
+        score: 0,
+        oldScores: [],
+        scores: []
+    } : null;
+
     var score = self.handler.getScore();
     for (var i = 0; i < self.heapElements.length; i++) {
         var el = self.heapElements[i];
+        if (info) {
+            info.oldScores.push(el.score);
+            info.scores.push(score);
+        }
         el.rescore(score);
+    }
+
+    if (info) {
+        self.channel.peerScoredEvent.emit(self, info);
     }
 };
 

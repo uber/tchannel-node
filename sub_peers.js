@@ -130,6 +130,15 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
         var peer = self._map[hostPort];
         if (!req || !req.triedRemoteAddrs || !req.triedRemoteAddrs[hostPort]) {
             var score = peer.handler.getScore(req);
+
+            if (self.channel.topChannel.peerScoredEvent) {
+                self.channel.topChannel.peerScoredEvent.emit(peer, {
+                    peer: peer,
+                    reason: 'chooseLinearPeer',
+                    score: score,
+                });
+            }
+
             var want = score > threshold &&
                        (selectedPeer === null || score > selectedScore);
             if (want) {
@@ -139,17 +148,34 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
         }
     }
 
+    if (self.channel.topChannel.peerChosenEvent) {
+        self.channel.topChannel.peerChosenEvent.emit(self, {
+            mode: 'linear',
+            peer: selectedPeer
+        });
+    }
+
     return selectedPeer;
 };
 
 TChannelSubPeers.prototype.chooseHeapPeer = function chooseHeapPeer(req) {
     var self = this;
 
+    var peer;
     if (req && req.triedRemoteAddrs) {
-        return self._choosePeerSkipTried(req);
+        peer = self._choosePeerSkipTried(req);
+    } else {
+        peer = self._heap.choose(self.peerScoreThreshold);
     }
 
-    return self._heap.choose(self.peerScoreThreshold);
+    if (self.channel.topChannel.peerChosenEvent) {
+        self.channel.topChannel.peerChosenEvent.emit(self, {
+            mode: 'heap',
+            peer: peer
+        });
+    }
+
+    return peer;
 };
 
 TChannelSubPeers.prototype._choosePeerSkipTried =
