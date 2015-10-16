@@ -68,15 +68,28 @@ TChannelPeersBase.prototype.close = function close(peers, callback) {
     }
 };
 
-TChannelPeersBase.prototype.sanitySweep = function sanitySweep() {
+TChannelPeersBase.prototype.sanitySweep =
+function sanitySweep(callback) {
     var self = this;
 
-    var peers = self.values();
-    for (var i = 0; i < peers.length; i++) {
+    nextPeer(self.values(), 0, callback);
+
+    function nextPeer(peers, i, done) {
+        if (i >= peers.length) {
+            done(null);
+            return;
+        }
+
         var peer = peers[i];
         for (var j = 0; j < peer.connections.length; j++) {
             var conn = peer.connections[j];
             conn.ops.sanitySweep();
+        }
+
+        setImmediate(deferNextPeer);
+
+        function deferNextPeer() {
+            nextPeer(peers, i + 1, done);
         }
     }
 };

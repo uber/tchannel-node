@@ -972,9 +972,7 @@ function sanitySweep(callback) {
         }
     }
 
-    self.peers.sanitySweep();
-
-    callback(null);
+    self.peers.sanitySweep(callback);
 };
 
 module.exports = TChannel;
