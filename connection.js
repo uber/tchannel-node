@@ -414,9 +414,10 @@ function onCallErrorFrame(errFrame) {
         if (req.res) {
             req.res.errorEvent.emit(req.res, err);
         } else {
-            // Only popOutReq if there is no call response object yet
-            req = self.ops.popOutReq(id, err);
             req.emitError(err);
+        }
+        if (self.ops.getOutReq(id)) {
+            self.ops.popOutReq(id, err);
         }
     }
 };
