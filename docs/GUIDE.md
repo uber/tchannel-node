@@ -2,7 +2,7 @@
 
 This guide will show you how to write a server and client.
 
-The code matching this guide is [here](./examples/keyvalue/).
+The code matching this guide is [here](../examples/keyvalue/).
 
 ## Table of contents
 
@@ -69,14 +69,14 @@ To get a server up and running you need to do the following:
 
 ### Creating a tchannel
 
-Create a tchannel using [`TChannel(opts)`](./docs/channel.md#var-channel--tchanneloptions) and listen to it by calling [`.listen(port, host)`](./docs/channel.md#channellistenport-host-callback).
+Create a tchannel using [`TChannel(opts)`](./channel.md#var-channel--tchanneloptions) and listen to it by calling [`.listen(port, host)`](./channel.md#channellistenport-host-callback).
 
 It's advised that you listen on the external IP of your host to
 ensure that other machines can create incoming connections to you.
 Consider using [`my-local-ip`](https://github.com/dominictarr/my-local-ip) to determine your external IP.
 
 When you create your channel make sure you configure the correct
-options for your use cases. See the [tchannel docs](./docs/channel.md)
+options for your use cases. See the [tchannel docs](./channel.md)
 for more details.
 
 ```js
@@ -92,11 +92,11 @@ rootChannel.listen(4040, myLocalIp());
 To register your interface you must implement the `get` and `put`
 endpoints on your tchannel.
 
-First we create a sub channel using [`channel.makeSubChannel()`](./docs/sub-channels.md#channelmakesubchanneloptions).
+First we create a sub channel using [`channel.makeSubChannel()`](./sub-channels.md#channelmakesubchanneloptions).
 
-Once we have a sub channel we have to create a [`TChannelThrift(opts)`](./docs/as-thrift.md#var-tchannelthrift--tchannelthriftops) codec.
+Once we have a sub channel we have to create a [`TChannelThrift(opts)`](./as-thrift.md#var-tchannelthrift--tchannelthriftops) codec.
 
-Finally you can call [`.register()`](./docs/as-thrift.md#tchannelthriftregistertchannel-arg1-ctx-handlerfn) on the thrift
+Finally you can call [`.register()`](./as-thrift.md#tchannelthriftregistertchannel-arg1-ctx-handlerfn) on the thrift
 codec to register your actual endpoints.
 
 ```js
@@ -166,9 +166,9 @@ on how to set a local hyperbahn up.
 
 ### Registering with hyperbahn
 
-Create a Hyperbahn client using [`HyperbahnClient(opts)`](./docs/hyperbahn.md#var-hyperbahnclient--hyperbahnclientoptions).
+Create a Hyperbahn client using [`HyperbahnClient(opts)`](./hyperbahn.md#var-hyperbahnclient--hyperbahnclientoptions).
 
-Call [`.advertise()`](./docs/hyperbahn.md#hyperbahnclientadvertise)
+Call [`.advertise()`](./hyperbahn.md#hyperbahnclientadvertise)
 on the hyperbahn client to advertise your service with hyperbahn.
 
 ```js
@@ -248,12 +248,12 @@ Feel free to re-use the `hyperbahnClient` that you made for the server
 
 To make an outgoing call request you will need a sub channel
 for the service you are talking to. Use
-[`hyperbahnClient.getClientChannel(opts)`](./docs/hyperbahn.md#hyperbahnclientgetclientchannelopts) to get a sub channel
+[`hyperbahnClient.getClientChannel(opts)`](./hyperbahn.md#hyperbahnclientgetclientchannelopts) to get a sub channel
 
 Once you have a subchannel you can create a thrift codec using
-[`TChannelThrift(opts)`](./docs/as-thrift.md#var-tchannelthrift--tchannelthriftopts)
+[`TChannelThrift(opts)`](./as-thrift.md#var-tchannelthrift--tchannelthriftopts)
 
-Finally we call [`.request()`](./docs/as-thrift.md#tchannelthriftrequestreqoptssendendpoint-head-body-cb)
+Finally we call [`.request()`](./as-thrift.md#tchannelthriftrequestreqoptssendendpoint-head-body-cb)
 on the thrift codec.
 
 ```js
