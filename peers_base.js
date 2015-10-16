@@ -81,15 +81,33 @@ function sanitySweep(callback) {
         }
 
         var peer = peers[i];
-        for (var j = 0; j < peer.connections.length; j++) {
-            var conn = peer.connections[j];
-            conn.ops.sanitySweep();
-        }
 
-        setImmediate(deferNextPeer);
+        nextConn(peer.connections, 0, function connSweepDone(err) {
+            if (err) {
+                done(err);
+                return;
+            }
+            setImmediate(deferNextPeer);
+        });
 
         function deferNextPeer() {
             nextPeer(peers, i + 1, done);
+        }
+    }
+
+    function nextConn(conns, i, done) {
+        if (i >= conns.length) {
+            done(null);
+            return;
+        }
+
+        var conn = conns[i];
+        conn.ops.sanitySweep();
+
+        setImmediate(deferNextConn);
+
+        function deferNextConn() {
+            nextConn(conns, i + 1, done);
         }
     }
 };
