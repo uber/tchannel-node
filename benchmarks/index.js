@@ -58,6 +58,7 @@ function BenchmarkRunner(opts) {
     self.benchProcs = [];
     self.benchCounter = 0;
     self.fileStream = null;
+    self.startClientDelay = 500;
 
     var SERVER_PORT = 7100;
     var TRACE_SERVER_PORT = 7039;
@@ -89,13 +90,13 @@ BenchmarkRunner.prototype.start = function start() {
     if (self.opts.relay || self.opts.trace) {
         setTimeout(startRelay, 500);
     } else {
-        setTimeout(startClient, 500);
+        setTimeout(startClient, self.startClientDelay);
     }
 
     function startRelay() {
         self.spawnRelayServer();
 
-        setTimeout(startClient, 500);
+        setTimeout(startClient, self.startClientDelay);
     }
 
     function startClient() {
