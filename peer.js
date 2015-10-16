@@ -57,6 +57,9 @@ function TChannelPeer(channel, hostPort, options) {
     self.pendingIdentified = 0;
     self.heapElements = [];
     self.handler = null;
+    self.boundOnIdentified = onIdentified;
+    self.boundOnConnectionError = onConnectionError;
+    self.boundOnConnectionClose = onConnectionClose;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -67,6 +70,18 @@ function TChannelPeer(channel, hostPort, options) {
 
     var direction = options.preferConnectionDirection || 'any';
     self.setPreferConnectionDirection(direction);
+
+    function onIdentified(_, conn) {
+        self.onIdentified(conn);
+    }
+
+    function onConnectionError(err, conn) {
+        self.onConnectionError(err, conn);
+    }
+
+    function onConnectionClose(_, conn) {
+        self.onConnectionClose(conn);
+    }
 
     function onReport() {
         if (!self.hostPort) {
@@ -326,36 +341,45 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     } else {
         self.connections.unshift(conn);
     }
-    conn.errorEvent.on(onConnectionError);
-    conn.closeEvent.on(onConnectionClose);
+    conn.errorEvent.on(self.boundOnConnectionError);
+    conn.closeEvent.on(self.boundOnConnectionClose);
 
     self._maybeInvalidateScore();
     if (!conn.remoteName) {
         // TODO: could optimize if handler had a way of saying "would a new
         // identified connection change your Tier?"
-        conn.identifiedEvent.on(onIdentified);
+        conn.identifiedEvent.on(self.boundOnIdentified);
     }
 
     return conn;
+};
 
-    function onIdentified() {
-        conn.identifiedEvent.removeListener(onIdentified);
-        self._maybeInvalidateScore();
-    }
+TChannelPeer.prototype.onIdentified =
+function onIdentified(conn) {
+    var self = this;
 
-    function onConnectionError(err) {
-        conn.closeEvent.removeListener(onConnectionClose);
-        conn.errorEvent.removeListener(onConnectionError);
-        conn.identifiedEvent.removeListener(onIdentified);
-        self.removeConnectionFrom(err, conn);
-    }
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    self._maybeInvalidateScore();
+};
 
-    function onConnectionClose() {
-        conn.closeEvent.removeListener(onConnectionClose);
-        conn.errorEvent.removeListener(onConnectionError);
-        conn.identifiedEvent.removeListener(onIdentified);
-        self.removeConnectionFrom(null, conn);
-    }
+TChannelPeer.prototype.onConnectionError =
+function onConnectionError(err, conn) {
+    var self = this;
+
+    conn.closeEvent.removeListener(self.boundOnConnectionClose);
+    conn.errorEvent.removeListener(self.boundOnConnectionError);
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    self.removeConnectionFrom(err, conn);
+};
+
+TChannelPeer.prototype.onConnectionClose =
+function onConnectionClose(conn) {
+    var self = this;
+
+    conn.closeEvent.removeListener(self.boundOnConnectionClose);
+    conn.errorEvent.removeListener(self.boundOnConnectionError);
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    self.removeConnectionFrom(null, conn);
 };
 
 TChannelPeer.prototype.removeConnectionFrom =
