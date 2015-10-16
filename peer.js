@@ -344,18 +344,17 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     }
 
     function onConnectionError(err) {
-        removeConnection(err);
-    }
-
-    function onConnectionClose() {
-        removeConnection(null);
-    }
-
-    function removeConnection(err) {
         conn.closeEvent.removeListener(onConnectionClose);
         conn.errorEvent.removeListener(onConnectionError);
         conn.identifiedEvent.removeListener(onIdentified);
         self.removeConnectionFrom(err, conn);
+    }
+
+    function onConnectionClose() {
+        conn.closeEvent.removeListener(onConnectionClose);
+        conn.errorEvent.removeListener(onConnectionError);
+        conn.identifiedEvent.removeListener(onIdentified);
+        self.removeConnectionFrom(null, conn);
     }
 };
 
