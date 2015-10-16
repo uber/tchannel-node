@@ -355,24 +355,30 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
         conn.closeEvent.removeListener(onConnectionClose);
         conn.errorEvent.removeListener(onConnectionError);
         conn.identifiedEvent.removeListener(onIdentified);
-        if (err) {
-            var loggerInfo = {
-                error: err,
-                direction: conn.direction,
-                remoteName: conn.remoteName,
-                socketRemoteAddr: conn.socketRemoteAddr
-            };
-
-            var codeName = errors.classify(err);
-            if (codeName === 'Timeout') {
-                self.logger.warn('Got a connection error', loggerInfo);
-            } else {
-                self.logger.error('Got an unexpected connection error', loggerInfo);
-            }
-        }
-
-        self.removeConnection(conn);
+        self.removeConnectionFrom(err, conn);
     }
+};
+
+TChannelPeer.prototype.removeConnectionFrom =
+function removeConnectionFrom(err, conn) {
+    var self = this;
+
+    if (err) {
+        var loggerInfo = {
+            error: err,
+            direction: conn.direction,
+            remoteName: conn.remoteName,
+            socketRemoteAddr: conn.socketRemoteAddr
+        };
+        var codeName = errors.classify(err);
+        if (codeName === 'Timeout') {
+            self.logger.warn('Got a connection error', loggerInfo);
+        } else {
+            self.logger.error('Got an unexpected connection error', loggerInfo);
+        }
+    }
+
+    self.removeConnection(conn);
 };
 
 TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
