@@ -36,6 +36,8 @@ var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
 var DEFAULT_REPORT_INTERVAL = 1000;
 
 function TChannelPeer(channel, hostPort, options) {
+    assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
+
     if (!(this instanceof TChannelPeer)) {
         return new TChannelPeer(channel, hostPort, options);
     }
@@ -46,9 +48,6 @@ function TChannelPeer(channel, hostPort, options) {
     self.stateChangedEvent = self.defineEvent('stateChanged');
     self.allocConnectionEvent = self.defineEvent('allocConnection');
     self.removeConnectionEvent = self.defineEvent('removeConnection');
-
-    assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
-
     self.channel = channel;
     self.logger = self.channel.logger;
     self.timers = self.channel.timers;
@@ -58,6 +57,9 @@ function TChannelPeer(channel, hostPort, options) {
     self.pendingIdentified = 0;
     self.heapElements = [];
     self.handler = null;
+    self.boundOnIdentified = onIdentified;
+    self.boundOnConnectionError = onConnectionError;
+    self.boundOnConnectionClose = onConnectionClose;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -68,6 +70,18 @@ function TChannelPeer(channel, hostPort, options) {
 
     var direction = options.preferConnectionDirection || 'any';
     self.setPreferConnectionDirection(direction);
+
+    function onIdentified(_, conn) {
+        self.onIdentified(conn);
+    }
+
+    function onConnectionError(err, conn) {
+        self.onConnectionError(err, conn);
+    }
+
+    function onConnectionClose(_, conn) {
+        self.onConnectionClose(conn);
+    }
 
     function onReport() {
         if (!self.hostPort) {
@@ -327,53 +341,67 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     } else {
         self.connections.unshift(conn);
     }
-    conn.errorEvent.on(onConnectionError);
-    conn.closeEvent.on(onConnectionClose);
+    conn.errorEvent.on(self.boundOnConnectionError);
+    conn.closeEvent.on(self.boundOnConnectionClose);
 
     self._maybeInvalidateScore();
     if (!conn.remoteName) {
         // TODO: could optimize if handler had a way of saying "would a new
         // identified connection change your Tier?"
-        conn.identifiedEvent.on(onIdentified);
+        conn.identifiedEvent.on(self.boundOnIdentified);
     }
 
     return conn;
+};
 
-    function onIdentified() {
-        conn.identifiedEvent.removeListener(onIdentified);
-        self._maybeInvalidateScore();
-    }
+TChannelPeer.prototype.onIdentified =
+function onIdentified(conn) {
+    var self = this;
 
-    function onConnectionError(err) {
-        removeConnection(err);
-    }
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    self._maybeInvalidateScore();
+};
 
-    function onConnectionClose() {
-        removeConnection(null);
-    }
+TChannelPeer.prototype.onConnectionError =
+function onConnectionError(err, conn) {
+    var self = this;
 
-    function removeConnection(err) {
-        conn.closeEvent.removeListener(onConnectionClose);
-        conn.errorEvent.removeListener(onConnectionError);
-        conn.identifiedEvent.removeListener(onIdentified);
-        if (err) {
-            var loggerInfo = {
-                error: err,
-                direction: conn.direction,
-                remoteName: conn.remoteName,
-                socketRemoteAddr: conn.socketRemoteAddr
-            };
+    conn.closeEvent.removeListener(self.boundOnConnectionClose);
+    conn.errorEvent.removeListener(self.boundOnConnectionError);
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    self.removeConnectionFrom(err, conn);
+};
 
-            var codeName = errors.classify(err);
-            if (codeName === 'Timeout') {
-                self.logger.warn('Got a connection error', loggerInfo);
-            } else {
-                self.logger.error('Got an unexpected connection error', loggerInfo);
-            }
+TChannelPeer.prototype.onConnectionClose =
+function onConnectionClose(conn) {
+    var self = this;
+
+    conn.closeEvent.removeListener(self.boundOnConnectionClose);
+    conn.errorEvent.removeListener(self.boundOnConnectionError);
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    self.removeConnectionFrom(null, conn);
+};
+
+TChannelPeer.prototype.removeConnectionFrom =
+function removeConnectionFrom(err, conn) {
+    var self = this;
+
+    if (err) {
+        var loggerInfo = {
+            error: err,
+            direction: conn.direction,
+            remoteName: conn.remoteName,
+            socketRemoteAddr: conn.socketRemoteAddr
+        };
+        var codeName = errors.classify(err);
+        if (codeName === 'Timeout') {
+            self.logger.warn('Got a connection error', loggerInfo);
+        } else {
+            self.logger.error('Got an unexpected connection error', loggerInfo);
         }
-
-        self.removeConnection(conn);
     }
+
+    self.removeConnection(conn);
 };
 
 TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
