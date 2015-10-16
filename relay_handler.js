@@ -160,6 +160,7 @@ function LazyRelayInReq(conn, reqFrame) {
     self.endpoint = '';
     self.error = null;
     self.tracing = null;
+    self.reqContFrames = [];
 
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
@@ -311,6 +312,12 @@ function onIdentified(err) {
     self.forwardTo(conn);
 };
 
+LazyRelayInReq.prototype.freeReferences = function freeReferences() {
+    var self = this;
+
+    self.reqContFrames.length = 0;
+};
+
 LazyRelayInReq.prototype.forwardTo =
 function forwardTo(conn) {
     var self = this;
@@ -327,6 +334,12 @@ function forwardTo(conn) {
     conn.ops.addOutReq(self.outreq);
     self.handleFrameLazily(self.reqFrame);
     self.reqFrame = null;
+
+    for (var i = 0; i < self.reqContFrames.length; i++) {
+        self.handleFrameLazily(self.reqContFrames[i]);
+    }
+
+    self.freeReferences();
 
     var now = self.channel.timers.now();
     self.channel.emitFastStat(self.channel.buildStat(
@@ -384,6 +397,8 @@ function onError(err) {
         info: 'lazy relay request error',
         relayDirection: 'in'
     }));
+
+    self.freeReferences();
 };
 
 LazyRelayInReq.prototype.sendErrorFrame =
@@ -401,6 +416,13 @@ function handleFrameLazily(frame) {
 
     if (!self.alive) {
         self.logger.warn('dropping frame from dead relay request', self.extendLogInfo({}));
+        return;
+    }
+
+    // We have not flushed the CallRequest yet.
+    // Probably waiting for init req/res blocking on out request conn.
+    if (frame.type === v2.Types.CallRequestCont && self.reqFrame !== null) {
+        self.reqContFrames.push(frame);
         return;
     }
 
