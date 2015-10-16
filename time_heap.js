@@ -20,6 +20,8 @@
 
 'use strict';
 
+var DRAIN_LOOP_MAX_DURATION = 100; // ms
+
 module.exports = TimeHeap;
 
 var globalTimers = {
@@ -78,6 +80,7 @@ function TimeHeap(options) {
     self.timer = null;
     self.end = 0;
     self.lastRun = 0;
+    self.drainUntil = 0;
 }
 
 TimeHeap.prototype.clear = function clear() {
@@ -150,6 +153,12 @@ TimeHeap.prototype.onTimeout = function onTimeout(now) {
 TimeHeap.prototype.drainExpired = function drainExpired(now) {
     var self = this;
 
+    if (now < self.drainUntil) {
+        return;
+    }
+
+    self.drainUntil = now + DRAIN_LOOP_MAX_DURATION;
+
     while (self.end && self.array[0].expireTime <= now) {
         var item = self.pop();
         if (item) {
@@ -157,8 +166,16 @@ TimeHeap.prototype.drainExpired = function drainExpired(now) {
         }
     }
     if (self.expired.length) {
+        // callExpiredTimeouts can re-enter drainExpired by calling popOutReq,
+        // which in turn calls update, and then back to drainExpired.
+        // The drainUntil shorts this recursive loop.
+        // The solution uses a timer instead of a flag to ensure that drain
+        // resumes even if an exception halts the loop prematurely without
+        // incurring the cost of try/finally.
         self.callExpiredTimeouts(now);
     }
+
+    self.drainUntil = 0;
 };
 
 TimeHeap.prototype.callExpiredTimeouts = function callExpiredTimeouts(now) {
