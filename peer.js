@@ -528,26 +528,22 @@ function onIdentified(conn) {
 TChannelPeer.prototype.onConnectionError =
 function onConnectionError(err, conn) {
     var self = this;
-
-    conn.closeEvent.removeListener(self.boundOnConnectionClose);
-    conn.errorEvent.removeListener(self.boundOnConnectionError);
-    conn.identifiedEvent.removeListener(self.boundOnIdentified);
     self.removeConnectionFrom(err, conn);
 };
 
 TChannelPeer.prototype.onConnectionClose =
 function onConnectionClose(conn) {
     var self = this;
-
-    conn.closeEvent.removeListener(self.boundOnConnectionClose);
-    conn.errorEvent.removeListener(self.boundOnConnectionError);
-    conn.identifiedEvent.removeListener(self.boundOnIdentified);
     self.removeConnectionFrom(null, conn);
 };
 
 TChannelPeer.prototype.removeConnectionFrom =
 function removeConnectionFrom(err, conn) {
     var self = this;
+
+    conn.closeEvent.removeListener(self.boundOnConnectionClose);
+    conn.errorEvent.removeListener(self.boundOnConnectionError);
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
 
     if (err) {
         var loggerInfo = {
