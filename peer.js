@@ -37,6 +37,10 @@ var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
 
 var DEFAULT_REPORT_INTERVAL = 1000;
 
+TChannelPeer.PENDING_TOTAL_JUST_COUNT = 0;
+TChannelPeer.PENDING_TOTAL_CACHE_SHADOW = 1;
+TChannelPeer.PENDING_TOTAL_CACHE_MASTER = 2;
+
 function TChannelPeer(channel, hostPort, options) {
     assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
 
@@ -657,6 +661,28 @@ TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() 
 TChannelPeer.prototype.getTotalPending =
 function getTotalPending() {
     var self = this;
+
+    if (self.channel.peerPendingTotalMode ===
+        TChannelPeer.PENDING_TOTAL_CACHE_MASTER) {
+        return self.pendingTotal;
+    }
+
+    if (self.channel.peerPendingTotalMode ===
+        TChannelPeer.PENDING_TOTAL_CACHE_SHADOW) {
+        var pendingCount = self.countPending();
+        var pendingCacheMatch = self.pendingTotal === pendingCount;
+        if (!pendingCacheMatch) {
+            self.logger.warn('peer total pending cache shadow mismatch', self.extendLogInfo({
+                pendingCount: pendingCount,
+                pendingTotal: self.pendingTotal,
+                pendingDiff: self.pendingTotal - pendingCount
+            }));
+        }
+        return pendingCount;
+    }
+
+    // else self.channel.peerPendingTotalMode ===
+    //      TChannelPeer.PENDING_TOTAL_JUST_COUNT
 
     return self.countPending();
 };

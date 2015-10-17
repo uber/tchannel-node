@@ -57,6 +57,7 @@ var BaseStat = require('./lib/stat.js').BaseStat;
 var TChannelAsThrift = require('./as/thrift');
 var TChannelAsJSON = require('./as/json');
 var TChannelConnection = require('./connection');
+var TChannelPeer = require('./peer.js');
 var TChannelRootPeers = require('./root_peers');
 var TChannelSubPeers = require('./sub_peers');
 var TChannelServices = require('./services');
@@ -140,6 +141,10 @@ function TChannel(options) {
     self.choosePeerWithHeap = self.options.choosePeerWithHeap || false;
 
     self.setObservePeerScoreEvents(self.options.observePeerScoreEvents);
+    self.peerPendingTotalMode = TChannelPeer.PENDING_TOTAL_JUST_COUNT;
+    if (self.options.peerPendingTotalMode !== undefined) {
+        self.peerPendingTotalMode = self.options.peerPendingTotalMode;
+    }
 
     // required: 'app'
     // optional: 'host', 'cluster', 'version'
