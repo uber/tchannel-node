@@ -57,6 +57,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.hostPort = hostPort;
     self.connections = [];
     self.pendingIdentified = 0;
+    self.pendingTotal = 0;
     self.heapElements = [];
     self.scoreStrategy = null;
     self.draining = false;
@@ -457,6 +458,7 @@ function _waitForIdentified(conn, callback) {
     var self = this;
 
     self.pendingIdentified++;
+    self.pendingTotal++;
     conn.errorEvent.on(onConnectionError);
     conn.closeEvent.on(onConnectionClose);
     conn.identifiedEvent.on(onIdentified);
@@ -476,6 +478,7 @@ function _waitForIdentified(conn, callback) {
 
     function finish(err) {
         self.pendingIdentified = 0;
+        self.pendingTotal = Math.max(0, self.pendingTotal - 1);
         conn.errorEvent.removeListener(onConnectionError);
         conn.closeEvent.removeListener(onConnectionClose);
         conn.identifiedEvent.removeListener(onIdentified);
@@ -544,12 +547,16 @@ function onConnectionClose(conn) {
 };
 
 TChannelPeer.prototype.onPendingChange =
-function onPendingChange() {
+function onPendingChange(conn, pendingChange) {
     var self = this;
 
-    // TODO: it would be possible to a faster partial-recomputation based only
-    // on the change of pending for the this one connection. Note arguments are
-    // (conn, pending)
+    self.pendingTotal = Math.max(0,
+        self.pendingTotal +
+        pendingChange.out +
+        pendingChange.errors
+    );
+
+    // TODO: score invalidation could become able to ingest the delta
     self._maybeInvalidateScore('pendingChange');
 };
 
