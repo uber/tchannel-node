@@ -647,11 +647,18 @@ TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() 
     //
     // This remains true with this algorithm, within each equivalence class.
     var self = this;
-    var pending = self.countPending();
+    var pending = self.getTotalPending();
     var max = Math.pow(0.5, pending);
     var min = max / 2;
     var diff = max - min;
     return min + diff * self.random();
+};
+
+TChannelPeer.prototype.getTotalPending =
+function getTotalPending() {
+    var self = this;
+
+    return self.countPending();
 };
 
 TChannelPeer.prototype.countPending = function countPending() {
