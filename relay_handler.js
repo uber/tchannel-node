@@ -312,12 +312,6 @@ function onIdentified(err) {
     self.forwardTo(conn);
 };
 
-LazyRelayInReq.prototype.freeReferences = function freeReferences() {
-    var self = this;
-
-    self.reqContFrames.length = 0;
-};
-
 LazyRelayInReq.prototype.forwardTo =
 function forwardTo(conn) {
     var self = this;
@@ -339,7 +333,7 @@ function forwardTo(conn) {
         self.handleFrameLazily(self.reqContFrames[i]);
     }
 
-    self.freeReferences();
+    self.reqContFrames.length = 0;
 
     var now = self.channel.timers.now();
     self.channel.emitFastStat(self.channel.buildStat(
@@ -398,7 +392,7 @@ function onError(err) {
         relayDirection: 'in'
     }));
 
-    self.freeReferences();
+    self.reqContFrames.length = 0;
 };
 
 LazyRelayInReq.prototype.sendErrorFrame =
