@@ -415,8 +415,14 @@ allocCluster.test('relay request handles channel close correctly', {
     function onResponse(err, res, arg2, arg3) {
         assert.equal(err && err.type,
                      'tchannel.connection.reset',
-                     'expected timeout error');
+                     'expected connection error');
         assert.notOk(res, 'expected no response');
+        finish();
+    }
+
+    function finish() {
+        dest.close();
+
         assert.end();
     }
 });
