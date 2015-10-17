@@ -293,17 +293,8 @@ allocCluster.test('relay request times out', {
         }
     });
 
-    // Try to ensure a timeout in the relay by injecting delay into peer
-    // identification... still not 100% deterministic, but the test does pass
-    // always... even if it doesn't always hit the timeout path
     var relayOutPeer = relayChan.peers.get(dest.hostPort);
-    var waitForIdentified = relayOutPeer.waitForIdentified;
-    relayOutPeer.waitForIdentified = function punchWaitForIdentified(callback) {
-        var self = this;
-
-        relay.timers.setTimeout(function delayIt() {
-            waitForIdentified.call(self, callback);
-        }, 5);
+    relayOutPeer.waitForIdentified = function punchWaitForIdentified() {
     };
 
     sourceChan.request({
@@ -313,10 +304,8 @@ allocCluster.test('relay request times out', {
     }).send('limbo', null, null, onResponse);
 
     function onResponse(err, res, arg2, arg3) {
-        assert.ok(err && (
-                      err.type === 'tchannel.timeout' ||
-                      err.type === 'tchannel.request.timeout'
-                  ), 'expected timeout error');
+        assert.ok(err && err.type === 'tchannel.request.timeout',
+                  'expected timeout error');
         assert.notOk(res, 'expected no response');
         assert.end();
     }
@@ -415,8 +404,14 @@ allocCluster.test('relay request handles channel close correctly', {
     function onResponse(err, res, arg2, arg3) {
         assert.equal(err && err.type,
                      'tchannel.connection.reset',
-                     'expected timeout error');
+                     'expected connection error');
         assert.notOk(res, 'expected no response');
+        finish();
+    }
+
+    function finish() {
+        dest.close();
+
         assert.end();
     }
 });
