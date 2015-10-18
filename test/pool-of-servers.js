@@ -24,6 +24,10 @@ var parallel = require('run-parallel');
 
 var BatchClient = require('./lib/batch-client.js');
 var allocCluster = require('./lib/alloc-cluster.js');
+var barplot = require('./lib/barplot.js');
+var hookupPeerScoreObs = require('./lib/peer_score_obs.js');
+
+var debug = false; // TODO: less jank affordance
 
 allocCluster.test('sending requests to servers synchronously has perfect distribution', {
     numPeers: 5
@@ -389,6 +393,13 @@ function setup(cluster, assert, defects) {
     cluster.client = cluster.channels[0];
     cluster.servers = cluster.channels.slice(1);
 
+    if (debug) {
+        cluster.client.setObservePeerScoreEvents(true);
+        hookupPeerScoreObs(assert.comment,
+                           cluster.client,
+                           cluster.servers);
+    }
+
     var i = 0;
     for (; i < defects.length; i++) {
         makeErrorServer(cluster.servers[i], i, defects[i]);
@@ -450,6 +461,11 @@ function collectByResult(results) {
 
 function verifyCountsWithinRange(assert, byServer, expectedRange) {
     var keys = Object.keys(byServer).sort(sortByLastTokenNumeric);
+    if (debug) {
+        barplot(assert.comment, keys.map(function each(key) {
+            return [key, byServer[key]];
+        }));
+    }
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
         var count = byServer[key];
