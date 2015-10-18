@@ -28,17 +28,12 @@ var allocCluster = require('./lib/alloc-cluster.js');
 allocCluster.test('sending requests to servers synchronously has perfect distribution', {
     numPeers: 5
 }, function t(cluster, assert) {
-    var client = cluster.channels[0];
-    var servers = cluster.channels.slice(1);
+    setup(cluster, assert, []);
 
-    var numPeers = 4;
-
-    var clientChannel = client.makeSubChannel({
+    var clientChannel = cluster.client.makeSubChannel({
         serviceName: 'server',
-        peers: servers.map(getHostPort)
+        peers: cluster.servers.map(getHostPort)
     });
-
-    servers.forEach(makeServer);
 
     var callReqThunks = [];
     for (var i = 0; i < 200; i++) {
@@ -70,8 +65,8 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
 
         var byServer = collectByResult(results);
         var keys = Object.keys(byServer);
-        assert.equal(keys.length, numPeers,
-                     'expected ' + numPeers + ' servers');
+        assert.equal(keys.length, cluster.servers.length,
+                     'expected ' + cluster.servers.length + ' servers');
 
         for (var k = 0; k < keys.length; k++) {
             var count = byServer[keys[k]];
@@ -85,16 +80,14 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
 allocCluster.test('sending requests to servers over time has good distribution', {
     numPeers: 26
 }, function t(cluster, assert) {
-    var client = cluster.channels[0];
-    var servers = cluster.channels.slice(1);
+    setup(cluster, assert, []);
 
-    var numPeers = 25;
     var numRequests = 800;
-    var numExpectedReqs = numRequests / numPeers;
+    var numExpectedReqs = numRequests / cluster.servers.length;
 
-    var batchClient = new BatchClient(client, servers.map(getHostPort));
-
-    servers.forEach(makeServer);
+    var batchClient = new BatchClient(
+        cluster.client,
+        cluster.servers.map(getHostPort));
 
     batchClient.warmUp(onWarmedup);
 
@@ -112,8 +105,8 @@ allocCluster.test('sending requests to servers over time has good distribution',
         assert.equal(data.errors.length, 0, 'expected no client error');
 
         var byServer = collectByResult(data.results);
-        assert.equal(Object.keys(byServer).length, numPeers,
-                     'expected ' + numPeers + ' servers');
+        assert.equal(Object.keys(byServer).length, cluster.servers.length,
+                     'expected ' + cluster.servers.length + ' servers');
 
         verifyCountsWithinRange(assert, byServer, function expectedBalance(key) {
             return [
@@ -129,17 +122,16 @@ allocCluster.test('sending requests to servers over time has good distribution',
 allocCluster.test('sending requests to servers with bad request', {
     numPeers: 26
 }, function t(cluster, assert) {
-    var client = cluster.channels[0];
-    var servers = cluster.channels.slice(1);
+    setup(cluster, assert, [
+        'BadRequest'
+    ]);
 
-    var numPeers = 25;
     var numRequests = 800;
-    var numExpectedReqs = numRequests / numPeers;
+    var numExpectedReqs = numRequests / cluster.servers.length;
 
-    var batchClient = new BatchClient(client, servers.map(getHostPort));
-
-    makeErrorServer(servers.shift(), 0, 'BadRequest');
-    servers.forEach(makeServer);
+    var batchClient = new BatchClient(
+        cluster.client,
+        cluster.servers.map(getHostPort));
 
     batchClient.warmUp(onWarmedup);
 
@@ -157,8 +149,8 @@ allocCluster.test('sending requests to servers with bad request', {
         assert.equal(data.errors.length, 0, 'expected no client error');
 
         var byServer = collectByResult(data.results);
-        assert.equal(Object.keys(byServer).length, numPeers,
-                     'expected ' + numPeers + ' servers');
+        assert.equal(Object.keys(byServer).length, cluster.servers.length,
+                     'expected ' + cluster.servers.length + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             return [
@@ -174,21 +166,20 @@ allocCluster.test('sending requests to servers with bad request', {
 allocCluster.test('sending requests to servers with declined', {
     numPeers: 26
 }, function t(cluster, assert) {
-    var client = cluster.channels[0];
-    var servers = cluster.channels.slice(1);
+    setup(cluster, assert, [
+        'Declined'
+    ]);
 
-    var numPeers = 25;
     var numRequests = 800;
-    var numExpectedReqs = numRequests / numPeers;
+    var numExpectedReqs = numRequests / cluster.servers.length;
 
-    var batchClient = new BatchClient(client, servers.map(getHostPort), {
-        retryFlags: {
-            never: true
-        }
-    });
-
-    makeErrorServer(servers.shift(), 0, 'Declined');
-    servers.forEach(makeServer);
+    var batchClient = new BatchClient(
+        cluster.client,
+        cluster.servers.map(getHostPort), {
+            retryFlags: {
+                never: true
+            }
+        });
 
     batchClient.warmUp(onWarmedup);
 
@@ -206,8 +197,8 @@ allocCluster.test('sending requests to servers with declined', {
         assert.equal(data.errors.length, 0, 'expected no client error');
 
         var byServer = collectByResult(data.results);
-        assert.equal(Object.keys(byServer).length, numPeers,
-                     'expected ' + numPeers + ' servers');
+        assert.equal(Object.keys(byServer).length, cluster.servers.length,
+                     'expected ' + cluster.servers.length + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
@@ -226,23 +217,22 @@ allocCluster.test('sending requests to servers with declined', {
 allocCluster.test('sending requests to servers with declined over time', {
     numPeers: 26
 }, function t(cluster, assert) {
-    var client = cluster.channels[0];
-    var servers = cluster.channels.slice(1);
+    setup(cluster, assert, [
+        'Declined'
+    ]);
 
-    var numPeers = 25;
     var batchSize = 20;
     var numRequests = 800;
     var batchDelay = 40;
-    var numExpectedReqs = numRequests / numPeers;
+    var numExpectedReqs = numRequests / cluster.servers.length;
 
-    var batchClient = new BatchClient(client, servers.map(getHostPort), {
-        retryFlags: {
-            never: true
-        }
-    });
-
-    makeErrorServer(servers.shift(), 0, 'Declined');
-    servers.forEach(makeServer);
+    var batchClient = new BatchClient(
+        cluster.client,
+        cluster.servers.map(getHostPort), {
+            retryFlags: {
+                never: true
+            }
+        });
 
     batchClient.warmUp(onWarmedup);
 
@@ -266,8 +256,8 @@ allocCluster.test('sending requests to servers with declined over time', {
 
         var byServer = collectByResult(data.results);
 
-        assert.equal(Object.keys(byServer).length, numPeers,
-                     'expected ' + numPeers + ' servers');
+        assert.equal(Object.keys(byServer).length, cluster.servers.length,
+                     'expected ' + cluster.servers.length + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
@@ -287,21 +277,20 @@ allocCluster.test('sending requests to servers with declined over time', {
 allocCluster.test('sending requests to servers with busy', {
     numPeers: 26
 }, function t(cluster, assert) {
-    var client = cluster.channels[0];
-    var servers = cluster.channels.slice(1);
+    setup(cluster, assert, [
+        'Busy'
+    ]);
 
-    var numPeers = 25;
     var numRequests = 800;
-    var numExpectedReqs = numRequests / numPeers;
+    var numExpectedReqs = numRequests / cluster.servers.length;
 
-    var batchClient = new BatchClient(client, servers.map(getHostPort), {
-        retryFlags: {
-            never: true
-        }
-    });
-
-    makeErrorServer(servers.shift(), 0, 'Busy');
-    servers.forEach(makeServer);
+    var batchClient = new BatchClient(
+        cluster.client,
+        cluster.servers.map(getHostPort), {
+            retryFlags: {
+                never: true
+            }
+        });
 
     batchClient.warmUp(onWarmedup);
 
@@ -320,8 +309,8 @@ allocCluster.test('sending requests to servers with busy', {
 
         var byServer = collectByResult(data.results);
 
-        assert.equal(Object.keys(byServer).length, numPeers,
-                     'expected ' + numPeers + ' servers');
+        assert.equal(Object.keys(byServer).length, cluster.servers.length,
+                     'expected ' + cluster.servers.length + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
@@ -340,23 +329,22 @@ allocCluster.test('sending requests to servers with busy', {
 allocCluster.test('sending requests to servers with busy over time', {
     numPeers: 26
 }, function t(cluster, assert) {
-    var client = cluster.channels[0];
-    var servers = cluster.channels.slice(1);
+    setup(cluster, assert, [
+        'Busy'
+    ]);
 
-    var numPeers = 25;
     var batchSize = 20;
     var numRequests = 800;
     var batchDelay = 40;
-    var numExpectedReqs = numRequests / numPeers;
+    var numExpectedReqs = numRequests / cluster.servers.length;
 
-    var batchClient = new BatchClient(client, servers.map(getHostPort), {
-        retryFlags: {
-            never: true
-        }
-    });
-
-    makeErrorServer(servers.shift(), 0, 'Busy');
-    servers.forEach(makeServer);
+    var batchClient = new BatchClient(
+        cluster.client,
+        cluster.servers.map(getHostPort), {
+            retryFlags: {
+                never: true
+            }
+        });
 
     batchClient.warmUp(onWarmedup);
 
@@ -379,8 +367,8 @@ allocCluster.test('sending requests to servers with busy over time', {
         );
 
         var byServer = collectByResult(data.results);
-        assert.equal(Object.keys(byServer).length, numPeers,
-                     'expected ' + numPeers + ' servers');
+        assert.equal(Object.keys(byServer).length, cluster.servers.length,
+                     'expected ' + cluster.servers.length + ' servers');
 
         verifyCountsWithinRange(byServer, function expectedBalance(key) {
             // If its the error frame
@@ -396,6 +384,19 @@ allocCluster.test('sending requests to servers with busy over time', {
         assert.end();
     }
 });
+
+function setup(cluster, assert, defects) {
+    cluster.client = cluster.channels[0];
+    cluster.servers = cluster.channels.slice(1);
+
+    var i = 0;
+    for (; i < defects.length; i++) {
+        makeErrorServer(cluster.servers[i], i, defects[i]);
+    }
+    for (; i < cluster.servers.length; i++) {
+        makeServer(cluster.servers[i], i);
+    }
+}
 
 function makeServer(channel, index) {
     var chanNum = index + 1;
