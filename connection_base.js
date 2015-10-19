@@ -328,16 +328,25 @@ TChannelConnectionBase.prototype.onReqDone = function onReqDone(req) {
         return;
     }
 
-    // we popped something else, or there was nothing to pop
-
     // incoming req that timed out are already cleaned up
     if (req.err && errors.classify(req.err) === 'Timeout') {
         return;
     }
 
-    self.logger.warn('mismatched conn.onReqDone', self.extendLogInfo(req.extendLogInfo({
-        hasInReq: !!inreq
-    })));
+    if (req) {
+        // we popped something else
+        self.logger.warn('mismatched conn.onReqDone', self.extendLogInfo(req.extendLogInfo({})));
+        return;
+    }
+
+    // there was nothing to pop
+    if (self.closing) {
+        // this happens because TChannelConnection#resetAll calls popInReq on
+        // all conn.requests.in, and is okay
+        return;
+    }
+
+    self.logger.warn('orphaned conn.onReqDone', self.extendLogInfo(req.extendLogInfo({})));
 };
 
 module.exports = TChannelConnectionBase;
