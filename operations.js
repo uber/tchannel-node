@@ -35,6 +35,7 @@ function Operations(opts) {
     self.draining = false;
     self.drainEvent = self.defineEvent('drain');
     self.pendingChangeEvent = self.defineEvent('pendingChange');
+    self.pendingChangeDelta = null;
 
     self.timers = opts.timers;
     self.logger = opts.logger;
@@ -57,6 +58,23 @@ function Operations(opts) {
     self.lastTimeoutTime = 0;
 }
 inherits(Operations, EventEmitter);
+
+Operations.prototype.emitPendingChange =
+function emitPendingChange(numIn, numOut, numErrors) {
+    var self = this;
+
+    if (self.pendingChangeDelta !== null) {
+        self.pendingChangeDelta.in += numIn;
+        self.pendingChangeDelta.out += numOut;
+        self.pendingChangeDelta.errors += numErrors;
+    } else {
+        self.pendingChangeEvent.emit(self, {
+            in: numIn,
+            out: numOut,
+            errors: numErrors
+        });
+    }
+};
 
 Operations.prototype.extendLogInfo =
 function extendLogInfo(info) {
@@ -140,11 +158,7 @@ OperationTombstone.prototype.onTimeout = function onTimeout(now) {
         delete self.operations.requests.out[self.id];
         if (self.isPendingError) {
             self.operations.pending.errors--;
-            self.operations.pendingChangeEvent.emit(self, {
-                in: 0,
-                out: 0,
-                errors: -1
-            });
+            self.operations.emitPendingChange(0, 0, -1);
         }
         self.operations = null;
     } else {
@@ -224,11 +238,7 @@ Operations.prototype.addOutReq = function addOutReq(req) {
 
     req.timeHeapHandle = self.connection.channel.timeHeap.update(req);
 
-    self.pendingChangeEvent.emit(self, {
-        in: 0,
-        out: 1,
-        errors: 0
-    });
+    self.emitPendingChange(0, 1, 0);
 
     return req;
 };
@@ -242,11 +252,7 @@ Operations.prototype.addInReq = function addInReq(req) {
 
     req.timeHeapHandle = self.connection.channel.timeHeap.update(req);
 
-    self.pendingChangeEvent.emit(self, {
-        in: 1,
-        out: 0,
-        errors: 0
-    });
+    self.emitPendingChange(1, 0, 0);
 
     return req;
 };
@@ -321,25 +327,21 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
     self.requests.out[id] = tombstone;
     tombstone.timeHeapHandle = self.connection.channel.timeHeap.update(tombstone, tombstone.time);
 
-    var pending = {
-        in: 0,
-        out: 0,
-        errors: 0
-    };
+    var errors = 0;
 
     if (tombstone.isPendingError) {
         self.pending.errors++;
-        pending.errors++;
+        errors++;
     }
+
 
     req.operations = null;
     self.pending.out--;
-    pending.out--;
     if (self.draining) {
         self.checkDrained();
     }
 
-    self.pendingChangeEvent.emit(self, pending);
+    self.emitPendingChange(0, -1, errors);
 
     return req;
 };
@@ -390,11 +392,7 @@ Operations.prototype.popInReq = function popInReq(id) {
     delete self.requests.in[id];
     self.pending.in--;
 
-    self.pendingChangeEvent.emit(self, {
-        in: -1,
-        out: 0,
-        errors: 0
-    });
+    self.emitPendingChange(-1, 0, 0);
 
     if (self.draining) {
         self.checkDrained();
@@ -440,7 +438,10 @@ Operations.prototype.sanitySweep = function sanitySweep() {
 Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
     var self = this;
 
-    var pending = {
+    // keep track of all pending change made during the sweep so we can
+    // (maybe) emit one event at the end of the sweep
+
+    self.pendingChangeDelta = {
         in: 0,
         out: 0,
         errors: 0
@@ -465,8 +466,10 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
 
             if (direction === 'in') {
                 self.popInReq(id);
+                pendingDirty = true;
             } else if (direction === 'out') {
                 self.popOutReq(id);
+                pendingDirty = true;
             }
         } else if (op.isTombstone) {
             var heap = self.connection.channel.timeHeap;
@@ -480,7 +483,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 delete ops[id];
                 if (op.isPendingError) {
                     self.pending.errors--;
-                    pending.errors--;
+                    self.pendingChangeDelta.errors--;
                     pendingDirty = true;
                 }
                 op.operations = null;
@@ -498,7 +501,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 delete ops[id];
                 if (op.isPendingError) {
                     self.pending.errors--;
-                    pending.errors--;
+                    self.pendingChangeDelta.errors--;
                     pendingDirty = true;
                 }
                 op.operations = null;
@@ -509,6 +512,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
     }
 
     if (pendingDirty) {
-        self.pendingChangeEvent.emit(self, pending);
+        self.pendingChangeEvent.emit(self, self.pendingChangeDelta);
     }
+    self.pendingChangeDelta = null;
 };
