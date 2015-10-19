@@ -114,6 +114,8 @@ function TChannel(options) {
     self.errorEvent = self.defineEvent('error');
     self.listeningEvent = self.defineEvent('listening');
     self.connectionEvent = self.defineEvent('connection');
+    self.peerChosenEvent = null;
+    self.peerScoredEvent = null;
 
     self.options = extend({
         useLazyHandling: false,
@@ -136,6 +138,8 @@ function TChannel(options) {
         typeof self.options.emitConnectionMetrics === 'boolean' ?
         self.options.emitConnectionMetrics : false;
     self.choosePeerWithHeap = self.options.choosePeerWithHeap || false;
+
+    self.setObservePeerScoreEvents(self.options.observePeerScoreEvents);
 
     // required: 'app'
     // optional: 'host', 'cluster', 'version'
@@ -300,6 +304,19 @@ TChannel.prototype.eachConnection = function eachConnection(each) {
         for (i = 0; i < connKeys.length; i++) {
             each(self.serverConnections[connKeys[i]]);
         }
+    }
+};
+
+TChannel.prototype.setObservePeerScoreEvents =
+function setObservePeerScoreEvents(obs) {
+    var self = this;
+
+    if (obs) {
+        self.peerChosenEvent = self.defineEvent('peerChosen');
+        self.peerScoredEvent = self.defineEvent('peerScored');
+    } else {
+        self.peerChosenEvent = null;
+        self.peerScoredEvent = null;
     }
 };
 
