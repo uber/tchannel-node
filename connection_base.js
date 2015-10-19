@@ -340,6 +340,12 @@ TChannelConnectionBase.prototype.onReqDone = function onReqDone(req) {
     }
 
     // there was nothing to pop
+    if (self.closing) {
+        // this happens because TChannelConnection#resetAll calls popInReq on
+        // all conn.requests.in, and is okay
+        return;
+    }
+
     self.logger.warn('orphaned conn.onReqDone', self.extendLogInfo(req.extendLogInfo({})));
 };
 
