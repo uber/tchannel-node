@@ -254,8 +254,13 @@ allocCluster.test('relay an error frame', {
 
         assert.ok(cluster.logger.items().length >= 1, 'expected some logs');
         client.close();
-        assert.end();
+
+        setTimeout(finish, 1);
     });
+
+    function finish() {
+        assert.end();
+    }
 });
 
 allocCluster.test('relay request times out', {
@@ -309,6 +314,11 @@ allocCluster.test('relay request times out', {
                   err.type === 'tchannel.request.timeout'),
                   'expected timeout error');
         assert.notOk(res, 'expected no response');
+
+        setTimeout(finish, 1);
+    }
+
+    function finish() {
         assert.end();
     }
 });
