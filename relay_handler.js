@@ -58,7 +58,7 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     rereq.peer = self.channel.peers.choosePeer(null);
     if (!rereq.peer) {
         rereq.sendErrorFrame('Declined', 'no peer available for request');
-        self.logger.warn('no relay peer available', rereq.extendLogInfo({}));
+        self.logger.info('no relay peer available', rereq.extendLogInfo({}));
         return true;
     }
 
@@ -128,7 +128,7 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
         // TODO: allow for customization of this message so hyperbahn can
         // augment it with things like "at entry node", "at exit node", etc
         buildRes().sendError('Declined', 'no peer available for request');
-        self.logger.warn('no relay peer available', req.extendLogInfo({}));
+        self.logger.info('no relay peer available', req.extendLogInfo({}));
         return;
     }
 
