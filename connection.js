@@ -646,7 +646,8 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
 
     var errorCodeName = errors.classify(err);
     if (errorCodeName !== 'NetworkError' &&
-        errorCodeName !== 'ProtocolError'
+        errorCodeName !== 'ProtocolError' &&
+        errorCodeName !== 'TimeoutError'
     ) {
         self.logger.warn('resetting connection', logInfo);
         self.errorEvent.emit(self, err);
