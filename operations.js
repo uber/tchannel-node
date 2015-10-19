@@ -58,7 +58,8 @@ function Operations(opts) {
 }
 inherits(Operations, EventEmitter);
 
-Operations.prototype.extendLogInfo = function extendLogInfo(info) {
+Operations.prototype.extendLogInfo =
+function extendLogInfo(info) {
     var self = this;
 
     if (self.connection) {
