@@ -230,7 +230,7 @@ Test.prototype.stopClients = function stopClients(callback) {
 
     function closed() {
         if (--count <= 0) {
-            callback();
+            callback(null);
         }
     }
 };
@@ -355,21 +355,29 @@ argv.sizes.forEach(function each(size) {
 
 function next(i, j, done) {
     if (i >= tests.length) {
-        return done();
+        return done(null);
     }
     if (j >= multiplicity) {
         return next(i + 1, 0, done);
     }
 
     var test = tests[i].copy();
-    test.run(function runit() {
+    test.run(function runit(err) {
+        if (err) {
+            done(err);
+            return;
+        }
         setTimeout(function delayNext() {
             next(i, j + 1, done);
         }, 1000);
     });
 }
 
-next(0, 0, function finish() {
+next(0, 0, function finish(err) {
+    if (err) {
+        console.error(err);
+        process.exit(1);
+    }
     process.exit(0);
 });
 
