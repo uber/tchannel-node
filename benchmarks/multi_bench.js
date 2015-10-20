@@ -110,8 +110,6 @@ Test.prototype.run = function run(callback) {
     var self = this;
     var i;
 
-    this.callback = callback;
-
     var counter = numClients;
     for (i = 0; i < numClients; i++) {
         self.newClient(i, onReady);
@@ -125,7 +123,7 @@ Test.prototype.run = function run(callback) {
 
         counter--;
         if (counter === 0) {
-            self.start();
+            self.start(callback);
         }
     }
 };
@@ -202,12 +200,12 @@ Test.prototype.newClient = function newClient(id, callback) {
     });
 };
 
-Test.prototype.start = function start() {
+Test.prototype.start = function start(callback) {
     this.testStart = Date.now();
-    this.fillPipeline();
+    this.fillPipeline(callback);
 };
 
-Test.prototype.fillPipeline = function fillPipeline() {
+Test.prototype.fillPipeline = function fillPipeline(callback) {
     var pipeline = this.commandsSent - this.commandsCompleted;
 
     while (this.commandsSent < numRequests && pipeline < this.maxPipeline) {
@@ -218,13 +216,11 @@ Test.prototype.fillPipeline = function fillPipeline() {
 
     if (this.commandsCompleted === numRequests) {
         this.printStats();
-        this.stopClients();
+        this.stopClients(callback);
     }
 };
 
-Test.prototype.stopClients = function stopClients() {
-    var self = this;
-
+Test.prototype.stopClients = function stopClients(callback) {
     var count = 1;
     this.clients.forEach(function each(client) {
         count++;
@@ -234,7 +230,7 @@ Test.prototype.stopClients = function stopClients() {
 
     function closed() {
         if (--count <= 0) {
-            self.callback();
+            callback();
         }
     }
 };
