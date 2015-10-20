@@ -25,6 +25,7 @@ var inherits = require('util').inherits;
 var EventEmitter = require('./lib/event_emitter');
 var stat = require('./lib/stat.js');
 var net = require('net');
+var CountedReadySignal = require('ready-signal/counted');
 
 var TChannelConnection = require('./connection');
 var errors = require('./errors');
@@ -60,6 +61,8 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnIdentified = onIdentified;
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
+    self.draining = false;
+    self.drainReason = '';
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -114,8 +117,35 @@ function extendLogInfo(info) {
     var self = this;
 
     info.hostPort = self.hostPort;
+    info.peerDraining = self.draining;
 
     return info;
+};
+
+TChannelPeer.prototype.drain =
+function drain(reason, callback) {
+    var self = this;
+
+    var chan = self.channel.topChannel || self.channel;
+    assert(!chan.draining, 'cannot drain a peer while channel is draining');
+    assert(!self.draining, 'cannot double drain a peer');
+
+    self.draining = true;
+    self.drainReason = reason;
+
+    var drained = CountedReadySignal(1);
+    process.nextTick(drained.signal);
+    drained(callback);
+
+    for (var i = 0; i < self.connections.length; i++) {
+        drained.counter++;
+        self.connections[i].drain(self.drainReason, drained.signal);
+    }
+
+    self.logger.info('draining peer', self.extendLogInfo({
+        reason: self.drainReason,
+        count: drained.counter
+    }));
 };
 
 TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {
@@ -455,6 +485,8 @@ TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
 
     if (chan.draining) {
         conn.drain(chan.drainReason, null);
+    } else if (self.draining) {
+        conn.drain(self.drainReason, null);
     }
 
     self.allocConnectionEvent.emit(self, conn);
