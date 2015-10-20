@@ -206,8 +206,6 @@ function register(channel, name, opts, handle, spec) {
                     'expected response.body to exist');
 
                 if (!thriftRes.ok) {
-                    assert(isError(thriftRes.body),
-                        'not-ok body should be an error');
                     assert(typeof thriftRes.typeName === 'string',
                         'expected not-ok response to have typeName');
                 }
