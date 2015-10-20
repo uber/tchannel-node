@@ -24,7 +24,7 @@ var collectParallel = require('collect-parallel/array');
 
 var allocCluster = require('./lib/alloc-cluster.js');
 
-allocCluster.test('immediate drain', {
+allocCluster.test('immediate chan.drain', {
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
@@ -61,7 +61,7 @@ allocCluster.test('immediate drain', {
     }
 });
 
-allocCluster.test('drain server with a few incoming', {
+allocCluster.test('chan.drain server with a few incoming', {
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
@@ -154,7 +154,7 @@ allocCluster.test('drain server with a few incoming', {
     }
 });
 
-allocCluster.test('drain server with a few incoming (with exempt service)', {
+allocCluster.test('chan.drain server with a few incoming (with exempt service)', {
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
@@ -287,7 +287,7 @@ allocCluster.test('drain server with a few incoming (with exempt service)', {
     }
 });
 
-allocCluster.test('drain client with a few outgoing', {
+allocCluster.test('chan.drain client with a few outgoing', {
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
@@ -441,7 +441,7 @@ allocCluster.test('drain client with a few outgoing', {
     }
 });
 
-allocCluster.test('drain client with a few outgoing (with exempt service)', {
+allocCluster.test('chan.drain client with a few outgoing (with exempt service)', {
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
