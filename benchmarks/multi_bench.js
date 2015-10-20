@@ -110,8 +110,6 @@ Test.prototype.run = function run(callback) {
     var self = this;
     var i;
 
-    this.callback = callback;
-
     var counter = numClients;
     for (i = 0; i < numClients; i++) {
         self.newClient(i, onReady);
@@ -119,12 +117,14 @@ Test.prototype.run = function run(callback) {
 
     function onReady(err) {
         if (err) {
-            console.error('failed to setup clients', err);
-        } else {
-            counter--;
-            if (counter === 0) {
-                self.start();
-            }
+            // TODO: wrap error "failed to setup clients"
+            callback(err);
+            return;
+        }
+
+        counter--;
+        if (counter === 0) {
+            self.start(callback);
         }
     }
 };
@@ -201,12 +201,12 @@ Test.prototype.newClient = function newClient(id, callback) {
     });
 };
 
-Test.prototype.start = function start() {
+Test.prototype.start = function start(callback) {
     this.testStart = Date.now();
-    this.fillPipeline();
+    this.fillPipeline(callback);
 };
 
-Test.prototype.fillPipeline = function fillPipeline() {
+Test.prototype.fillPipeline = function fillPipeline(callback) {
     var pipeline = this.commandsSent - this.commandsCompleted;
 
     while (this.commandsSent < numRequests && pipeline < this.maxPipeline) {
@@ -217,13 +217,11 @@ Test.prototype.fillPipeline = function fillPipeline() {
 
     if (this.commandsCompleted === numRequests) {
         this.printStats();
-        this.stopClients();
+        this.stopClients(callback);
     }
 };
 
-Test.prototype.stopClients = function stopClients() {
-    var self = this;
-
+Test.prototype.stopClients = function stopClients(callback) {
     var count = 1;
     this.clients.forEach(function each(client) {
         count++;
@@ -233,7 +231,7 @@ Test.prototype.stopClients = function stopClients() {
 
     function closed() {
         if (--count <= 0) {
-            self.callback();
+            callback(null);
         }
     }
 };
@@ -358,21 +356,29 @@ argv.sizes.forEach(function each(size) {
 
 function next(i, j, done) {
     if (i >= tests.length) {
-        return done();
+        return done(null);
     }
     if (j >= multiplicity) {
         return next(i + 1, 0, done);
     }
 
     var test = tests[i].copy();
-    test.run(function runit() {
+    test.run(function runit(err) {
+        if (err) {
+            done(err);
+            return;
+        }
         setTimeout(function delayNext() {
             next(i, j + 1, done);
         }, 1000);
     });
 }
 
-next(0, 0, function finish() {
+next(0, 0, function finish(err) {
+    if (err) {
+        console.error(err);
+        process.exit(1);
+    }
     process.exit(0);
 });
 
