@@ -264,7 +264,7 @@ Test.prototype.sendNext = function sendNext() {
         }
         self.commandsCompleted++;
         self.commandLatency.update(Date.now() - start);
-        self.fillPipeline();
+        self.fillPipeline(onRageQuit);
     }
 };
 
@@ -372,6 +372,13 @@ function next(i, j, done) {
             next(i, j + 1, done);
         }, 1000);
     });
+}
+
+function onRageQuit(err) {
+    if (err) {
+        console.error(err);
+        process.exit(1);
+    }
 }
 
 next(0, 0, function finish(err) {

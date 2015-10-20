@@ -295,6 +295,13 @@ function startClient(clientPort) {
             self.close();
         }
     });
+
+    benchProc.once('exit', function onExit(code) {
+        if (code !== 0) {
+            /* eslint no-process-exit: 0 */
+            process.exit(code);
+        }
+    });
 };
 
 BenchmarkRunner.prototype.close = function close() {
