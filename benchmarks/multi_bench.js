@@ -120,11 +120,12 @@ Test.prototype.run = function run(callback) {
     function onReady(err) {
         if (err) {
             console.error('failed to setup clients', err);
-        } else {
-            counter--;
-            if (counter === 0) {
-                self.start();
-            }
+            return;
+        }
+
+        counter--;
+        if (counter === 0) {
+            self.start();
         }
     }
 };
