@@ -333,7 +333,7 @@ TChannelConnectionBase.prototype.onReqDone = function onReqDone(req) {
         return;
     }
 
-    if (req) {
+    if (inreq) {
         // we popped something else
         self.logger.warn('mismatched conn.onReqDone', self.extendLogInfo(req.extendLogInfo({})));
         return;
