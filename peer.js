@@ -62,6 +62,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
     self.draining = false;
+    self.drainTimer = null;
     self.drainReason = '';
     self.drainDirection = '';
 
@@ -139,6 +140,7 @@ function drain(options, callback) {
 
     if (options.timeout) {
         var drainTimer = chan.timers.setTimeout(drainTimedOut, options.timeout);
+        self.drainTimer = drainTimer;
     }
 
     var start = chan.timers.now();
@@ -177,11 +179,28 @@ function drain(options, callback) {
     function finish(err) {
         if (drainTimer) {
             chan.timers.clearTimeout(drainTimer);
+            if (self.drainTimer === drainTimer) {
+                self.drainTimer = null;
+            }
         }
         if (!finished) {
             finished = true;
             callback(err);
         }
+    }
+};
+
+TChannelPeer.prototype.clearDrain =
+function clearDrain() {
+    var self = this;
+    var chan = self.channel.topChannel || self.channel;
+
+    self.draining = false;
+    self.drainReason = '';
+    self.drainDirection = '';
+    if (self.drainTimer) {
+        chan.timers.clearTimeout(self.drainTimer);
+        self.drainTimer = null;
     }
 };
 
