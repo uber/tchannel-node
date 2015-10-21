@@ -24,7 +24,7 @@ set -e
 set -x
 
 package=$(node -e 'console.log(require("./package.json").name);')
-version=$(node -e 'console.log(require("./package.json").version);')
+version=$(npm dist-tag ls "$package" | grep '^alpha:' | cut -d ' ' -f2)
 tag=${1:-latest}
 
 npm dist-tag add "$package"@"$version" "$tag"
