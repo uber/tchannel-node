@@ -63,6 +63,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionClose = onConnectionClose;
     self.draining = false;
     self.drainReason = '';
+    self.drainDirection = '';
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -134,6 +135,7 @@ function drain(options, callback) {
 
     self.draining = true;
     self.drainReason = options.reason;
+    self.drainDirection = options.direction || 'both';
 
     if (options.timeout) {
         var drainTimer = chan.timers.setTimeout(drainTimedOut, options.timeout);
@@ -152,6 +154,7 @@ function drain(options, callback) {
 
     self.logger.info('draining peer', self.extendLogInfo({
         reason: self.drainReason,
+        direction: self.drainDirection,
         count: drained.counter
     }));
 
@@ -434,7 +437,9 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     if (!conn.draining) {
         if (conn.channel.draining) {
             conn.drain(conn.channel.drainReason, null);
-        } else if (self.draining) {
+        } else if (self.draining && (
+                   self.drainDirection === 'both' ||
+                   self.drainDirection === conn.direction)) {
             conn.drain(self.drainReason, null);
         }
     }
