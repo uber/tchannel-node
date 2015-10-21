@@ -397,6 +397,14 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
         conn.identifiedEvent.on(self.boundOnIdentified);
     }
 
+    if (!conn.draining) {
+        if (conn.channel.draining) {
+            conn.drain(conn.channel.drainReason, null);
+        } else if (self.draining) {
+            conn.drain(self.drainReason, null);
+        }
+    }
+
     return conn;
 };
 
@@ -482,13 +490,6 @@ TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
     var self = this;
     var chan = self.channel.topChannel || self.channel;
     var conn = new TChannelConnection(chan, socket, 'out', self.hostPort);
-
-    if (chan.draining) {
-        conn.drain(chan.drainReason, null);
-    } else if (self.draining) {
-        conn.drain(self.drainReason, null);
-    }
-
     self.allocConnectionEvent.emit(self, conn);
     return conn;
 };
