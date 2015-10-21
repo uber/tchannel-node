@@ -123,15 +123,17 @@ function extendLogInfo(info) {
 };
 
 TChannelPeer.prototype.drain =
-function drain(reason, callback) {
+function drain(options, callback) {
     var self = this;
-
     var chan = self.channel.topChannel || self.channel;
+
+    assert(options, 'options is required');
+    assert(options.reason, 'a reason is required');
     assert(!chan.draining, 'cannot drain a peer while channel is draining');
     assert(!self.draining, 'cannot double drain a peer');
 
     self.draining = true;
-    self.drainReason = reason;
+    self.drainReason = options.reason;
 
     var drained = CountedReadySignal(1);
     process.nextTick(drained.signal);
