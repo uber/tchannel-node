@@ -543,7 +543,6 @@ allocCluster.test('drain client with a few outgoing (with exempt service)', {
 });
 
 // TODO: test draining of outgoing reqs
-// TODO: currently the exempt test provokes mismatched onReqDone callback warn logs
 
 function setupTestClients(cluster, services, callback) {
     var i;
