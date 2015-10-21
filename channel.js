@@ -269,6 +269,9 @@ function TChannel(options) {
     }
 
     function sweepDone() {
+        if (self.destroyed) {
+            return;
+        }
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
     }
 }
