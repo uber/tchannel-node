@@ -36,7 +36,6 @@
     "hexer": "^1.4.5",
     "json-stringify-safe": "^5.0.0",
     "ldjson-stream": "^1.2.1",
-    "lru-cache": "^2.6.4",
     "metrics": "^0.1.8",
     "minimist": "^1.1.0",
     "process": "0.11.1",
