@@ -135,6 +135,7 @@ function drain(options, callback) {
     self.draining = true;
     self.drainReason = options.reason;
 
+    var finished = false;
     var drained = CountedReadySignal(1);
     process.nextTick(drained.signal);
     drained(drainDone);
@@ -154,7 +155,10 @@ function drain(options, callback) {
     }
 
     function finish(err) {
-        callback(err);
+        if (!finished) {
+            finished = true;
+            callback(err);
+        }
     }
 };
 
