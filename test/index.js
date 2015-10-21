@@ -72,6 +72,7 @@ require('./no_frag_arg1.js');
 require('./lazy_handler.js');
 require('./lazy_conn_handler.js');
 require('./chan_drain.js');
+require('./peer_drain.js');
 
 require('./trace/basic_server.js');
 require('./trace/server_2_requests.js');
