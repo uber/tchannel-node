@@ -169,6 +169,15 @@ function drain(options, callback) {
     }
 };
 
+TChannelPeer.prototype.clearDrain =
+function clearDrain() {
+    var self = this;
+
+    self.draining = false;
+    self.drainReason = '';
+    self.drainDirection = '';
+};
+
 TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {
     var self = this;
     if (self.preferConnectionDirection === direction) {
