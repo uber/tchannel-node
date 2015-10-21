@@ -661,7 +661,7 @@ function setupTestClients(cluster, services, callback) {
     function ided(err, res) {
         for (var i = 0; i < res.length; i++) {
             if (res[i].err) {
-                callback(err, clients);
+                callback(res[i].err, clients);
                 return;
             }
         }
