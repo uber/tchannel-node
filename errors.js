@@ -370,6 +370,14 @@ module.exports.ParentRequired = TypedError({
     serviceName: null
 });
 
+module.exports.PeerDrainTimedOutError = TypedError({
+    type: 'tchannel.drain.peer.timed-out',
+    message: 'peer drain timed out',
+    direction: null,
+    elapsed: null,
+    timeout: null
+});
+
 module.exports.ReconstructedError = TypedError({
     type: 'tchannel.hydrated-error.default-type',
     message: 'TChannel json hydrated error;' +
@@ -716,6 +724,7 @@ module.exports.classify = function classify(err) {
         case 'tchannel-thrift-handler.stringify-error.head-failed':
         case 'tchannel.argstream.unknown-frame-handling-state':
         case 'tchannel.connection.unknown-reset':
+        case 'tchannel.drain.peer.timed-out':
         case 'tchannel.handler.outgoing-req-as-header-required':
         case 'tchannel.handler.outgoing-req-cn-header-required':
         case 'tchannel.http-handler.from-buffer-arg2.req-failed':

@@ -135,6 +135,11 @@ function drain(options, callback) {
     self.draining = true;
     self.drainReason = options.reason;
 
+    if (options.timeout) {
+        var drainTimer = chan.timers.setTimeout(drainTimedOut, options.timeout);
+    }
+
+    var start = chan.timers.now();
     var finished = false;
     var drained = CountedReadySignal(1);
     process.nextTick(drained.signal);
@@ -154,7 +159,22 @@ function drain(options, callback) {
         finish(null);
     }
 
+    function drainTimedOut() {
+        if (finished) {
+            return;
+        }
+        var now = chan.timers.now();
+        finish(errors.PeerDrainTimedOutError({
+            direction: self.drainDirection,
+            elapsed: now - start,
+            timeout: options.timeout
+        }));
+    }
+
     function finish(err) {
+        if (drainTimer) {
+            chan.timers.clearTimeout(drainTimer);
+        }
         if (!finished) {
             finished = true;
             callback(err);
