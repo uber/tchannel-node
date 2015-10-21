@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright (c) 2015 Uber Technologies, Inc.
 #
@@ -23,16 +23,8 @@
 set -e
 set -x
 
-if [ -z "$1" ]; then
-    echo "must pass in version as first arg";
-    exit 1;
-fi
+package=$(node -e 'console.log(require("./package.json").name);')
+version=$(node -e 'console.log(require("./package.json").version);')
+tag=${1:-latest}
 
-npm version "$1"
-
-git push origin master --tags
-
-git archive --prefix=package/ --format tgz master >package.tgz
-${NPM:-npm} publish --registry=https://registry.npmjs.org/ package.tgz --tag "${NPM_TAG:-alpha}"
-rm package.tgz
-npm cache clean tchannel
+npm dist-tag add "$package"@"$version" "$tag"
