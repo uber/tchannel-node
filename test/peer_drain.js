@@ -62,7 +62,7 @@ allocCluster.test('immediate peer.drain', {
     }
 });
 
-allocCluster.test('drain server with a few incoming', {
+allocCluster.test('peer.drain server with a few incoming', {
     numPeers: 2,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
@@ -143,7 +143,7 @@ allocCluster.test('drain server with a few incoming', {
     }
 });
 
-allocCluster.test('drain server with a few incoming (with exempt service)', {
+allocCluster.test('peer.drain server with a few incoming (with exempt service)', {
     numPeers: 2,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
@@ -286,7 +286,7 @@ allocCluster.test('drain server with a few incoming (with exempt service)', {
     }
 });
 
-allocCluster.test('drain client with a few outgoing', {
+allocCluster.test('peer.drain client with a few outgoing', {
     numPeers: 2,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
@@ -381,7 +381,7 @@ allocCluster.test('drain client with a few outgoing', {
     }
 });
 
-allocCluster.test('drain client with a few outgoing (with exempt service)', {
+allocCluster.test('peer.drain client with a few outgoing (with exempt service)', {
     numPeers: 2,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
