@@ -137,7 +137,7 @@ function drain(options, callback) {
 
     var drained = CountedReadySignal(1);
     process.nextTick(drained.signal);
-    drained(callback);
+    drained(drainDone);
 
     for (var i = 0; i < self.connections.length; i++) {
         drained.counter++;
@@ -148,6 +148,14 @@ function drain(options, callback) {
         reason: self.drainReason,
         count: drained.counter
     }));
+
+    function drainDone() {
+        finish(null);
+    }
+
+    function finish(err) {
+        callback(err);
+    }
 };
 
 TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {
