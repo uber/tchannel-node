@@ -57,7 +57,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.connections = [];
     self.pendingIdentified = 0;
     self.heapElements = [];
-    self.handler = null;
+    self.scoreStrategy = null;
     self.boundOnIdentified = onIdentified;
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
@@ -169,7 +169,7 @@ TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnecti
 TChannelPeer.prototype.setScoreStrategy = function setScoreStrategy(ScoreStrategy) {
     var self = this;
 
-    self.handler = new ScoreStrategy(self);
+    self.scoreStrategy = new ScoreStrategy(self);
 };
 
 TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
@@ -187,7 +187,7 @@ TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
         scores: []
     } : null;
 
-    var score = self.handler.getScore();
+    var score = self.scoreStrategy.getScore();
     for (var i = 0; i < self.heapElements.length; i++) {
         var el = self.heapElements[i];
         if (info) {
@@ -546,14 +546,14 @@ TChannelPeer.prototype._maybeInvalidateScore =
 function _maybeInvalidateScore(reason) {
     var self = this;
 
-    if (self.handler.getTier() !== self.handler.lastTier) {
+    if (self.scoreStrategy.getTier() !== self.scoreStrategy.lastTier) {
         self.invalidateScore(reason);
     }
 };
 
 TChannelPeer.prototype.getScore = function getScore() {
     var self = this;
-    return self.handler.getScore();
+    return self.scoreStrategy.getScore();
 };
 
 module.exports = TChannelPeer;
