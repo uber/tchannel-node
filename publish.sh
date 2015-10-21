@@ -24,8 +24,8 @@ set -e
 set -x
 
 if [ -z "$1" ]; then
-    echo "must pass in version as first arg";
-    exit 1;
+    echo "must pass in version as first arg" >&2
+    exit 1
 fi
 
 npm version "$1"
