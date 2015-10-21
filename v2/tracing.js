@@ -21,7 +21,6 @@
 'use strict';
 
 var bufrw = require('bufrw');
-var fix8 = bufrw.FixedWidth(8);
 
 module.exports = Tracing;
 
@@ -34,9 +33,9 @@ emptyTraceId.fill(0);
 
 function Tracing(spanid, parentid, traceid, flags) {
     var self = this;
-    self.spanid = spanid || emptySpanId;
-    self.parentid = parentid || emptyParentId;
-    self.traceid = traceid || emptyTraceId;
+    self.spanid = spanid || [0, 0];
+    self.parentid = parentid || [0, 0];
+    self.traceid = traceid || [0, 0];
     self.flags = flags || 0;
 }
 
@@ -54,15 +53,27 @@ function tracingByteLength() {
 function writeTracingInto(tracing, buffer, offset) {
     var res;
 
-    res = fix8.writeInto(tracing.spanid, buffer, offset);
+    res = bufrw.UInt32BE.writeInto(tracing.spanid[0], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = fix8.writeInto(tracing.parentid, buffer, offset);
+    res = bufrw.UInt32BE.writeInto(tracing.spanid[1], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = fix8.writeInto(tracing.traceid, buffer, offset);
+    res = bufrw.UInt32BE.writeInto(tracing.parentid[0], buffer, offset);
+    if (res.err) return res;
+    offset = res.offset;
+
+    res = bufrw.UInt32BE.writeInto(tracing.parentid[1], buffer, offset);
+    if (res.err) return res;
+    offset = res.offset;
+
+    res = bufrw.UInt32BE.writeInto(tracing.traceid[0], buffer, offset);
+    if (res.err) return res;
+    offset = res.offset;
+
+    res = bufrw.UInt32BE.writeInto(tracing.traceid[1], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
@@ -75,20 +86,35 @@ function readTracingFrom(buffer, offset) {
     var tracing = new Tracing();
     var res;
 
-    res = fix8.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.readFrom(buffer,offset);
     if (res.err) return res;
     offset = res.offset;
-    tracing.spanid = res.value;
+    tracing.spanid[0] = res.value;
 
-    res = fix8.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.readFrom(buffer,offset);
     if (res.err) return res;
     offset = res.offset;
-    tracing.parentid = res.value;
+    tracing.spanid[1] = res.value;
 
-    res = fix8.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.readFrom(buffer,offset);
     if (res.err) return res;
     offset = res.offset;
-    tracing.traceid = res.value;
+    tracing.parentid[0] = res.value;
+
+    res = bufrw.UInt32BE.readFrom(buffer,offset);
+    if (res.err) return res;
+    offset = res.offset;
+    tracing.parentid[1] = res.value;
+
+    res = bufrw.UInt32BE.readFrom(buffer,offset);
+    if (res.err) return res;
+    offset = res.offset;
+    tracing.traceid[0] = res.value;
+
+    res = bufrw.UInt32BE.readFrom(buffer,offset);
+    if (res.err) return res;
+    offset = res.offset;
+    tracing.traceid[1] = res.value;
 
     res = bufrw.UInt8.readFrom(buffer, offset);
     if (res.err) return res;

@@ -49,10 +49,9 @@ function Agent(options) {
     }
 }
 
-function compareBufs(buf1, buf2) {
-    if (!buf2) return false;
-    return (buf1.readUInt32BE(0) === buf2.readUInt32BE(0)) &&
-        (buf1.readUInt32BE(4) === buf2.readUInt32BE(4));
+function compareTracingIds(id1, id2) {
+    if (!id1 || !id2) return false;
+    return id1[0] === id2[0] && id1[1] === id2[1];
 }
 
 // ## setupNewSpan
@@ -63,16 +62,16 @@ Agent.prototype.setupNewSpan = function setupNewSpan(options) {
     var hostPortParts = options.remoteName.split(":");
     var host = hostPortParts[0], port = parseInt(hostPortParts[1], 10);
 
-    var empty = new Buffer([0, 0, 0, 0, 0, 0, 0, 0]);
-    if (compareBufs(empty, options.parentid)) {
+    var empty = [0, 0];
+    if (compareTracingIds(empty, options.parentid)) {
         options.parentid = null;
     }
 
-    if (compareBufs(empty, options.traceid)) {
+    if (compareTracingIds(empty, options.traceid)) {
         options.traceid = null;
     }
 
-    if (compareBufs(empty, options.spanid)) {
+    if (compareTracingIds(empty, options.spanid)) {
         options.spanid = null;
     }
 

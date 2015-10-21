@@ -113,9 +113,9 @@ TestBody.testWith('LazyFrame.setId', function t(assert) {
 });
 
 test('CallRequest.RW.lazy', function t(assert) {
-    var spanId = Buffer([0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10]);
-    var parentId = Buffer([0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f]);
-    var traceId = Buffer([0x01, 0x01, 0x02, 0x03, 0x05, 0x08, 0x0d, 0x15]);
+    var spanId = [0, 1];
+    var parentId = [2, 3];
+    var traceId = [4, 5];
     var tracing = new v2.Tracing(
         spanId, parentId, traceId
     );
@@ -220,9 +220,9 @@ test('CallRequest.RW.lazy', function t(assert) {
 });
 
 test('CallResponse.RW.lazy', function t(assert) {
-    var spanId = Buffer([0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10]);
-    var parentId = Buffer([0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f]);
-    var traceId = Buffer([0x01, 0x01, 0x02, 0x03, 0x05, 0x08, 0x0d, 0x15]);
+    var spanId = [0, 1];
+    var parentId = [2, 3];
+    var traceId = [4, 5];
     var tracing = new v2.Tracing(
         spanId, parentId, traceId
     );
@@ -375,9 +375,9 @@ test('CallResponseCont.RW.lazy', function t(assert) {
 });
 
 test('ErrorResponse.RW.lazy', function t(assert) {
-    var spanId = Buffer([0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10]);
-    var parentId = Buffer([0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f]);
-    var traceId = Buffer([0x01, 0x01, 0x02, 0x03, 0x05, 0x08, 0x0d, 0x15]);
+    var spanId = [0, 1];
+    var parentId = [2, 3];
+    var traceId = [4, 5];
     var tracing = new v2.Tracing(
         spanId, parentId, traceId
     );

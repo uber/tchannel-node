@@ -159,7 +159,7 @@ module.exports = [
             "serviceName": "server"
         },
         "traceid": validators.checkId(idStore, 'traceid'),
-        "parentid": "0000000000000000",
+        "parentid": [0, 0],
         "spanid": validators.checkId(idStore, 'span0'),
         "annotations": [
             {
