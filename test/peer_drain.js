@@ -40,7 +40,9 @@ allocCluster.test('immediate peer.drain', {
 
         var peer = server.peers.get(clients.a[0].hostPort);
         assert.timeoutAfter(50);
-        peer.drain('testdown', drained);
+        peer.drain({
+            reason: 'testdown'
+        }, drained);
     }
 
     function drained() {
@@ -94,7 +96,9 @@ allocCluster.test('drain server with a few incoming', {
     function testdown() {
         assert.comment('triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
-        peer.drain('testdown', drained);
+        peer.drain({
+            reason: 'testdown'
+        }, drained);
         finishCount++;
         reqN++;
         assert.comment('sending request ' + reqN);
@@ -210,7 +214,9 @@ allocCluster.test('drain server with a few incoming (with exempt service)', {
         assert.equal(finishCount, 2, 'requests have not finished');
 
         finishCount++;
-        peer.drain('testdown', drained);
+        peer.drain({
+            reason: 'testdown'
+        }, drained);
 
         finishCount++;
         reqN++;
@@ -319,7 +325,9 @@ allocCluster.test('drain client with a few outgoing', {
     function testdown() {
         assert.comment('triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
-        peer.drain('testdown', drained);
+        peer.drain({
+            reason: 'testdown'
+        }, drained);
         finishCount++;
         reqN++;
         assert.comment('sending request ' + reqN);
@@ -449,7 +457,9 @@ allocCluster.test('drain client with a few outgoing (with exempt service)', {
         assert.equal(finishCount, 2, 'requests have not finished');
 
         finishCount++;
-        peer.drain('testdown', drained);
+        peer.drain({
+            reason: 'testdown'
+        }, drained);
 
         finishCount++;
         reqN++;
