@@ -634,6 +634,88 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
     }
 });
 
+allocCluster.test('incoming connection during chan.drain', {
+    numPeers: 3,
+    skipEmptyCheck: true
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'draining channel');
+
+    var server = cluster.channels[0];
+    var client1 = null;
+    var client2 = null;
+    var finishCount = 0;
+    var reqN = 0;
+    setupTestClient(cluster.channels[1], server.hostPort, ['a'], runTest);
+    setupServiceServer(server, 'a', 15); // XXX can decrease?
+
+    function runTest(err, client) {
+        if (err) {
+            finish(err);
+            return;
+        }
+        client1 = client;
+
+        finishCount = 2;
+        assert.timeoutAfter(50);
+
+        reqN++;
+        var theMess = 'mess' + reqN;
+        assert.comment('sending request ' + reqN);
+        client1.request().send('echo', 'such', theMess, function sendDone(err, res) {
+            assert.ifError(err, 'no error');
+            assert.equal(res && String(res.arg3), theMess, 'res: expected arg3');
+            finish();
+        });
+
+        setTimeout(testdown, 1);
+    }
+
+    function testdown() {
+        assert.comment('triggering drain');
+        assert.equal(finishCount, 2, 'requests have not finished');
+        server.drain('testdown', drained);
+        finishCount++;
+
+        setupTestClient(cluster.channels[2], server.hostPort, ['a'], clientReady);
+
+        function clientReady(err, client) {
+            if (err) {
+                finish(err);
+                return;
+            }
+            client2 = client;
+
+            reqN++;
+            assert.comment('sending request ' + reqN);
+            client2.request().send('echo', 'such', 'mess' + reqN, function afterDrainSendsDone(err, res) {
+                assert.equal(err && err.type, 'tchannel.declined', 'expected declined');
+                assert.equal(res, null, 'res: no value');
+
+                finish();
+            });
+        }
+    }
+
+    function drained() {
+        assert.pass('drain happened');
+        waitForConnRemoved(4, cluster, finish);
+        server.close(closed);
+    }
+
+    function closed(err) {
+        if (err) {
+            finish(err);
+            return;
+        }
+
+        assert.pass('server closed');
+    }
+
+    function finish(err) {
+        finishCount = checkFinish(assert, err, cluster, finishCount);
+    }
+});
+
 // TODO: test draining of outgoing reqs
 
 function setupTestClients(cluster, services, callback) {
@@ -666,6 +748,27 @@ function setupTestClients(cluster, services, callback) {
             }
         }
         callback(null, clients);
+    }
+}
+
+function setupTestClient(chan, serverHostPort, services, callback) {
+    var client = null;
+
+    for (var i = 0; i < services.length; i++) {
+        var service = services[i];
+        client = setupServiceClient(chan, service);
+        client.peers.add(serverHostPort);
+    }
+
+    var peer = chan.peers.add(serverHostPort);
+    peer.waitForIdentified(ided);
+
+    function ided(err, res) {
+        if (err) {
+            callback(err, client);
+            return;
+        }
+        callback(null, client);
     }
 }
 
