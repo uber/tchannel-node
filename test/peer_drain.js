@@ -545,11 +545,10 @@ allocCluster.test('peer.drain client with a few outgoing (with exempt service)',
 // TODO: test draining of outgoing reqs
 
 function setupTestClients(cluster, services, callback) {
-    var i;
     var clients = {};
     var serverRoot = cluster.channels[0];
 
-    for (i = 0; i < services.length; i++) {
+    for (var i = 0; i < services.length; i++) {
         var service = services[i];
         var clis = clients[service] = [];
         for (var j = 1; j < cluster.channels.length; j++) {
@@ -642,8 +641,13 @@ function waitForConnRemoved(count, cluster, callback) {
         });
     });
 
+    var called = false;
     function removed() {
+        if (called) {
+            return;
+        }
         if (--count <= 0) {
+            called = true;
             callback(null);
         }
     }
