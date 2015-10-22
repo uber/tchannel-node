@@ -110,6 +110,8 @@ Test.prototype.run = function run(callback) {
     var self = this;
     var i;
 
+    this.callback = callback;
+
     var counter = numClients;
     for (i = 0; i < numClients; i++) {
         self.newClient(i, onReady);
@@ -222,6 +224,8 @@ Test.prototype.fillPipeline = function fillPipeline(callback) {
 };
 
 Test.prototype.stopClients = function stopClients(callback) {
+    var self = this;
+
     var count = 1;
     this.clients.forEach(function each(client) {
         count++;
@@ -231,7 +235,7 @@ Test.prototype.stopClients = function stopClients(callback) {
 
     function closed() {
         if (--count <= 0) {
-            callback(null);
+            self.callback(null);
         }
     }
 };
