@@ -791,7 +791,11 @@ TChannelV2Handler.prototype.sendPingReponse = function sendPingReponse(res) {
     this.pushFrame(resFrame);
 };
 
-TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing, codeString, message) {
+TChannelV2Handler.prototype.sendErrorFrame =
+function sendErrorFrame(id, tracing, codeString, message, ownerName) {
+    assert(typeof ownerName === 'string' && ownerName !== '',
+        'ownerName is a required parameter for `sendErrorFrame()`');
+
     var code = v2.ErrorResponse.Codes[codeString];
     if (code === undefined) {
         this.logger.error('invalid error frame code string', this.extendLogInfo({
@@ -800,6 +804,9 @@ TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing
         code = v2.ErrorResponse.Codes.UnexpectedError;
         message = 'UNKNOWN CODE(' + codeString + '): ' + message;
     }
+
+    message = '[' + ownerName + ']: ' + message;
+
     var errBody = new v2.ErrorResponse(code, tracing, message);
     var errFrame = new v2.Frame(id, errBody);
     this.pushFrame(errFrame);
