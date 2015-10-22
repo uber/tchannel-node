@@ -31,7 +31,7 @@ module.exports.checkId = function (idStore, idKey) {
             return;
         }
 
-        assert.equals(id, idStore[idKey], "idKey: " + idKey + " key: " + key);
+        assert.deepEquals(id, idStore[idKey], "idKey: " + idKey + " key: " + key);
     };
 };
 

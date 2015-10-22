@@ -24,6 +24,14 @@ var test = require('tape');
 var Tracing = require('../../v2/tracing');
 var testRW = require('bufrw/test_rw');
 
+var spanidBuf = Buffer([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]);
+var parentidBuf = Buffer([0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10]);
+var traceidBuf = Buffer([0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18]);
+
+var spanid = [spanidBuf.readUInt32BE(0), spanidBuf.readUInt32BE(4)];
+var parentid = [parentidBuf.readUInt32BE(0), parentidBuf.readUInt32BE(4)];
+var traceid = [traceidBuf.readUInt32BE(0), traceidBuf.readUInt32BE(4)];
+
 test('Tracing: read/write', testRW.cases(Tracing.RW, [
 
     [
@@ -40,12 +48,9 @@ test('Tracing: read/write', testRW.cases(Tracing.RW, [
 
     [
         new Tracing(
-            Buffer([0x01, 0x02, 0x03, 0x04,
-                    0x05, 0x06, 0x07, 0x08]),
-            Buffer([0x09, 0x0a, 0x0b, 0x0c,
-                    0x0d, 0x0e, 0x0f, 0x10]),
-            Buffer([0x11, 0x12, 0x13, 0x14,
-                    0x15, 0x16, 0x17, 0x18]),
+            spanid,
+            parentid,
+            traceid,
             42
         ), [
             0x01, 0x02, 0x03, 0x04, // spanid:8

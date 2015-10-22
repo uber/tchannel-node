@@ -142,9 +142,9 @@ var testSpan = {
         {key: 'count', value: 10, type: 'number'},
         {key: 'cacheHit', value: false, type: 'boolean'}
     ],
-    traceid: new Buffer([0, 1, 2, 3, 4, 5, 6, 7]),
-    parentid: new Buffer([2, 1, 2, 3, 4, 5, 6, 7]),
-    id: new Buffer([0, 9, 2, 3, 4, 5, 6, 7]),
+    traceid: [0, 1],
+    parentid: [2, 3],
+    id: [4, 5],
     name: 'testlol'
 };
 
@@ -152,9 +152,9 @@ test('jsonSpanToThriftSpan', function t2(assert) {
     var mapped = TCollectorReporter.jsonSpanToThriftSpan(testSpan);
 
     assert.equals(mapped.name, testSpan.name);
-    assert.deepEquals(mapped.traceId, testSpan.traceid);
-    assert.deepEquals(mapped.id, testSpan.id);
-    assert.deepEquals(mapped.parentId, testSpan.parentid);
+    assert.deepEquals(mapped.traceId, Buffer([0, 0, 0, 0, 0, 0, 0, 1]));
+    assert.deepEquals(mapped.id, Buffer([0, 0, 0, 4, 0, 0, 0, 5]));
+    assert.deepEquals(mapped.parentId, Buffer([0, 0, 0, 2, 0, 0, 0, 3]));
 
     assert.deepEquals(mapped.host, {
         port: 999,
@@ -223,17 +223,7 @@ allocCluster.test('functional test', {
     reporter.report(testSpan);
 
     function onSubmit(opts, req, head, body, done) {
-        assert.equals(
-            req.headers.shardKey,
-            testSpan.traceid.toString('base64')
-        );
-
-        assert.equals(
-            req.headers.shardKey,
-            body.span.traceId.toString('base64')
-        );
-
-        assert.deepEqual(body.span.id, testSpan.id);
+        assert.deepEqual(body.span.id, Buffer([0, 0, 0, 4, 0, 0, 0, 5]));
         assert.equals(body.span.host.ipv4, -1062731775);
         assert.equals(body.span.annotations.length, 2);
 

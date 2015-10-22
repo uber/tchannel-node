@@ -68,6 +68,13 @@ TCollectorTraceReporter.ipToInt = function ipToInt(ip) {
     return (ipl >>> 0);
 };
 
+TCollectorTraceReporter.intIdToBuffer = function intIdToBuffer(id) {
+    var buf = new Buffer(8);
+    buf.writeUInt32BE(id[0], 0);
+    buf.writeUInt32BE(id[1], 4);
+    return buf;
+};
+
 TCollectorTraceReporter.convertHost = function convertHost(endpoint) {
     return {
         // the >> 0 here effectively casts the ip as a signed int since
@@ -118,9 +125,9 @@ function jsonSpanToThriftSpan(span) {
 
     var mapped = {
         name: span.name,
-        traceId: span.traceid,
-        parentId: span.parentid,
-        id: span.id,
+        traceId: TCollectorTraceReporter.intIdToBuffer(span.traceid),
+        parentId: TCollectorTraceReporter.intIdToBuffer(span.parentid),
+        id: TCollectorTraceReporter.intIdToBuffer(span.id),
         annotations: annotations,
         binaryAnnotations: binaryAnnotations,
         host: host

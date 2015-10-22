@@ -48,8 +48,7 @@ function Span(options) {
     self.name = options.name;
     self.parentid = options.parentid;
     if (!options.parentid) {
-        self.parentid = new Buffer(8);
-        self.parentid.fill(0);
+        self.parentid = [0, 0];
     }
     self.annotations = [];
     self.binaryAnnotations = [];
@@ -76,9 +75,9 @@ Span.prototype.toJSON = function toJSON() {
     return {
         name: self.name,
         endpoint: self.endpoint,
-        traceid: self.traceid.toString('hex'),
-        parentid: self.parentid.toString('hex'),
-        spanid: self.id.toString('hex'),
+        traceid: self.traceid,
+        parentid: self.parentid,
+        spanid: self.id,
         annotations: self.annotations,
         binaryAnnotations: self.binaryAnnotations
     };
@@ -88,14 +87,14 @@ Span.prototype.toJSON = function toJSON() {
 Span.prototype.generateIds = function generateIds() {
     var self = this;
 
-    self.id = self.traceid = rng.rand64();
+    self.id = self.traceid = [rng.rand(), rng.rand()];
 };
 
 // Generate just a span id
 Span.prototype.generateSpanid = function generateSpanid() {
     var self = this;
 
-    self.id = rng.rand64();
+    self.id = [rng.rand(), rng.rand()];
 };
 
 // ##
