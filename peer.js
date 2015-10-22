@@ -234,6 +234,34 @@ TChannelPeer.prototype.isConnected = function isConnected(direction, identified)
     return false;
 };
 
+TChannelPeer.prototype.closeDrainedConnections =
+function closeDrainedConnections(callback) {
+    var self = this;
+
+    var counter = 1;
+    var conns = self.connections.slice(0);
+
+    for (var i = 0; i < conns.length; i++) {
+        var conn = conns[i];
+        if (conn.draining) {
+            counter++;
+            conn.close(onClose);
+        }
+    }
+    onClose();
+
+    function onClose() {
+        if (--counter <= 0) {
+            if (counter < 0) {
+                self.logger.error('closed more peer sockets than expected', {
+                    counter: counter
+                });
+            }
+            callback(null);
+        }
+    }
+};
+
 TChannelPeer.prototype.close = function close(callback) {
     var self = this;
 
