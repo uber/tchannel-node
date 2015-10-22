@@ -341,10 +341,13 @@ TChannelPeer.prototype.connectTo = function connectTo() {
 };
 
 TChannelPeer.prototype.waitForIdentified =
-function waitForIdentified(callback) {
+function waitForIdentified(conn, callback) {
     var self = this;
 
-    var conn = self.connect();
+    if (typeof conn === 'function' && !callback) {
+        callback = conn;
+        conn = self.connect();
+    }
 
     if (conn.closing) {
         callback(conn.closeError);
