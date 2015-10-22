@@ -242,10 +242,11 @@ TChannelPeer.prototype.close = function close(callback) {
         self.reportTimer = null;
     }
 
-    var counter = self.connections.length;
+    var conns = self.connections.slice(0);
+    var counter = conns.length;
     if (counter) {
-        for (var i = counter - 1; i >= 0; i--) {
-            self.connections[i].close(onClose);
+        for (var i = 0; i < conns.length; i++) {
+            conns[i].close(onClose);
         }
     } else {
         callback(null);
