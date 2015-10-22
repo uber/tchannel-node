@@ -20,6 +20,7 @@
 
 'use strict';
 
+var Ready = require('ready-signal');
 var collectParallel = require('collect-parallel/array');
 
 var allocCluster = require('./lib/alloc-cluster.js');
@@ -552,7 +553,245 @@ allocCluster.test('peer.drain client with a few outgoing (with exempt service)',
     }
 });
 
-// TODO: test draining of outgoing reqs
+allocCluster.test('peer.drain direction=in server', {
+    numPeers: 2,
+    skipEmptyCheck: true
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'draining peer');
+
+    var connsClosed = Ready();
+    var finishCount = 0;
+    var server = cluster.channels[0].makeSubChannel({
+        serviceName: 'a'
+    });
+    server.register('hello', hello);
+
+    function hello(req, res, arg2, arg3) {
+        if (req.connection.direction === 'out') {
+            res.headers.as = 'raw';
+            res.send('', 'noop');
+            return;
+        }
+
+        var peer = server.peers.add(req.remoteAddr);
+        peer.waitForIdentified(peer.connect(true), outConnIded);
+
+        function outConnIded(err) {
+            if (err) {
+                finish(err);
+                return;
+            }
+
+            finishCount++;
+            peer.drain({
+                direction: 'in',
+                reason: 'switcheroo'
+            }, drained);
+
+            res.headers.as = 'raw';
+            res.send('', 'switched');
+        }
+
+        function drained(err) {
+            if (err) {
+                finish(err);
+                return;
+            }
+            waitForConnRemoved(2, cluster, connsClosed.signal);
+            peer.closeDrainedConnections(finish);
+            peer.clearDrain();
+        }
+    }
+
+    var client = setupServiceClient(cluster.channels[1], 'a');
+    client.peers.add(server.hostPort);
+
+    assert.timeoutAfter(50);
+
+    finishCount++;
+    assert.comment('sending hello');
+    client.request().send('hello', '', '', function sendDone(err, res) {
+        assert.ifError(err, 'expected no error');
+        assert.equal(res && String(res.arg3), 'switched', 'expected switcheroo');
+
+        finishCount++;
+        connsClosed(function thenSendAgain() {
+            assert.comment('sending 2nd hello');
+            client.request().send('hello', '', '', function sendDone(err, res) {
+                assert.ifError(err, 'expected no error');
+                assert.equal(res && String(res.arg3), 'noop', 'expected noop');
+                finish();
+            });
+        });
+
+        finish();
+    });
+
+    function finish(err) {
+        assert.ifError(err, 'no unexpected error');
+
+        if (--finishCount > 0) {
+            return;
+        }
+
+        if (finishCount < 0) {
+            throw new Error('broken');
+        }
+
+        cluster.assertCleanState(assert, {
+            channels: [
+                // server has a peer with a single idle out conn
+                {peers: [
+                    {connections: [
+                        {
+                            remoteName: client.hostPort,
+                            direction: 'out',
+                            inReqs: 0,
+                            outReqs: 0,
+                            streamingReq: 0,
+                            streamingRes: 0
+                        }
+                    ]}
+                ]},
+                // client has a peer with a single idle in conn
+                {peers: [
+                    {connections: [
+                        {
+                            remoteName: server.hostPort,
+                            direction: 'in',
+                            inReqs: 0,
+                            outReqs: 0,
+                            streamingReq: 0,
+                            streamingRes: 0
+                        }
+                    ]}
+                ]}
+            ]
+        });
+
+        assert.end();
+    }
+});
+
+allocCluster.test('peer.drain direction=out client', {
+    numPeers: 2,
+    skipEmptyCheck: true
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'draining peer');
+
+    var finishCount = 0;
+    var server = cluster.channels[0].makeSubChannel({
+        serviceName: 'a'
+    });
+    server.register('hello', hello);
+
+    function hello(req, res, arg2, arg3) {
+        if (req.connection.direction === 'out') {
+            res.headers.as = 'raw';
+            res.send('', 'noop');
+            return;
+        }
+
+        var peer = server.peers.add(req.remoteAddr);
+        peer.waitForIdentified(peer.connect(true), outConnIded);
+
+        function outConnIded(err) {
+            if (err) {
+                finish(err);
+                return;
+            }
+
+            res.headers.as = 'raw';
+            res.send('', 'switched');
+        }
+    }
+
+    var client = setupServiceClient(cluster.channels[1], 'a');
+    var peer = client.peers.add(server.hostPort);
+
+    assert.timeoutAfter(50);
+
+    finishCount++;
+    assert.comment('sending hello');
+    client.request().send('hello', '', '', function sendDone(err, res) {
+        assert.ifError(err, 'expected no error');
+        assert.equal(res && String(res.arg3), 'switched', 'expected switcheroo');
+
+        finishCount++;
+        peer.drain({
+            direction: 'out',
+            reason: 'switcheroo'
+        }, drained);
+
+        function drained(err) {
+            if (err) {
+                finish(err);
+                return;
+            }
+            finishCount++;
+            waitForConnRemoved(2, cluster, thenSendAgain);
+            peer.closeDrainedConnections(finish);
+        }
+
+        function thenSendAgain() {
+            assert.comment('sending 2nd hello');
+            client.request().send('hello', '', '', function sendDone(err, res) {
+                assert.ifError(err, 'expected no error');
+                assert.equal(res && String(res.arg3), 'noop', 'expected noop');
+                finish();
+            });
+        }
+
+        finish();
+    });
+
+    function finish(err) {
+        assert.ifError(err, 'no unexpected error');
+
+        if (--finishCount > 0) {
+            return;
+        }
+
+        if (finishCount < 0) {
+            throw new Error('broken');
+        }
+
+        cluster.assertCleanState(assert, {
+            channels: [
+                // server has a peer with a single idle out conn
+                {peers: [
+                    {connections: [
+                        {
+                            remoteName: client.hostPort,
+                            direction: 'out',
+                            inReqs: 0,
+                            outReqs: 0,
+                            streamingReq: 0,
+                            streamingRes: 0
+                        }
+                    ]}
+                ]},
+                // client has a peer with a single idle in conn
+                {peers: [
+                    {connections: [
+                        {
+                            remoteName: server.hostPort,
+                            direction: 'in',
+                            inReqs: 0,
+                            outReqs: 0,
+                            streamingReq: 0,
+                            streamingRes: 0
+                        }
+                    ]}
+                ]}
+            ]
+        });
+
+        assert.end();
+    }
+});
+
+// TODO: drainTimeout
 
 function setupTestClients(cluster, services, callback) {
     var clients = {};
