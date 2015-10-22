@@ -62,6 +62,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
     self.draining = false;
+    self.drainTimer = null;
     self.drainReason = '';
     self.drainDirection = '';
 
@@ -137,6 +138,12 @@ function drain(options, callback) {
     self.drainReason = options.reason;
     self.drainDirection = options.direction || 'both';
 
+    if (options.timeout) {
+        var drainTimer = chan.timers.setTimeout(drainTimedOut, options.timeout);
+        self.drainTimer = drainTimer;
+    }
+
+    var start = chan.timers.now();
     var finished = false;
     var drained = CountedReadySignal(1);
     process.nextTick(drained.signal);
@@ -161,7 +168,25 @@ function drain(options, callback) {
         finish(null);
     }
 
+    function drainTimedOut() {
+        if (finished) {
+            return;
+        }
+        var now = chan.timers.now();
+        finish(errors.PeerDrainTimedOutError({
+            direction: self.drainDirection,
+            elapsed: now - start,
+            timeout: options.timeout
+        }));
+    }
+
     function finish(err) {
+        if (drainTimer) {
+            chan.timers.clearTimeout(drainTimer);
+            if (self.drainTimer === drainTimer) {
+                self.drainTimer = null;
+            }
+        }
         if (!finished) {
             finished = true;
             callback(err);
@@ -172,10 +197,15 @@ function drain(options, callback) {
 TChannelPeer.prototype.clearDrain =
 function clearDrain() {
     var self = this;
+    var chan = self.channel.topChannel || self.channel;
 
     self.draining = false;
     self.drainReason = '';
     self.drainDirection = '';
+    if (self.drainTimer) {
+        chan.timers.clearTimeout(self.drainTimer);
+        self.drainTimer = null;
+    }
 };
 
 TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {

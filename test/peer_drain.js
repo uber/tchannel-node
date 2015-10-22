@@ -791,7 +791,139 @@ allocCluster.test('peer.drain direction=out client', {
     }
 });
 
-// TODO: drainTimeout
+allocCluster.test('peer.drain direction=in server with a timeout', {
+    numPeers: 2,
+    skipEmptyCheck: true
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'draining peer');
+
+    var connsClosed = Ready();
+    var finishCount = 0;
+    var server = cluster.channels[0].makeSubChannel({
+        serviceName: 'a'
+    });
+    server.register('hello', hello);
+    server.register('limbo', limbo);
+
+    function hello(req, res, arg2, arg3) {
+        if (req.connection.direction === 'out') {
+            res.headers.as = 'raw';
+            res.send('', 'noop');
+            return;
+        }
+
+        var peer = server.peers.add(req.remoteAddr);
+        peer.waitForIdentified(peer.connect(true), outConnIded);
+
+        function outConnIded(err) {
+            if (err) {
+                finish(err);
+                return;
+            }
+
+            finishCount++;
+            peer.drain({
+                direction: 'in',
+                timeout: 25,
+                reason: 'switcheroo'
+            }, drained);
+
+            res.headers.as = 'raw';
+            res.send('', 'switched');
+        }
+
+        function drained(err) {
+            assert.equal(err && err.type, 'tchannel.drain.peer.timed-out',
+                         'expected drain to timeout');
+            waitForConnRemoved(2, cluster, connsClosed.signal);
+            peer.closeDrainedConnections(finish);
+            peer.clearDrain();
+        }
+    }
+
+    function limbo() {
+    }
+
+    var client = setupServiceClient(cluster.channels[1], 'a');
+    client.peers.add(server.hostPort);
+
+    assert.timeoutAfter(100);
+
+    finishCount++;
+    assert.comment('sending limbo');
+    client.request({
+        timeout: 500
+    }).send('limbo', '', '', function sendDone(err, res) {
+        assert.equal(err && err.type, 'tchannel.connection.reset',
+                     'expected tchannel.connection.reset error');
+        assert.ok(!res, 'no res value');
+        finish();
+    });
+
+    finishCount++;
+    assert.comment('sending hello');
+    client.request().send('hello', '', '', function sendDone(err, res) {
+        assert.ifError(err, 'expected no error');
+        assert.equal(res && String(res.arg3), 'switched', 'expected switcheroo');
+
+        finishCount++;
+        connsClosed(function thenSendAgain() {
+            assert.comment('sending 2nd hello');
+            client.request().send('hello', '', '', function sendDone(err, res) {
+                assert.ifError(err, 'expected no error');
+                assert.equal(res && String(res.arg3), 'noop', 'expected noop');
+                finish();
+            });
+        });
+
+        finish();
+    });
+
+    function finish(err) {
+        assert.ifError(err, 'no unexpected error');
+
+        if (--finishCount > 0) {
+            return;
+        }
+
+        if (finishCount < 0) {
+            throw new Error('broken');
+        }
+
+        cluster.assertCleanState(assert, {
+            channels: [
+                // server has a peer with a single idle out conn
+                {peers: [
+                    {connections: [
+                        {
+                            remoteName: client.hostPort,
+                            direction: 'out',
+                            inReqs: 0,
+                            outReqs: 0,
+                            streamingReq: 0,
+                            streamingRes: 0
+                        }
+                    ]}
+                ]},
+                // client has a peer with a single idle in conn
+                {peers: [
+                    {connections: [
+                        {
+                            remoteName: server.hostPort,
+                            direction: 'in',
+                            inReqs: 0,
+                            outReqs: 0,
+                            streamingReq: 0,
+                            streamingRes: 0
+                        }
+                    ]}
+                ]}
+            ]
+        });
+
+        assert.end();
+    }
+});
 
 function setupTestClients(cluster, services, callback) {
     var clients = {};
