@@ -601,9 +601,12 @@ function sendProtocolError(type, err) {
             new stat.InboundProtocolErrorsTags(self.socketRemoteAddr)
         );
 
+        var topChannel = self.channel.topChannel || self.channel;
+        var ownerName = topChannel.ownerName;
+
         self.handler.sendErrorFrame(
             protocolError.frameId || v2.Frame.NullId, null,
-            'ProtocolError', protocolError.message);
+            'ProtocolError', protocolError.message, ownerName);
 
         self.resetAll(protocolError);
     } else if (type === 'write') {
@@ -1102,16 +1105,28 @@ InitOperation.prototype.onTimeout = function onTimeout(now) {
 };
 
 TChannelConnection.prototype.sendLazyErrorFrameForReq =
-function sendLazyErrorFrameForReq(reqFrame, codeString, message) {
+function sendLazyErrorFrameForReq(reqFrame, codeString, message, ownerName) {
     var self = this;
 
     var res = reqFrame.bodyRW.lazy.readTracing(reqFrame);
     var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
 
-    self.sendLazyErrorFrame(reqFrame.id, tracing, codeString, message);
+    assert(ownerName && typeof ownerName === 'string',
+        'sendLazyErrorFrameForReq');
+
+    self.sendLazyErrorFrame(reqFrame.id, tracing, codeString, message, ownerName);
 
     var now = self.channel.timers.now();
     self._observeInboundErrorFrame(reqFrame, now, codeString);
+};
+
+TChannelConnection.prototype.sendLazyErrorFrame =
+function sendLazyErrorFrame(id, tracing, codeString, message, ownerName) {
+    var self = this;
+
+    assert(ownerName && typeof ownerName === 'string', 'sendLazyErrorFrame');
+
+    self.handler.sendErrorFrame(id, tracing, codeString, message, ownerName);
 };
 
 TChannelConnection.prototype._observeInboundErrorFrame =
@@ -1151,13 +1166,6 @@ function _observeInboundErrorFrame(reqFrame, now, codeName) {
             codeName
         )
     );
-};
-
-TChannelConnection.prototype.sendLazyErrorFrame =
-function sendLazyErrorFrame(id, tracing, codeString, message) {
-    var self = this;
-
-    self.handler.sendErrorFrame(id, tracing, codeString, message);
 };
 
 module.exports = TChannelConnection;

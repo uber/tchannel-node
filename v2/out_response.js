@@ -23,6 +23,7 @@
 /* eslint-disable curly */
 
 var inherits = require('util').inherits;
+var assert = require('assert');
 
 var OutResponse = require('../out_response');
 var StreamingOutResponse = require('../streaming_out_response');
@@ -70,8 +71,12 @@ function _sendCallResponseCont(args, isLast) {
 
 V2OutResponse.prototype._sendError =
 V2StreamingOutResponse.prototype._sendError =
-function _sendError(codeString, message) {
-    this.handler.sendErrorFrame(this.id, this.tracing, codeString, message);
+function _sendError(codeString, message, ownerName) {
+    assert(ownerName && typeof ownerName === 'string', '_sendError()');
+
+    this.handler.sendErrorFrame(
+        this.id, this.tracing, codeString, message, ownerName
+    );
 };
 
 module.exports.OutResponse = V2OutResponse;
