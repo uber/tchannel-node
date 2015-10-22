@@ -413,7 +413,7 @@ function connect(outOnly) {
 // ensures that an outbound connection exists
 TChannelPeer.prototype.connectTo = function connectTo() {
     var self = this;
-    self.connect(true);
+    return self.connect(true);
 };
 
 TChannelPeer.prototype.waitForIdentified =
