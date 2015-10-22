@@ -132,6 +132,11 @@ function TChannel(options) {
     // Filled in by listening event:
     this.hostPort = null;
 
+    self.ownerName = self.options.ownerName;
+    if (!self.ownerName) {
+        self.ownerName = 'unknown-nodejs';
+    }
+
     // name of the service running over this channel
     this.serviceName = '';
     if (this.options.serviceName) {
