@@ -860,12 +860,14 @@ module.exports.isFatal = function isFatal(err, codeName) {
 
 module.exports.logLevel = function errorLogLevel(err, codeName) {
     switch (codeName) {
-        case 'ProtocolError':
         case 'UnexpectedError':
             if (err.isErrorFrame) {
                 return 'warn';
             }
             return 'error';
+
+        case 'ProtocolError':
+            return 'warn';
 
         case 'Busy':
         case 'Cancelled':
