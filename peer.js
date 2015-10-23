@@ -22,6 +22,7 @@
 
 var assert = require('assert');
 var inherits = require('util').inherits;
+var inspect = require('util').inspect;
 var EventEmitter = require('./lib/event_emitter');
 var stat = require('./lib/stat.js');
 var net = require('net');
@@ -113,6 +114,18 @@ function TChannelPeer(channel, hostPort, options) {
 }
 
 inherits(TChannelPeer, EventEmitter);
+
+TChannelPeer.prototype.toString =
+function toString() {
+    var self = this;
+    return 'TChannelPeer(' + self.hostPort + ')';
+};
+
+TChannelPeer.prototype.inspect =
+function inspectPeer() {
+    var self = this;
+    return 'TChannelPeer(' + inspect(self.extendLogInfo({})) + ')';
+};
 
 TChannelPeer.prototype.extendLogInfo =
 function extendLogInfo(info) {
