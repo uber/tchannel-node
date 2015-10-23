@@ -133,7 +133,8 @@ TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer) {
 TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var self = this;
 
-    var writeBuffer = self.writeBuffer || new Buffer(v2.Frame.MaxSize);
+    var isShared = !!self.writeBuffer;
+    var writeBuffer = isShared || new Buffer(v2.Frame.MaxSize);
 
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
@@ -145,7 +146,11 @@ TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     }
 
     var buf = writeBuffer.slice(0, res.offset);
-    self.writeCopy(buf);
+    if (isShared) {
+        self.writeCopy(buf);
+    } else {
+        self.write(buf);
+    }
 };
 
 TChannelV2Handler.prototype.nextFrameId = function nextFrameId() {
