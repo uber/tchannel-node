@@ -308,7 +308,8 @@ function closeDrainedConnections(callback) {
     }
 };
 
-TChannelPeer.prototype.close = function close(callback) {
+TChannelPeer.prototype.close =
+function close(callback) {
     var self = this;
 
     if (self.reportTimer) {
@@ -391,7 +392,8 @@ TChannelPeer.prototype.countConnections = function countConnections(direction) {
 };
 
 // ensures that a connection exists
-TChannelPeer.prototype.connect = function connect(outOnly) {
+TChannelPeer.prototype.connect =
+function connect(outOnly) {
     var self = this;
     var conn = null;
     if (self.preferConnectionDirection === 'in' && !outOnly) {
@@ -411,7 +413,7 @@ TChannelPeer.prototype.connect = function connect(outOnly) {
 // ensures that an outbound connection exists
 TChannelPeer.prototype.connectTo = function connectTo() {
     var self = this;
-    self.connect(true);
+    return self.connect(true);
 };
 
 TChannelPeer.prototype.waitForIdentified =
