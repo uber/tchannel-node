@@ -323,7 +323,8 @@ function setObservePeerScoreEvents(obs) {
     }
 };
 
-TChannel.prototype.setLazyHandling = function setLazyHandling(enabled) {
+TChannel.prototype.setLazyHandling =
+function setLazyHandling(enabled) {
     var self = this;
 
     if (self.topChannel) {
@@ -339,7 +340,8 @@ TChannel.prototype.setLazyHandling = function setLazyHandling(enabled) {
     }
 };
 
-TChannel.prototype.setLazyRelaying = function setLazyRelaying(enabled) {
+TChannel.prototype.setLazyRelaying =
+function setLazyRelaying(enabled) {
     var self = this;
 
     if (self.topChannel) {
