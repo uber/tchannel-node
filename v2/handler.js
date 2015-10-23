@@ -40,6 +40,9 @@ var errors = require('../errors');
 
 var SERVER_TIMEOUT_DEFAULT = 100;
 
+var WRITE_BUFFER_EPHEMERAL = 0;
+var WRITE_BUFFER_STATIC = 1;
+
 /* jshint maxparams:10 */
 
 module.exports = TChannelV2Handler;
@@ -76,7 +79,7 @@ function TChannelV2Handler(options) {
     // TODO: GC these... maybe that's up to TChannel itself wrt ops
     self.streamingReq = Object.create(null);
     self.streamingRes = Object.create(null);
-    self.writeBuffer = new Buffer(v2.Frame.MaxSize);
+    self.writeBuffer = null;
 
     self.handleCallLazily = self.options.handleCallLazily || null;
     self.handleFrame = self.handleEagerFrame;
@@ -86,6 +89,12 @@ function TChannelV2Handler(options) {
 
     self.boundOnReqError = onReqError;
     self.boundOnResError = onResError;
+
+    if (options.writeBufferMode === undefined) {
+        self.setWriteBufferMode(self.connection.channel.options.writeBufferMode);
+    } else {
+        self.setWriteBufferMode(options.writeBufferMode);
+    }
 
     function onReqError(err, req) {
         self.onReqError(err, req);
@@ -97,6 +106,17 @@ function TChannelV2Handler(options) {
 }
 
 util.inherits(TChannelV2Handler, EventEmitter);
+
+TChannelV2Handler.prototype.setWriteBufferMode =
+function setWriteBufferMode(mode) {
+    var self = this;
+
+    if (mode === WRITE_BUFFER_EPHEMERAL) {
+        self.writeBuffer = null;
+    } else if (mode === WRITE_BUFFER_STATIC) {
+        self.writeBuffer = new Buffer(v2.Frame.MaxSize);
+    }
+};
 
 TChannelV2Handler.prototype.write = function write() {
     var self = this;
@@ -113,7 +133,8 @@ TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer) {
 TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var self = this;
 
-    var writeBuffer = self.writeBuffer;
+    var writeBuffer = self.writeBuffer || new Buffer(v2.Frame.MaxSize);
+
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
     if (err) {

@@ -65,6 +65,9 @@ var RetryFlags = require('./retry-flags.js');
 var TimeHeap = require('./time_heap');
 var CountedReadySignal = require('ready-signal/counted');
 
+// TODO: this jank is just here for the WRITE_BUFFER_EPHEMERAL symbol
+var v2Handler = require('./v2/handler.js');
+
 var TracingAgent = require('./trace/agent');
 
 var CONN_STALE_PERIOD = 1500;
@@ -120,6 +123,7 @@ function TChannel(options) {
     self.options = extend({
         useLazyHandling: false,
         useLazyRelaying: true,
+        writeBufferMode: v2Handler.WRITE_BUFFER_EPHEMERAL,
         timeoutCheckInterval: 100,
         timeoutFuzz: 100,
         connectionStalePeriod: CONN_STALE_PERIOD,
@@ -320,6 +324,23 @@ function setObservePeerScoreEvents(obs) {
     } else {
         self.peerChosenEvent = null;
         self.peerScoredEvent = null;
+    }
+};
+
+TChannel.prototype.setWriteBufferMode =
+function setWriteBufferMode(mode) {
+    var self = this;
+
+    if (self.topChannel) {
+        self.topChannel.setWriteBufferMode(mode);
+        return;
+    }
+
+    self.options.writeBufferMode = mode;
+    self.eachConnection(updateEachConn);
+
+    function updateEachConn(conn) {
+        conn.handler.setWriteBufferMode(mode);
     }
 };
 
