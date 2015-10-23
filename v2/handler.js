@@ -134,7 +134,7 @@ TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var self = this;
 
     var isShared = !!self.writeBuffer;
-    var writeBuffer = isShared || new Buffer(v2.Frame.MaxSize);
+    var writeBuffer = self.writeBuffer || new Buffer(v2.Frame.MaxSize);
 
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
