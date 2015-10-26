@@ -72,8 +72,6 @@ function TChannelOutRequest(id, options) {
     self.streamed = false;
     self.arg1 = null;
     self.endpoint = '';
-    self.arg2 = null;
-    self.arg3 = null;
     self.span = null;
     self.err = null;
     self.res = null;
@@ -405,9 +403,6 @@ TChannelOutRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
     if (self.logical === false && self.retryCount === 0) {
         self.emitOutboundCallsSent();
     }
-
-    self.arg2 = arg2;
-    self.arg3 = arg3;
 
     self.sendCallRequestFrame([arg1, arg2, arg3], true);
     self.finishEvent.emit(self);

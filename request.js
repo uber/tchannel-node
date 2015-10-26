@@ -150,6 +150,10 @@ TChannelRequest.prototype.emitResponse = function emitResponse(res) {
     if (!self.end) self.end = self.channel.timers.now();
     self.res = res;
 
+    self.arg1 = null;
+    self.arg2 = null;
+    self.arg3 = null;
+
     self.emitResponseStat(res);
     self.emitLatency();
 
