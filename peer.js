@@ -66,6 +66,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnIdentified = onIdentified;
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
+    self.boundOnPendingChange = onPendingChange;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -87,6 +88,10 @@ function TChannelPeer(channel, hostPort, options) {
 
     function onConnectionClose(_, conn) {
         self.onConnectionClose(conn);
+    }
+
+    function onPendingChange(pending, conn) {
+        self.onPendingChange(conn, pending);
     }
 
     function onReport() {
@@ -496,6 +501,7 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     }
     conn.errorEvent.on(self.boundOnConnectionError);
     conn.closeEvent.on(self.boundOnConnectionClose);
+    conn.ops.pendingChangeEvent.on(self.boundOnPendingChange);
 
     self._maybeInvalidateScore('addConnection');
     if (!conn.remoteName) {
@@ -537,6 +543,16 @@ function onConnectionClose(conn) {
     self.removeConnectionFrom(null, conn);
 };
 
+TChannelPeer.prototype.onPendingChange =
+function onPendingChange() {
+    var self = this;
+
+    // TODO: it would be possible to a faster partial-recomputation based only
+    // on the change of pending for the this one connection. Note arguments are
+    // (conn, pending)
+    self._maybeInvalidateScore('pendingChange');
+};
+
 TChannelPeer.prototype.removeConnectionFrom =
 function removeConnectionFrom(err, conn) {
     var self = this;
@@ -544,6 +560,7 @@ function removeConnectionFrom(err, conn) {
     conn.closeEvent.removeListener(self.boundOnConnectionClose);
     conn.errorEvent.removeListener(self.boundOnConnectionError);
     conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    conn.ops.pendingChangeEvent.removeListener(self.boundOnPendingChange);
 
     if (err) {
         var loggerInfo = {
