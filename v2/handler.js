@@ -21,6 +21,7 @@
 'use strict';
 
 var EventEmitter = require('../lib/event_emitter');
+var Buffer = require('buffer').Buffer;
 var stat = require('../lib/stat.js');
 var util = require('util');
 var assert = require('assert');
@@ -39,6 +40,7 @@ var v2 = require('./index');
 var errors = require('../errors');
 
 var SERVER_TIMEOUT_DEFAULT = 100;
+var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
 
 /* jshint maxparams:10 */
 
@@ -76,7 +78,6 @@ function TChannelV2Handler(options) {
     // TODO: GC these... maybe that's up to TChannel itself wrt ops
     self.streamingReq = Object.create(null);
     self.streamingRes = Object.create(null);
-    self.writeBuffer = new Buffer(v2.Frame.MaxSize);
 
     self.handleCallLazily = self.options.handleCallLazily || null;
     self.handleFrame = self.handleEagerFrame;
@@ -103,26 +104,30 @@ TChannelV2Handler.prototype.write = function write() {
     self.errorEvent.emit(self, new Error('write not implemented'));
 };
 
-TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer) {
+TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end) {
     var self = this;
-    var copy = new Buffer(buffer.length);
-    buffer.copy(copy);
+    // TODO: Optimize, allocating SlowBuffer here is slow
+    var copy = new Buffer(end - start);
+    buffer.copy(copy, 0, start, end);
     self.write(copy);
 };
 
 TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var self = this;
 
-    var writeBuffer = self.writeBuffer;
+    var writeBuffer = GLOBAL_WRITE_BUFFER;
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
     if (err) {
-        if (!Buffer.isBuffer(err.buffer)) err.buffer = writeBuffer;
+        if (!Buffer.isBuffer(err.buffer)) {
+            var bufCopy = new Buffer(res.offset);
+            writeBuffer.copy(bufCopy, 0, 0, res.offset);
+            err.buffer = bufCopy;
+        }
         if (typeof err.offset !== 'number') err.offset = res.offset;
         self.writeErrorEvent.emit(self, err);
     } else {
-        var buf = writeBuffer.slice(0, res.offset);
-        self.writeCopy(buf);
+        self.writeCopy(writeBuffer, 0, res.offset);
     }
 };
 
