@@ -21,7 +21,7 @@
 'use strict';
 
 var EventEmitter = require('./lib/event_emitter');
-var stat = require('./lib/stat');
+var stat = require('./stat-tags.js');
 var inherits = require('util').inherits;
 
 var errors = require('./errors');

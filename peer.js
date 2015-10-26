@@ -24,7 +24,7 @@ var assert = require('assert');
 var inherits = require('util').inherits;
 var inspect = require('util').inspect;
 var EventEmitter = require('./lib/event_emitter');
-var stat = require('./lib/stat.js');
+var stat = require('./stat-tags.js');
 var net = require('net');
 var CountedReadySignal = require('ready-signal/counted');
 

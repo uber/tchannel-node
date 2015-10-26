@@ -24,7 +24,7 @@ module.exports = TChannelOutRequest;
 
 var assert = require('assert');
 var EventEmitter = require('./lib/event_emitter');
-var stat = require('./lib/stat.js');
+var stat = require('./stat-tags.js');
 var inherits = require('util').inherits;
 var parallel = require('run-parallel');
 

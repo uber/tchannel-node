@@ -20,7 +20,7 @@
 
 'use strict';
 
-var Cleaner = require('./statsd-clean');
+var Cleaner = require('./lib/statsd-clean');
 var clean = Cleaner.clean;
 var cleanHostPort = Cleaner.cleanHostPort;
 

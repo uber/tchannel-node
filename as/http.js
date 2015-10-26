@@ -25,7 +25,7 @@ var http = require('http');
 var extend = require('xtend');
 var extendInto = require('xtend/mutable');
 var errors = require('../errors.js');
-var stat = require('../lib/stat.js');
+var stat = require('../stat-tags.js');
 var getRawBody = require('raw-body');
 
 var headerRW = bufrw.Repeat(bufrw.UInt16BE,

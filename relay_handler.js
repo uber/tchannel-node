@@ -22,7 +22,7 @@
 
 var errors = require('./errors');
 var v2 = require('./v2');
-var stat = require('./lib/stat.js');
+var stat = require('./stat-tags.js');
 
 RelayHandler.RelayRequest = RelayRequest;
 

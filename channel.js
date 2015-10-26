@@ -53,7 +53,7 @@ var TChannelServiceNameHandler = require('./service-name-handler');
 var errors = require('./errors');
 var EventEmitter = require('./lib/event_emitter.js');
 
-var BaseStat = require('./lib/stat.js').BaseStat;
+var BaseStat = require('./stat-tags.js').BaseStat;
 var TChannelAsThrift = require('./as/thrift');
 var TChannelAsJSON = require('./as/json');
 var TChannelConnection = require('./connection');
