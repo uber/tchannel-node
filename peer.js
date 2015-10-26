@@ -59,13 +59,13 @@ function TChannelPeer(channel, hostPort, options) {
     self.pendingIdentified = 0;
     self.heapElements = [];
     self.scoreStrategy = null;
-    self.boundOnIdentified = onIdentified;
-    self.boundOnConnectionError = onConnectionError;
-    self.boundOnConnectionClose = onConnectionClose;
     self.draining = false;
     self.drainTimer = null;
     self.drainReason = '';
     self.drainDirection = '';
+    self.boundOnIdentified = onIdentified;
+    self.boundOnConnectionError = onConnectionError;
+    self.boundOnConnectionClose = onConnectionClose;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
