@@ -599,7 +599,7 @@ TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
 TChannelPeer.prototype.makeOutSocket = function makeOutSocket() {
     var self = this;
     var parts = self.hostPort.split(':');
-    assert(parts.length === 2, 'invalid destination');
+    assert(parts.length === 2, 'invalid destination ' + self.hostPort);
     var host = parts[0];
     var port = parts[1];
     assert(host !== '0.0.0.0', 'cannot connect to ephemeral peer');
