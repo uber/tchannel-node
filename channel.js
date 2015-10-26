@@ -45,13 +45,13 @@ var format = require('util').format;
 var extend = require('xtend');
 
 var inherits = require('util').inherits;
-var StatEmitter = require('./lib/stat_emitter');
 
 var nullLogger = require('./null-logger.js');
 var EndpointHandler = require('./endpoint-handler.js');
 var TChannelRequest = require('./request');
 var TChannelServiceNameHandler = require('./service-name-handler');
 var errors = require('./errors');
+var EventEmitter = require('./lib/event_emitter.js');
 
 var BaseStat = require('./lib/stat.js').BaseStat;
 var TChannelAsThrift = require('./as/thrift');
@@ -110,10 +110,11 @@ function TChannel(options) {
     }
 
     var self = this;
-    StatEmitter.call(self);
+    EventEmitter.call(self);
     self.errorEvent = self.defineEvent('error');
     self.listeningEvent = self.defineEvent('listening');
     self.connectionEvent = self.defineEvent('connection');
+    self.statEvent = self.defineEvent('stat');
     self.peerChosenEvent = null;
     self.peerScoredEvent = null;
 
@@ -275,7 +276,7 @@ function TChannel(options) {
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
     }
 }
-inherits(TChannel, StatEmitter);
+inherits(TChannel, EventEmitter);
 
 TChannel.prototype.extendLogInfo =
 function extendLogInfo(info) {
