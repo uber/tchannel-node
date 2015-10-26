@@ -40,6 +40,7 @@ var v2 = require('./index');
 var errors = require('../errors');
 
 var SERVER_TIMEOUT_DEFAULT = 100;
+var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
 
 /* jshint maxparams:10 */
 
@@ -77,7 +78,6 @@ function TChannelV2Handler(options) {
     // TODO: GC these... maybe that's up to TChannel itself wrt ops
     self.streamingReq = Object.create(null);
     self.streamingRes = Object.create(null);
-    self.writeBuffer = new Buffer(v2.Frame.MaxSize);
 
     self.handleCallLazily = self.options.handleCallLazily || null;
     self.handleFrame = self.handleEagerFrame;
@@ -115,7 +115,7 @@ TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end) {
 TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var self = this;
 
-    var writeBuffer = self.writeBuffer;
+    var writeBuffer = GLOBAL_WRITE_BUFFER;
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
     if (err) {
