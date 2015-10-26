@@ -59,13 +59,14 @@ function TChannelPeer(channel, hostPort, options) {
     self.pendingIdentified = 0;
     self.heapElements = [];
     self.scoreStrategy = null;
-    self.boundOnIdentified = onIdentified;
-    self.boundOnConnectionError = onConnectionError;
-    self.boundOnConnectionClose = onConnectionClose;
     self.draining = false;
     self.drainTimer = null;
     self.drainReason = '';
     self.drainDirection = '';
+    self.boundOnIdentified = onIdentified;
+    self.boundOnConnectionError = onConnectionError;
+    self.boundOnConnectionClose = onConnectionClose;
+    self.boundOnPendingChange = onPendingChange;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -87,6 +88,10 @@ function TChannelPeer(channel, hostPort, options) {
 
     function onConnectionClose(_, conn) {
         self.onConnectionClose(conn);
+    }
+
+    function onPendingChange(pending, conn) {
+        self.onPendingChange(conn, pending);
     }
 
     function onReport() {
@@ -496,6 +501,7 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     }
     conn.errorEvent.on(self.boundOnConnectionError);
     conn.closeEvent.on(self.boundOnConnectionClose);
+    conn.ops.pendingChangeEvent.on(self.boundOnPendingChange);
 
     self._maybeInvalidateScore('addConnection');
     if (!conn.remoteName) {
@@ -528,26 +534,33 @@ function onIdentified(conn) {
 TChannelPeer.prototype.onConnectionError =
 function onConnectionError(err, conn) {
     var self = this;
-
-    conn.closeEvent.removeListener(self.boundOnConnectionClose);
-    conn.errorEvent.removeListener(self.boundOnConnectionError);
-    conn.identifiedEvent.removeListener(self.boundOnIdentified);
     self.removeConnectionFrom(err, conn);
 };
 
 TChannelPeer.prototype.onConnectionClose =
 function onConnectionClose(conn) {
     var self = this;
-
-    conn.closeEvent.removeListener(self.boundOnConnectionClose);
-    conn.errorEvent.removeListener(self.boundOnConnectionError);
-    conn.identifiedEvent.removeListener(self.boundOnIdentified);
     self.removeConnectionFrom(null, conn);
+};
+
+TChannelPeer.prototype.onPendingChange =
+function onPendingChange() {
+    var self = this;
+
+    // TODO: it would be possible to a faster partial-recomputation based only
+    // on the change of pending for the this one connection. Note arguments are
+    // (conn, pending)
+    self._maybeInvalidateScore('pendingChange');
 };
 
 TChannelPeer.prototype.removeConnectionFrom =
 function removeConnectionFrom(err, conn) {
     var self = this;
+
+    conn.closeEvent.removeListener(self.boundOnConnectionClose);
+    conn.errorEvent.removeListener(self.boundOnConnectionError);
+    conn.identifiedEvent.removeListener(self.boundOnIdentified);
+    conn.ops.pendingChangeEvent.removeListener(self.boundOnPendingChange);
 
     if (err) {
         var loggerInfo = {
@@ -627,7 +640,7 @@ TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() 
     //
     // This remains true with this algorithm, within each equivalence class.
     var self = this;
-    var pending = self.pendingIdentified + self.countPending();
+    var pending = self.countPending();
     var max = Math.pow(0.5, pending);
     var min = max / 2;
     var diff = max - min;
@@ -636,7 +649,9 @@ TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() 
 
 TChannelPeer.prototype.countPending = function countPending() {
     var self = this;
-    var pending = 0;
+
+    var pending = self.pendingIdentified;
+
     for (var index = 0; index < self.connections.length; index++) {
         var connPending = self.connections[index].ops.getPending();
 
