@@ -21,12 +21,12 @@
 'use strict';
 
 var assert = require('assert');
-var bufrw = require('bufrw');
 var extend = require('xtend');
-var ReadMachine = require('bufrw/stream/read_machine');
 var inherits = require('util').inherits;
+var bufrw = require('bufrw');
 var stat = require('./lib/stat.js');
 
+var FrameParser = require('./frame-parser.js');
 var v2 = require('./v2');
 var errors = require('./errors');
 var States = require('./reqres_states');
@@ -85,7 +85,8 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
     // jshint forin:true
     self.handler = new v2.Handler(opts);
 
-    self.mach = ReadMachine(bufrw.UInt16BE, v2.Frame.RW);
+    self.frameBufferParser = new FrameParser(self, onFrameBuffer);
+    self.frameParser = v2.Frame.RW;
 
     self.setupSocket();
     self.setupHandler();
@@ -97,6 +98,10 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
 }
 inherits(TChannelConnection, TChannelConnectionBase);
 
+function onFrameBuffer(connection, frameBuffer) {
+    connection.onFrameBuffer(frameBuffer);
+}
+
 TChannelConnection.prototype.setLazyHandling = function setLazyHandling(enabled) {
     var self = this;
 
@@ -104,12 +109,25 @@ TChannelConnection.prototype.setLazyHandling = function setLazyHandling(enabled)
     // boundary should just be self.handler.handleChunk in
     // onSocketChunk under setupSocket; then the switching logic
     // moves wholly into a `self.handler.setLazyHandling(bool)`
-    if (enabled && self.mach.chunkRW !== v2.LazyFrame.RW) {
-        self.mach.chunkRW = v2.LazyFrame.RW;
-    } else if (!enabled && self.mach.chunkRW !== v2.Frame.RW) {
-        self.mach.chunkRW = v2.Frame.RW;
+    if (enabled && self.frameParser !== v2.LazyFrame.RW) {
+        self.frameParser = v2.LazyFrame.RW;
+    } else if (!enabled && self.frameParser !== v2.Frame.RW) {
+        self.frameParser = v2.Frame.RW;
     }
     self.handler.useLazyFrames(enabled);
+};
+
+TChannelConnection.prototype.onFrameBuffer =
+function onFrameBuffer(frameBuffer) {
+    var self = this;
+
+    var res = bufrw.fromBufferResult(self.frameParser, frameBuffer, 0);
+    if (res.err) {
+        self.sendProtocolError('read', res.err);
+        return;
+    }
+
+    self.handleReadFrame(res.value);
 };
 
 TChannelConnection.prototype.setupSocket = function setupSocket() {
@@ -126,10 +144,7 @@ TChannelConnection.prototype.setupSocket = function setupSocket() {
 
     // TODO: move to method for function optimization
     function onSocketChunk(chunk) {
-        var err = self.mach.handleChunk(chunk);
-        if (err) {
-            self.sendProtocolError('read', err);
-        }
+        self.frameBufferParser.write(chunk);
     }
 
     // TODO: move to method for function optimization
@@ -165,8 +180,6 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
     self.handler.write = function write(buf, done) {
         self.socket.write(buf, null, done);
     };
-
-    self.mach.emit = handleReadFrame;
 
     self.handler.writeErrorEvent.on(onWriteError);
     self.handler.errorEvent.on(onHandlerError);
@@ -206,10 +219,6 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 
     function onErrorFrame(errFrame) {
         self.onErrorFrame(errFrame);
-    }
-
-    function handleReadFrame(frame) {
-        self.handleReadFrame(frame);
     }
 
     function onCallRequest(req) {
