@@ -104,10 +104,11 @@ TChannelV2Handler.prototype.write = function write() {
     self.errorEvent.emit(self, new Error('write not implemented'));
 };
 
-TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer) {
+TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end) {
     var self = this;
-    var copy = new Buffer(buffer.length);
-    buffer.copy(copy);
+    // TODO: Optimize, allocating SlowBuffer here is slow
+    var copy = new Buffer(end - start);
+    buffer.copy(copy, 0, start, end);
     self.write(copy);
 };
 
@@ -122,8 +123,7 @@ TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
         if (typeof err.offset !== 'number') err.offset = res.offset;
         self.writeErrorEvent.emit(self, err);
     } else {
-        var buf = writeBuffer.slice(0, res.offset);
-        self.writeCopy(buf);
+        self.writeCopy(writeBuffer, 0, res.offset);
     }
 };
 
