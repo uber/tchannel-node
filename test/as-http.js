@@ -37,58 +37,6 @@ function isNumber(assert, value) {
 }
 
 var fixture = {
-    'tchannel.http-handler.egress.request-build-latency': {
-        'name': 'tchannel.http-handler.egress.request-build-latency',
-        'type': 'timing',
-        'value': isNumber,
-        'tags': {
-            'app': '',
-            'host': '',
-            'cluster': '',
-            'version': '',
-            'callerName': 'wat',
-            'targetService': 'test_http'
-        }
-    },
-    'tchannel.http-handler.egress.response-build-latency': {
-        'name': 'tchannel.http-handler.egress.response-build-latency',
-        'type': 'timing',
-        'value': isNumber,
-        'tags': {
-            'app': '',
-            'host': '',
-            'cluster': '',
-            'version': '',
-            'callerName': 'wat',
-            'targetService': 'test_http'
-        }
-    },
-    'tchannel.http-handler.ingress.request-build-latency': {
-        'name': 'tchannel.http-handler.ingress.request-build-latency',
-        'type': 'timing',
-        'value': isNumber,
-        'tags': {
-            'app': '',
-            'host': '',
-            'cluster': '',
-            'version': '',
-            'callerName': 'wat',
-            'targetService': 'test_http'
-        }
-    },
-    'tchannel.http-handler.ingress.response-build-latency': {
-        'name': 'tchannel.http-handler.ingress.response-build-latency',
-        'type': 'timing',
-        'value': isNumber,
-        'tags': {
-            'app': '',
-            'host': '',
-            'cluster': '',
-            'version': '',
-            'callerName': 'wat',
-            'targetService': 'test_http'
-        }
-    },
     'tchannel.http-handler.ingress.service-call-latency': {
         'name': 'tchannel.http-handler.ingress.service-call-latency',
         'type': 'timing',
@@ -101,7 +49,7 @@ var fixture = {
             'callerName': 'wat',
             'targetService': 'test_http'
         }
-    },
+    }
 };
 
 allocHTTPTest('as/http can bridge a service using node http (streaming)', {
