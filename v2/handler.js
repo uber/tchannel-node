@@ -119,7 +119,11 @@ TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
     if (err) {
-        if (!Buffer.isBuffer(err.buffer)) err.buffer = writeBuffer;
+        if (!Buffer.isBuffer(err.buffer)) {
+            var bufCopy = new Buffer(res.offset);
+            writeBuffer.copy(bufCopy, 0, 0, res.offset);
+            err.buffer = bufCopy;
+        }
         if (typeof err.offset !== 'number') err.offset = res.offset;
         self.writeErrorEvent.emit(self, err);
     } else {
