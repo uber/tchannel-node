@@ -53,52 +53,27 @@ var TChannelServiceNameHandler = require('./service-name-handler');
 var errors = require('./errors');
 var EventEmitter = require('./lib/event_emitter.js');
 
-var BaseStat = require('./stat-tags.js').BaseStat;
 var TChannelAsThrift = require('./as/thrift');
 var TChannelAsJSON = require('./as/json');
 var TChannelConnection = require('./connection');
 var TChannelRootPeers = require('./root_peers');
 var TChannelSubPeers = require('./sub_peers');
 var TChannelServices = require('./services');
-var TChannelStatsd = require('./lib/statsd');
 var RetryFlags = require('./retry-flags.js');
 var TimeHeap = require('./time_heap');
 var CountedReadySignal = require('ready-signal/counted');
+var BatchStatsd = require('./lib/statsd.js');
 
 var TracingAgent = require('./trace/agent');
 
 var CONN_STALE_PERIOD = 1500;
 var SANITY_PERIOD = 10 * 1000;
-var STAT_EMIT_PERIOD = 100;
+
 var DEFAULT_RETRY_FLAGS = new RetryFlags(
     /*never:*/ false,
     /*onConnectionError*/ true,
     /*onTimeout*/ false
 );
-
-function StatTags(opts) {
-    var self = this;
-
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    if (opts) {
-        if (opts.app) {
-            self.app = opts.app;
-        }
-        if (opts.host) {
-            self.host = opts.host;
-        }
-        if (opts.cluster) {
-            self.cluster = opts.cluster;
-        }
-        if (opts.version) {
-            self.version = opts.version;
-        }
-    }
-}
 
 // TODO restore spying
 // var Spy = require('./v2/spy');
@@ -141,17 +116,6 @@ function TChannel(options) {
     self.choosePeerWithHeap = self.options.choosePeerWithHeap || false;
 
     self.setObservePeerScoreEvents(self.options.observePeerScoreEvents);
-
-    // required: 'app'
-    // optional: 'host', 'cluster', 'version'
-    assert(!self.options.statTags || self.options.statTags.app, 'the stats must have the "app" tag');
-    self.statTags = new StatTags(self.options.statTags);
-
-    self.statsd = self.options.statsd;
-    if (self.statsd) {
-        self.channelStatsd = new TChannelStatsd(self, self.statsd);
-        self.options.statsd = null;
-    }
 
     // Filled in by the listen call:
     self.host = null;
@@ -254,14 +218,22 @@ function TChannel(options) {
     self.TChannelAsThrift = TChannelAsThrift;
     self.TChannelAsJSON = TChannelAsJSON;
 
-    self.statsQueue = [];
+    self.statsd = self.options.statsd;
+    self.batchStats = null;
 
     self.requestDefaults = self.options.requestDefaults ?
         new RequestDefaults(self.options.requestDefaults) : null;
 
     if (!self.topChannel) {
+        self.batchStats = new BatchStatsd({
+            logger: self.logger,
+            timers: self.timers,
+            statsd: self.statsd,
+            baseTags: self.options.statTags
+        });
+
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
-        self.flushStats();
+        self.batchStats.flushStats();
     }
 
     function doSanitySweep() {
@@ -417,27 +389,6 @@ TChannel.prototype.getServer = function getServer() {
 
     function onServerSocketError(err) {
         self.onServerSocketError(err);
-    }
-};
-
-TChannel.prototype.flushStats = function flushStats() {
-    var self = this;
-
-    if (self.batchStatTimer) {
-        self.timers.clearTimeout(self.batchStatTimer);
-    }
-
-    for (var i = 0; i < self.statsQueue.length; i++) {
-        self.statEvent.emit(self, self.statsQueue[i]);
-    }
-    self.statsQueue = [];
-
-    self.batchStatTimer = self.timers.setTimeout(
-        flushStatsRecur, STAT_EMIT_PERIOD
-    );
-
-    function flushStatsRecur() {
-        self.flushStats();
     }
 };
 
@@ -918,9 +869,8 @@ TChannel.prototype.close = function close(callback) {
     }
 
     if (!self.topChannel) {
-        self.flushStats();
+        self.batchStats.destroy();
         self.timeHeap.clear();
-        self.timers.clearTimeout(self.batchStatTimer);
     }
 
     counter++;
@@ -951,41 +901,26 @@ TChannel.prototype.buildStat =
 function buildStat(name, type, value, tags) {
     var self = this;
 
-    tags.app = self.statTags.app;
-    tags.host = self.statTags.host;
-    tags.cluster = self.statTags.cluster;
-    tags.version = self.statTags.version;
+    var batchStats = self.topChannel ?
+        self.topChannel.batchStats : self.batchStats;
 
-    return new BaseStat(
-        name, type, value, tags
-    );
+    return batchStats.buildStat(name, type, value, tags);
 };
 
 TChannel.prototype.emitFastStat = function emitFastStat(stat) {
     var self = this;
 
-    if (self.topChannel) {
-        self.topChannel.emitFastStat(stat);
-    } else {
-        self.statsQueue.push(stat);
-    }
+    var channel = self.topChannel ? self.topChannel : self;
+
+    channel.batchStats.pushStat(stat);
+    channel.statEvent.emit(channel, stat);
 };
 
-TChannel.prototype.emitStat = function emitStat(stat) {
+TChannel.prototype.flushStats = function flushStats() {
     var self = this;
 
-    var commonTags = self.statTags;
-    var commonKeys = Object.keys(self.statTags);
-
-    var localTags = stat.tags;
-    for (var i = 0; i < commonKeys.length; i++) {
-        localTags[commonKeys[i]] = commonTags[commonKeys[i]];
-    }
-
-    if (self.topChannel) {
-        self.topChannel.emitFastStat(stat);
-    } else {
-        self.statsQueue.push(stat);
+    if (self.batchStats) {
+        self.batchStats.flushStats();
     }
 };
 
