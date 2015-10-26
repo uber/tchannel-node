@@ -21,6 +21,7 @@
 'use strict';
 
 var EventEmitter = require('../lib/event_emitter');
+var Buffer = require('buffer').Buffer;
 var stat = require('../lib/stat.js');
 var util = require('util');
 var assert = require('assert');
