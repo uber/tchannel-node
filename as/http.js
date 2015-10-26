@@ -59,6 +59,9 @@ HTTPResArg2.RW = bufrw.Struct(HTTPResArg2, {
     headerPairs: headerRW       // numHeaders:2 (headerName~2 headerValue~2){numHeaders}
 });
 
+var GLOBAL_REQUEST_ARG2 = new HTTPReqArg2();
+var GLOBAL_RESPONSE_ARG2 = new HTTPResArg2();
+
 // per RFC2616
 HTTPReqArg2.prototype.getHeaders =
 HTTPResArg2.prototype.getHeaders =
@@ -164,17 +167,18 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, options, callback
         options = null;
     }
 
-    var head = new HTTPReqArg2(hreq.method, hreq.url);
-    head.setHeaders(hreq.headers);
+    GLOBAL_REQUEST_ARG2.method = hreq.method;
+    GLOBAL_REQUEST_ARG2.url = hreq.url;
+    GLOBAL_REQUEST_ARG2.setHeaders(hreq.headers);
 
     var arg1 = ''; // TODO: left empty for now, could compute circuit names heuristically
-    var arg2res = bufrw.toBufferResult(HTTPReqArg2.RW, head);
+    var arg2res = bufrw.toBufferResult(HTTPReqArg2.RW, GLOBAL_REQUEST_ARG2);
     if (arg2res.err) {
         self.logger.error('Buffer write for arg2 failed', {
             error: arg2res.err
         });
         var toBufferErr = errors.HTTPReqArg2toBufferError(arg2res.err, {
-            head: head
+            head: GLOBAL_REQUEST_ARG2
         });
         callback(toBufferErr, null, null);
         return null;
@@ -248,15 +252,16 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, options, callback
 TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, callback) {
     // TODO: map http response codes onto error frames and application errors
     var self = this;
-    var head = new HTTPResArg2(hres.statusCode, hres.statusMessage);
-    head.setHeaders(hres.headers);
-    var arg2res = bufrw.toBufferResult(HTTPResArg2.RW, head);
+    GLOBAL_RESPONSE_ARG2.statusCode = hres.statusCode;
+    GLOBAL_RESPONSE_ARG2.statusMessage = hres.statusMessage;
+    GLOBAL_RESPONSE_ARG2.setHeaders(hres.headers);
+    var arg2res = bufrw.toBufferResult(HTTPResArg2.RW, GLOBAL_RESPONSE_ARG2);
     if (arg2res.err) {
         self.logger.error('Buffer write for arg2 failed', {
             error: arg2res.err
         });
         var toBufferErr = errors.HTTPResArg2toBufferError(arg2res.err, {
-            head: head
+            head: GLOBAL_RESPONSE_ARG2
         });
         callback(toBufferErr);
         return null;
@@ -512,7 +517,6 @@ AsHTTPHandler.prototype.handleRequest = function handleRequest(req, buildRespons
     function handle() {
         // TODO: explicate type
         var hres = {
-            head: new HTTPResArg2(200, 'Ok'),
             sendError: sendError,
             sendResponse: sendResponse
         };
