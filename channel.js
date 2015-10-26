@@ -234,6 +234,8 @@ function TChannel(options) {
 
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
         self.batchStats.flushStats();
+    } else {
+        self.batchStats = self.topChannel.batchStats;
     }
 
     function doSanitySweep() {
@@ -901,19 +903,16 @@ TChannel.prototype.buildStat =
 function buildStat(name, type, value, tags) {
     var self = this;
 
-    var batchStats = self.topChannel ?
-        self.topChannel.batchStats : self.batchStats;
-
-    return batchStats.buildStat(name, type, value, tags);
+    return self.batchStats.buildStat(name, type, value, tags);
 };
 
 TChannel.prototype.emitFastStat = function emitFastStat(stat) {
     var self = this;
 
-    var channel = self.topChannel ? self.topChannel : self;
+    var topChannel = self.topChannel ? self.topChannel : self;
 
-    channel.batchStats.pushStat(stat);
-    channel.statEvent.emit(channel, stat);
+    self.batchStats.pushStat(stat);
+    topChannel.statEvent.emit(topChannel, stat);
 };
 
 TChannel.prototype.flushStats = function flushStats() {
