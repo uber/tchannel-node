@@ -225,17 +225,19 @@ function TChannel(options) {
         new RequestDefaults(self.options.requestDefaults) : null;
 
     if (!self.topChannel) {
-        self.batchStats = self.options.batchStats;
-        self.batchStatsAllocated = false;
-        if (!self.batchStats) {
+        if (self.options.batchStats) {
+            self.batchStats = self.options.batchStats;
+            self.batchStatsAllocated = false;
+        } else {
             self.batchStats = new BatchStatsd({
                 logger: self.logger,
                 timers: self.timers,
                 statsd: self.statsd,
                 baseTags: self.options.statTags
             });
-            self.batchStats.flushStats();
             self.batchStatsAllocated = true;
+
+            self.batchStats.flushStats();
         }
 
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
