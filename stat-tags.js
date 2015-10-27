@@ -20,9 +20,9 @@
 
 'use strict';
 
-var Cleaner = require('./lib/statsd-clean');
-var clean = Cleaner.clean;
-var cleanHostPort = Cleaner.cleanHostPort;
+var BatchStatsd = require('./lib/statsd.js');
+var clean = BatchStatsd.clean;
+var cleanHostPort = BatchStatsd.cleanHostPort;
 
 module.exports = {
     InboundCallsRecvdTags: InboundCallsRecvdTags,
