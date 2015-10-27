@@ -61,6 +61,7 @@ HTTPResArg2.RW = bufrw.Struct(HTTPResArg2, {
 
 var GLOBAL_REQUEST_ARG2 = new HTTPReqArg2();
 var GLOBAL_RESPONSE_ARG2 = new HTTPResArg2();
+var GLOBAL_STAT_TAGS = new stat.HTTPHanlderBuildLatencyTags();
 
 // per RFC2616
 HTTPReqArg2.prototype.getHeaders =
@@ -278,7 +279,6 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, c
         return null;
     }
 
-
     var res = buildResponse({
         streamed: true,
         headers: {
@@ -386,6 +386,8 @@ TChannelHTTP.prototype._forwardToLBPool = function _forwardToLBPool(options, inr
     options.encoding = null;
     var data = inreq.bodyStream || inreq.bodyArg; // lb_pool likes polymorphism
     self.lbpool.request(options, data, onResponse);
+    var serviceName = inreq.serviceName;
+    var callerName = inreq.callerName;
 
     function onResponse(err, res, body) {
         if (err) {
@@ -398,15 +400,14 @@ TChannelHTTP.prototype._forwardToLBPool = function _forwardToLBPool(options, inr
         }
         outres.sendResponse(res, body);
         callback(null);
+        GLOBAL_STAT_TAGS.targetService = serviceName;
+        GLOBAL_STAT_TAGS.callerName = callerName;
+        GLOBAL_STAT_TAGS.streamed = false;
         self.channel.emitFastStat(
             'tchannel.http-handler.ingress.service-call-latency',
             'timing',
             self.channel.timers.now() - start,
-            new stat.HTTPHanlderBuildLatencyTags(
-                inreq.serviceName,
-                inreq.callerName,
-                false
-            )
+            GLOBAL_STAT_TAGS
         );
     }
 };
@@ -424,21 +425,22 @@ TChannelHTTP.prototype._forwardToNodeHTTP = function _forwardToNodeHTTP(options,
     } else {
         outreq.end(inreq.bodyArg);
     }
+    var serviceName = inreq.serviceName;
+    var callerName = inreq.callerName;
 
     function onResponse(inres) {
         if (!sent) {
             sent = true;
             outres.sendResponse(inres);
             callback(null);
+            GLOBAL_STAT_TAGS.targetService = serviceName;
+            GLOBAL_STAT_TAGS.callerName = callerName;
+            GLOBAL_STAT_TAGS.streamed = true;
             self.channel.emitFastStat(
                 'tchannel.http-handler.ingress.service-call-latency',
                 'timing',
                 self.channel.timers.now() - start,
-                new stat.HTTPHanlderBuildLatencyTags(
-                    inreq.serviceName,
-                    inreq.callerName,
-                    true
-                )
+                GLOBAL_STAT_TAGS
             );
         }
     }
