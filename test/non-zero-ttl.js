@@ -20,6 +20,8 @@
 
 'use strict';
 
+var process = require('process');
+
 var allocCluster = require('./lib/alloc-cluster.js');
 
 allocCluster.test('request() with zero timeout', {
@@ -27,48 +29,21 @@ allocCluster.test('request() with zero timeout', {
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'resetting connection');
 
-    var one = cluster.channels[0];
-    var two = cluster.channels[1];
+    warmUpConnection(cluster, onIdentified);
 
-    var subTwo = two.makeSubChannel({
-        serviceName: 'server'
-    });
-
-    subTwo.waitForIdentified({
-        host: one.hostPort
-    }, function onIdentified(err) {
+    function onIdentified(err, conn) {
         assert.ifError(err);
 
-        var peer = subTwo.peers.add(one.hostPort);
-        var conn = peer.connect();
-
-        // fff magic test
-        var req = conn.buildOutRequest({
-            channel: conn.channel,
-            peer: peer,
-            remoteAddr: conn.remoteName,
-            timeout: 0,
-            tracer: conn.tracer,
-            serviceName: 'server',
-            host: one.hostPort,
-            hasNoParent: true,
-            checksumType: null,
-            timers: conn.channel.timers,
-            headers: {
-                'as': 'raw',
-                'cn': 'wat'
-            }
-        });
-        conn.ops.addOutReq(req);
-
+        var req = buildRequest(conn, 0);
         req.send('echo', '', '', onResponse);
-    });
+    }
 
     function onResponse(err, resp) {
         assert.ok(err);
         assert.equal(err.type, 'tchannel.connection.reset');
         assert.equal(err.message,
-            'tchannel: tchannel write failure: Got an invalid ttl. Expected positive ttl but got 0'
+            'tchannel: tchannel write failure: Got an invalid ' +
+                'ttl. Expected positive ttl but got 0'
         );
 
         assert.equal(resp, null);
@@ -80,7 +55,8 @@ allocCluster.test('request() with zero timeout', {
         assert.equal(cluster.logger.items().length, 1);
         var logLine = cluster.logger.items()[0];
         assert.equal(logLine && logLine.levelName, 'info');
-        assert.equal(logLine && logLine.meta.error.type, 'tchannel.protocol.write-failed');
+        assert.equal(logLine && logLine.meta.error.type,
+            'tchannel.protocol.write-failed');
 
         assert.end();
     }
@@ -91,47 +67,21 @@ allocCluster.test('request() with negative timeout', {
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'resetting connection');
 
-    var one = cluster.channels[0];
-    var two = cluster.channels[1];
+    warmUpConnection(cluster, onIdentified);
 
-    var subTwo = two.makeSubChannel({
-        serviceName: 'server'
-    });
-
-    subTwo.waitForIdentified({
-        host: one.hostPort
-    }, function onIdentified(err) {
+    function onIdentified(err, conn) {
         assert.ifError(err);
 
-        var peer = subTwo.peers.add(one.hostPort);
-        var conn = peer.connect();
-
-        var req = conn.buildOutRequest({
-            channel: conn.channel,
-            peer: peer,
-            remoteAddr: conn.remoteName,
-            timeout: -10,
-            tracer: conn.tracer,
-            serviceName: 'server',
-            host: one.hostPort,
-            hasNoParent: true,
-            checksumType: null,
-            timers: conn.channel.timers,
-            headers: {
-                'as': 'raw',
-                'cn': 'wat'
-            }
-        });
-        conn.ops.addOutReq(req);
-
+        var req = buildRequest(conn, -10);
         req.send('echo', '', '', onResponse);
-    });
+    }
 
     function onResponse(err, resp) {
         assert.ok(err);
         assert.equal(err.type, 'tchannel.connection.reset');
         assert.equal(err.message,
-            'tchannel: tchannel write failure: Got an invalid ttl. Expected positive ttl but got -10'
+            'tchannel: tchannel write failure: Got an invalid ' +
+                'ttl. Expected positive ttl but got -10'
         );
 
         assert.equal(resp, null);
@@ -143,8 +93,56 @@ allocCluster.test('request() with negative timeout', {
         assert.equal(cluster.logger.items().length, 1);
         var logLine = cluster.logger.items()[0];
         assert.equal(logLine && logLine.levelName, 'info');
-        assert.equal(logLine && logLine.meta.error.type, 'tchannel.protocol.write-failed');
+        assert.equal(logLine && logLine.meta.error.type,
+            'tchannel.protocol.write-failed');
 
         assert.end();
     }
 });
+
+function warmUpConnection(cluster, cb) {
+    var one = cluster.channels[0];
+    var two = cluster.channels[1];
+
+    var clientChan = one.makeSubChannel({
+        serviceName: 'server'
+    });
+
+    clientChan.waitForIdentified({
+        host: two.hostPort
+    }, function onIdentified(err) {
+        if (err) {
+            return cb(err);
+        }
+
+        var peer = clientChan.peers.get(two.hostPort);
+        var conn = peer.getIdentifiedOutConnection();
+
+        cb(null, conn);
+    });
+}
+
+function buildRequest(conn, ttl) {
+    var peer = conn.channel.peers.get(conn.socketRemoteAddr);
+
+    // fff magic test
+    var req = conn.buildOutRequest({
+        channel: conn.channel,
+        peer: peer,
+        remoteAddr: conn.remoteName,
+        timeout: ttl,
+        tracer: conn.tracer,
+        serviceName: 'server',
+        host: conn.socketRemoteAddr,
+        hasNoParent: true,
+        checksumType: null,
+        timers: conn.channel.timers,
+        headers: {
+            'as': 'raw',
+            'cn': 'wat'
+        }
+    });
+    conn.ops.addOutReq(req);
+
+    return req;
+}
