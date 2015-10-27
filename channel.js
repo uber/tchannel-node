@@ -903,8 +903,7 @@ TChannel.prototype.emitFastStat =
 function emitFastStat(name, type, value, tags) {
     var self = this;
 
-    var stat = self.batchStats.buildStat(name, type, value, tags);
-    self.batchStats.pushStat(stat);
+    var stat = self.batchStats.pushStat(name, type, value, tags);
 
     var topChannel = self.topChannel ? self.topChannel : self;
     topChannel.statEvent.emit(topChannel, stat);
