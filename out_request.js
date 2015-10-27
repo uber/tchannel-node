@@ -24,7 +24,7 @@ module.exports = TChannelOutRequest;
 
 var assert = require('assert');
 var EventEmitter = require('./lib/event_emitter');
-var stat = require('./stat-tags.js');
+var stat = require('./lib/stat.js');
 var inherits = require('util').inherits;
 var parallel = require('run-parallel');
 
@@ -130,7 +130,7 @@ function emitPerAttemptErrorStat(err) {
     var self = this;
 
     if (err.isErrorFrame) {
-        self.channel.emitFastStat(
+        self.channel.emitFastStat(self.channel.buildStat(
             'tchannel.outbound.calls.system-errors',
             'counter',
             1,
@@ -141,9 +141,9 @@ function emitPerAttemptErrorStat(err) {
                 err.codeName,
                 self.retryCount
             )
-        );
+        ));
     } else {
-        self.channel.emitFastStat(
+        self.channel.emitFastStat(self.channel.buildStat(
             'tchannel.outbound.calls.per-attempt.operational-errors',
             'counter',
             1,
@@ -154,7 +154,7 @@ function emitPerAttemptErrorStat(err) {
                 err.type || 'unknown',
                 self.retryCounts
             )
-        );
+        ));
     }
 };
 
@@ -163,7 +163,7 @@ function emitPerAttemptResponseStat(res) {
     var self = this;
 
     if (!res.ok) {
-        self.channel.emitFastStat(
+        self.channel.emitFastStat(self.channel.buildStat(
             'tchannel.outbound.calls.per-attempt.app-errors',
             'counter',
             1,
@@ -174,10 +174,10 @@ function emitPerAttemptResponseStat(res) {
                 'unknown',
                 self.retryCount
             )
-        );
+        ));
     // Only emit success if peer-to-peer request or relay
     } else if (self.logical === false) {
-        self.channel.emitFastStat(
+        self.channel.emitFastStat(self.channel.buildStat(
             'tchannel.outbound.calls.success',
             'counter',
             1,
@@ -186,7 +186,7 @@ function emitPerAttemptResponseStat(res) {
                 self.callerName,
                 self.endpoint
             )
-        );
+        ));
     }
 };
 
@@ -196,7 +196,7 @@ function emitPerAttemptLatency() {
 
     var latency = self.end - self.start;
 
-    self.channel.emitFastStat(
+    self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.outbound.calls.per-attempt-latency',
         'timing',
         latency,
@@ -207,7 +207,7 @@ function emitPerAttemptLatency() {
             self.remoteAddr,
             self.retryCount
         )
-    );
+    ));
 };
 
 TChannelOutRequest.prototype.emitError = function emitError(err) {
@@ -413,7 +413,7 @@ TChannelOutRequest.prototype.emitOutboundCallsSent =
 function emitOutboundCallsSent() {
     var self = this;
 
-    self.channel.emitFastStat(
+    self.channel.emitFastStat(self.channel.buildStat(
         'tchannel.outbound.calls.sent',
         'counter',
         1,
@@ -422,7 +422,7 @@ function emitOutboundCallsSent() {
             self.callerName,
             self.endpoint
         )
-    );
+    ));
 };
 
 TChannelOutRequest.prototype.hookupStreamCallback =

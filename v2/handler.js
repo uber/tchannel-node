@@ -22,7 +22,7 @@
 
 var EventEmitter = require('../lib/event_emitter');
 var Buffer = require('buffer').Buffer;
-var stat = require('../stat-tags.js');
+var stat = require('../lib/stat.js');
 var util = require('util');
 var assert = require('assert');
 
@@ -265,7 +265,7 @@ TChannelV2Handler.prototype.handleCallRequest = function handleCallRequest(reqFr
     }
 
     var channel = self.connection.channel;
-    channel.emitFastStat(
+    channel.emitFastStat(channel.buildStat(
         'tchannel.inbound.request.size',
         'counter',
         reqFrame.size,
@@ -274,7 +274,7 @@ TChannelV2Handler.prototype.handleCallRequest = function handleCallRequest(reqFr
             req.serviceName,
             req.endpoint
         )
-    );
+    ));
 
     self.emitBytesRecvd(reqFrame);
 };
@@ -285,7 +285,7 @@ function emitBytesRecvd(frame) {
 
     var channel = self.connection.channel;
     if (channel.emitConnectionMetrics) {
-        channel.emitFastStat(
+        channel.emitFastStat(channel.buildStat(
             'tchannel.connections.bytes-recvd',
             'counter',
             frame.size,
@@ -293,7 +293,7 @@ function emitBytesRecvd(frame) {
                 channel.hostPort || '0.0.0.0:0',
                 self.connection.socketRemoteAddr
             )
-        );
+        ));
     }
 };
 
@@ -396,7 +396,7 @@ TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(res
 
     var channel = self.connection.channel;
 
-    channel.emitFastStat(
+    channel.emitFastStat(channel.buildStat(
         'tchannel.inbound.response.size',
         'counter',
         resFrame.size,
@@ -405,7 +405,7 @@ TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(res
             req ? req.serviceName : '',
             req ? req.endpoint : ''
         )
-    );
+    ));
 
     self.emitBytesRecvd(resFrame);
 
@@ -444,7 +444,7 @@ TChannelV2Handler.prototype.handleCallRequestCont = function handleCallRequestCo
     self._handleCallFrame(req, reqFrame, self.streamingReq);
 
     var channel = self.connection.channel;
-    channel.emitFastStat(
+    channel.emitFastStat(channel.buildStat(
         'tchannel.inbound.request.size',
         'counter',
         reqFrame.size,
@@ -453,7 +453,7 @@ TChannelV2Handler.prototype.handleCallRequestCont = function handleCallRequestCo
             req.serviceName,
             req.endpoint
         )
-    );
+    ));
 
     self.emitBytesRecvd(reqFrame);
 };
@@ -475,7 +475,7 @@ TChannelV2Handler.prototype.handleCallResponseCont = function handleCallResponse
     var req = self.connection.ops.getOutReq(res.id);
     var channel = self.connection.channel;
 
-    channel.emitFastStat(
+    channel.emitFastStat(channel.buildStat(
         'tchannel.inbound.response.size',
         'counter',
         resFrame.size,
@@ -484,7 +484,7 @@ TChannelV2Handler.prototype.handleCallResponseCont = function handleCallResponse
             req ? req.serviceName : '',
             req ? req.endpoint : ''
         )
-    );
+    ));
 
     self.emitBytesRecvd(resFrame);
 
@@ -642,7 +642,7 @@ function emitBytesSent(size) {
 
     var channel = self.connection.channel;
     if (channel.emitConnectionMetrics) {
-        channel.emitFastStat(
+        channel.emitFastStat(channel.buildStat(
             'tchannel.connections.bytes-sent',
             'counter',
             size,
@@ -650,7 +650,7 @@ function emitBytesSent(size) {
                 channel.hostPort || '0.0.0.0:0',
                 self.connection.socketRemoteAddr
             )
-        );
+        ));
     }
 };
 
@@ -789,7 +789,8 @@ function sendCallBodies(id, body, checksum, chanStat, tags) {
     } while (body = body.cont);
 
     if (chanStat) {
-        channel.emitFastStat(chanStat, 'counter', size, tags);
+        var stat = channel.buildStat(chanStat, 'counter', size, tags);
+        channel.emitFastStat(stat);
     }
     self.emitBytesSent(size);
 

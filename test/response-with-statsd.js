@@ -25,7 +25,7 @@ var TimeMock = require('time-mock');
 
 var allocCluster = require('./lib/alloc-cluster.js');
 var nullStatsd = require('uber-statsd-client/null');
-var BatchStatsd = require('../lib/statsd');
+var TChannelStatsd = require('../lib/statsd');
 var timers = TimeMock(Date.now());
 
 allocCluster.test('emits stats on response ok', {
@@ -54,20 +54,13 @@ allocCluster.test('emits stats on response ok', {
         }, 500);
         timers.advance(500);
     });
-
-    server.batchStats.destroy();
-    server.batchStats = new BatchStatsd({
-        logger: server.logger,
-        timers: server.timers,
-        statsd: statsd,
-        baseTags: {
-            app: 'waterSupply',
-            host: os.hostname(),
-            cluster: 'c0',
-            version: '1.0'
-        }
-    });
-    server.batchStats.flushStats();
+    server.statTags = server.options.statTags = {
+        app: 'waterSupply',
+        host: os.hostname(),
+        cluster: 'c0',
+        version: '1.0'
+    };
+    server.channelStatsd = new TChannelStatsd(server, statsd);
 
     var clientChan = client.makeSubChannel({
         serviceName: 'reservoir',
@@ -177,19 +170,13 @@ allocCluster.test('emits stats on response notOk', {
         }, 500);
         timers.advance(500);
     });
-    server.batchStats.destroy();
-    server.batchStats = new BatchStatsd({
-        logger: server.logger,
-        timers: server.timers,
-        statsd: statsd,
-        baseTags: {
-            app: 'waterSupply',
-            host: os.hostname(),
-            cluster: 'c0',
-            version: '1.0'
-        }
-    });
-    server.batchStats.flushStats();
+    server.statTags = server.options.statTags = {
+        app: 'waterSupply',
+        host: os.hostname(),
+        cluster: 'c0',
+        version: '1.0'
+    };
+    server.channelStatsd = new TChannelStatsd(server, statsd);
 
     var clientChan = client.makeSubChannel({
         serviceName: 'reservoir',
@@ -298,19 +285,13 @@ allocCluster.test('emits stats on response error', {
         }, 500);
         timers.advance(500);
     });
-    server.batchStats.destroy();
-    server.batchStats = new BatchStatsd({
-        logger: server.logger,
-        timers: server.timers,
-        statsd: statsd,
-        baseTags: {
-            app: 'waterSupply',
-            host: os.hostname(),
-            cluster: 'c0',
-            version: '1.0'
-        }
-    });
-    server.batchStats.flushStats();
+    server.statTags = server.options.statTags = {
+        app: 'waterSupply',
+        host: os.hostname(),
+        cluster: 'c0',
+        version: '1.0'
+    };
+    server.channelStatsd = new TChannelStatsd(server, statsd);
 
     var clientChan = client.makeSubChannel({
         serviceName: 'reservoir',
