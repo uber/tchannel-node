@@ -20,12 +20,11 @@
 
 'use strict';
 
-var Cleaner = require('./statsd-clean');
-var clean = Cleaner.clean;
-var cleanHostPort = Cleaner.cleanHostPort;
+var BatchStatsd = require('./lib/statsd.js');
+var clean = BatchStatsd.clean;
+var cleanHostPort = BatchStatsd.cleanHostPort;
 
 module.exports = {
-    BaseStat: BaseStat,
     InboundCallsRecvdTags: InboundCallsRecvdTags,
     OutboundCallsSuccessTags: OutboundCallsSuccessTags,
     OutboundCallsLatencyTags: OutboundCallsLatencyTags,
@@ -61,15 +60,6 @@ module.exports = {
     RelayLatencyTags: RelayLatencyTags,
     HTTPHanlderBuildLatencyTags: HTTPHanlderBuildLatencyTags
 };
-
-function BaseStat(name, type, value, tags) {
-    var self = this;
-
-    self.name = name;
-    self.type = type;
-    self.value = value;
-    self.tags = tags || {};
-}
 
 function InboundCallsRecvdTags(cn, serviceName, endpoint) {
     var self = this;

@@ -25,7 +25,7 @@ var TimeMock = require('time-mock');
 
 var allocCluster = require('./lib/alloc-cluster.js');
 var nullStatsd = require('uber-statsd-client/null');
-var TChannelStatsd = require('../lib/statsd');
+var BatchStatsd = require('../lib/statsd');
 var timers = TimeMock(Date.now());
 
 allocCluster.test('emits stats on call success', {
@@ -52,13 +52,20 @@ allocCluster.test('emits stats on call success', {
         timers.advance(500);
     });
 
-    client.statTags = client.options.statTags = {
-        app: 'pool',
-        host: os.hostname(),
-        cluster: 'c0',
-        version: '1.0'
-    };
-    client.channelStatsd = new TChannelStatsd(client, statsd);
+    client.batchStats.destroy();
+    client.batchStats = new BatchStatsd({
+        logger: client.logger,
+        timers: client.timers,
+        statsd: statsd,
+        baseTags: {
+            app: 'waterSupply',
+            host: os.hostname(),
+            cluster: 'c0',
+            version: '1.0'
+        }
+    });
+    client.batchStats.flushStats();
+
     var clientChan = client.makeSubChannel({
         serviceName: 'reservoir',
         peers: [server.hostPort],
@@ -179,13 +186,20 @@ allocCluster.test('emits stats on p2p call success', {
         timers.advance(500);
     });
 
-    client.statTags = client.options.statTags = {
-        app: 'pool',
-        host: os.hostname(),
-        cluster: 'c0',
-        version: '1.0'
-    };
-    client.channelStatsd = new TChannelStatsd(client, statsd);
+    client.batchStats.destroy();
+    client.batchStats = new BatchStatsd({
+        logger: client.logger,
+        timers: client.timers,
+        statsd: statsd,
+        baseTags: {
+            app: 'waterSupply',
+            host: os.hostname(),
+            cluster: 'c0',
+            version: '1.0'
+        }
+    });
+    client.batchStats.flushStats();
+
     var clientChan = client.makeSubChannel({
         serviceName: 'reservoir',
         peers: [server.hostPort],
@@ -304,13 +318,20 @@ allocCluster.test('emits stats with no connection metrics', {
         timers.advance(500);
     });
 
-    client.statTags = client.options.statTags = {
-        app: 'pool',
-        host: os.hostname(),
-        cluster: 'c0',
-        version: '1.0'
-    };
-    client.channelStatsd = new TChannelStatsd(client, statsd);
+    client.batchStats.destroy();
+    client.batchStats = new BatchStatsd({
+        logger: client.logger,
+        timers: client.timers,
+        statsd: statsd,
+        baseTags: {
+            app: 'waterSupply',
+            host: os.hostname(),
+            cluster: 'c0',
+            version: '1.0'
+        }
+    });
+    client.batchStats.flushStats();
+
     var clientChan = client.makeSubChannel({
         serviceName: 'reservoir',
         peers: [server.hostPort],
@@ -413,13 +434,20 @@ allocCluster.test('emits stats on call failure', {
         timers.advance(500);
     });
 
-    client.statTags = client.options.statTags = {
-        app: 'pool',
-        host: os.hostname(),
-        cluster: 'c0',
-        version: '1.0'
-    };
-    client.channelStatsd = new TChannelStatsd(client, statsd);
+    client.batchStats.destroy();
+    client.batchStats = new BatchStatsd({
+        logger: client.logger,
+        timers: client.timers,
+        statsd: statsd,
+        baseTags: {
+            app: 'waterSupply',
+            host: os.hostname(),
+            cluster: 'c0',
+            version: '1.0'
+        }
+    });
+    client.batchStats.flushStats();
+
     var clientChan = client.makeSubChannel({
         serviceName: 'reservoir',
         peers: [server.hostPort],

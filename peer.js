@@ -24,7 +24,7 @@ var assert = require('assert');
 var inherits = require('util').inherits;
 var inspect = require('util').inspect;
 var EventEmitter = require('./lib/event_emitter');
-var stat = require('./lib/stat.js');
+var stat = require('./stat-tags.js');
 var net = require('net');
 var CountedReadySignal = require('ready-signal/counted');
 
@@ -101,7 +101,7 @@ function TChannelPeer(channel, hostPort, options) {
 
         var count = self.countConnections('out');
         if (self.channel.emitConnectionMetrics) {
-            self.channel.emitFastStat(self.channel.buildStat(
+            self.channel.emitFastStat(
                 'tchannel.connections.active',
                 'gauge',
                 count,
@@ -109,7 +109,7 @@ function TChannelPeer(channel, hostPort, options) {
                     self.channel.hostPort,
                     self.hostPort
                 )
-            ));
+            );
         }
 
         self.reportTimer = self.timers.setTimeout(
