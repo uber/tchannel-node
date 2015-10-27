@@ -225,15 +225,20 @@ function TChannel(options) {
         new RequestDefaults(self.options.requestDefaults) : null;
 
     if (!self.topChannel) {
-        self.batchStats = new BatchStatsd({
-            logger: self.logger,
-            timers: self.timers,
-            statsd: self.statsd,
-            baseTags: self.options.statTags
-        });
+        self.batchStats = self.options.batchStats;
+        self.batchStatsAllocated = false;
+        if (!self.batchStats) {
+            self.batchStats = new BatchStatsd({
+                logger: self.logger,
+                timers: self.timers,
+                statsd: self.statsd,
+                baseTags: self.options.statTags
+            });
+            self.batchStats.flushStats();
+            self.batchStatsAllocated = true;
+        }
 
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
-        self.batchStats.flushStats();
     } else {
         self.batchStats = self.topChannel.batchStats;
     }
@@ -871,7 +876,9 @@ TChannel.prototype.close = function close(callback) {
     }
 
     if (!self.topChannel) {
-        self.batchStats.destroy();
+        if (self.batchStatsAllocated) {
+            self.batchStats.destroy();
+        }
         self.timeHeap.clear();
     }
 
