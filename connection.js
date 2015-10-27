@@ -44,25 +44,25 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
 
     if (direction === 'out') {
         if (self.channel.emitConnectionMetrics) {
-            self.channel.emitFastStat(self.channel.buildStat(
+            self.channel.emitFastStat(
                 'tchannel.connections.initiated',
                 'counter',
                 1,
                 new stat.ConnectionsInitiatedTags(
                     self.channel.hostPort || '0.0.0.0:0',
                     socketRemoteAddr
-                )));
+                ));
         }
     } else {
         if (self.channel.emitConnectionMetrics) {
-            self.channel.emitFastStat(self.channel.buildStat(
+            self.channel.emitFastStat(
                 'tchannel.connections.accepted',
                 'counter',
                 1,
                 new stat.ConnectionsAcceptedTags(
                     self.channel.hostPort,
                     socketRemoteAddr
-                )));
+                ));
         }
     }
 
@@ -245,12 +245,12 @@ function sendProtocolError(type, err) {
             frameId: err.frameId
         });
 
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.inbound.protocol-errors',
             'counter',
             1,
             new stat.InboundProtocolErrorsTags(self.socketRemoteAddr)
-        ));
+        );
 
         self.handler.sendErrorFrame(
             protocolError.frameId || v2.Frame.NullId, null,
@@ -566,24 +566,24 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
 
     if (!self.remoteName && self.channel.emitConnectionMetrics) {
         if (self.direction === 'out') {
-            self.channel.emitFastStat(self.channel.buildStat(
+            self.channel.emitFastStat(
                 'tchannel.connections.connect-errors',
                 'counter',
                 1,
                 new stat.ConnectionsConnectErrorsTags(
                     self.channel.hostPort || '0.0.0.0:0',
                     self.socketRemoteAddr
-                )));
+                ));
         } else {
-            self.channel.emitFastStat(self.channel.buildStat(
+            self.channel.emitFastStat(
                 'tchannel.connections.accept-errors',
                 'counter',
                 1,
-                new stat.ConnectionsAcceptErrorsTags(self.channel.hostPort)));
+                new stat.ConnectionsAcceptErrorsTags(self.channel.hostPort));
         }
     } else if (self.channel.emitConnectionMetrics) {
         if (err.type !== 'tchannel.socket-local-closed') {
-            self.channel.emitFastStat(self.channel.buildStat(
+            self.channel.emitFastStat(
                 'tchannel.connections.errors',
                 'counter',
                 1,
@@ -591,10 +591,10 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
                     self.remoteName,
                     err.type // TODO unified error type
                 )
-            ));
+            );
         }
 
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.connections.closed',
             'counter',
             1,
@@ -603,7 +603,7 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
                 self.remoteName,
                 err.type // TODO unified reason type
             )
-        ));
+        );
     }
 
     var logInfo = self.extendLogInfo({

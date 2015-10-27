@@ -101,7 +101,7 @@ function TChannelPeer(channel, hostPort, options) {
 
         var count = self.countConnections('out');
         if (self.channel.emitConnectionMetrics) {
-            self.channel.emitFastStat(self.channel.buildStat(
+            self.channel.emitFastStat(
                 'tchannel.connections.active',
                 'gauge',
                 count,
@@ -109,7 +109,7 @@ function TChannelPeer(channel, hostPort, options) {
                     self.channel.hostPort,
                     self.hostPort
                 )
-            ));
+            );
         }
 
         self.reportTimer = self.timers.setTimeout(

@@ -193,7 +193,7 @@ TChannelConnectionBase.prototype.handleCallLazily = function handleCallLazily(fr
 TChannelConnectionBase.prototype.runHandler = function runHandler(req) {
     var self = this;
 
-    self.channel.emitFastStat(self.channel.buildStat(
+    self.channel.emitFastStat(
         'tchannel.inbound.calls.recvd',
         'counter',
         1,
@@ -202,7 +202,7 @@ TChannelConnectionBase.prototype.runHandler = function runHandler(req) {
             req.serviceName,
             req.endpoint
         )
-    ));
+    );
 
     self.channel.handler.handleRequest(req, buildResponse);
     function buildResponse(options) {

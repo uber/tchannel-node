@@ -100,7 +100,7 @@ function emitErrorStat(err) {
     var self = this;
 
     if (err.isErrorFrame) {
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.outbound.calls.system-errors',
             'counter',
             1,
@@ -111,9 +111,9 @@ function emitErrorStat(err) {
                 err.codeName,
                 self.retryCount
             )
-        ));
+        );
     } else {
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.outbound.calls.operational-errors',
             'counter',
             1,
@@ -123,7 +123,7 @@ function emitErrorStat(err) {
                 self.endpoint,
                 err.type || 'unknown'
             )
-        ));
+        );
     }
 };
 
@@ -133,7 +133,7 @@ function emitLatency() {
 
     var latency = self.end - self.start;
 
-    self.channel.emitFastStat(self.channel.buildStat(
+    self.channel.emitFastStat(
         'tchannel.outbound.calls.latency',
         'timing',
         latency,
@@ -142,7 +142,7 @@ function emitLatency() {
             self.callerName,
             self.endpoint
         )
-    ));
+    );
 };
 
 TChannelRequest.prototype.emitResponse = function emitResponse(res) {
@@ -166,7 +166,7 @@ function emitResponseStat(res) {
     var self = this;
 
     if (res.ok) {
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.outbound.calls.success',
             'counter',
             1,
@@ -175,9 +175,9 @@ function emitResponseStat(res) {
                 self.callerName,
                 self.endpoint
             )
-        ));
+        );
     } else {
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.outbound.calls.app-errors',
             'counter',
             1,
@@ -187,7 +187,7 @@ function emitResponseStat(res) {
                 self.endpoint,
                 'unknown'
             )
-        ));
+        );
     }
 };
 
@@ -251,7 +251,7 @@ TChannelRequest.prototype.emitOutboundCallsSent =
 function emitOutboundCallsSent() {
     var self = this;
 
-    self.channel.emitFastStat(self.channel.buildStat(
+    self.channel.emitFastStat(
         'tchannel.outbound.calls.sent',
         'counter',
         1,
@@ -260,7 +260,7 @@ function emitOutboundCallsSent() {
             self.callerName,
             self.endpoint
         )
-    ));
+    );
 };
 
 TChannelRequest.prototype.resend = function resend() {
@@ -320,7 +320,7 @@ TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
     self.outReqs.push(outReq);
 
     if (self.outReqs.length !== 1) {
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.outbound.calls.retries',
             'counter',
             1,
@@ -329,7 +329,7 @@ TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
                 outReq.callerName,
                 String(self.arg1),
                 self.outReqs.length - 1
-            )));
+            ));
     }
 
     if (!self.triedRemoteAddrs) {

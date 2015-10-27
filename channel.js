@@ -899,19 +899,14 @@ TChannel.prototype.close = function close(callback) {
     }
 };
 
-TChannel.prototype.buildStat =
-function buildStat(name, type, value, tags) {
+TChannel.prototype.emitFastStat =
+function emitFastStat(name, type, value, tags) {
     var self = this;
 
-    return self.batchStats.buildStat(name, type, value, tags);
-};
-
-TChannel.prototype.emitFastStat = function emitFastStat(stat) {
-    var self = this;
+    var stat = self.batchStats.buildStat(name, type, value, tags);
+    self.batchStats.pushStat(stat);
 
     var topChannel = self.topChannel ? self.topChannel : self;
-
-    self.batchStats.pushStat(stat);
     topChannel.statEvent.emit(topChannel, stat);
 };
 
