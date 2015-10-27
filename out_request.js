@@ -131,7 +131,7 @@ function emitPerAttemptErrorStat(err) {
 
     if (err.isErrorFrame) {
         self.channel.emitFastStat(self.channel.buildStat(
-            'tchannel.outbound.calls.system-errors',
+            'tchannel.outbound.calls.per-attempt.system-errors',
             'counter',
             1,
             new stat.OutboundCallsSystemErrorsTags(
