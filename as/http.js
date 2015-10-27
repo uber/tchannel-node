@@ -62,6 +62,7 @@ HTTPResArg2.RW = bufrw.Struct(HTTPResArg2, {
 var GLOBAL_REQUEST_ARG2 = new HTTPReqArg2();
 var GLOBAL_RESPONSE_ARG2 = new HTTPResArg2();
 var GLOBAL_STAT_TAGS = new stat.HTTPHanlderBuildLatencyTags();
+var GLOBAL_AS_HTTP_REQUEST = new AsHTTPRequest();
 
 // per RFC2616
 HTTPReqArg2.prototype.getHeaders =
@@ -250,7 +251,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, options, callback
     }
 };
 
-TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, callback) {
+TChannelHTTP.prototype.sendResponse = function sendResponse(buildResponse, hres, body) {
     // TODO: map http response codes onto error frames and application errors
     var self = this;
     GLOBAL_RESPONSE_ARG2.statusCode = hres.statusCode;
@@ -264,7 +265,7 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, c
         var toBufferErr = errors.HTTPResArg2toBufferError(arg2res.err, {
             head: GLOBAL_RESPONSE_ARG2
         });
-        callback(toBufferErr);
+        self.sendError(buildResponse, toBufferErr);
         return null;
     }
     var arg2 = arg2res.value;
@@ -275,7 +276,6 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, c
                 as: 'http'
             }
         }).sendOk(arg2, body);
-        callback(null);
         return null;
     }
 
@@ -284,8 +284,20 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, c
         headers: {
             as: 'http'
         }
-    }).sendStreams(arg2, hres, callback);
+    }).sendStreams(arg2, hres, self.sendError.bind(self, buildResponse));
     return res;
+};
+
+TChannelHTTP.prototype.sendError = function sendError(buildResponse, err) {
+    var self = this;
+    if (err) {
+        self.logger.warn('Handling request failed', {
+            error: err
+        });
+        var codeString = errors.classify(err);
+        buildResponse().sendError(
+            codeString ? codeString : 'UnexpectedError', err.message);
+    }
 };
 
 TChannelHTTP.prototype.setHandler = function register(tchannel, handler) {
@@ -384,21 +396,37 @@ TChannelHTTP.prototype._forwardToLBPool = function _forwardToLBPool(options, inr
     var start = self.channel.timers.now();
     if (!options) { options = {}; }
     options.encoding = null;
-    var data = inreq.bodyStream || inreq.bodyArg; // lb_pool likes polymorphism
+    var data = inreq.req.arg3; // lb_pool likes polymorphism
+    var serviceName = inreq.req.serviceName;
+    var callerName = inreq.req.callerName;
     self.lbpool.request(options, data, onResponse);
-    var serviceName = inreq.serviceName;
-    var callerName = inreq.callerName;
+
+    var sent = false;
+    inreq.req.errorEvent.on(onError);
+    function onError(err) {
+        if (sent) {
+            return;
+        }
+        sent = true;
+        self.logger.warn('Handling request failed', {
+            error: err
+        });
+    }
 
     function onResponse(err, res, body) {
+        if (sent) {
+            return;
+        }
+        sent = true;
         if (err) {
             self.logger.warn('Forwarding to LBPool failed', {
                 error: err
             });
-            outres.sendError(err);
+            self.sendError(outres, err);
             callback(err);
             return;
         }
-        outres.sendResponse(res, body);
+        self.sendResponse(outres, res, body);
         callback(null);
         GLOBAL_STAT_TAGS.targetService = serviceName;
         GLOBAL_STAT_TAGS.callerName = callerName;
@@ -417,43 +445,56 @@ TChannelHTTP.prototype._forwardToNodeHTTP = function _forwardToNodeHTTP(options,
     var start = self.channel.timers.now();
     var sent = false;
     var outreq = http.request(options, onResponse);
-    outreq.on('error', onError);
+    outreq.on('error', onHTTPError);
     // TODO: more http state machine integration
 
-    if (inreq.bodyStream !== null) {
-        inreq.bodyStream.pipe(outreq);
+    if (inreq.req.streamed) {
+        inreq.req.arg3.pipe(outreq);
     } else {
-        outreq.end(inreq.bodyArg);
+        outreq.end(inreq.req.arg3);
     }
-    var serviceName = inreq.serviceName;
-    var callerName = inreq.callerName;
+    var serviceName = inreq.req.serviceName;
+    var callerName = inreq.req.callerName;
+
+    inreq.req.errorEvent.on(onError);
+    function onError(err) {
+        if (sent) {
+            return;
+        }
+        sent = true;
+        self.logger.warn('Handling request failed', {
+            error: err
+        });
+    }
 
     function onResponse(inres) {
-        if (!sent) {
-            sent = true;
-            outres.sendResponse(inres);
-            callback(null);
-            GLOBAL_STAT_TAGS.targetService = serviceName;
-            GLOBAL_STAT_TAGS.callerName = callerName;
-            GLOBAL_STAT_TAGS.streamed = true;
-            self.channel.emitFastStat(
-                'tchannel.http-handler.ingress.service-call-latency',
-                'timing',
-                self.channel.timers.now() - start,
-                GLOBAL_STAT_TAGS
-            );
+        if (sent) {
+            return;
         }
+        sent = true;
+        self.sendResponse(outres, inres, null);
+        callback(null);
+        GLOBAL_STAT_TAGS.targetService = serviceName;
+        GLOBAL_STAT_TAGS.callerName = callerName;
+        GLOBAL_STAT_TAGS.streamed = true;
+        self.channel.emitFastStat(
+            'tchannel.http-handler.ingress.service-call-latency',
+            'timing',
+            self.channel.timers.now() - start,
+            GLOBAL_STAT_TAGS
+        );
     }
 
-    function onError(err) {
-        if (!sent) {
-            sent = true;
-            self.logger.warn('Forwarding to HTTP failed', {
-                error: err
-            });
-            outres.sendError(err);
-            callback(err);
+    function onHTTPError(err) {
+        if (sent) {
+            return;
         }
+        sent = true;
+        self.logger.warn('Forwarding to HTTP failed', {
+            error: err
+        });
+        self.sendError(outres, err);
+        callback(err);
     }
 };
 
@@ -470,18 +511,11 @@ function AsHTTPHandler(asHTTP, channel, handler) {
 
 AsHTTPHandler.prototype.handleRequest = function handleRequest(req, buildResponse) {
     var self = this;
-    // TODO: explicate type
-    var hreq = {
-        url: req.arg1,
-        head: null,
-        bodyArg: null,
-        bodyStream: null
-    };
-    req.withArg2(onArg2);
 
+    req.withArg2(onArg2);
     function onArg2(err, arg2) {
         if (err) {
-            sendError(err);
+            self.asHTTP.sendError(buildResponse, err);
             return;
         }
 
@@ -493,56 +527,18 @@ AsHTTPHandler.prototype.handleRequest = function handleRequest(req, buildRespons
             var fromBufferErr = errors.HTTPResArg2fromoBufferError(arg2res.err, {
                 arg2: arg2
             });
-            sendError(fromBufferErr);
+            self.asHTTP.sendError(buildResponse, fromBufferErr);
             return;
         }
 
-        hreq.head = arg2res.value;
-        if (req.streamed) {
-            hreq.bodyStream = req.arg3;
-        } else {
-            hreq.bodyArg = req.arg3;
-        }
-
-        handle();
-    }
-
-    var sent = false;
-    req.errorEvent.on(onError);
-    function onError(err) {
-        sent = true;
-        self.logger.warn('Handling request failed', {
-            error: err
-        });
-    }
-
-    function handle() {
-        // TODO: explicate type
-        var hres = {
-            sendError: sendError,
-            sendResponse: sendResponse
-        };
-        hreq.serviceName = req.serviceName;
-        hreq.callerName = req.callerName;
-        self.handler.handleRequest(hreq, hres);
-    }
-
-    function sendResponse(hres, body) {
-        if (!sent) {
-            sent = true;
-            self.asHTTP.sendResponse(buildResponse, hres, body, sendError);
-        }
-    }
-
-    function sendError(err) {
-        if (!sent) {
-            sent = true;
-            self.logger.warn('Handling request failed', {
-                error: err
-            });
-            var codeString = errors.classify(err);
-            buildResponse().sendError(
-                codeString ? codeString : 'UnexpectedError', err.message);
-        }
+        GLOBAL_AS_HTTP_REQUEST.head = arg2res.value;
+        GLOBAL_AS_HTTP_REQUEST.req = req;
+        self.handler.handleRequest(GLOBAL_AS_HTTP_REQUEST, buildResponse);
     }
 };
+
+function AsHTTPRequest() {
+    var self = this;
+    self.head = null;
+    self.req = null;
+}
