@@ -418,6 +418,29 @@ function onCallErrorFrame(errFrame) {
             req = self.ops.popOutReq(id, err);
             req.emitError(err);
         }
+    } else {
+        self.logUnknownErrorFrame(err);
+    }
+};
+
+TChannelConnection.prototype.logUnknownErrorFrame =
+function logUnknownErrorFrame(err) {
+    var self = this;
+
+    var level = errors.logLevel(err, err.codeName);
+    var logger = self.channel.logger;
+
+    var info = self.extendLogInfo({
+        error: err,
+        isErrorFrame: err.isErrorFrame
+    });
+
+    if (level === 'error') {
+        logger.error('got unexpected errorframe without call request', info);
+    } else if (level === 'warn') {
+        logger.warn('got errorframe without call request', info);
+    } else if (level === 'info') {
+        logger.info('got expected errorframe without call request', info);
     }
 };
 
