@@ -67,6 +67,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
     self.boundOnPendingChange = onPendingChange;
+    self._weightedRange = null;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -252,6 +253,8 @@ TChannelPeer.prototype.setScoreStrategy = function setScoreStrategy(ScoreStrateg
 
 TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
     var self = this;
+
+    self._weightedRange = null;
 
     if (!self.heapElements.length) {
         return;
@@ -621,9 +624,9 @@ TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() 
     // a peer with a higher score over one with a lower score.
     // This range is divided among an infinite set of subranges corresponding
     // to peers with the same number of pending requests.
-    // So, the range (1/2, 1) is reserved for peers with 0 pending connections.
-    // The range (1/4, 1/2) is reserved for peers with 1 pending connections.
-    // The range (1/8, 1/4) is reserved for peers with 2 pending connections.
+    // So, the range (1/2, 1] is reserved for peers with 0 pending connections.
+    // The range (1/4, 1/2] is reserved for peers with 1 pending connections.
+    // The range (1/8, 1/4] is reserved for peers with 2 pending connections.
     // Ad nauseam.
     // Within each equivalence class, each peer receives a uniform random
     // value.
@@ -640,11 +643,32 @@ TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() 
     //
     // This remains true with this algorithm, within each equivalence class.
     var self = this;
+    var range = self.pendingWeightedRange();
+    var min = range[0];
+    var max = range[1];
+    var diff = max - min;
+
+    // Force rand to be (0, 1] instead of [0, 1) 
+    var rand = self.random();
+    if (rand === 0) {
+        rand = 1;
+    }
+
+    return min + diff * rand;
+};
+
+TChannelPeer.prototype.pendingWeightedRange = function pendingWeightedRange() {
+    var self = this;
+    if (self._weightedRange) {
+        return self._weightedRange;
+    }
+
     var pending = self.countPending();
     var max = Math.pow(0.5, pending);
     var min = max / 2;
-    var diff = max - min;
-    return min + diff * self.random();
+    self._weightedRange = [min, max];
+
+    return self._weightedRange;
 };
 
 TChannelPeer.prototype.countPending = function countPending() {
