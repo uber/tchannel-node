@@ -76,7 +76,8 @@ CallRequest.RW.lazy.readTTL = function readTTL(frame) {
     var res = bufrw.UInt32BE.readFrom(frame.buffer, CallRequest.RW.lazy.ttlOffset);
     if (!res.err && res.value <= 0) {
         res.err = errors.InvalidTTL({
-            ttl: res.value
+            ttl: res.value,
+            isParseError: true
         });
     }
     return res;
@@ -209,7 +210,8 @@ function readCallReqFrom(buffer, offset) {
 
     if (res.value <= 0) {
         return bufrw.ReadResult.error(errors.InvalidTTL({
-            ttl: res.value
+            ttl: res.value,
+            isParseError: true
         }), offset, body);
     }
 
