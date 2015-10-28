@@ -256,9 +256,8 @@ function _extendLogInfo(info) {
 LazyRelayInReq.prototype.logError =
 function relayRequestlogError(err, codeName) {
     var self = this;
-    logError(self.conn.logger, err, codeName, function extendLogInfo(info) {
-        return self.extendLogInfo(info);
-    });
+
+    logError(self.conn.logger, err, codeName, self.boundExtendLogInfo);
 };
 
 LazyRelayInReq.prototype.onTimeout =
@@ -385,7 +384,7 @@ function onError(err) {
     self.alive = false;
     var codeName = errors.classify(err) || 'UnexpectedError';
     self.sendErrorFrame(codeName, err.message);
-    logError(self.conn.logger, err, codeName, self.boundExtendLogInfo);
+    self.logError(err, codeName);
     // TODO: stat in some cases, e.g. declined / peer not available
     self.conn.ops.popInReq(self.id, self.extendLogInfo({
         info: 'lazy relay request error',
@@ -589,9 +588,8 @@ function emitError(err) {
 LazyRelayOutReq.prototype.logError =
 function relayRequestlogError(err, codeName) {
     var self = this;
-    logError(self.conn.logger, err, codeName, function extendLogInfo(info) {
-        return self.inreq.extendLogInfo(info);
-    });
+
+    self.inreq.logError(err, codeName);
 };
 
 LazyRelayOutReq.prototype.onTimeout =
