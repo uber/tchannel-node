@@ -34,15 +34,13 @@ if (typeof global.tchannelVersion === 'string' &&
     global.tchannelVersion = version;
 }
 
-var globalTimers = {
-    setTimeout: require('timers').setTimeout,
-    clearTimeout: require('timers').clearTimeout,
+var extend = require('xtend');
+var globalTimers = extend(require('timers'), {
     now: Date.now
-};
+});
 var globalRandom = Math.random;
 var net = require('net');
 var format = require('util').format;
-var extend = require('xtend');
 
 var inherits = require('util').inherits;
 var StatEmitter = require('./lib/stat_emitter');
