@@ -1003,4 +1003,16 @@ function sanitySweep(callback) {
     self.peers.sanitySweep(callback);
 };
 
+TChannel.prototype.setMaxTombstoneTTL =
+function setMaxTombstoneTTL(ttl) {
+    var self = this;
+
+    var peers = self.peers.values();
+    for (var i = 0; i < peers.length; i++) {
+        var peer = peers[i];
+
+        peer.setMaxTombstoneTTL(ttl);
+    }
+};
+
 module.exports = TChannel;
