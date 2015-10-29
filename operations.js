@@ -25,6 +25,7 @@ var inherits = require('util').inherits;
 var EventEmitter = require('./lib/event_emitter');
 
 var TOMBSTONE_TTL_OFFSET = 500;
+var MAX_TOMBSTONE_TTL = 5000;
 
 module.exports = Operations;
 
@@ -90,13 +91,18 @@ function extendLogInfo(info) {
 function OperationTombstone(operations, id, time, req, context) {
     var self = this;
 
+    var timeout = Math.min(
+        TOMBSTONE_TTL_OFFSET + req.timeout,
+        MAX_TOMBSTONE_TTL
+    );
+
     self.type = 'tchannel.operation.tombstone';
     self.isTombstone = true;
     self.logger = operations.logger;
     self.operations = operations;
     self.id = id;
     self.time = time;
-    self.timeout = TOMBSTONE_TTL_OFFSET + req.timeout;
+    self.timeout = timeout;
     self.timeHeapHandle = null;
     self.destroyed = false;
     self.serviceName = req.serviceName;
