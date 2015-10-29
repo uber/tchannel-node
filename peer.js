@@ -226,6 +226,16 @@ function clearDrain() {
     }
 };
 
+TChannelPeer.prototype.setMaxTombstoneTTL =
+function setMaxTombstoneTTL(ttl) {
+    var self = this;
+
+    for (var i = 0; i < self.connections.length; i++) {
+        var conn = self.connections[i];
+        conn.operations.setMaxTombstoneTTL(ttl);
+    }
+};
+
 TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {
     var self = this;
     if (self.preferConnectionDirection === direction) {

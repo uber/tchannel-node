@@ -89,6 +89,13 @@ function extendLogInfo(info) {
     return info;
 };
 
+Operations.prototype.setMaxTombstoneTTL =
+function setMaxTombstoneTTL(ttl) {
+    var self = this;
+
+    self.maxTombstoneTTL = ttl;
+};
+
 function OperationTombstone(operations, id, time, req, context) {
     var self = this;
 
