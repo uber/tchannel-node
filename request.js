@@ -292,7 +292,18 @@ TChannelRequest.prototype.resend = function resend() {
 
     function onIdentified(err) {
         if (err) {
-            return self.emitError(err);
+            /* emulate outReq failure */
+
+            self.outReqs.push({
+                err: err
+            });
+            if (!self.triedRemoteAddrs) {
+                self.triedRemoteAddrs = {};
+            }
+            self.triedRemoteAddrs[peer.hostPort] =
+                (self.triedRemoteAddrs[peer.hostPort] || 0) + 1;
+
+            return self.onSubreqError(err);
         }
 
         self.onIdentified(peer);
