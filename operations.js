@@ -25,6 +25,7 @@ var inherits = require('util').inherits;
 var EventEmitter = require('./lib/event_emitter');
 
 var TOMBSTONE_TTL_OFFSET = 500;
+var MAX_TOMBSTONE_TTL = 5000;
 
 module.exports = Operations;
 
@@ -41,6 +42,7 @@ function Operations(opts) {
     self.logger = opts.logger;
     self.random = opts.random;
     self.connectionStalePeriod = opts.connectionStalePeriod;
+    self.maxTombstoneTTL = MAX_TOMBSTONE_TTL;
 
     self.connection = opts.connection;
     // TODO need this?
@@ -87,8 +89,20 @@ function extendLogInfo(info) {
     return info;
 };
 
+Operations.prototype.setMaxTombstoneTTL =
+function setMaxTombstoneTTL(ttl) {
+    var self = this;
+
+    self.maxTombstoneTTL = ttl;
+};
+
 function OperationTombstone(operations, id, time, req, context) {
     var self = this;
+
+    var timeout = Math.min(
+        TOMBSTONE_TTL_OFFSET + req.timeout,
+        operations.maxTombstoneTTL
+    );
 
     self.type = 'tchannel.operation.tombstone';
     self.isTombstone = true;
@@ -96,7 +110,7 @@ function OperationTombstone(operations, id, time, req, context) {
     self.operations = operations;
     self.id = id;
     self.time = time;
-    self.timeout = TOMBSTONE_TTL_OFFSET + req.timeout;
+    self.timeout = timeout;
     self.timeHeapHandle = null;
     self.destroyed = false;
     self.serviceName = req.serviceName;
