@@ -42,6 +42,7 @@ function Operations(opts) {
     self.logger = opts.logger;
     self.random = opts.random;
     self.connectionStalePeriod = opts.connectionStalePeriod;
+    self.maxTombstoneTTL = MAX_TOMBSTONE_TTL;
 
     self.connection = opts.connection;
     // TODO need this?
@@ -93,7 +94,7 @@ function OperationTombstone(operations, id, time, req, context) {
 
     var timeout = Math.min(
         TOMBSTONE_TTL_OFFSET + req.timeout,
-        MAX_TOMBSTONE_TTL
+        operations.maxTombstoneTTL
     );
 
     self.type = 'tchannel.operation.tombstone';
