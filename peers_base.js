@@ -102,9 +102,9 @@ function sanitySweep(callback) {
         }
 
         var conn = conns[i];
-        conn.ops.sanitySweep();
-
-        setImmediate(deferNextConn);
+        conn.ops.sanitySweep(function opsSweepDone() {
+            setImmediate(deferNextConn);
+        });
 
         function deferNextConn() {
             nextConn(conns, i + 1, done);
