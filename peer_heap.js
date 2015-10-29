@@ -38,18 +38,6 @@ function PeerHeap(random) {
     self._stack = [];
 }
 
-PeerHeap.prototype.iterate = function iterate(i, fn) {
-    var self = this;
-
-    if (i < self.array.length) {
-        var res = fn(self.array[i]);
-        if (res) {
-            self.iterate(i * 2 + 1, fn);
-            self.iterate(i * 2 + 2, fn);
-        }
-    }
-};
-
 PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshold, filter) {
     var self = this;
 
@@ -59,29 +47,41 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
     var seedRange = seedPeer.pendingWeightedRange();
     var set = [seedPeer];
     var minRangeStart = seedRange[0];
+    var i;
 
-    self.iterate(0, eachItem);
+    self._stack.push(0);
 
-    function eachItem(item) {
-        var range = item.peer.pendingWeightedRange();
+    while (self._stack.length) {
+        i = self._stack.shift();
+        var el = self.array[i];
+
+        var range = el.peer.pendingWeightedRange();
 
         if (range[1] <= minRangeStart) {
             // If this range ends before the range with the smallest start
-            // begins, then it's no longer overlapping. Returning false cancels
-            // the DFS so we don't go any deeper in the tree.
-            return false;
-        } else if (!filter || filter(item)) {
+            // begins, then it's no longer overlapping. Continue without
+            // adding the left and right children to the search stack.
+            continue;
+        } else if (!filter || filter(el.peer)) {
             minRangeStart = Math.min(minRangeStart, range[0]);
-            set.push(item.peer);
-            return true;
-        } else {
-            return true;
+            set.push(el.peer);
+        }
+
+        // Continue DFS down heap
+        var left = 2 * i + 1;
+        var right = 2 * i + 2;
+        if (left < self.array.length) {
+            self._stack.push(left);
+            if (right < self.array.length) {
+                self._stack.push(right);
+            }
         }
     }
 
+    self._stack.length = 0;
+
     var chosenPeer = null;
     var highestProbability = 0;
-    var i;
     var probability;
     for (i = 0; i < set.length; i++) {
         probability = set[i].scoreStrategy.getScore();
