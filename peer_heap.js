@@ -45,9 +45,12 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
     // we introduce randomness into the set and choose
     var seedPeer = self.array[0].peer;
     var seedRange = seedPeer.pendingWeightedRange();
-    var set = [seedPeer];
-    var minRangeStart = seedRange[0];
+    var maxRangeStart = seedRange[0];
     var i;
+
+    var chosenPeer = null;
+    var highestProbability = 0;
+    var probability;
 
     self._stack.push(0);
 
@@ -55,16 +58,21 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
         i = self._stack.shift();
         var el = self.array[i];
 
-        var range = el.peer.pendingWeightedRange();
+        var range = el.range;
 
-        if (range[1] <= minRangeStart) {
-            // If this range ends before the range with the smallest start
-            // begins, then it's no longer overlapping. Continue without
-            // adding the left and right children to the search stack.
+        if (range[1] <= maxRangeStart) {
+            // If this range ends before the range with the largest start
+            // begins, then it's no longer choosable. Don't add left and right
+            // children to search stack.
             continue;
         } else if (!filter || filter(el.peer)) {
-            minRangeStart = Math.min(minRangeStart, range[0]);
-            set.push(el.peer);
+            maxRangeStart = Math.max(maxRangeStart, range[0]);
+            probability = el.peer.scoreStrategy.getScore();
+
+            if ((probability > highestProbability) && (probability > threshold)) {
+                highestProbability = probability;
+                chosenPeer = el.peer;
+            }
         }
 
         // Continue DFS down heap
@@ -79,17 +87,6 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
     }
 
     self._stack.length = 0;
-
-    var chosenPeer = null;
-    var highestProbability = 0;
-    var probability;
-    for (i = 0; i < set.length; i++) {
-        probability = set[i].scoreStrategy.getScore();
-        if ((probability > highestProbability) && (probability > threshold)) {
-            highestProbability = probability;
-            chosenPeer = set[i];
-        }
-    }
 
     return chosenPeer;
 };
@@ -112,6 +109,7 @@ PeerHeap.prototype.clear = function clear() {
         el.heap = null;
         el.peer = null;
         el.score = 0;
+        el.range = null;
         el.index = 0;
     }
     self.array.length = 0;
@@ -122,7 +120,7 @@ PeerHeap.prototype.add = function add(peer) {
 
     var range = peer.pendingWeightedRange();
 
-    var i = self.push(peer, range[1]);
+    var i = self.push(peer, range[1], range);
     var el = self.array[i];
     return el;
 };
@@ -132,7 +130,8 @@ PeerHeap.prototype.rescore = function rescore() {
 
     for (var i = 0; i < self.array.length; i++) {
         var el = self.array[i];
-        el.score = el.peer.pendingWeightedRange()[1];
+        el.range = el.peer.pendingWeightedRange();
+        el.peer = el.range[1];
     }
     self.heapify();
 };
@@ -172,12 +171,13 @@ PeerHeap.prototype.remove = function remove(i) {
     self.siftup(i);
 };
 
-PeerHeap.prototype.push = function push(peer, score) {
+PeerHeap.prototype.push = function push(peer, score, range) {
     var self = this;
 
     var el = new PeerHeapElement(self);
     el.peer = peer;
     el.score = score;
+    el.range = range;
     el.index = self.array.length;
 
     self.array.push(el);
@@ -263,6 +263,7 @@ function PeerHeapElement(heap) {
     self.heap = heap;
     self.peer = null;
     self.score = 0;
+    self.range = null;
     self.index = 0;
 }
 
@@ -274,7 +275,8 @@ PeerHeapElement.prototype.rescore = function rescore(score) {
     }
 
     if (score === undefined) {
-        score = self.peer.pendingWeightedRange()[1];
+        self.range = self.peer.pendingWeightedRange();
+        self.score = self.range[1];
     }
 
     self.score = score;
