@@ -428,14 +428,22 @@ Operations.prototype.destroy = function destroy() {
     self.destroyed = true;
 };
 
-Operations.prototype.sanitySweep = function sanitySweep() {
+Operations.prototype.sanitySweep = function sanitySweep(callback) {
     var self = this;
 
-    self._sweepOps(self.requests.in, 'in');
-    self._sweepOps(self.requests.out, 'out');
+    self._sweepOps(self.requests.in, 'in', doneSweep);
+    self._sweepOps(self.requests.out, 'out', doneSweep);
+
+    var i = 0;
+    function doneSweep() {
+        i++;
+        if (i === 2) {
+            callback();
+        }
+    }
 };
 
-Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
+Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
     var self = this;
 
     // keep track of all pending change made during the sweep so we can
@@ -449,8 +457,15 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
     var pendingDirty = false;
 
     var now = self.timers.now();
-    var opKeys = Object.keys(ops);
-    for (var i = 0; i < opKeys.length; i++) {
+
+    nextOp(Object.keys(ops), 0, callback);
+
+    function nextOp(opKeys, i, done) {
+        if (i >= opKeys.length) {
+            done(null);
+            return;
+        }
+
         var id = opKeys[i];
         var op = ops[id];
         if (op === undefined) {
@@ -508,6 +523,12 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 op.timeHeapHandle.cancel();
                 op.timeHeapHandle = null;
             }
+        }
+
+        setImmediate(deferNextOp);
+
+        function deferNextOp() {
+            nextOp(opKeys, i + 1, done);
         }
     }
 
