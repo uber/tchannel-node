@@ -22,9 +22,62 @@
 
 var CountedReadySignal = require('ready-signal/counted');
 var series = require('run-series');
+var parallel = require('run-parallel');
 var allocCluster = require('./lib/alloc-cluster');
 var TChannel = require('../channel');
 var randSeq = require('./lib/peer_score_random.js').randSeq;
+
+allocCluster.test('retries over conn failures', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    var client = cluster.channels[0];
+    var clientChan = client.makeSubChannel({
+        serviceName: 'server'
+    });
+
+    var server = cluster.channels[1];
+    server.makeSubChannel({
+        serviceName: 'server'
+    }).register('echo', servedByFoo('server'));
+
+    var dead = cluster.channels[2];
+
+    clientChan.peers.add(server.hostPort);
+    clientChan.peers.add(dead.hostPort);
+
+    dead.close();
+
+    parallel([
+        makeRPC(),
+        makeRPC(),
+        makeRPC(),
+        makeRPC(),
+        makeRPC(),
+        makeRPC(),
+        makeRPC(),
+        makeRPC(),
+        makeRPC()
+    ], onResult);
+
+    function onResult(err) {
+        assert.ifError(err);
+
+        assert.end();
+    }
+
+    function makeRPC() {
+        return function thunk(cb) {
+            clientChan.request({
+                serviceName: 'server',
+                hasNoParent: true,
+                headers: {
+                    cn: 'client',
+                    as: 'raw'
+                }
+            }).send('echo', '', '', cb);
+        };
+    }
+});
 
 allocCluster.test('request retries', {
     numPeers: 4
