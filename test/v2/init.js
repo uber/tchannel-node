@@ -56,7 +56,7 @@ test('Init.Request.RW: read/write payload', testRW.cases(Init.Request.RW, [
     ]
 ]));
 
-test('Init.Request.RW: read/write payload', testRW.cases(Init.Response.RW, [
+test('Init.Response.RW: read/write payload', testRW.cases(Init.Response.RW, [
     [
         new Init.Response(2, {
             host_port: '2.3.4.5:6',

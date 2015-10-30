@@ -28,7 +28,7 @@ var nullStatsd = require('uber-statsd-client/null');
 var TChannelStatsd = require('../lib/statsd');
 var timers = TimeMock(Date.now());
 
-allocCluster.test('emits connection stats with success', {
+allocCluster.test('emits connection stats with success (statsd)', {
     numPeers: 2,
     channelOptions: {
         emitConnectionMetrics: true
@@ -91,7 +91,7 @@ allocCluster.test('emits connection stats with success', {
     }
 });
 
-allocCluster.test('emits connection stats with failure', {
+allocCluster.test('emits connection stats with failure (statsd)', {
     numPeers: 1,
     channelOptions: {
         emitConnectionMetrics: true
@@ -146,7 +146,7 @@ allocCluster.test('emits connection stats with failure', {
     }
 });
 
-allocCluster.test('emits active connections', {
+allocCluster.test('emits active connections (statsd)', {
     numPeers: 2,
     channelOptions: {
         timers: timers,

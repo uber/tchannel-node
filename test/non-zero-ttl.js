@@ -86,7 +86,7 @@ allocCluster.test('request() with zero timeout', {
     }
 });
 
-allocCluster.test('request() with zero timeout', {
+allocCluster.test('request() with negative timeout', {
     numPeers: 2
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'resetting connection');

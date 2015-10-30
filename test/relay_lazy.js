@@ -74,7 +74,7 @@ allocCluster.test('send lazy relay requests', {
     });
 });
 
-allocCluster.test('send relay with tiny timeout', {
+allocCluster.test('send lazy relay with tiny timeout', {
     numPeers: 2
 }, function t(cluster, assert) {
     var one = cluster.channels[0];
@@ -134,7 +134,7 @@ allocCluster.test('send relay with tiny timeout', {
     }
 });
 
-allocCluster.test('relay respects ttl', {
+allocCluster.test('lazy relay respects ttl', {
     numPeers: 3
 }, function t(cluster, assert) {
     var relay = cluster.channels[0];
@@ -185,7 +185,7 @@ allocCluster.test('relay respects ttl', {
     }
 });
 
-allocCluster.test('relay an error frame', {
+allocCluster.test('lazy relay an error frame', {
     numPeers: 4
 }, function t(cluster, assert) {
     cluster.logger.whitelist('warn', 'forwarding error frame');
@@ -263,7 +263,7 @@ allocCluster.test('relay an error frame', {
     }
 });
 
-allocCluster.test('relay request times out', {
+allocCluster.test('lazy relay request times out', {
     numPeers: 3
 }, function t(cluster, assert) {
     // TODO: address the warn logs

@@ -24,7 +24,7 @@ var Buffer = require('buffer').Buffer;
 var allocCluster = require('./lib/alloc-cluster.js');
 var TChannel = require('../channel.js');
 
-allocCluster.test('request().send() to a server', 2, function t(cluster, assert) {
+allocCluster.test('request().send() to a busy server', 2, function t(cluster, assert) {
     var two = cluster.channels[1];
 
     var count = 0;
