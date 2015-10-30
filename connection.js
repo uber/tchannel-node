@@ -419,16 +419,22 @@ function onCallErrorFrame(errFrame) {
             req.emitError(err);
         }
     } else {
-        self.logUnknownErrorFrame(err);
+        self.logUnknownErrorFrame(err, id);
     }
 };
 
 TChannelConnection.prototype.logUnknownErrorFrame =
-function logUnknownErrorFrame(err) {
+function logUnknownErrorFrame(err, id) {
     var self = this;
 
-    var level = errors.logLevel(err, err.codeName);
     var logger = self.channel.logger;
+    var tombstone = self.ops.getOutTombstone(id);
+    var level = errors.logLevel(err, err.codeName);
+
+    // Do not log about incoming timeouts for tombstones
+    if (err.codeName === 'Timeout' && tombstone) {
+        return;
+    }
 
     var info = self.extendLogInfo({
         error: err,
