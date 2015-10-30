@@ -374,10 +374,12 @@ function onReadError(err) {
 
     var hasError = !self.alive && self.error;
     if (hasError) {
-        var info = self.extendLogInfo({
-            error: err
-        });
-        self.logger.warn('dropping read error from dead relay request', info);
+        self.logger.warn(
+            'dropping read error from dead relay request',
+            self.extendLogInfo({
+                error: err
+            })
+        );
     }
 
     self.onError(err);
