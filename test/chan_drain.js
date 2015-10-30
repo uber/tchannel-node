@@ -22,6 +22,7 @@
 
 var collectParallel = require('collect-parallel/array');
 
+var CollapsedAssert = require('./lib/collapsed-assert.js');
 var allocCluster = require('./lib/alloc-cluster.js');
 
 allocCluster.test('immediate chan.drain', {
@@ -389,7 +390,9 @@ allocCluster.test('chan.drain client with a few outgoing', {
             // cluster.assertEmptyState(assert);
             // return;
 
-            cluster.assertCleanState(assert, {
+
+            var cassert = CollapsedAssert();
+            cluster.assertCleanState(cassert, {
                 channels: [
                     // server has no peers
                     {peers: [
@@ -435,6 +438,7 @@ allocCluster.test('chan.drain client with a few outgoing', {
                     ]}]}
                 ]
             });
+            cassert.report(assert, 'expected clean state');
 
             assert.end();
         }
@@ -582,7 +586,8 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
 
             checkLogs();
 
-            cluster.assertCleanState(assert, {
+            var cassert = CollapsedAssert();
+            cluster.assertCleanState(cassert, {
                 channels: [
                     // server has no peers
                     {peers: [
@@ -628,6 +633,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
                     ]}]}
                 ]
             });
+            cassert.report(assert, 'expected clean state');
 
             assert.end();
         }
@@ -828,7 +834,9 @@ function checkFinish(assert, err, cluster, finishCount) {
     assert.ifError(err, 'no unexpected error');
 
     if (--finishCount === 0) {
-        cluster.assertCleanState(assert, {
+        var cassert = CollapsedAssert();
+
+        cluster.assertCleanState(cassert, {
             channels: [
                 // server has no peers
                 {peers: []},
@@ -838,6 +846,7 @@ function checkFinish(assert, err, cluster, finishCount) {
                 {peers: [{connections: []}]}
             ]
         });
+        cassert.report(assert, 'cluster has a clean state');
 
         assert.end();
     }
