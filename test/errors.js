@@ -35,7 +35,7 @@ test('errors module should be in sorted order', function t(assert) {
 
     processLineMatches({
         filePath: errorsPath,
-        caseRegex: /^module\.exports\.([^ ]+) *= *([\w_\-]+)/,
+        caseRegex: /^Errors\.([^ ]+) *= *([\w_\-]+)/,
         onMatch: function each(match) {
             if (/Error$/.test(match[2])) {
                 exportedErrors.push(match[1]);
@@ -106,7 +106,7 @@ test('error case statements should not be duplicates', function t(assert) {
     var caseTypes = [];
     processLineMatches({
         filePath: errorsPath,
-        startRegex: /module\.exports\.classify = function classify\(err\) \{/,
+        startRegex: /Errors\.classify = function classify\(err\) \{/,
         caseRegex: /case\s+(['"])(.+?)\1/,
         endRegex: /\};/,
         onMatch: function each(match) {
@@ -172,7 +172,7 @@ test('error code classification coverage', function t(assert) {
 
     processLineMatches({
         filePath: errorsPath,
-        caseRegex: /^module\.exports\.([^ ]+) *= function *([\w_\-]+)|switch *\(\s*(.+?)\s*\)|case *'(.+?)' *:/,
+        caseRegex: /^Errors\.([^ ]+) *= function *([\w_\-]+)|switch *\(\s*(.+?)\s*\)|case *'(.+?)' *:/,
         onMatch: function each(match) {
             if (match[2]) {
                 checkFunc();

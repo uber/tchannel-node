@@ -23,75 +23,77 @@
 var TypedError = require('error/typed');
 var WrappedError = require('error/wrapped');
 
+var Errors = module.exports;
+
 // All exported errors must be in sorted order
 
-module.exports.Arg1Fragmented = TypedError({
+Errors.Arg1Fragmented = TypedError({
     type: 'tchannel.arg1-fragmented',
     message: 'arg1 must not be fragmented'
 });
 
-module.exports.Arg1OverLengthLimit = TypedError({
+Errors.Arg1OverLengthLimit = TypedError({
     type: 'tchannel.arg1-over-length-limit',
     message: 'arg1 length {length} is larger than the limit {limit}',
     length: null,
     limit: null
 });
 
-module.exports.ArgChunkGapError = TypedError({
+Errors.ArgChunkGapError = TypedError({
     type: 'tchannel.arg-chunk.gap',
     message: 'arg chunk gap, current: {current} got: {got}',
     current: null,
     got: null
 });
 
-module.exports.ArgChunkOutOfOrderError = TypedError({
+Errors.ArgChunkOutOfOrderError = TypedError({
     type: 'tchannel.arg-chunk.out-of-order',
     message: 'out of order arg chunk, current: {current} got: {got}',
     current: null,
     got: null
 });
 
-module.exports.ArgStreamExceededFramePartsError = TypedError({
+Errors.ArgStreamExceededFramePartsError = TypedError({
     type: 'tchannel.argstream.exceeded-frame-parts',
     message: 'frame parts exceeded stream arity'
 });
 
-module.exports.ArgStreamFinishedError = TypedError({
+Errors.ArgStreamFinishedError = TypedError({
     type: 'tchannel.argstream.finished',
     message: 'arg stream already finished'
 });
 
-module.exports.ArgStreamUnimplementedError = TypedError({
+Errors.ArgStreamUnimplementedError = TypedError({
     type: 'tchannel.argstream.unimplemented',
     message: 'un-streamed argument defragmentation is not implemented'
 });
 
-module.exports.ArgStreamUnknownFrameHandlingStateError = TypedError({
+Errors.ArgStreamUnknownFrameHandlingStateError = TypedError({
     type: 'tchannel.argstream.unknown-frame-handling-state',
     message: 'unknown frame handling state'
 });
 
-module.exports.CallReqBeforeInitReqError = TypedError({
+Errors.CallReqBeforeInitReqError = TypedError({
     type: 'tchannel.init.call-request-before-init-request',
     message: 'call request before init request'
 });
 
-module.exports.CallReqContBeforeInitReqError = TypedError({
+Errors.CallReqContBeforeInitReqError = TypedError({
     type: 'tchannel.init.call-request-cont-before-init-request',
     message: 'call request cont before init request'
 });
 
-module.exports.CallResBeforeInitResError = TypedError({
+Errors.CallResBeforeInitResError = TypedError({
     type: 'tchannel.init.call-response-before-init-response',
     message: 'call response before init response'
 });
 
-module.exports.CallResContBeforeInitResError = TypedError({
+Errors.CallResContBeforeInitResError = TypedError({
     type: 'tchannel.init.call-response-cont-before-init-response',
     message: 'call response cont before init response'
 });
 
-module.exports.ChecksumError = TypedError({
+Errors.ChecksumError = TypedError({
     type: 'tchannel.checksum',
     message: 'invalid checksum (type {checksumType}) expected: {expectedValue} actual: {actualValue}',
     checksumType: null,
@@ -99,14 +101,14 @@ module.exports.ChecksumError = TypedError({
     actualValue: null
 });
 
-module.exports.ChecksumTypeChanged = TypedError({
+Errors.ChecksumTypeChanged = TypedError({
     type: 'tchannel.call.checksum-type-changed',
     message: 'checksum type changed mid-stream',
     initialChecksumType: null,
     newChecksumType: null
 });
 
-module.exports.ConnectionStaleTimeoutError = TypedError({
+Errors.ConnectionStaleTimeoutError = TypedError({
     type: 'tchannel.connection-stale.timeout',
     message: 'Connection got two timeouts in a row.\n' +
         'Connection has been marked as stale and will be timed out',
@@ -115,7 +117,7 @@ module.exports.ConnectionStaleTimeoutError = TypedError({
     lastTimeoutTime: null
 });
 
-module.exports.ConnectionTimeoutError = TypedError({
+Errors.ConnectionTimeoutError = TypedError({
     type: 'tchannel.connection.timeout',
     message: 'connection timed out after {elapsed}ms ' +
         '(limit was {timeout}ms)',
@@ -125,13 +127,13 @@ module.exports.ConnectionTimeoutError = TypedError({
     timeout: null
 });
 
-module.exports.CorruptWriteLazyFrame = TypedError({
+Errors.CorruptWriteLazyFrame = TypedError({
     type: 'tchannel.lazy-frame.write-corrupt',
     message: 'could not serialize lazy frame due to {context}',
     context: null
 });
 
-module.exports.DuplicateHeaderKeyError = TypedError({
+Errors.DuplicateHeaderKeyError = TypedError({
     type: 'tchannel.duplicate-header-key',
     message: 'duplicate header key {key}',
     offset: null,
@@ -141,17 +143,17 @@ module.exports.DuplicateHeaderKeyError = TypedError({
     priorValue: null
 });
 
-module.exports.DuplicateInitRequestError = TypedError({
+Errors.DuplicateInitRequestError = TypedError({
     type: 'tchannel.init.duplicate-init-request',
     message: 'tchannel: duplicate init request'
 });
 
-module.exports.DuplicateInitResponseError = TypedError({
+Errors.DuplicateInitResponseError = TypedError({
     type: 'tchannel.init.duplicate-init-response',
     message: 'tchannel: duplicate init response'
 });
 
-module.exports.EphemeralInitResponse = TypedError({
+Errors.EphemeralInitResponse = TypedError({
     type: 'tchannel.init.ephemeral-init-response',
     message: 'tchannel: got invalid 0.0.0.0:0 as hostPort in Init Response',
     hostPort: null,
@@ -159,71 +161,71 @@ module.exports.EphemeralInitResponse = TypedError({
     processName: null
 });
 
-module.exports.HTTPReqArg2fromBufferError = WrappedError({
+Errors.HTTPReqArg2fromBufferError = WrappedError({
     type: 'tchannel.http-handler.from-buffer-arg2.req-failed',
     message: 'Could not read from buffer when sending request.',
     isSerializationError: true,
     arg2: null
 });
 
-module.exports.HTTPReqArg2toBufferError = WrappedError({
+Errors.HTTPReqArg2toBufferError = WrappedError({
     type: 'tchannel.http-handler.to-buffer-arg2.req-failed',
     message: 'Could not write to buffer when sending request.',
     isSerializationError: true,
     head: null
 });
 
-module.exports.HTTPResArg2fromBufferError = WrappedError({
+Errors.HTTPResArg2fromBufferError = WrappedError({
     type: 'tchannel.http-handler.from-buffer-arg2.res-failed',
     message: 'Could not read from buffer when sending response.',
     isSerializationError: true,
     arg2: null
 });
 
-module.exports.HTTPResArg2toBufferError = WrappedError({
+Errors.HTTPResArg2toBufferError = WrappedError({
     type: 'tchannel.http-handler.to-buffer-arg2.res-failed',
     message: 'Could not write to buffer when sending response.',
     isSerializationError: true,
     head: null
 });
 
-module.exports.InAsHeaderRequired = TypedError({
+Errors.InAsHeaderRequired = TypedError({
     type: 'tchannel.handler.incoming-req-as-header-required',
     message: 'Expected incoming call {frame} to have "as" header set.',
     frame: null
 });
 
-module.exports.InCnHeaderRequired = TypedError({
+Errors.InCnHeaderRequired = TypedError({
     type: 'tchannel.handler.incoming-req-cn-header-required',
     message: 'Expected incoming call request to have "cn" header set.'
 });
 
-module.exports.InvalidArgumentError = TypedError({
+Errors.InvalidArgumentError = TypedError({
     type: 'tchannel.invalid-argument',
     message: 'invalid argument, expected array or null',
     argType: null,
     argConstructor: null
 });
 
-module.exports.InvalidErrorCodeError = TypedError({
+Errors.InvalidErrorCodeError = TypedError({
     type: 'tchannel.invalid-error-code',
     message: 'invalid tchannel error code {errorCode}',
     errorCode: null,
     originalId: null
 });
 
-module.exports.InvalidFrameTypeError = TypedError({
+Errors.InvalidFrameTypeError = TypedError({
     type: 'tchannel.invalid-frame-type',
     message: 'invalid frame type {typeNumber}',
     typeNumber: null
 });
 
-module.exports.InvalidHandlerError = TypedError({
+Errors.InvalidHandlerError = TypedError({
     type: 'tchannel.invalid-handler',
     message: 'invalid handler function'
 });
 
-module.exports.InvalidHandlerForRegister = TypedError({
+Errors.InvalidHandlerForRegister = TypedError({
     type: 'tchannel.invalid-handler.for-registration',
     message: 'Found unexpected handler when calling `.register()`.\n' +
         'You cannot set a custom handler when using `.register()`.\n' +
@@ -232,7 +234,7 @@ module.exports.InvalidHandlerForRegister = TypedError({
     handler: null
 });
 
-module.exports.InvalidHeaderTypeError = TypedError({
+Errors.InvalidHeaderTypeError = TypedError({
     type: 'tchannel.invalid-header-type',
     message: 'invalid header type for header {name}; ' +
         'expected string, got {headerType}',
@@ -240,7 +242,7 @@ module.exports.InvalidHeaderTypeError = TypedError({
     name: null
 });
 
-module.exports.InvalidJSONBody = TypedError({
+Errors.InvalidJSONBody = TypedError({
     type: 'tchannel-handler.json.invalid-body',
     message: 'Invalid error body, expected a typed-error',
     isSerializationError: true,
@@ -248,13 +250,14 @@ module.exports.InvalidJSONBody = TypedError({
     body: null
 });
 
-module.exports.InvalidTTL = TypedError({
+Errors.InvalidTTL = TypedError({
     type: 'tchannel.protocol.invalid-ttl',
     message: 'Got an invalid ttl. Expected positive ttl but got {ttl}',
-    ttl: null
+    ttl: null,
+    isParseError: null
 });
 
-module.exports.JSONBodyParserError = WrappedError({
+Errors.JSONBodyParserError = WrappedError({
     type: 'tchannel-json-handler.parse-error.body-failed',
     message: 'Could not parse body (arg3) argument.\n' +
         'Expected JSON encoded arg3 for endpoint {endpoint}.\n' +
@@ -265,7 +268,7 @@ module.exports.JSONBodyParserError = WrappedError({
     bodyStr: null
 });
 
-module.exports.JSONBodyStringifyError = WrappedError({
+Errors.JSONBodyStringifyError = WrappedError({
     type: 'tchannel-json-handler.stringify-error.body-failed',
     message: 'Could not stringify body (res2) argument.\n' +
         'Expected JSON serializable res2 for endpoint {endpoint}.',
@@ -275,7 +278,7 @@ module.exports.JSONBodyStringifyError = WrappedError({
     direction: null
 });
 
-module.exports.JSONHeadParserError = WrappedError({
+Errors.JSONHeadParserError = WrappedError({
     type: 'tchannel-json-handler.parse-error.head-failed',
     message: 'Could not parse head (arg2) argument.\n' +
         'Expected JSON encoded arg2 for endpoint {endpoint}.\n' +
@@ -286,7 +289,7 @@ module.exports.JSONHeadParserError = WrappedError({
     headStr: null
 });
 
-module.exports.JSONHeadStringifyError = WrappedError({
+Errors.JSONHeadStringifyError = WrappedError({
     type: 'tchannel-json-handler.stringify-error.head-failed',
     message: 'Could not stringify head (res1) argument.\n' +
         'Expected JSON serializable res1 for endpoint {endpoint}.',
@@ -296,71 +299,71 @@ module.exports.JSONHeadStringifyError = WrappedError({
     direction: null
 });
 
-module.exports.LocalSocketCloseError = TypedError({
+Errors.LocalSocketCloseError = TypedError({
     type: 'tchannel.socket-local-closed',
     message: 'tchannel: Connection was manually closed.'
 });
 
-module.exports.MaxPendingError = TypedError({
+Errors.MaxPendingError = TypedError({
     type: 'tchannel.max-pending',
     message: 'maximum pending requests exceeded (limit was {pending})',
     pending: null
 });
 
-module.exports.MaxPendingForServiceError = TypedError({
+Errors.MaxPendingForServiceError = TypedError({
     type: 'tchannel.max-pending-for-service',
     message: 'maximum pending requests exceeded for service (limit was {pending} for service {serviceName})',
     pending: null,
     serviceName: null
 });
 
-module.exports.MissingInitHeaderError = TypedError({
+Errors.MissingInitHeaderError = TypedError({
     type: 'tchannel.missing-init-header',
     message: 'missing init frame header {field}',
     field: null
 });
 
-module.exports.NoPeerAvailable = TypedError({
+Errors.NoPeerAvailable = TypedError({
     type: 'tchannel.no-peer-available',
     message: 'no peer available for request'
 });
 
-module.exports.NoServiceHandlerError = TypedError({
+Errors.NoServiceHandlerError = TypedError({
     type: 'tchannel.no-service-handler',
     message: 'unknown service {serviceName}',
     serviceName: null
 });
 
-module.exports.NullKeyError = TypedError({
+Errors.NullKeyError = TypedError({
     type: 'tchannel.null-key',
     message: 'null key',
     offset: null,
     endOffset: null
 });
 
-module.exports.OrphanCallRequestCont = TypedError({
+Errors.OrphanCallRequestCont = TypedError({
     type: 'tchannel.call-request.orphan-cont',
     message: 'orphaned call request cont',
     frameId: null
 });
 
-module.exports.OrphanCallResponseCont = TypedError({
+Errors.OrphanCallResponseCont = TypedError({
     type: 'tchannel.call-response.orphan-cont',
     message: 'orphaned call response cont',
     frameId: null
 });
 
-module.exports.OutAsHeaderRequired = TypedError({
+Errors.OutAsHeaderRequired = TypedError({
     type: 'tchannel.handler.outgoing-req-as-header-required',
     message: 'Expected outgoing call request to have "as" header set.'
 });
 
-module.exports.OutCnHeaderRequired = TypedError({
+Errors.OutCnHeaderRequired = TypedError({
     type: 'tchannel.handler.outgoing-req-cn-header-required',
     message: 'Expected outgoing call request to have "cn" header set.'
 });
 
-module.exports.ParentRequired = TypedError({
+Errors.ParentRequired = TypedError({
     type: 'tchannel.tracer.parent-required',
     message: 'parent not specified for outgoing call req.\n' +
         'Expected either a parent or hasNoParent.\n' +
@@ -370,7 +373,7 @@ module.exports.ParentRequired = TypedError({
     serviceName: null
 });
 
-module.exports.PeerDrainTimedOutError = TypedError({
+Errors.PeerDrainTimedOutError = TypedError({
     type: 'tchannel.drain.peer.timed-out',
     message: 'peer drain timed out',
     direction: null,
@@ -378,38 +381,38 @@ module.exports.PeerDrainTimedOutError = TypedError({
     timeout: null
 });
 
-module.exports.ReconstructedError = TypedError({
+Errors.ReconstructedError = TypedError({
     type: 'tchannel.hydrated-error.default-type',
     message: 'TChannel json hydrated error;' +
         ' this message should be replaced with an upstream error message'
 });
 
-module.exports.RequestAlreadyDone = TypedError({
+Errors.RequestAlreadyDone = TypedError({
     type: 'tchannel.request-already-done',
     message: 'cannot {attempted}, request already done',
     attempted: null
 });
 
-module.exports.RequestDrained = TypedError({
+Errors.RequestDrained = TypedError({
     type: 'tchannel.request.drained',
     message: 'refusing to send drained request: {reason}',
     reason: null
 });
 
-module.exports.RequestFrameState = TypedError({
+Errors.RequestFrameState = TypedError({
     type: 'tchannel.request-frame-state',
     message: 'cannot send {attempted} in {state} request state',
     attempted: null,
     state: null
 });
 
-module.exports.RequestRetryLimitExceeded = TypedError({
+Errors.RequestRetryLimitExceeded = TypedError({
     type: 'tchannel.request.retry-limit-exceeded',
     message: 'exceeded retry limit',
     limit: null
 });
 
-module.exports.RequestTimeoutError = TypedError({
+Errors.RequestTimeoutError = TypedError({
     type: 'tchannel.request.timeout',
     message: 'request timed out after {elapsed}ms ' +
         '(limit was {timeout}ms)',
@@ -420,7 +423,7 @@ module.exports.RequestTimeoutError = TypedError({
     logical: false
 });
 
-module.exports.ResponseAlreadyDone = TypedError({
+Errors.ResponseAlreadyDone = TypedError({
     type: 'tchannel.response-already-done',
     message: 'cannot send {attempted}, response already done ' +
         'in state: {currentState}',
@@ -428,46 +431,46 @@ module.exports.ResponseAlreadyDone = TypedError({
     currentState: null
 });
 
-module.exports.ResponseAlreadyStarted = TypedError({
+Errors.ResponseAlreadyStarted = TypedError({
     type: 'tchannel.response-already-started',
     message: 'response already started (state {state})',
     state: null
 });
 
-module.exports.ResponseFrameState = TypedError({
+Errors.ResponseFrameState = TypedError({
     type: 'tchannel.response-frame-state',
     message: 'cannot send {attempted} in {state} response state',
     attempted: null,
     state: null
 });
 
-module.exports.SendCallReqBeforeIdentifiedError = TypedError({
+Errors.SendCallReqBeforeIdentifiedError = TypedError({
     type: 'tchannel.init.send-call-request-before-indentified',
     message: 'cannot send call request before the connection is identified'
 });
 
-module.exports.SendCallReqContBeforeIdentifiedError = TypedError({
+Errors.SendCallReqContBeforeIdentifiedError = TypedError({
     type: 'tchannel.init.send-call-request-cont-before-indentified',
     message: 'cannot send call request cont before the connection is identified'
 });
 
-module.exports.SendCallResBeforeIdentifiedError = TypedError({
+Errors.SendCallResBeforeIdentifiedError = TypedError({
     type: 'tchannel.init.send-call-response-before-indentified',
     message: 'cannot send call response before the connection is identified'
 });
 
-module.exports.SendCallResContBeforeIdentifiedError = TypedError({
+Errors.SendCallResContBeforeIdentifiedError = TypedError({
     type: 'tchannel.init.send-call-response-cont-before-indentified',
     message: 'cannot send call response cont before the connection is identified'
 });
 
-module.exports.SocketClosedError = TypedError({
+Errors.SocketClosedError = TypedError({
     type: 'tchannel.socket-closed',
     message: 'socket closed, {reason}',
     reason: null
 });
 
-module.exports.SocketError = WrappedError({
+Errors.SocketError = WrappedError({
     type: 'tchannel.socket',
     message: 'tchannel socket error ({code} from {syscall}): {origMessage}',
     hostPort: null,
@@ -475,54 +478,54 @@ module.exports.SocketError = WrappedError({
     remoteAddr: null
 });
 
-module.exports.TChannelConnectionCloseError = TypedError({
+Errors.TChannelConnectionCloseError = TypedError({
     type: 'tchannel.connection.close',
     message: 'connection closed'
 });
 
-module.exports.TChannelConnectionResetError = WrappedError({
+Errors.TChannelConnectionResetError = WrappedError({
     type: 'tchannel.connection.reset',
     message: 'tchannel: {causeMessage}'
 });
 
-module.exports.TChannelDestroyedError = TypedError({
+Errors.TChannelDestroyedError = TypedError({
     type: 'tchannel.destroyed',
     message: 'the channel is destroyed'
 });
 
-module.exports.TChannelListenError = WrappedError({
+Errors.TChannelListenError = WrappedError({
     type: 'tchannel.server.listen-failed',
     message: 'tchannel: {origMessage}',
     requestedPort: null,
     host: null
 });
 
-module.exports.TChannelLocalResetError = WrappedError({
+Errors.TChannelLocalResetError = WrappedError({
     type: 'tchannel.local.reset',
     message: 'tchannel: {causeMessage}'
 });
 
-module.exports.TChannelReadProtocolError = WrappedError({
+Errors.TChannelReadProtocolError = WrappedError({
     type: 'tchannel.protocol.read-failed',
     message: 'tchannel read failure: {origMessage}',
     remoteName: null,
     localName: null
 });
 
-module.exports.TChannelUnhandledFrameTypeError = TypedError({
+Errors.TChannelUnhandledFrameTypeError = TypedError({
     type: 'tchannel.unhandled-frame-type',
     message: 'unhandled frame type {typeCode}',
     typeCode: null
 });
 
-module.exports.TChannelWriteProtocolError = WrappedError({
+Errors.TChannelWriteProtocolError = WrappedError({
     type: 'tchannel.protocol.write-failed',
     message: 'tchannel write failure: {origMessage}',
     remoteName: null,
     localName: null
 });
 
-module.exports.ThriftBodyParserError = WrappedError({
+Errors.ThriftBodyParserError = WrappedError({
     type: 'tchannel-thrift-handler.parse-error.body-failed',
     message: 'Could not parse body (arg3) argument.\n' +
         'Expected Thrift encoded arg3 for endpoint {endpoint}.\n' +
@@ -535,7 +538,7 @@ module.exports.ThriftBodyParserError = WrappedError({
     bodyBuf: null
 });
 
-module.exports.ThriftBodyStringifyError = WrappedError({
+Errors.ThriftBodyStringifyError = WrappedError({
     type: 'tchannel-thrift-handler.stringify-error.body-failed',
     message: 'Could not stringify body (res2) argument.\n' +
         'Expected Thrift serializable res2 for endpoint {endpoint}.',
@@ -546,7 +549,7 @@ module.exports.ThriftBodyStringifyError = WrappedError({
     direction: null
 });
 
-module.exports.ThriftHeadParserError = WrappedError({
+Errors.ThriftHeadParserError = WrappedError({
     type: 'tchannel-thrift-handler.parse-error.head-failed',
     message: 'Could not parse head (arg2) argument.\n' +
         'Expected Thrift encoded arg2 for endpoint {endpoint}.\n' +
@@ -559,7 +562,7 @@ module.exports.ThriftHeadParserError = WrappedError({
     headBuf: null
 });
 
-module.exports.ThriftHeadStringifyError = WrappedError({
+Errors.ThriftHeadStringifyError = WrappedError({
     type: 'tchannel-thrift-handler.stringify-error.head-failed',
     message: 'Could not stringify head (res1) argument.\n' +
         'Expected Thrift serializable res1 for endpoint {endpoint}.',
@@ -570,7 +573,7 @@ module.exports.ThriftHeadStringifyError = WrappedError({
     direction: null
 });
 
-module.exports.TooManyHeaders = TypedError({
+Errors.TooManyHeaders = TypedError({
     type: 'tchannel.protocol.too-many-headers',
     message: 'too many transport headers, got {count}, expected at most {maxHeaderCount}',
     count: null,
@@ -579,19 +582,19 @@ module.exports.TooManyHeaders = TypedError({
     endOffset: null
 });
 
-module.exports.TopLevelRegisterError = TypedError({
+Errors.TopLevelRegisterError = TypedError({
     type: 'tchannel.top-level-register',
     message: 'Cannot register endpoints points on top-level channel.\n' +
         'Provide serviceName to constructor, or create a sub-channel.'
 });
 
-module.exports.TopLevelRequestError = TypedError({
+Errors.TopLevelRequestError = TypedError({
     type: 'tchannel.top-level-request',
     message: 'Cannot make request() on top level tchannel.\n' +
         'Must use a sub channel directly.'
 });
 
-module.exports.TransportHeaderTooLong = TypedError({
+Errors.TransportHeaderTooLong = TypedError({
     type: 'tchannel.transport-header-too-long',
     message: 'transport header: {headerName} exceeds {maxLength} bytes',
     maxLength: null,
@@ -600,35 +603,35 @@ module.exports.TransportHeaderTooLong = TypedError({
     endOffset: null
 });
 
-module.exports.UnexpectedCallFrameAfterDone = TypedError({
+Errors.UnexpectedCallFrameAfterDone = TypedError({
     type: 'tchannel.call.frame-unexpected.after-done',
     message: 'got call frame (type {frameType}) in done state',
     frameId: null,
     frameType: null
 });
 
-module.exports.UnexpectedCallFrameAfterError = TypedError({
+Errors.UnexpectedCallFrameAfterError = TypedError({
     type: 'tchannel.call.frame-unexpected.after-error',
     message: 'got call frame (type {frameType}) in error state',
     frameId: null,
     frameType: null
 });
 
-module.exports.UnimplementedMethod = TypedError({
+Errors.UnimplementedMethod = TypedError({
     message: 'Unimplemented {className}#{methodName}',
     type: 'tchannel.unimplemented-method',
     className: null,
     methodName: null
 });
 
-module.exports.UnknownConnectionReset = TypedError({
+Errors.UnknownConnectionReset = TypedError({
     type: 'tchannel.connection.unknown-reset',
     message: 'unknown connection reset'
 });
 
 // utilities
 
-module.exports.classify = function classify(err) {
+Errors.classify = function classify(err) {
     if (err.isErrorFrame) {
         return err.codeName;
     }
@@ -753,7 +756,7 @@ module.exports.classify = function classify(err) {
 // To determine whether a circuit should break for each response code.
 // TODO consider whether to keep a circuit healthy if a downstream circuit is
 // unhealthy.
-module.exports.isUnhealthy = function isUnhealthy(codeName) {
+Errors.isUnhealthy = function isUnhealthy(codeName) {
     switch (codeName) {
         // not an indicator of bad health
         case 'BadRequest':
@@ -774,7 +777,7 @@ module.exports.isUnhealthy = function isUnhealthy(codeName) {
     }
 };
 
-module.exports.shouldRetry = function shouldRetry(codeName, retryFlags) {
+Errors.shouldRetry = function shouldRetry(codeName, retryFlags) {
     switch (codeName) {
         case 'BadRequest':
         case 'Cancelled':
@@ -803,7 +806,7 @@ function HTTPInfo(statusCode, statusMessage) {
     this.statusMessage = statusMessage;
 }
 
-module.exports.toHTTPCode = function toHTTPCode(codeName) {
+Errors.toHTTPCode = function toHTTPCode(codeName) {
     switch (codeName) {
         case 'Cancelled':
             return new HTTPInfo(500, 'TChannel Cancelled');
@@ -835,9 +838,9 @@ module.exports.toHTTPCode = function toHTTPCode(codeName) {
     }
 };
 
-module.exports.isFatal = function isFatal(err, codeName) {
+Errors.isFatal = function isFatal(err, codeName) {
     if (!codeName) {
-        codeName = module.exports.classify(err);
+        codeName = Errors.classify(err);
     }
     switch (codeName) {
         case 'Busy':
@@ -858,7 +861,7 @@ module.exports.isFatal = function isFatal(err, codeName) {
     }
 };
 
-module.exports.logLevel = function errorLogLevel(err, codeName) {
+Errors.logLevel = function errorLogLevel(err, codeName) {
     switch (codeName) {
         case 'ProtocolError':
         case 'UnexpectedError':
@@ -888,7 +891,7 @@ module.exports.logLevel = function errorLogLevel(err, codeName) {
     On Busy & Declined we increase the pending count for a peer
     to allow peer selection to favor less loaded peers.
 */
-module.exports.isPendingError = function isPendingError(codeName) {
+Errors.isPendingError = function isPendingError(codeName) {
     switch (codeName) {
         case 'Busy':
         case 'Declined':
