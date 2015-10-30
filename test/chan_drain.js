@@ -156,7 +156,7 @@ allocCluster.test('chan.drain server with a few incoming', {
     }
 });
 
-allocCluster.test.only('chan.drain server with a few incoming (with exempt service)', {
+allocCluster.test('chan.drain server with a few incoming (with exempt service)', {
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
