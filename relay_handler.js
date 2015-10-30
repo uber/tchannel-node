@@ -242,6 +242,10 @@ LazyRelayInReq.prototype._extendLogInfo =
 function _extendLogInfo(info) {
     var self = this;
 
+    if (self.conn) {
+        info = self.conn.extendLogInfo(info);
+    }
+
     info.requestType = self.type;
     info.inRemoteAddr = self.remoteAddr;
     info.inRequestId = self.id;
