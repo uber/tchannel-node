@@ -226,6 +226,17 @@ Operations.prototype.getPending = function getPending() {
     return self.pending;
 };
 
+Operations.prototype.getOutTombstone = function getOutTombstone(id) {
+    var self = this;
+
+    var tombstone = self.requests.out[id] || null;
+    if (tombstone && !tombstone.isTombstone) {
+        return null;
+    }
+
+    return tombstone;
+};
+
 Operations.prototype.getOutReq = function getOutReq(id) {
     var self = this;
 
