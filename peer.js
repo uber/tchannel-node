@@ -232,7 +232,7 @@ function setMaxTombstoneTTL(ttl) {
 
     for (var i = 0; i < self.connections.length; i++) {
         var conn = self.connections[i];
-        conn.operations.setMaxTombstoneTTL(ttl);
+        conn.ops.setMaxTombstoneTTL(ttl);
     }
 };
 
