@@ -342,7 +342,6 @@ function warmUpConnection(cluster, cb) {
 function buildRequest(conn, ttl) {
     var peer = conn.channel.peers.get(conn.socketRemoteAddr);
 
-    // fff magic test
     var req = conn.buildOutRequest({
         channel: conn.channel,
         peer: peer,
@@ -355,8 +354,8 @@ function buildRequest(conn, ttl) {
         checksumType: null,
         timers: conn.channel.timers,
         headers: {
-            'as': 'raw',
-            'cn': 'wat'
+            as: 'raw',
+            cn: 'wat'
         }
     });
     conn.ops.addOutReq(req);
@@ -368,15 +367,18 @@ function sendCallRequestFrame(conn, ttl, onWrite) {
     /* eslint no-inline-comments: 0*/
 
     var callFrameBytes = [
-        0x00, 0x00, // length:2
-        0x03, // type:1
-        0x00, // reserved
+        0x00, 0x00,             // length:2
+        0x03,                   // type:1
+        0x00,                   // reserved
         0x00, 0x00, 0x00, 0x03, // id:4
         0x00, 0x00, 0x00, 0x00, // reserved:8
         0x00, 0x00, 0x00, 0x00, // ...
 
         0x00,                   // flags:1
-        ttl >>> 24, ttl >>> 16, ttl >>> 8, ttl, // ttl:4
+        ttl >>> 24 & 0xff,      // ttl:4
+        ttl >>> 16 & 0xff,      // ...
+        ttl >>> 8 & 0xff,       // ...
+        ttl & 0xff,             // ...
         0x00, 0x01, 0x02, 0x03, // tracing:24
         0x04, 0x05, 0x06, 0x07, // ...
         0x08, 0x09, 0x0a, 0x0b, // ...
