@@ -106,6 +106,36 @@ allocCluster.test('peer should return the latest connection when none is identif
     assert.end();
 });
 
+allocCluster.test('peer can setMaxTombstoneTTL', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var server = cluster.channels[0];
+    var client = cluster.channels[1];
+    var serverHost = cluster.hosts[0];
+
+    server.makeSubChannel({
+        serviceName: 'server'
+    });
+
+    var subClient = client.makeSubChannel({
+        serviceName: 'server',
+        peers: [server.hostPort]
+    });
+
+    var peer = subClient.peers.get(serverHost);
+    var socket = peer.makeOutSocket();
+    var conn = peer.makeOutConnection(socket);
+    peer.addConnection(conn);
+
+    assert.doesNotThrow(function noThrow() {
+        peer.setMaxTombstoneTTL(400);
+    });
+
+    client.close();
+    server.close();
+    assert.end();
+});
+
 allocCluster.test('peer close should not leak connections', {
     numPeers: 2
 }, function t(cluster, assert) {
