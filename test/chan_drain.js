@@ -88,7 +88,7 @@ allocCluster.test('chan.drain server with a few incoming', {
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('--- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
         server.drain('testdown', drained);
         finishCount++;
@@ -97,7 +97,7 @@ allocCluster.test('chan.drain server with a few incoming', {
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
@@ -208,7 +208,7 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('--- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
 
         finishCount++;
@@ -245,7 +245,7 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
@@ -315,7 +315,7 @@ allocCluster.test('chan.drain client with a few outgoing', {
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('--- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
         drainClient.drain('testdown', drained);
         finishCount++;
@@ -324,7 +324,7 @@ allocCluster.test('chan.drain client with a few outgoing', {
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
@@ -499,7 +499,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('--- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
 
         finishCount++;
@@ -541,7 +541,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
@@ -666,7 +666,7 @@ allocCluster.test('incoming connection during chan.drain', {
 
         reqN++;
         var theMess = 'mess' + reqN;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client1.request().send('echo', 'such', theMess, function sendDone(err, res) {
             assert.ifError(err, 'no error');
             assert.equal(res && String(res.arg3), theMess, 'res: expected arg3');
@@ -677,7 +677,7 @@ allocCluster.test('incoming connection during chan.drain', {
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('-- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
         server.drain('testdown', drained);
         finishCount++;
@@ -692,7 +692,7 @@ allocCluster.test('incoming connection during chan.drain', {
             client2 = client;
 
             reqN++;
-            assert.comment('sending request ' + reqN);
+            assert.comment('--- sending request ' + reqN);
             client2.request().send('echo', 'such', 'mess' + reqN, function afterDrainSendsDone(err, res) {
                 assert.equal(err && err.type, 'tchannel.declined', 'expected declined');
                 assert.equal(res, null, 'res: no value');
