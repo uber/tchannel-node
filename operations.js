@@ -229,12 +229,12 @@ Operations.prototype.getPending = function getPending() {
 Operations.prototype.getOutTombstone = function getOutTombstone(id) {
     var self = this;
 
-    var tombstone = self.requests.out[id] || null;
-    if (tombstone && !tombstone.isTombstone) {
+    var op = self.requests.out[id] || null;
+    if (op && !op.isTombstone) {
         return null;
     }
 
-    return tombstone;
+    return op;
 };
 
 Operations.prototype.getOutReq = function getOutReq(id) {
