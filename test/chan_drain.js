@@ -20,6 +20,7 @@
 
 'use strict';
 
+var setTimeout = require('timers').setTimeout;
 var collectParallel = require('collect-parallel/array');
 
 var CollapsedAssert = require('./lib/collapsed-assert.js');
@@ -155,21 +156,20 @@ allocCluster.test('chan.drain server with a few incoming', {
     }
 });
 
-allocCluster.test('chan.drain server with a few incoming (with exempt service)', {
+allocCluster.test.only('chan.drain server with a few incoming (with exempt service)', {
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
-
     cluster.logger.whitelist('info', 'draining channel');
     cluster.logger.whitelist('info', 'ignoring outresponse.send on a closed connection');
 
     var server = cluster.channels[0];
     var clients = null;
-    var finishCount = 0;
+    var requestsCount = 0;
     var reqN = 0;
     setupTestClients(cluster, ['a', 'b'], runTest);
-    setupServiceServer(server, 'a', 5);
-    setupServiceServer(server, 'b', 5);
+    setupServiceServer(server, 'a', 25);
+    setupServiceServer(server, 'b', 25);
     server.drainExempt = drainExemptB;
 
     function runTest(err, gotClients) {
@@ -179,15 +179,16 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
         }
         clients = gotClients;
 
-        assert.timeoutAfter(50);
+        assert.timeoutAfter(500);
 
-        finishCount++;
+        requestsCount++;
         collectParallel(clients.a, sendOne, checkSendsDone('service:a', checkASend, finish));
 
-        finishCount++;
+        requestsCount++;
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBSend, finish));
 
-        setTimeout(testdown, 1);
+        // We need to wait until all requests are recieved at other end.
+        setTimeout(testdown, 10);
 
         function checkASend(desc, res, i) {
             assert.ifError(res.err, desc + 'no error');
@@ -209,15 +210,12 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
 
     function testdown() {
         assert.comment('--- triggering drain');
-        assert.equal(finishCount, 2, 'requests have not finished');
+        assert.equal(requestsCount, 2, 'requests have not finished');
 
-        finishCount++;
         server.drain('testdown', drained);
 
-        finishCount++;
         collectParallel(clients.a, sendOne, checkSendsDone('service:a', checkADecline, finish));
 
-        finishCount++;
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBRes, finish));
 
         function checkADecline(desc, res, i) {
@@ -252,7 +250,12 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
     function drained() {
         assert.pass('drain happened');
         waitForConnRemoved(6, cluster, finish);
-        server.close(closed);
+
+        // Not garaunteed that sockets are flushed.
+        // Let's wait ~10ms
+        setTimeout(function waitUntilSocketFlush() {
+            server.close(closed);
+        }, 10);
     }
 
     function closed(err) {
@@ -281,10 +284,33 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
                 msg: 'ignoring outresponse.send on a closed connection'
             }, 'expected zero or more sends after close');
         }
+
+        // Give clients 20ms to cleanup
+        setTimeout(verifyClusterEmpty, 20);
+    }
+
+    function verifyClusterEmpty() {
+        var cassert = CollapsedAssert();
+
+        cluster.assertCleanState(cassert, {
+            channels: [
+                // server has no peers
+                {peers: []},
+                // all client connections closed
+                {peers: [{connections: []}]},
+                {peers: [{connections: []}]},
+                {peers: [{connections: []}]}
+            ]
+        });
+        cassert.report(assert, 'cluster has a clean state');
+
+        assert.end();
     }
 
     function finish(err) {
-        finishCount = checkFinish(assert, err, cluster, finishCount);
+        assert.ifError(err);
+
+        requestsCount--;
     }
 });
 
