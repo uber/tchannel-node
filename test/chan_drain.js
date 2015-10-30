@@ -20,7 +20,6 @@
 
 'use strict';
 
-var setTimeout = require('timers').setTimeout;
 var collectParallel = require('collect-parallel/array');
 
 var CollapsedAssert = require('./lib/collapsed-assert.js');
@@ -85,7 +84,7 @@ allocCluster.test('chan.drain server with a few incoming', {
         assert.timeoutAfter(50);
         collectParallel(clients.a, sendOne, sendsDone);
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
     }
 
     function testdown() {
@@ -188,7 +187,7 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBSend, finish));
 
         // We need to wait until all requests are recieved at other end.
-        setTimeout(testdown, 10);
+        server.timers.setTimeout(testdown, 10);
 
         function checkASend(desc, res, i) {
             assert.ifError(res.err, desc + 'no error');
@@ -253,7 +252,7 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
 
         // Not garaunteed that sockets are flushed.
         // Let's wait ~10ms
-        setTimeout(function waitUntilSocketFlush() {
+        server.timers.setTimeout(function waitUntilSocketFlush() {
             server.close(closed);
         }, 10);
     }
@@ -286,7 +285,7 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
         }
 
         // Give clients 20ms to cleanup
-        setTimeout(verifyClusterEmpty, 20);
+        server.timers.setTimeout(verifyClusterEmpty, 20);
     }
 
     function verifyClusterEmpty() {
@@ -337,7 +336,7 @@ allocCluster.test('chan.drain client with a few outgoing', {
         assert.timeoutAfter(50);
         collectParallel(clients.a, sendOne, sendsDone);
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
     }
 
     function testdown() {
@@ -504,7 +503,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
         finishCount++;
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBSend, finish));
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
 
         function checkASend(desc, res, i) {
             assert.ifError(res.err, desc + 'no error');
@@ -699,7 +698,7 @@ allocCluster.test('incoming connection during chan.drain', {
             finish();
         });
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
     }
 
     function testdown() {
