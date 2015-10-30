@@ -253,11 +253,6 @@ function _extendLogInfo(info) {
     info.callerName = self.callerName;
     info.endpoint = self.endpoint;
 
-    // TODO: why not full peer.extendLogInfo
-    if (self.peer) {
-        info.hostPort = self.peer.hostPort;
-    }
-
     return info;
 };
 
