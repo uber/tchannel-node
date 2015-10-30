@@ -22,6 +22,7 @@
 
 var collectParallel = require('collect-parallel/array');
 
+var CollapsedAssert = require('./lib/collapsed-assert.js');
 var allocCluster = require('./lib/alloc-cluster.js');
 
 allocCluster.test('immediate chan.drain', {
@@ -83,11 +84,11 @@ allocCluster.test('chan.drain server with a few incoming', {
         assert.timeoutAfter(50);
         collectParallel(clients.a, sendOne, sendsDone);
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('--- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
         server.drain('testdown', drained);
         finishCount++;
@@ -96,7 +97,7 @@ allocCluster.test('chan.drain server with a few incoming', {
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
@@ -158,17 +159,16 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
     numPeers: 4,
     skipEmptyCheck: true
 }, function t(cluster, assert) {
-
     cluster.logger.whitelist('info', 'draining channel');
     cluster.logger.whitelist('info', 'ignoring outresponse.send on a closed connection');
 
     var server = cluster.channels[0];
     var clients = null;
-    var finishCount = 0;
+    var requestsCount = 0;
     var reqN = 0;
     setupTestClients(cluster, ['a', 'b'], runTest);
-    setupServiceServer(server, 'a', 5);
-    setupServiceServer(server, 'b', 5);
+    setupServiceServer(server, 'a', 25);
+    setupServiceServer(server, 'b', 25);
     server.drainExempt = drainExemptB;
 
     function runTest(err, gotClients) {
@@ -178,15 +178,16 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
         }
         clients = gotClients;
 
-        assert.timeoutAfter(50);
+        assert.timeoutAfter(500);
 
-        finishCount++;
+        requestsCount++;
         collectParallel(clients.a, sendOne, checkSendsDone('service:a', checkASend, finish));
 
-        finishCount++;
+        requestsCount++;
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBSend, finish));
 
-        setTimeout(testdown, 1);
+        // We need to wait until all requests are recieved at other end.
+        server.timers.setTimeout(testdown, 10);
 
         function checkASend(desc, res, i) {
             assert.ifError(res.err, desc + 'no error');
@@ -207,16 +208,13 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
     }
 
     function testdown() {
-        assert.comment('triggering drain');
-        assert.equal(finishCount, 2, 'requests have not finished');
+        assert.comment('--- triggering drain');
+        assert.equal(requestsCount, 2, 'requests have not finished');
 
-        finishCount++;
         server.drain('testdown', drained);
 
-        finishCount++;
         collectParallel(clients.a, sendOne, checkSendsDone('service:a', checkADecline, finish));
 
-        finishCount++;
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBRes, finish));
 
         function checkADecline(desc, res, i) {
@@ -244,14 +242,19 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
     function drained() {
         assert.pass('drain happened');
         waitForConnRemoved(6, cluster, finish);
-        server.close(closed);
+
+        // Not garaunteed that sockets are flushed.
+        // Let's wait ~10ms
+        server.timers.setTimeout(function waitUntilSocketFlush() {
+            server.close(closed);
+        }, 10);
     }
 
     function closed(err) {
@@ -280,10 +283,33 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
                 msg: 'ignoring outresponse.send on a closed connection'
             }, 'expected zero or more sends after close');
         }
+
+        // Give clients 20ms to cleanup
+        server.timers.setTimeout(verifyClusterEmpty, 20);
+    }
+
+    function verifyClusterEmpty() {
+        var cassert = CollapsedAssert();
+
+        cluster.assertCleanState(cassert, {
+            channels: [
+                // server has no peers
+                {peers: []},
+                // all client connections closed
+                {peers: [{connections: []}]},
+                {peers: [{connections: []}]},
+                {peers: [{connections: []}]}
+            ]
+        });
+        cassert.report(assert, 'cluster has a clean state');
+
+        assert.end();
     }
 
     function finish(err) {
-        finishCount = checkFinish(assert, err, cluster, finishCount);
+        assert.ifError(err);
+
+        requestsCount--;
     }
 });
 
@@ -310,11 +336,11 @@ allocCluster.test('chan.drain client with a few outgoing', {
         assert.timeoutAfter(50);
         collectParallel(clients.a, sendOne, sendsDone);
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('--- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
         drainClient.drain('testdown', drained);
         finishCount++;
@@ -323,7 +349,7 @@ allocCluster.test('chan.drain client with a few outgoing', {
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
@@ -389,7 +415,9 @@ allocCluster.test('chan.drain client with a few outgoing', {
             // cluster.assertEmptyState(assert);
             // return;
 
-            cluster.assertCleanState(assert, {
+
+            var cassert = CollapsedAssert();
+            cluster.assertCleanState(cassert, {
                 channels: [
                     // server has no peers
                     {peers: [
@@ -435,6 +463,7 @@ allocCluster.test('chan.drain client with a few outgoing', {
                     ]}]}
                 ]
             });
+            cassert.report(assert, 'expected clean state');
 
             assert.end();
         }
@@ -474,7 +503,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
         finishCount++;
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBSend, finish));
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
 
         function checkASend(desc, res, i) {
             assert.ifError(res.err, desc + 'no error');
@@ -495,7 +524,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('--- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
 
         finishCount++;
@@ -537,7 +566,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
 
     function sendOne(client, _, done) {
         reqN++;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client.request().send('echo', 'such', 'mess' + reqN, done);
     }
 
@@ -582,7 +611,8 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
 
             checkLogs();
 
-            cluster.assertCleanState(assert, {
+            var cassert = CollapsedAssert();
+            cluster.assertCleanState(cassert, {
                 channels: [
                     // server has no peers
                     {peers: [
@@ -628,6 +658,7 @@ allocCluster.test('chan.drain client with a few outgoing (with exempt service)',
                     ]}]}
                 ]
             });
+            cassert.report(assert, 'expected clean state');
 
             assert.end();
         }
@@ -660,18 +691,18 @@ allocCluster.test('incoming connection during chan.drain', {
 
         reqN++;
         var theMess = 'mess' + reqN;
-        assert.comment('sending request ' + reqN);
+        assert.comment('--- sending request ' + reqN);
         client1.request().send('echo', 'such', theMess, function sendDone(err, res) {
             assert.ifError(err, 'no error');
             assert.equal(res && String(res.arg3), theMess, 'res: expected arg3');
             finish();
         });
 
-        setTimeout(testdown, 1);
+        server.timers.setTimeout(testdown, 1);
     }
 
     function testdown() {
-        assert.comment('triggering drain');
+        assert.comment('-- triggering drain');
         assert.equal(finishCount, 2, 'requests have not finished');
         server.drain('testdown', drained);
         finishCount++;
@@ -686,7 +717,7 @@ allocCluster.test('incoming connection during chan.drain', {
             client2 = client;
 
             reqN++;
-            assert.comment('sending request ' + reqN);
+            assert.comment('--- sending request ' + reqN);
             client2.request().send('echo', 'such', 'mess' + reqN, function afterDrainSendsDone(err, res) {
                 assert.equal(err && err.type, 'tchannel.declined', 'expected declined');
                 assert.equal(res, null, 'res: no value');
@@ -828,7 +859,9 @@ function checkFinish(assert, err, cluster, finishCount) {
     assert.ifError(err, 'no unexpected error');
 
     if (--finishCount === 0) {
-        cluster.assertCleanState(assert, {
+        var cassert = CollapsedAssert();
+
+        cluster.assertCleanState(cassert, {
             channels: [
                 // server has no peers
                 {peers: []},
@@ -838,6 +871,7 @@ function checkFinish(assert, err, cluster, finishCount) {
                 {peers: [{connections: []}]}
             ]
         });
+        cassert.report(assert, 'cluster has a clean state');
 
         assert.end();
     }
