@@ -225,6 +225,10 @@ LazyRelayInReq.prototype.extendLogInfo =
 function extendLogInfo(info) {
     var self = this;
 
+    if (self.conn) {
+        info = self.conn.extendLogInfo(info);
+    }
+
     if (self.outreq) {
         info = self.outreq._extendLogInfo(info);
     }
@@ -524,6 +528,10 @@ LazyRelayOutReq.prototype.type = 'tchannel.lazy.outgoing-request';
 LazyRelayOutReq.prototype.extendLogInfo =
 function extendLogInfo(info) {
     var self = this;
+
+    if (self.conn) {
+        info = self.conn.extendLogInfo(info);
+    }
 
     if (self.inreq) {
         info = self.inreq._extendLogInfo(info);
