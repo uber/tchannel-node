@@ -418,6 +418,35 @@ function onCallErrorFrame(errFrame) {
             req = self.ops.popOutReq(id, err);
             req.emitError(err);
         }
+    } else {
+        self.logUnknownErrorFrame(err, id);
+    }
+};
+
+TChannelConnection.prototype.logUnknownErrorFrame =
+function logUnknownErrorFrame(err, id) {
+    var self = this;
+
+    var logger = self.channel.logger;
+    var tombstone = self.ops.getOutTombstone(id);
+    var level = errors.logLevel(err, err.codeName);
+
+    // Do not log about incoming timeouts for tombstones
+    if (err.codeName === 'Timeout' && tombstone) {
+        return;
+    }
+
+    var info = self.extendLogInfo({
+        error: err,
+        isErrorFrame: err.isErrorFrame
+    });
+
+    if (level === 'error') {
+        logger.error('got unexpected errorframe without call request', info);
+    } else if (level === 'warn') {
+        logger.warn('got errorframe without call request', info);
+    } else if (level === 'info') {
+        logger.info('got expected errorframe without call request', info);
     }
 };
 

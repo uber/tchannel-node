@@ -226,15 +226,27 @@ Operations.prototype.getPending = function getPending() {
     return self.pending;
 };
 
+// TODO: Merge getOutTombstone() with getOutReq()
+Operations.prototype.getOutTombstone = function getOutTombstone(id) {
+    var self = this;
+
+    var op = self.requests.out[id] || null;
+    if (op && !op.isTombstone) {
+        return null;
+    }
+
+    return op;
+};
+
 Operations.prototype.getOutReq = function getOutReq(id) {
     var self = this;
 
     var req = self.requests.out[id] || null;
     if (req && req.isTombstone) {
         return null;
-    } else {
-        return req;
     }
+
+    return req;
 };
 
 Operations.prototype.getInReq = function getInReq(id) {
