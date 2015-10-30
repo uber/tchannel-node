@@ -315,7 +315,7 @@ allocCluster.test('relay request times out', {
                   'expected timeout error');
         assert.notOk(res, 'expected no response');
 
-        setTimeout(finish, 1);
+        setTimeout(finish, 10);
     }
 
     function finish() {
