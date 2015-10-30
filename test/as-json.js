@@ -79,7 +79,7 @@ allocCluster.test('getting an ok response', {
     });
 });
 
-allocCluster.test('sending using request()', {
+allocCluster.test('sending using json request()', {
     numPeers: 2
 }, function t(cluster, assert) {
     var tchannelJSON = makeTChannelJSONServer(cluster, {
@@ -140,7 +140,7 @@ allocCluster.test('getting a notOk response', {
     });
 });
 
-allocCluster.test('getting an UnexpectedError frame', {
+allocCluster.test('getting an UnexpectedError frame from json', {
     numPeers: 2
 }, function t(cluster, assert) {
     var tchannelJSON = makeTChannelJSONServer(cluster, {
@@ -171,7 +171,7 @@ allocCluster.test('getting an UnexpectedError frame', {
     });
 });
 
-allocCluster.test('getting a BadRequest frame', {
+allocCluster.test('getting a BadRequest frame from json', {
     numPeers: 2
 }, function t(cluster, assert) {
     makeTChannelJSONServer(cluster, {
@@ -207,7 +207,7 @@ allocCluster.test('getting a BadRequest frame', {
     }
 });
 
-allocCluster.test('sending without as header', {
+allocCluster.test('sending without as header in json', {
     numPeers: 2
 }, function t(cluster, assert) {
     makeTChannelJSONServer(cluster, {
