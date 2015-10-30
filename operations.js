@@ -226,6 +226,7 @@ Operations.prototype.getPending = function getPending() {
     return self.pending;
 };
 
+// TODO: Merge getOutTombstone() with getOutReq()
 Operations.prototype.getOutTombstone = function getOutTombstone(id) {
     var self = this;
 
