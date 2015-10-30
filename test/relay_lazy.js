@@ -391,7 +391,7 @@ allocCluster.test('relay request declines on no peer', {
     }
 });
 
-allocCluster.test.only('relay request handles channel close correctly', {
+allocCluster.test('relay request handles channel close correctly', {
     numPeers: 3
 }, function t(cluster, assert) {
     cluster.logger.whitelist('warn', 'error while forwarding');
