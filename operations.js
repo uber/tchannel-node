@@ -232,9 +232,9 @@ Operations.prototype.getOutReq = function getOutReq(id) {
     var req = self.requests.out[id] || null;
     if (req && req.isTombstone) {
         return null;
-    } else {
-        return req;
     }
+
+    return req;
 };
 
 Operations.prototype.getInReq = function getInReq(id) {
