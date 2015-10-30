@@ -266,7 +266,8 @@ allocCluster.test('lazy relay an error frame', {
 allocCluster.test('lazy relay request times out', {
     numPeers: 3
 }, function t(cluster, assert) {
-    // TODO: address the warn logs
+    cluster.logger.whitelist('info', 'expected error while forwarding');
+
     var relay = cluster.channels[0];
     var source = cluster.channels[1];
     var dest = cluster.channels[2];
@@ -319,6 +320,17 @@ allocCluster.test('lazy relay request times out', {
     }
 
     function finish() {
+        var logs = cluster.logger.items();
+        assert.equal(logs.length, 1);
+
+        var relayLine = logs[0];
+        assert.equal(relayLine.msg, 'expected error while forwarding');
+        assert.equal(relayLine.levelName, 'info');
+        assert.equal(relayLine.meta.error.type, 'tchannel.request.timeout');
+
+        assert.equal(relayLine.meta.hostPort, relay.hostPort, 'hostPort is relay');
+        assert.equal(relayLine.meta.remoteName, source.hostPort);
+
         assert.end();
     }
 });
@@ -326,7 +338,8 @@ allocCluster.test('lazy relay request times out', {
 allocCluster.test('relay request declines on no peer', {
     numPeers: 2
 }, function t(cluster, assert) {
-    // TODO: address the warn logs
+    cluster.logger.whitelist('info', 'no relay peer available');
+
     var relay = cluster.channels[0];
     var source = cluster.channels[1];
 
@@ -363,6 +376,17 @@ allocCluster.test('relay request declines on no peer', {
                      'tchannel.declined',
                      'expected declined error');
         assert.notOk(res, 'expected no response');
+
+        var logs = cluster.logger.items();
+        assert.equal(logs.length, 1);
+
+        var relayLine = logs[0];
+        assert.equal(relayLine.msg, 'no relay peer available');
+        assert.equal(relayLine.levelName, 'info');
+
+        assert.equal(relayLine.meta.hostPort, relay.hostPort);
+        assert.equal(relayLine.meta.remoteName, source.hostPort);
+
         assert.end();
     }
 });
@@ -370,7 +394,7 @@ allocCluster.test('relay request declines on no peer', {
 allocCluster.test('relay request handles channel close correctly', {
     numPeers: 3
 }, function t(cluster, assert) {
-    // TODO: address the warn logs
+    cluster.logger.whitelist('warn', 'error while forwarding');
 
     var relay = cluster.channels[0];
     var source = cluster.channels[1];
@@ -423,6 +447,17 @@ allocCluster.test('relay request handles channel close correctly', {
 
     function finish() {
         dest.close();
+
+        var items = cluster.logger.items();
+        assert.equal(items.length, 1);
+
+        var relayLine = items[0];
+        assert.equal(relayLine.msg, 'error while forwarding');
+        assert.equal(relayLine.levelName, 'warn');
+
+        assert.equal(relayLine.meta.error.type, 'tchannel.local.reset');
+        assert.equal(relayLine.meta.hostPort, relay.hostPort);
+        assert.equal(relayLine.meta.remoteName, source.hostPort);
 
         assert.end();
     }
