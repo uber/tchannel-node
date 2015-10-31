@@ -360,6 +360,7 @@ TChannelConnection.prototype.onCallResponse = function onCallResponse(res) {
     }
 
     if (!req) {
+        self.logUnknownCallResponse(res);
         return;
     }
 
@@ -371,6 +372,24 @@ TChannelConnection.prototype.onCallResponse = function onCallResponse(res) {
     }
 
     req.emitResponse(res);
+};
+
+TChannelConnection.prototype.logUnknownCallResponse =
+function logUnknownCallResponse(res) {
+    var self = this;
+
+    var logger = self.channel.logger;
+    var tombstone = self.ops.getOutTombstone(res.id);
+    var info = self.extendLogInfo(res.extendLogInfo({
+        responseHeaders: res.headers,
+        tombstone: tombstone
+    }));
+
+    if (tombstone) {
+        logger.info('got call response for timed out call request', info);
+    } else {
+        logger.warn('got unexpected call response without call request', info);
+    }
 };
 
 TChannelConnection.prototype._deferPopOutReq = function _deferPopOutReq(res) {
