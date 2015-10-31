@@ -118,7 +118,7 @@ function TChannel(options) {
     self.options = extend({
         useLazyHandling: false,
         useLazyRelaying: true,
-        timeoutCheckInterval: 100,
+        timeoutCheckInterval: 10,
         timeoutFuzz: 100,
         connectionStalePeriod: CONN_STALE_PERIOD,
 
