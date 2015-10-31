@@ -170,17 +170,8 @@ function TChannel(options) {
     // for processing operation timeouts
     self.timeHeap = self.options.timeHeap || new TimeHeap({
         timers: self.timers,
-        // TODO: do we still need/want fuzzing?
-        minTimeout: fuzzedMinTimeout
+        minTimeout: self.options.timeoutCheckInterval
     });
-
-    function fuzzedMinTimeout() {
-        var fuzz = self.options.timeoutFuzz;
-        if (fuzz) {
-            fuzz = Math.floor(fuzz * (self.random() - 0.5));
-        }
-        return self.options.timeoutCheckInterval + fuzz;
-    }
 
     // how to handle incoming requests
     if (!self.options.handler) {
