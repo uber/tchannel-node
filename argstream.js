@@ -40,6 +40,10 @@ var inherits = require('util').inherits;
 var EventEmitter = require('./lib/event_emitter');
 var PassThrough = require('stream').PassThrough;
 var Ready = require('ready-signal');
+var Buffer = require('buffer').Buffer;
+var setImmediate = require('timers').setImmediate;
+var clearImmediate = require('timers').clearImmediate;
+
 var errors = require('./errors');
 
 function ArgStream() {
