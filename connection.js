@@ -53,17 +53,15 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
                     socketRemoteAddr
                 ));
         }
-    } else {
-        if (self.channel.emitConnectionMetrics) {
-            self.channel.emitFastStat(
-                'tchannel.connections.accepted',
-                'counter',
-                1,
-                new stat.ConnectionsAcceptedTags(
-                    self.channel.hostPort,
-                    socketRemoteAddr
-                ));
-        }
+    } else if (self.channel.emitConnectionMetrics) {
+        self.channel.emitFastStat(
+            'tchannel.connections.accepted',
+            'counter',
+            1,
+            new stat.ConnectionsAcceptedTags(
+                self.channel.hostPort,
+                socketRemoteAddr
+            ));
     }
 
     self.socket = socket;
