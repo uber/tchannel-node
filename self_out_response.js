@@ -21,6 +21,7 @@
 'use strict';
 
 var inherits = require('util').inherits;
+var process = require('process');
 
 var InResponse = require('./in_response');
 var OutResponse = require('./out_response');
