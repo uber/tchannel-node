@@ -459,8 +459,8 @@ function send(endpoint, head, body, callback) {
     self.tchannelThrift.send(outreq, endpoint, head, body, callback);
 };
 
-function health(self, req, head, body, callback) {
-    var status = self.isHealthy();
+function health(tchannelThrift, req, head, body, callback) {
+    var status = tchannelThrift.isHealthy();
     assert(status && typeof status.ok === 'boolean', 'status must have ok field');
     assert(status && (status.ok || typeof status.message === 'string'),
         'status.message must be provided when status.ok === false');
@@ -474,14 +474,14 @@ function health(self, req, head, body, callback) {
     });
 }
 
-function thriftIDL(self, req, head, body, callback) {
+function thriftIDL(tchannelThrift, req, head, body, callback) {
     var idls = {};
-    idls[self.thriftFileName] = self.thriftSource;
+    idls[tchannelThrift.thriftFileName] = tchannelThrift.thriftSource;
     return callback(null, {
         ok: true,
         body: {
             idls: idls,
-            entryPoint: self.thriftFileName
+            entryPoint: tchannelThrift.thriftFileName
         }
     });
 }
