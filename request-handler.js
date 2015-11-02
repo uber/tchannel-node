@@ -56,7 +56,7 @@ RequestCallbackHandler.prototype.handleRequest = function handleRequest(req, bui
         req.withArg23(function onArg23(err, arg2, arg3) {
             if (err) {
                 req.channel.logger.warn(
-                    'Could not parse arg3 for streaming inreq',
+                    'Could not parse arg2/arg3 for streaming inreq',
                     req.extendLogInfo({
                         error: err
                     })
