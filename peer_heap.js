@@ -246,7 +246,7 @@ PeerHeap.prototype.pop = function pop() {
 PeerHeap.prototype.siftdown = function siftdown(i) {
     var self = this;
 
-    while (true) {
+    for (;;) {
         var left = (2 * i) + 1;
         if (left >= self.array.length) {
             self.rangehis[i] = self.array[i].range.hi;
