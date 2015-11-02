@@ -86,7 +86,9 @@ TChannelRequest.prototype.type = 'tchannel.request';
 
 TChannelRequest.prototype.emitError = function emitError(err) {
     var self = this;
-    if (!self.end) self.end = self.channel.timers.now();
+    if (!self.end) {
+        self.end = self.channel.timers.now();
+    }
     self.err = err;
 
     self.emitErrorStat(err);
@@ -148,7 +150,9 @@ function emitLatency() {
 
 TChannelRequest.prototype.emitResponse = function emitResponse(res) {
     var self = this;
-    if (!self.end) self.end = self.channel.timers.now();
+    if (!self.end) {
+        self.end = self.channel.timers.now();
+    }
     self.res = res;
 
     self.arg1 = null;
@@ -207,14 +211,18 @@ TChannelRequest.prototype.hookupCallback = function hookupCallback(callback) {
     self.responseEvent.on(onResponse);
 
     function onError(err) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
 
         callback(err, null, null, null);
     }
 
     function onResponse(res) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         res.withArg23(function gotArg23(err, arg2, arg3) {
             callback(err, res, arg2, arg3);
@@ -267,9 +275,13 @@ function emitOutboundCallsSent() {
 TChannelRequest.prototype.resend = function resend() {
     var self = this;
 
-    if (self.trackPending && self.checkPending()) return;
+    if (self.trackPending && self.checkPending()) {
+        return;
+    }
 
-    if (self.checkTimeout()) return;
+    if (self.checkTimeout()) {
+        return;
+    }
 
     var peer = self.choosePeer();
     if (!peer) {
@@ -364,7 +376,9 @@ TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
 
 TChannelRequest.prototype.onSubreqError = function onSubreqError(err) {
     var self = this;
-    if (self.checkTimeout(err)) return;
+    if (self.checkTimeout(err)) {
+        return;
+    }
     if (self.shouldRetryError(err)) {
         self.deferResend();
     } else {
@@ -374,7 +388,9 @@ TChannelRequest.prototype.onSubreqError = function onSubreqError(err) {
 
 TChannelRequest.prototype.onSubreqResponse = function onSubreqResponse(res) {
     var self = this;
-    if (self.checkTimeout(null, res)) return;
+    if (self.checkTimeout(null, res)) {
+        return;
+    }
     if (res.ok) {
         self.emitResponse(res);
     } else if (self.options.shouldApplicationRetry) {
@@ -412,7 +428,9 @@ TChannelRequest.prototype.checkTimeout = function checkTimeout(err, res) {
     var self = this;
     var now = self.channel.timers.now();
     self.elapsed = now - self.start;
-    if (self.elapsed < self.timeout) return false;
+    if (self.elapsed < self.timeout) {
+        return false;
+    }
 
     if (err) {
         if (!self.err) {
@@ -465,7 +483,9 @@ TChannelRequest.prototype.maybeAppRetry = function maybeAppRetry(res) {
     self.options.shouldApplicationRetry(self, res, retry, done);
 
     function retry() {
-        if (self.checkTimeout(null, res)) return;
+        if (self.checkTimeout(null, res)) {
+            return;
+        }
         self.deferResend();
     }
 
