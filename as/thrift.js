@@ -292,6 +292,7 @@ function send(request, endpoint, outHead, outBody, callback) {
     }
 };
 
+/*eslint-disable max-statements */
 TChannelAsThrift.prototype._parse = function parse(opts) {
     var self = this;
     var spec = opts.spec || self.spec;
@@ -364,6 +365,7 @@ TChannelAsThrift.prototype._parse = function parse(opts) {
         typeName: typeName
     });
 };
+/*eslint-enable max-statements */
 
 TChannelAsThrift.prototype._stringify = function stringify(opts) {
     var self = this;
