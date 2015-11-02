@@ -62,11 +62,12 @@ RequestCallbackHandler.prototype.handleRequest = function handleRequest(req, bui
                     })
                 );
 
-                return req.emitError(err);
+                req.emitError(err);
+                return;
             }
 
             if (req.res && req.res.responseAlreadyDone()) {
-                return null;
+                return;
             }
 
             res = buildResponse({streamed: false});
