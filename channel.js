@@ -21,7 +21,10 @@
 'use strict';
 
 var assert = require('assert');
+var process = require('process');
 var version = require('./package.json').version;
+
+/*global global*/
 if (typeof global.tchannelVersion === 'string' &&
     version !== global.tchannelVersion
 ) {
