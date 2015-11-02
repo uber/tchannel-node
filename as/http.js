@@ -60,6 +60,7 @@ HTTPResArg2.RW = bufrw.Struct(HTTPResArg2, {
 });
 
 // per RFC2616
+/*eslint-disable complexity*/
 HTTPReqArg2.prototype.getHeaders =
 HTTPResArg2.prototype.getHeaders =
 function getHeaders() {
@@ -105,8 +106,10 @@ function getHeaders() {
         }
     }
     return headers;
+    /*eslint-enable complexity*/
 };
 
+/*eslint-disable complexity*/
 HTTPReqArg2.prototype.setHeaders =
 HTTPResArg2.prototype.setHeaders =
 function setHeaders(headers) {
@@ -146,6 +149,7 @@ function setHeaders(headers) {
         }
     }
 };
+/*eslint-enable complexity*/
 
 function TChannelHTTP(options) {
     if (!(this instanceof TChannelHTTP)) {
