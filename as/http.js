@@ -316,7 +316,6 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, s
         return null;
     }
 
-
     var res = buildResponse({
         streamed: true,
         headers: {
