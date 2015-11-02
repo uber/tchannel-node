@@ -20,7 +20,6 @@
 
 'use strict';
 
-
 var Buffer = require('buffer').Buffer;
 var assert = require('assert');
 var Result = require('bufrw/result');
