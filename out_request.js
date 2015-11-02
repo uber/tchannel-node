@@ -325,8 +325,11 @@ TChannelOutRequest.prototype.sendCallRequestFrame = function sendCallRequestFram
                 self.span.annotate('cs');
             }
             self._sendCallRequest(args, isLast);
-            if (isLast) self.state = States.Done;
-            else self.state = States.Streaming;
+            if (isLast) {
+                self.state = States.Done;
+            } else {
+                self.state = States.Streaming;
+            }
             break;
         case States.Streaming:
             self.emitError(errors.RequestFrameState({
@@ -356,7 +359,9 @@ TChannelOutRequest.prototype.sendCallRequestContFrame = function sendCallRequest
             break;
         case States.Streaming:
             self._sendCallRequestCont(args, isLast);
-            if (isLast) self.state = States.Done;
+            if (isLast) {
+                self.state = States.Done;
+            }
             break;
         case States.Done:
             self.emitError(errors.RequestAlreadyDone({
@@ -443,13 +448,17 @@ function hookupStreamCallback(callback) {
     self.responseEvent.on(onResponse);
 
     function onError(err) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         callback(err, null, null);
     }
 
     function onResponse(res) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         callback(null, self, res);
     }
@@ -470,13 +479,17 @@ function hookupCallback(callback) {
     self.responseEvent.on(onResponse);
 
     function onError(err) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         callback(err, null, null);
     }
 
     function onResponse(res) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         if (!res.streamed) {
             callback(null, res, res.arg2, res.arg3);
