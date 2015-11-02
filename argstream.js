@@ -59,7 +59,9 @@ function ArgStream() {
     }
 
     self.arg3.on('start', function onArg3Start() {
-        if (!self.arg2._writableState.ended) self.arg2.end();
+        if (!self.arg2._writableState.ended) {
+            self.arg2.end();
+        }
     });
 }
 
@@ -97,16 +99,24 @@ InArgStream.prototype.handleFrame = function handleFrame(parts, isLast) {
     }
 
     for (var i = 0; i < parts.length; i++) {
-        if (i > 0) stream = advance();
-        if (!stream) break;
-        if (parts[i].length) stream.write(parts[i]);
+        if (i > 0) {
+            stream = advance();
+        }
+        if (!stream) {
+            break;
+        }
+        if (parts[i].length) {
+            stream.write(parts[i]);
+        }
     }
     if (i < parts.length) {
         return errors.ArgStreamExceededFramePartsError();
     }
 
     if (isLast) {
-        while (stream) stream = advance();
+        while (stream) {
+            stream = advance();
+        }
     }
 
     return null;
@@ -204,11 +214,15 @@ OutArgStream.prototype._flushParts = function _flushParts(isLast) {
         clearImmediate(self._flushImmed);
         self._flushImmed = null;
     }
-    if (self.finished) return;
+    if (self.finished) {
+        return;
+    }
     isLast = Boolean(isLast);
     var frame = self.frame;
     self.frame = [Buffer(0)];
-    if (frame.length) self.frameEvent.emit(self, [frame, isLast]);
+    if (frame.length) {
+        self.frameEvent.emit(self, [frame, isLast]);
+    }
 };
 
 function StreamArg(options) {
@@ -253,7 +267,9 @@ function bufferStreamData(stream, callback) {
         stream.removeListener('end', finish);
         var buf = Buffer.concat(parts);
         stream.buf = buf;
-        if (err === undefined) err = null;
+        if (err === undefined) {
+            err = null;
+        }
         callback(err, buf);
     }
 }
