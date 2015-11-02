@@ -66,7 +66,7 @@ RandomSample.fromString = function fromString(str, random) {
     }
 
     var args = str.split(',');
-    if (args.length !== variate.length-1) {
+    if (args.length !== variate.length - 1) {
         throw new Error('wrong number of args for random sample kind ' + kind);
     }
 
