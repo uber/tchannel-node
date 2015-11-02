@@ -20,7 +20,6 @@
 
 'use strict';
 
-/* jshint maxparams:5 */
 
 var TypedError = require('error/typed');
 var test = require('tape');

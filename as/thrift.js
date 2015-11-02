@@ -237,7 +237,6 @@ function register(channel, name, opts, handle, spec) {
     }
 };
 
-/* jshint maxparams:5 */
 TChannelAsThrift.prototype.send =
 function send(request, endpoint, outHead, outBody, callback) {
     var self = this;

@@ -82,7 +82,6 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
         handleCallLazily: handleCallLazily
     };
 
-    // jshint forin:true
     self.handler = new v2.Handler(opts);
 
     self.mach = ReadMachine(bufrw.UInt16BE, v2.Frame.RW);

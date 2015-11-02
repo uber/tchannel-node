@@ -42,7 +42,6 @@ var util = require('util');
 var TestSearch = require('./lib/test_search');
 var argstream = require('../argstream');
 
-/* jshint camelcase:false */
 
 // Useful for verifying the searcher
 test.skip('setup sanity', argSearchTest(function t(state, assert) {

@@ -42,7 +42,6 @@ var errors = require('../errors');
 var SERVER_TIMEOUT_DEFAULT = 100;
 var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
 
-/* jshint maxparams:10 */
 
 module.exports = TChannelV2Handler;
 
@@ -216,13 +215,11 @@ TChannelV2Handler.prototype.handleInitRequest = function handleInitRequest(reqFr
     if (self.remoteName !== null) {
         return self.errorEvent.emit(self, errors.DuplicateInitRequestError());
     }
-    /* jshint camelcase:false */
     var headers = reqFrame.body.headers;
     var init = {
         hostPort: headers.host_port,
         processName: headers.process_name
     };
-    /* jshint camelcase:true */
     self.sendInitResponse(reqFrame);
     self.remoteName = init.hostPort;
     self.initRequestEvent.emit(self, init);
@@ -233,13 +230,11 @@ TChannelV2Handler.prototype.handleInitResponse = function handleInitResponse(res
     if (self.remoteName !== null) {
         return self.errorEvent.emit(self, errors.DuplicateInitResponseError());
     }
-    /* jshint camelcase:false */
     var headers = resFrame.body.headers;
     var init = {
         hostPort: headers.host_port,
         processName: headers.process_name
     };
-    /* jshint camelcase:true */
     self.remoteName = init.hostPort;
     self.initResponseEvent.emit(self, init);
 };
@@ -584,10 +579,8 @@ TChannelV2Handler.prototype.sendInitRequest = function sendInitRequest() {
     var hostPort = self.hostPort || '0.0.0.0:0';
     var processName = self.processName;
     var body = new v2.InitRequest(v2.VERSION, {
-        /* jshint camelcase:false */
         host_port: hostPort,
         process_name: processName
-        /* jshint camelcase:true */
     });
     var reqFrame = new v2.Frame(id, body);
     self.pushFrame(reqFrame);
@@ -599,10 +592,8 @@ TChannelV2Handler.prototype.sendInitResponse = function sendInitResponse(reqFram
     var hostPort = self.hostPort;
     var processName = self.processName;
     var body = new v2.InitResponse(v2.VERSION, {
-        /* jshint camelcase:false */
         host_port: hostPort,
         process_name: processName
-        /* jshint camelcase:true */
     });
     var resFrame = new v2.Frame(id, body);
     self.pushFrame(resFrame);
@@ -776,7 +767,6 @@ function sendCallBodies(id, body, checksum, chanStat, tags) {
     var frame;
 
     var size = 0;
-    // jshint boss:true
     do {
         if (checksum) {
             body.csum = checksum;
@@ -949,7 +939,6 @@ TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame)
     return res;
 };
 
-/*jshint maxparams:10*/
 function InRequestOptions(
     channel, timeout, tracing, serviceName, headers, checksum,
     retryFlags, connection, hostPort, tracer

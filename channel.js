@@ -607,7 +607,6 @@ TChannel.prototype.requestOptions = function requestOptions(options) {
     var self = this;
     var prop;
     var opts = {};
-    // jshint forin:false
     for (prop in self.requestDefaults) {
         if (prop === 'headers') {
             continue;
@@ -636,7 +635,6 @@ TChannel.prototype.requestOptions = function requestOptions(options) {
             opts.headers[prop] = options.headers[prop];
         }
     }
-    // jshint forin:true
     return opts;
 };
 
@@ -700,13 +698,11 @@ function fastRequestDefaults(reqOpts) {
     }
 
     if (defaults.headers) {
-        // jshint forin:false
         for (var key in defaults.headers) {
             if (!reqOpts.headers[key]) {
                 reqOpts.headers[key] = defaults.headers[key];
             }
         }
-        // jshint forin:true
     }
 };
 

@@ -27,7 +27,6 @@ module.exports.Header = require('./header');
 module.exports.Parser = require('./parser');
 module.exports.Handler = require('./handler');
 
-/* jshint camelcase:false */
 
 var types = module.exports.Types = {};
 types.reqCompleteMessage = types.req_complete_message = 0x01;
@@ -38,4 +37,3 @@ types.resMessageFragment = types.res_message_fragment = 0x81;
 types.resLastFragment = types.res_last_fragment = 0x82;
 types.resError = types.res_error = 0xC0;
 
-/* jshint camelcase:true */
