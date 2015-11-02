@@ -26,6 +26,7 @@ process.title = 'nodejs-benchmarks-bench_server';
 var parseArgs = require('minimist');
 var assert = require('assert');
 var Statsd = require('uber-statsd-client');
+var setTimeout = require('timers').setTimeout;
 
 var Reporter = require('../tcollector/reporter.js');
 var TChannel = require('../channel');
