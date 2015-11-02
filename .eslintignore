@@ -1,0 +1,4 @@
+examples/*.js
+scripts/*.js
+test/
+v1/*.js
