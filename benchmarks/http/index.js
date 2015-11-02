@@ -106,7 +106,7 @@ HTTPBenchmarkRunner.prototype.spawnBenchmarkClient =
         maxRequests: self.opts.numRequests,
         agentKeepAlive: self.opts.keepAlive
     };
-    loadtest.loadTest(options, function(error, result) {
+    loadtest.loadTest(options, function onLoad(error, result) {
         if (error) {
             console.error('benchmark failed with', error);
         } else {
