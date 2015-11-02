@@ -21,7 +21,7 @@
 'use strict';
 
 var EventEmitter = require('./lib/event_emitter');
-var stat = require('./lib/stat');
+var stat = require('./stat-tags.js');
 var inherits = require('util').inherits;
 
 var errors = require('./errors');
@@ -249,7 +249,7 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
 
         self.codeString = codeString;
         self.message = message;
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.inbound.calls.system-errors',
             'counter',
             1,
@@ -259,7 +259,7 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
                 String(self.inreq.arg1),
                 self.codeString
             )
-        ));
+        );
         self._sendError(codeString, message);
         self.emitFinish();
     }
@@ -291,7 +291,7 @@ TChannelOutResponse.prototype.emitFinish = function emitFinish() {
 
     var latency = self.end - self.inreq.start;
 
-    self.channel.emitFastStat(self.channel.buildStat(
+    self.channel.emitFastStat(
         'tchannel.inbound.calls.latency',
         'timing',
         latency,
@@ -300,7 +300,7 @@ TChannelOutResponse.prototype.emitFinish = function emitFinish() {
             self.inreq.serviceName,
             self.inreq.endpoint
         )
-    ));
+    );
 
     if (self.span) {
         self.spanEvent.emit(self, self.span);
@@ -377,7 +377,7 @@ TChannelOutResponse.prototype.send = function send(res1, res2) {
     self.arg3 = res2;
 
     if (self.ok) {
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.inbound.calls.success',
             'counter',
             1,
@@ -386,10 +386,10 @@ TChannelOutResponse.prototype.send = function send(res1, res2) {
                 self.inreq.serviceName,
                 self.inreq.endpoint
             )
-        ));
+        );
     } else {
         // TODO: add outResponse.setErrorType()
-        self.channel.emitFastStat(self.channel.buildStat(
+        self.channel.emitFastStat(
             'tchannel.inbound.calls.app-errors',
             'counter',
             1,
@@ -399,7 +399,7 @@ TChannelOutResponse.prototype.send = function send(res1, res2) {
                 self.inreq.endpoint,
                 'unknown'
             )
-        ));
+        );
     }
 
     // TODO: may be spam, consider dropping
