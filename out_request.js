@@ -381,7 +381,7 @@ TChannelOutRequest.prototype.sendArg1 = function sendArg1(arg1) {
         self.emitError(errors.RequestDrained({
             reason: self.drainReason
         }));
-        return;
+        return self;
     }
 
     self.arg1 = arg1;
@@ -404,7 +404,7 @@ TChannelOutRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
         self.emitError(errors.RequestDrained({
             reason: self.drainReason
         }));
-        return;
+        return self;
     }
 
     self.sendArg1(arg1);
