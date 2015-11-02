@@ -86,7 +86,7 @@ SelfOutRequest.prototype._sendCallRequest =
 SelfStreamingOutRequest.prototype._sendCallRequest =
 SelfOutRequest.prototype._sendCallRequestCont =
 SelfStreamingOutRequest.prototype._sendCallRequestCont =
-function passRequestParts(args, isLast ) {
+function passRequestParts(args, isLast) {
     var self = this;
     self.inreq.handleFrame(args, isLast);
     if (!self.closing) {
