@@ -75,8 +75,8 @@ TChannelInResponse.prototype.extendLogInfo = function extendLogInfo(info) {
     return info;
 };
 
-TChannelInResponse.prototype.onFinish = function onFinish(_arg, self) {
-    self.state = States.Done;
+TChannelInResponse.prototype.onFinish = function onFinish(_arg, resp) {
+    resp.state = States.Done;
 };
 
 TChannelInResponse.prototype.handleFrame = function handleFrame(parts, isLast) {
