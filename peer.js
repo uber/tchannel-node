@@ -295,7 +295,9 @@ TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
 TChannelPeer.prototype.isConnected = function isConnected(direction, identified) {
     var self = this;
 
-    if (identified === undefined) identified = true;
+    if (identified === undefined) {
+        identified = true;
+    }
     for (var i = 0; i < self.connections.length; i++) {
         var conn = self.connections[i];
         if (direction && conn.direction !== direction) {
@@ -373,10 +375,18 @@ TChannelPeer.prototype.getInConnection = function getInConnection(preferIdentifi
     var candidate = null;
     for (var i = 0; i < self.connections.length; i++) {
         var conn = self.connections[i];
-        if (conn.closing) continue;
-        if (!preferIdentified) return conn; // user doesn't care, take first incoming
-        if (conn.remoteName) return conn; // user wanted an identified channel, and we found one
-        if (!candidate) candidate = conn; // we'll fallback to returning this if we can't find an identified one
+        if (conn.closing) {
+            continue;
+        }
+        if (!preferIdentified) {
+            return conn; // user doesn't care, take first incoming
+        }
+        if (conn.remoteName) {
+            return conn; // user wanted an identified channel, and we found one
+        }
+        if (!candidate) {
+            candidate = conn; // we'll fallback to returning this if we can't find an identified one
+        }
     }
     return candidate;
 };
@@ -391,10 +401,18 @@ TChannelPeer.prototype.getOutConnection = function getOutConnection(preferIdenti
     var candidate = null;
     for (var i = self.connections.length - 1; i >= 0; i--) {
         var conn = self.connections[i];
-        if (conn.closing) continue;
-        if (!preferIdentified) return conn; // user doesn't care, take last outgoing
-        if (conn.remoteName) return conn; // user wanted an identified channel, and we found one
-        if (!candidate) candidate = conn; // we'll fallback to returning this if we can't find an identified one
+        if (conn.closing) {
+            continue;
+        }
+        if (!preferIdentified) {
+            return conn; // user doesn't care, take last outgoing
+        }
+        if (conn.remoteName) {
+            return conn; // user wanted an identified channel, and we found one
+        }
+        if (!candidate) {
+            candidate = conn; // we'll fallback to returning this if we can't find an identified one
+        }
     }
     return candidate;
 };
