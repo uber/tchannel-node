@@ -710,8 +710,8 @@ function _observeErrorFrame(errFrame, now) {
 
     // TODO: thinner logErrorFrame that doesn't need to instantiate an error
     // just to log an error frame
-    var codeErrorType = v2.ErrorResponse.CodeErrors[code];
-    var err = new codeErrorType({
+    var CodeErrorType = v2.ErrorResponse.CodeErrors[code];
+    var err = new CodeErrorType({
         originalId: errFrame.id,
         message: message
     });
