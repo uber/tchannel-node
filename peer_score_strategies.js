@@ -20,6 +20,8 @@
 
 'use strict';
 
+var Range = require('./range');
+
 module.exports.PreferOutgoing = PreferOutgoing;
 module.exports.NoPreference = NoPreference;
 module.exports.PreferIncoming = PreferIncoming;
@@ -53,13 +55,12 @@ PreferOutgoing.prototype.getTier = function getTier() {
     }
 };
 
-PreferOutgoing.prototype.getScore = function getScore() {
+PreferOutgoing.prototype.getScoreRange = function getScoreRange() {
     var self = this;
 
     // space:
     //   [0.1, 0.4)  peers with no identified outgoing connection
     //   [0.4, 1.0)  identified outgoing connections
-    var random = self.peer.pendingWeightedRandom();
     var tier = self.getTier();
     self.lastTier = tier;
     switch (tier) {
@@ -68,9 +69,9 @@ PreferOutgoing.prototype.getScore = function getScore() {
         case PreferOutgoing.UNCONNECTED:
             /* falls through */
         case PreferOutgoing.FRESH_OUTGOING:
-            return 0.1 + random * 0.3;
+            return new Range(0.1, 0.4);
         case PreferOutgoing.READY_OUTGOING:
-            return 0.4 + random * 0.6;
+            return new Range(0.4, 1.0);
     }
 };
 
@@ -99,22 +100,21 @@ NoPreference.prototype.getTier = function getTier() {
     }
 };
 
-NoPreference.prototype.getScore = function getScore() {
+NoPreference.prototype.getScoreRange = function getScoreRange() {
     var self = this;
 
     // space:
-    //   [0.1, 0.4)  peers with no identified connection
-    //   [0.4, 1.0)  identified connections
-    var random = self.peer.pendingWeightedRandom();
+    //   (0.1, 0.4]  peers with no identified connection
+    //   (0.4, 1.0]  identified connections
     var tier = self.getTier();
     self.lastTier = tier;
     switch (tier) {
         case NoPreference.UNCONNECTED:
             /* falls through */
         case NoPreference.CONNECTED:
-            return 0.1 + random * 0.3;
+            return new Range(0.1, 0.4);
         case NoPreference.IDENTIFIED:
-            return 0.4 + random * 0.6;
+            return new Range(0.4, 1.0);
     }
 };
 
@@ -147,13 +147,12 @@ PreferIncoming.prototype.getTier = function getTier() {
     }
 };
 
-PreferIncoming.prototype.getScore = function getScore() {
+PreferIncoming.prototype.getScoreRange = function getScoreRange() {
     var self = this;
 
     // space:
     //   [0.1, 0.4)  peers with no identified outgoing connection
     //   [0.4, 1.0)  identified outgoing connections
-    var random = self.peer.pendingWeightedRandom();
     var tier = self.getTier();
     self.lastTier = tier;
     switch (tier) {
@@ -162,8 +161,8 @@ PreferIncoming.prototype.getScore = function getScore() {
         case PreferIncoming.UNCONNECTED:
             /* falls through */
         case PreferIncoming.FRESH_INCOMING:
-            return 0.1 + random * 0.3;
+            return new Range(0.1, 0.4);
         case PreferIncoming.READY_INCOMING:
-            return 0.4 + random * 0.6;
+            return new Range(0.4, 1.0);
     }
 };
