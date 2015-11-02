@@ -135,7 +135,7 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
                 self.channel.topChannel.peerScoredEvent.emit(peer, {
                     peer: peer,
                     reason: 'chooseLinearPeer',
-                    score: score,
+                    score: score
                 });
             }
 
