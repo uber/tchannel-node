@@ -21,6 +21,7 @@
 'use strict';
 
 var inherits = require('util').inherits;
+var setImmediate = require('timers').setImmediate;
 var EventEmitter = require('./lib/event_emitter');
 
 function TChannelPeersBase(channel, options) {
