@@ -546,7 +546,9 @@ TChannel.prototype.onServerSocketError = function onServerSocketError(err) {
 
 TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
     var self = this;
-    if (!options) options = {};
+    if (!options) {
+        options = {};
+    }
     assert(!self.serviceName, 'arbitrary-depth sub channels are unsupported');
     assert(options.serviceName, 'must specify serviceName');
     assert(!self.subChannels[options.serviceName], 'duplicate sub channel creation');
