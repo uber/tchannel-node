@@ -147,8 +147,11 @@ TChannelOutResponse.prototype.sendCallResponseFrame = function sendCallResponseF
             if (self.span) {
                 self.span.annotate('ss');
             }
-            if (isLast) self.state = States.Done;
-            else self.state = States.Streaming;
+            if (isLast) {
+                self.state = States.Done;
+            } else {
+                self.state = States.Streaming;
+            }
             break;
         case States.Streaming:
             self.emitError(errors.ResponseFrameState({
@@ -188,7 +191,9 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
             break;
         case States.Streaming:
             self._sendCallResponseCont(args, isLast);
-            if (isLast) self.state = States.Done;
+            if (isLast) {
+                self.state = States.Done;
+            }
             break;
         case States.Done:
         case States.Error:
