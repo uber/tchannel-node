@@ -312,6 +312,7 @@ Operations.prototype.checkDrained = function checkDrained() {
 Operations.prototype._isCollDrained = function _isCollDrained(coll) {
     var self = this;
 
+    /*eslint-disable guard-for-in*/
     for (var id in coll) {
         var op = coll[id];
         if (!(op instanceof OperationTombstone) &&
@@ -322,6 +323,7 @@ Operations.prototype._isCollDrained = function _isCollDrained(coll) {
             return false;
         }
     }
+    /*eslint-enable guard-for-in*/
 
     return true;
 };
