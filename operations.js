@@ -473,6 +473,7 @@ Operations.prototype.sanitySweep = function sanitySweep(callback) {
 };
 
 Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
+    /*eslint max-statements: [2, 40]*/
     var self = this;
 
     // keep track of all pending change made during the sweep so we can
