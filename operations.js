@@ -357,11 +357,11 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
     self.requests.out[id] = tombstone;
     tombstone.timeHeapHandle = self.connection.channel.timeHeap.update(tombstone, tombstone.time);
 
-    var errors = 0;
+    var pendingErrors = 0;
 
     if (tombstone.isPendingError) {
         self.pending.errors++;
-        errors++;
+        pendingErrors++;
     }
 
     req.operations = null;
@@ -370,7 +370,7 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
         self.checkDrained();
     }
 
-    self.emitPendingChange(0, -1, errors);
+    self.emitPendingChange(0, -1, pendingErrors);
 
     return req;
 };
