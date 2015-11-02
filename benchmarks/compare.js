@@ -235,8 +235,8 @@ function rpad(input, len, chr) {
 
 function extractDim(name, sample) {
     var missing = 0;
-    var data = sample.map(function forSample(data) {
-        var d = data[name];
+    var data = sample.map(function forSample(item) {
+        var d = item[name];
         if (d === undefined) {
             ++missing;
         }
