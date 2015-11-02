@@ -44,7 +44,9 @@ if (argv._.length !== 2) {
 }
 
 readSamples(argv._, function onSamples(err, samples) {
-    if (err) throw err;
+    if (err) {
+        throw err;
+    }
 
     var keys = {};
     var maxKeyLen = 0;
@@ -115,7 +117,9 @@ function descStats(sample) {
     var hi = q3 + tol;
     var whiIndex = N;
     while (--whiIndex > 0) {
-        if (S[whiIndex] <= hi) break;
+        if (S[whiIndex] <= hi) {
+            break;
+        }
     }
     var whiPct = (whiIndex+1) / N;
     var whi = S[whiIndex];
@@ -231,7 +235,9 @@ function extractDim(name, sample) {
     var missing = 0;
     var data = sample.map(function forSample(data) {
         var d = data[name];
-        if (d === undefined) ++missing;
+        if (d === undefined) {
+            ++missing;
+        }
         return d;
     });
     return {
