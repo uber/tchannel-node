@@ -25,6 +25,8 @@ var fs = require('fs');
 var ldj = require('ldjson-stream');
 var parallel = require('run-parallel');
 var util = require('util');
+var process = require('process');
+var console = require('console');
 
 var argv = parseArgs(process.argv.slice(2), {
     default: {
