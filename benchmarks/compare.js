@@ -123,11 +123,11 @@ function descStats(sample) {
             break;
         }
     }
-    var whiPct = (whiIndex+1) / N;
+    var whiPct = (whiIndex + 1) / N;
     var whi = S[whiIndex];
     return {
         min: S[0],
-        max: S[N-1],
+        max: S[N - 1],
         q1: q1,
         q2: q2,
         q3: q3,
