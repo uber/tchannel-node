@@ -22,6 +22,8 @@
 
 var EventEmitter = require('./lib/event_emitter');
 var inherits = require('util').inherits;
+var process = require('process');
+var Buffer = require('buffer').Buffer;
 
 var errors = require('./errors');
 var States = require('./reqres_states');
