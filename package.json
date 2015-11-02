@@ -4,7 +4,7 @@
   "author": "mranney@uber.com",
   "version": "3.5.31",
   "scripts": {
-    "lint": "jshint .",
+    "lint": "eslint $(git ls-files | grep '.js$')",
     "travis": "npm run test",
     "test": "npm run check-licence && npm run lint -s && npm run cover -s && npm run check-benchmark -s",
     "benchmark": "echo '!!! DEPRECATED: Better to just run `node benchmarks` directly' >&2; node benchmarks",
@@ -57,6 +57,8 @@
     "child_pty": "^0.5.1",
     "collect-parallel": "^1.0.1",
     "duplexer": "^0.1.1",
+    "eslint": "0.24.0",
+    "eslint-config-perf-standard": "1.0.0",
     "faucet": "0.0.1",
     "format-stack": "4.1.1",
     "istanbul": "^0.3.13",
