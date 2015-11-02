@@ -49,7 +49,9 @@ function ChanConnMonitor(channel, options) {
     }
 }
 
+/*eslint-disable no-console*/
 ChanConnMonitor.prototype.log = console.log;
+/*eslint-enable no-console*/
 
 ChanConnMonitor.prototype.summary = function summary() {
 };
