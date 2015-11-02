@@ -206,7 +206,7 @@ OutArgStream.prototype._appendFrameChunk = function _appendFrameChunk(chunk) {
 OutArgStream.prototype.deferFlushParts = function deferFlushParts() {
     var self = this;
     if (!self._flushImmed) {
-        self._flushImmed = setImmediate(function() {
+        self._flushImmed = setImmediate(function flushParts() {
             self._flushParts();
         });
     }
