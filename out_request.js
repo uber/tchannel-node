@@ -27,6 +27,7 @@ var EventEmitter = require('./lib/event_emitter');
 var stat = require('./lib/stat.js');
 var inherits = require('util').inherits;
 var parallel = require('run-parallel');
+var process = require('process');
 
 var errors = require('./errors');
 var States = require('./reqres_states');
