@@ -107,7 +107,9 @@ readSamples(argv._, function onSamples(err, samples) {
 // return basic descriptive stats of some numerical sample
 function descStats(sample) {
     var S = [].concat(sample);
-    S.sort(function sortOrder(a, b) {return a - b;});
+    S.sort(function sortOrder(a, b) {
+        return a - b;
+    });
     var N = S.length;
     var q1 = S[Math.floor(0.25 * N)];
     var q2 = S[Math.floor(0.50 * N)];
