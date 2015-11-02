@@ -63,7 +63,7 @@ SelfOutResponse.prototype._sendCallResponse =
 SelfStreamingOutResponse.prototype._sendCallResponse =
 SelfOutResponse.prototype._sendCallResponseCont =
 SelfStreamingOutResponse.prototype._sendCallResponseCont =
-function passResponse(args, isLast ) {
+function passResponse(args, isLast) {
     var self = this;
     self.inres.handleFrame(args, isLast);
     if (self.first) {
