@@ -159,8 +159,8 @@ TimeHeap.prototype.setNextTimer = function setNextTimer(now) {
     self.timer = self.timers.setTimeout(onTimeout, timeout);
 
     function onTimeout() {
-        var now = self.timers.now();
-        self.onTimeout(now);
+        var now2 = self.timers.now();
+        self.onTimeout(now2);
     }
 };
 
