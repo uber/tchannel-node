@@ -63,6 +63,8 @@ PreferOutgoing.prototype.getScore = function getScore() {
     var tier = self.getTier();
     self.lastTier = tier;
     switch (tier) {
+        default:
+            /* falls through */
         case PreferOutgoing.ONLY_INCOMING:
             /* falls through */
         case PreferOutgoing.UNCONNECTED:
@@ -109,6 +111,8 @@ NoPreference.prototype.getScore = function getScore() {
     var tier = self.getTier();
     self.lastTier = tier;
     switch (tier) {
+        default:
+            /* falls through */
         case NoPreference.UNCONNECTED:
             /* falls through */
         case NoPreference.CONNECTED:
@@ -157,6 +161,8 @@ PreferIncoming.prototype.getScore = function getScore() {
     var tier = self.getTier();
     self.lastTier = tier;
     switch (tier) {
+        default:
+            /* falls through */
         case PreferIncoming.ONLY_OUTGOING:
             /* falls through */
         case PreferIncoming.UNCONNECTED:
