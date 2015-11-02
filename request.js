@@ -25,6 +25,7 @@ module.exports = TChannelRequest;
 var assert = require('assert');
 var EventEmitter = require('./lib/event_emitter');
 var inherits = require('util').inherits;
+var process = require('process');
 var stat = require('./stat-tags.js');
 
 var RetryFlags = require('./retry-flags.js');
