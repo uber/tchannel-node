@@ -310,6 +310,9 @@ TChannelOutRequest.prototype.sendParts = function sendParts(parts, isLast) {
         case States.Error:
             // TODO: log warn
             break;
+        default:
+            // TODO: log warn
+            break;
     }
 };
 
@@ -336,6 +339,9 @@ TChannelOutRequest.prototype.sendCallRequestFrame = function sendCallRequestFram
                 attempted: 'call request'
             }));
             break;
+        default:
+            // TODO: log warn
+            break;
     }
 };
 
@@ -356,6 +362,9 @@ TChannelOutRequest.prototype.sendCallRequestContFrame = function sendCallRequest
             self.emitError(errors.RequestAlreadyDone({
                 attempted: 'call request continuation'
             }));
+            break;
+        default:
+            // TODO: log warn
             break;
     }
 };
