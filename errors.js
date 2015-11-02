@@ -630,7 +630,7 @@ Errors.UnknownConnectionReset = TypedError({
 });
 
 // utilities
-
+/*eslint-disable complexity*/
 Errors.classify = function classify(err) {
     if (err.isErrorFrame) {
         return err.codeName;
@@ -752,6 +752,7 @@ Errors.classify = function classify(err) {
             return null;
     }
 };
+/*eslint-enable complexity*/
 
 // To determine whether a circuit should break for each response code.
 // TODO consider whether to keep a circuit healthy if a downstream circuit is
