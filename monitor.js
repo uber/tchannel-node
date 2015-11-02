@@ -254,7 +254,6 @@ function reduceByTTL(list) {
     return info;
 }
 
-
 function sumCounts(a, b) {
     Object.keys(b).forEach(function eachB(key) {
         if (!a[key]) {
