@@ -170,6 +170,10 @@ TChannelOutResponse.prototype.sendCallResponseFrame = function sendCallResponseF
                 bufArg3: arg3.slice(0, 50),
                 arg3: String(arg3).slice(0, 50)
             }));
+            break;
+        default:
+            // TODO: log warn
+            break;
     }
 };
 
@@ -193,6 +197,10 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
                 state: self.state,
                 method: 'sendCallResponseContFrame'
             }));
+            break;
+        default:
+            // TODO: log warn
+            break;
     }
 };
 
