@@ -623,9 +623,11 @@ TChannel.prototype.requestOptions = function requestOptions(options) {
     }
     opts.headers = {};
     if (self.requestDefaults.headers) {
+        /*eslint-disable guard-for-in*/
         for (prop in self.requestDefaults.headers) {
             opts.headers[prop] = self.requestDefaults.headers[prop];
         }
+        /*eslint-enable guard-for-in*/
     }
 
     if (options) {
@@ -638,9 +640,11 @@ TChannel.prototype.requestOptions = function requestOptions(options) {
     }
     if (options && options.headers) {
         opts.headers = opts.headers;
+        /*eslint-disable guard-for-in*/
         for (prop in options.headers) {
             opts.headers[prop] = options.headers[prop];
         }
+        /*eslint-enable guard-for-in*/
     }
     return opts;
 };
