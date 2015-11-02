@@ -217,7 +217,7 @@ function storeResultInto(sample) {
 
 function lpad(input, len, chr) {
     var str = input.toString();
-    chr = chr || " ";
+    chr = chr || ' ';
     while (str.length < len) {
         str = chr + str;
     }
@@ -226,7 +226,7 @@ function lpad(input, len, chr) {
 
 function rpad(input, len, chr) {
     var str = input.toString();
-    chr = chr || " ";
+    chr = chr || ' ';
     while (str.length < len) {
         str = str + chr;
     }
