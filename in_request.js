@@ -31,6 +31,7 @@ var States = require('./reqres_states');
 var emptyBuffer = Buffer(0);
 
 function TChannelInRequest(id, options) {
+    /*eslint max-statements: [2, 40]*/
     var self = this;
 
     EventEmitter.call(self);
