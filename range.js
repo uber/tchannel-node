@@ -39,8 +39,10 @@ Range.prototype.multiply = function multiply(range) {
     self.lo += (range.lo * diff);
 };
 
+Range.prototype.inspect = 
 Range.prototype.toString = function toString() {
     var self = this;
 
     return "Range(" + self.lo + ", " + self.hi + ")";
 };
+
