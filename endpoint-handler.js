@@ -50,7 +50,9 @@ TChannelEndpointHandler.prototype.register = function register(name, options, ha
     if (typeof handler !== 'function') {
         throw errors.InvalidHandlerError();
     }
-    if (options.streamed) handler.canStream = true;
+    if (options.streamed) {
+        handler.canStream = true;
+    }
     self.endpoints[name] = coerceRequestHandler(handler, self, options);
     return handler;
 };
