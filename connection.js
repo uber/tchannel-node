@@ -591,6 +591,7 @@ TChannelConnection.prototype.buildOutResponse = function buildOutResponse(req, o
 // In addition to erroring out all of the pending work, we reset the state
 // in case anybody stumbles across this object in a core dump.
 TChannelConnection.prototype.resetAll = function resetAll(err) {
+    /*eslint complexity: [2, 20]*/
     var self = this;
 
     self.ops.destroy();
