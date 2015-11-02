@@ -27,6 +27,7 @@ var inherits = require('util').inherits;
 var errors = require('./errors');
 var States = require('./reqres_states');
 
+/*eslint max-statements: [2, 40]*/
 function TChannelOutResponse(id, options) {
     options = options || {};
     var self = this;
