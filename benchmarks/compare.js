@@ -28,6 +28,8 @@ var util = require('util');
 var process = require('process');
 var console = require('console');
 
+/*eslint no-console: 0*/
+
 var argv = parseArgs(process.argv.slice(2), {
     default: {
          stat: 'rate'
