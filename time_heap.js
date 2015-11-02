@@ -248,7 +248,7 @@ TimeHeap.prototype.pop = function pop() {
 TimeHeap.prototype.siftdown = function siftdown(i) {
     var self = this;
 
-    while (true) {
+    for (;;) {
         var left = (2 * i) + 1;
         var right = left + 1;
         if (left < self.end &&
