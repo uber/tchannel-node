@@ -28,7 +28,7 @@ RandomSample.variate = {};
 RandomSample.variate.norm = function normalvariate(mu, sigma, random) {
     var nvMagicConst = 4 * Math.exp(-0.5) / Math.sqrt(2.0);
     return function sampleNormalRandom() {
-        while (true) {
+        for (;;) {
             var u1 = random();
             var u2 = 1.0 - random();
             var z = nvMagicConst * (u1 - 0.5) / u2;
