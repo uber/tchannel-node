@@ -23,6 +23,7 @@
 var path = require('path');
 var fs = require('fs');
 var assert = require('assert');
+var Buffer = require('buffer').Buffer;
 
 var tcollectorSpec =
     fs.readFileSync(path.join(__dirname, 'tcollector.thrift'), 'utf8');
