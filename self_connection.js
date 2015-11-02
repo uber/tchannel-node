@@ -81,7 +81,9 @@ TChannelSelfConnection.prototype.handleCallRequest = function handleCallRequest(
 TChannelSelfConnection.prototype.onReqError = function onReqError(req, err) {
     var self = this;
 
-    if (!req.res) self.buildResponse(req, {});
+    if (!req.res) {
+        self.buildResponse(req, {});
+    }
 
     var codeName = errors.classify(err);
     if (codeName) {
@@ -94,7 +96,9 @@ TChannelSelfConnection.prototype.onReqError = function onReqError(req, err) {
 
 TChannelSelfConnection.prototype.buildOutResponse = function buildOutResponse(inreq, options) {
     var self = this;
-    if (!options) options = {};
+    if (!options) {
+        options = {};
+    }
     options.logger = self.logger;
     options.random = self.random;
     options.timers = self.timers;
