@@ -23,6 +23,7 @@
 var parallel = require('run-parallel');
 var InResponse = require('./in_response');
 var inherits = require('util').inherits;
+var Buffer = require('buffer').Buffer;
 
 var errors = require('./errors');
 var States = require('./reqres_states');
