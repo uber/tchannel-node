@@ -43,13 +43,13 @@ if (argv._.length !== 2) {
     /*eslint-enable no-process-exit*/
 }
 
-readSamples(argv._, function(err, samples) {
+readSamples(argv._, function onSamples(err, samples) {
     if (err) throw err;
 
     var keys = {};
     var maxKeyLen = 0;
-    samples.forEach(function(sample) {
-        Object.keys(sample).forEach(function(key) {
+    samples.forEach(function forSample(sample) {
+        Object.keys(sample).forEach(function forSampleKey(key) {
             maxKeyLen = Math.max(maxKeyLen, key.length);
             keys[key] = true;
         });
@@ -57,7 +57,7 @@ readSamples(argv._, function(err, samples) {
 
     var sampleA = samples[0];
     var sampleB = samples[1];
-    Object.keys(keys).sort().forEach(function(key) {
+    Object.keys(keys).sort().forEach(function compareSample(key) {
         var aData = sampleA[key];
         var bData = sampleB[key];
         if (aData === undefined) {
@@ -105,7 +105,7 @@ readSamples(argv._, function(err, samples) {
 // return basic descriptive stats of some numerical sample
 function descStats(sample) {
     var S = [].concat(sample);
-    S.sort(function(a, b) {return a - b;});
+    S.sort(function sortOrder(a, b) {return a - b;});
     var N = S.length;
     var q1 = S[Math.floor(0.25 * N)];
     var q2 = S[Math.floor(0.50 * N)];
@@ -229,7 +229,7 @@ function rpad(input, len, chr) {
 
 function extractDim(name, sample) {
     var missing = 0;
-    var data = sample.map(function(data) {
+    var data = sample.map(function forSample(data) {
         var d = data[name];
         if (d === undefined) ++missing;
         return d;
