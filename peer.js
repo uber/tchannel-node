@@ -26,6 +26,8 @@ var inspect = require('util').inspect;
 var EventEmitter = require('./lib/event_emitter');
 var stat = require('./stat-tags.js');
 var net = require('net');
+var process = require('process');
+var CountedReadySignal = require('ready-signal/counted');
 
 var TChannelConnection = require('./connection');
 var errors = require('./errors');
