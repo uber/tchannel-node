@@ -68,6 +68,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
     self.boundOnPendingChange = onPendingChange;
+    self.scoreRange = null;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -263,6 +264,8 @@ TChannelPeer.prototype.setScoreStrategy = function setScoreStrategy(ScoreStrateg
 
 TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
     var self = this;
+
+    self.scoreRange = self.computeScoreRange();
 
     if (!self.heapElements.length) {
         return;
@@ -690,6 +693,12 @@ function _maybeInvalidateScore(reason) {
 TChannelPeer.prototype.getScoreRange = function getScoreRange() {
     var self = this;
 
+    return self.scoreRange;
+};
+
+TChannelPeer.prototype.computeScoreRange = function computeScoreRange() {
+    var self = this;
+
     var range = self.scoreStrategy.getScoreRange();
     range.multiply(self.pendingWeightedRange());
 
@@ -698,13 +707,12 @@ TChannelPeer.prototype.getScoreRange = function getScoreRange() {
 
 TChannelPeer.prototype.getScore = function getScore() {
     var self = this;
-    var range = self.getScoreRange();
-    var diff = range.hi - range.lo;
+    var diff = self.scoreRange.hi - self.scoreRange.lo;
     var rand = self.random();
     if (rand === 0) {
         rand = 1;
     }
-    return range.lo + diff * rand;
+    return self.scoreRange.lo + diff * rand;
 };
 
 module.exports = TChannelPeer;
