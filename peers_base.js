@@ -153,7 +153,7 @@ TChannelPeersBase.prototype.delete = function del(hostPort) {
     var peer = self._map[hostPort];
 
     if (!peer) {
-        return;
+        return null;
     }
 
     self._delete(peer);
