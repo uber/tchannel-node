@@ -22,6 +22,8 @@
 
 var errors = require('./errors.js');
 var inherits = require('util').inherits;
+var process = require('process');
+var Buffer = require('buffer').Buffer;
 var EventEmitter = require('./lib/event_emitter');
 
 var TOMBSTONE_TTL_OFFSET = 500;
@@ -45,6 +47,7 @@ function Operations(opts) {
     self.maxTombstoneTTL = MAX_TOMBSTONE_TTL;
 
     self.connection = opts.connection;
+    self.timers = self.connection.channel.timers;
     // TODO need this?
     self.destroyed = false;
 
@@ -550,7 +553,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
             }
         }
 
-        setImmediate(deferNextOp);
+        self.timers.setImmediate(deferNextOp);
 
         function deferNextOp() {
             nextOp(opKeys, i + 1, done);
