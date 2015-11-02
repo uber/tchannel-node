@@ -32,7 +32,7 @@ var errors = require('./errors');
 var States = require('./reqres_states');
 
 function TChannelOutRequest(id, options) {
-    /*eslint max-statements: [2, 50]*/
+    /*eslint max-statements: [2, 50], complexity: [2, 25]*/
     var self = this;
 
     EventEmitter.call(self);
