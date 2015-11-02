@@ -81,6 +81,7 @@ var DEFAULT_RETRY_FLAGS = new RetryFlags(
 // var Spy = require('./v2/spy');
 // var dumpEnabled = /\btchannel_dump\b/.test(process.env.NODE_DEBUG || '');
 
+/*eslint-disable max-statements*/
 function TChannel(options) {
     if (!(this instanceof TChannel)) {
         return new TChannel(options);
@@ -260,6 +261,7 @@ function TChannel(options) {
     }
 }
 inherits(TChannel, EventEmitter);
+/*eslint-enable max-statements*/
 
 TChannel.prototype.extendLogInfo =
 function extendLogInfo(info) {
@@ -661,6 +663,7 @@ function waitForIdentified(options, callback) {
     For each key in per request options; assign
     For each key in per request headers; assign
 */
+/*eslint max-statements: [2, 50]*/
 TChannel.prototype.fastRequestDefaults =
 function fastRequestDefaults(reqOpts) {
     var self = this;
@@ -799,7 +802,6 @@ function RequestHeaders() {
 }
 
 TChannel.prototype._request = function _request(opts) {
-    /*eslint max-statements: [2, 25]*/
     var self = this;
 
     assert(!self.destroyed, 'cannot request() to destroyed tchannel');
