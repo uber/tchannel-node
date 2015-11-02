@@ -22,6 +22,9 @@
 
 var assert = require('assert');
 var inherits = require('util').inherits;
+var process = require('process');
+var Buffer = require('buffer').Buffer;
+
 var EventEmitter = require('./lib/event_emitter');
 var stat = require('./stat-tags.js');
 var v2 = require('./v2');
