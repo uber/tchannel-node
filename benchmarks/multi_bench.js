@@ -326,7 +326,7 @@ argv.sizes.forEach(function each(size) {
     if (argv.expectedError) {
         argv.expectedError
             .split(/,\s*/)
-            .forEach(function each(errType) {
+            .forEach(function eachLine(errType) {
                 expectedErrorTypes[errType] = true;
             });
     }
@@ -334,7 +334,7 @@ argv.sizes.forEach(function each(size) {
         expectedErrorTypes.BadRequest = true;
     }
 
-    argv.pipeline.forEach(function each(pipeline) {
+    argv.pipeline.forEach(function eachPipe(pipeline) {
         tests.push(new Test({
             descr: 'SET ' + sizeDesc,
             command: 'set' + (argv.bad ? '_bad' : ''),
