@@ -114,14 +114,18 @@ StreamingOutResponse.prototype.sendStreams = function sendStreams(res1, res2, ca
     function onError(err) {
         if (!called) {
             called = true;
-            if (callback) callback(err);
+            if (callback) {
+                callback(err);
+            }
         }
     }
 
     function finish() {
         if (!called) {
             called = true;
-            if (callback) callback(null);
+            if (callback) {
+                callback(null);
+            }
         }
     }
 };
