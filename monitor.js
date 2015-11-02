@@ -22,6 +22,7 @@
 
 var format = require('util').format;
 var inherits = require('util').inherits;
+var console = require('console');
 
 module.exports.ChanConnMonitor = ChanConnMonitor;
 
