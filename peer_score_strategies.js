@@ -163,6 +163,6 @@ PreferIncoming.prototype.getScoreRange = function getScoreRange() {
         case PreferIncoming.FRESH_INCOMING:
             return new Range(0.1, 0.4);
         case PreferIncoming.READY_INCOMING:
-            return new Range(0.1, 0.4);
+            return new Range(0.4, 1.0);
     }
 };
