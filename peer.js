@@ -268,7 +268,7 @@ TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
         scores: []
     } : null;
 
-    var score = self.scoreStrategy.getScore();
+    var score = self.scoreStrategy.getScoreRange();
     for (var i = 0; i < self.heapElements.length; i++) {
         var el = self.heapElements[i];
         if (info) {
@@ -699,9 +699,30 @@ function _maybeInvalidateScore(reason) {
     }
 };
 
+TChannelPeer.prototype.getScoreRange = function getScoreRange() {
+    var self = this;
+
+    var randomRange = self.pendingWeightedRange();
+    var scoreRange = self.scoreStrategy.getScoreRange();
+    var diff = scoreRange[1] - scoreRange[0];
+
+    var newRange = [
+        randomRange[0] * diff + scoreRange[0],
+        randomRange[1] * diff + scoreRange[0]
+    ];
+
+    return newRange;
+};
+
 TChannelPeer.prototype.getScore = function getScore() {
     var self = this;
-    return self.scoreStrategy.getScore();
+    var range = self.getScoreRange();
+    var diff = range[1] - range[0];
+    var rand = self.random();
+    if (rand === 0) {
+        rand = 1;
+    }
+    return range[0] + diff * rand;
 };
 
 module.exports = TChannelPeer;

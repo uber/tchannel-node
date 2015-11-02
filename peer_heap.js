@@ -44,12 +44,12 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
     // We select into this set as long as we have ranges that overlap. Then,
     // we introduce randomness into the set and choose
     var seedPeer = self.array[0].peer;
-    var seedRange = seedPeer.pendingWeightedRange();
+    var seedRange = self.array[0].range;
     var maxRangeStart = seedRange[0];
     var i;
 
-    var chosenPeer = null;
-    var highestProbability = 0;
+    var chosenPeer = seedPeer;
+    var highestProbability = seedPeer.getScore();
     var probability;
 
     self._stack.push(0);
@@ -67,7 +67,7 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
             continue;
         } else if (!filter || filter(el.peer)) {
             maxRangeStart = Math.max(maxRangeStart, range[0]);
-            probability = el.peer.scoreStrategy.getScore();
+            probability = el.peer.getScore();
 
             if ((probability > highestProbability) && (probability > threshold)) {
                 highestProbability = probability;
@@ -118,7 +118,7 @@ PeerHeap.prototype.clear = function clear() {
 PeerHeap.prototype.add = function add(peer) {
     var self = this;
 
-    var range = peer.pendingWeightedRange();
+    var range = peer.getScoreRange();
 
     var i = self.push(peer, range[1], range);
     var el = self.array[i];
@@ -130,8 +130,7 @@ PeerHeap.prototype.rescore = function rescore() {
 
     for (var i = 0; i < self.array.length; i++) {
         var el = self.array[i];
-        el.range = el.peer.pendingWeightedRange();
-        el.peer = el.range[1];
+        el.rescore();
     }
     self.heapify();
 };
@@ -267,19 +266,21 @@ function PeerHeapElement(heap) {
     self.index = 0;
 }
 
-PeerHeapElement.prototype.rescore = function rescore(score) {
+PeerHeapElement.prototype.rescore = function rescore(range) {
     var self = this;
 
     if (!self.heap) {
         return;
     }
 
-    if (score === undefined) {
-        self.range = self.peer.pendingWeightedRange();
-        self.score = self.range[1];
+    if (range === undefined) {
+        self.range = self.peer.getScoreRange();
+    } else {
+        self.range = range;
     }
 
-    self.score = score;
+    self.score = self.range[1];
+
     self.index = self.heap.siftup(self.index);
     self.index = self.heap.siftdown(self.index);
 };
