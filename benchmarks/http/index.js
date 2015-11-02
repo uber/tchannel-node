@@ -26,6 +26,7 @@ var process = require('process');
 var path = require('path');
 var util = require('util');
 var loadtest = require('loadtest');
+var console = require('console');
 
 var BenchmarkRunner = require('../index.js');
 
