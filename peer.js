@@ -38,6 +38,7 @@ var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
 
 var DEFAULT_REPORT_INTERVAL = 1000;
 
+/*eslint max-statements: [2, 40]*/
 function TChannelPeer(channel, hostPort, options) {
     assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
 
