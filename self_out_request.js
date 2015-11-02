@@ -64,14 +64,18 @@ function makeInreq(id, options) {
     self.inreq.headers = self.headers;
 
     function onError(err) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         self.conn.ops.popOutReq(id);
         self.errorEvent.emit(self, err);
     }
 
     function onResponse(res) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         self.conn.ops.popOutReq(id);
         self.emitResponse(res);
@@ -85,7 +89,9 @@ SelfStreamingOutRequest.prototype._sendCallRequestCont =
 function passRequestParts(args, isLast ) {
     var self = this;
     self.inreq.handleFrame(args, isLast);
-    if (!self.closing) self.conn.ops.lastTimeoutTime = 0;
+    if (!self.closing) {
+        self.conn.ops.lastTimeoutTime = 0;
+    }
 };
 
 module.exports.OutRequest = SelfOutRequest;
