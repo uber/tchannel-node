@@ -67,6 +67,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
     self.boundOnPendingChange = onPendingChange;
+    self._range = null;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -263,6 +264,8 @@ TChannelPeer.prototype.setScoreStrategy = function setScoreStrategy(ScoreStrateg
 TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
     var self = this;
 
+    self.computeScoreRange();
+
     if (!self.heapElements.length) {
         return;
     }
@@ -275,7 +278,7 @@ TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
         scores: []
     } : null;
 
-    var score = self.scoreStrategy.getScore();
+    var score = self.scoreStrategy.getScoreRange();
     for (var i = 0; i < self.heapElements.length; i++) {
         var el = self.heapElements[i];
         if (info) {
@@ -626,42 +629,36 @@ TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
     return conn;
 };
 
-TChannelPeer.prototype.pendingWeightedRandom = function pendingWeightedRandom() {
-    // Returns a score in the range from 0 to 1, where it is preferable to use
-    // a peer with a higher score over one with a lower score.
-    // This range is divided among an infinite set of subranges corresponding
-    // to peers with the same number of pending requests.
-    // So, the range (1/2, 1] is reserved for peers with 0 pending connections.
-    // The range (1/4, 1/2] is reserved for peers with 1 pending connections.
-    // The range (1/8, 1/4] is reserved for peers with 2 pending connections.
-    // Ad nauseam.
-    // Within each equivalence class, each peer receives a uniform random
-    // value.
-    //
-    // The previous score was a weighted random variable:
-    //   random() ** (1 + pending)
-    // This had the attribute that a less loaded peer was merely more likely to
-    // be chosen over a more loaded peer.
-    // We observed with the introduction of a heap, that a less favored peer
-    // would have its score less frequently re-evaluated.
-    // An emergent behavior was that scores would, over time, be squeezed
-    // toward zero and the least favored peer would remain the least favored
-    // for ever increasing durations.
-    //
-    // This remains true with this algorithm, within each equivalence class.
+// Returns a range from 0 to 1, where it is preferable to use
+// a peer with a higher score over one with a lower score.
+// This range is divided among an infinite set of subranges corresponding
+// to peers with the same number of pending requests.
+// So, the range (1/2, 1] is reserved for peers with 0 pending connections.
+// The range (1/4, 1/2] is reserved for peers with 1 pending connections.
+// The range (1/8, 1/4] is reserved for peers with 2 pending connections.
+// Ad nauseam.
+// Within each equivalence class, each peer receives a uniform random
+// value.
+//
+// The previous score was a weighted random variable:
+//   random() ** (1 + pending)
+// This had the attribute that a less loaded peer was merely more likely to
+// be chosen over a more loaded peer.
+// We observed with the introduction of a heap, that a less favored peer
+// would have its score less frequently re-evaluated.
+// An emergent behavior was that scores would, over time, be squeezed
+// toward zero and the least favored peer would remain the least favored
+// for ever increasing durations.
+//
+// This remains true with this algorithm, within each equivalence class.
+TChannelPeer.prototype.pendingWeightedRange = function pendingWeightedRange() {
     var self = this;
+
     var pending = self.countPending();
     var max = Math.pow(0.5, pending);
     var min = max / 2;
-    var diff = max - min;
 
-    // Force rand to be (0, 1] instead of [0, 1)
-    var rand = self.random();
-    if (rand === 0) {
-        rand = 1;
-    }
-
-    return min + diff * rand;
+    return [min, max];
 };
 
 TChannelPeer.prototype.countPending = function countPending() {
@@ -692,9 +689,39 @@ function _maybeInvalidateScore(reason) {
     }
 };
 
+TChannelPeer.prototype.getScoreRange = function getScoreRange() {
+    var self = this;
+
+    if (!self._range) {
+        self.computeScoreRange();
+    }
+    return self._range;
+};
+
+TChannelPeer.prototype.computeScoreRange = function computeScoreRange() {
+    var self = this;
+
+    var pendingRange = self.pendingWeightedRange();
+    var scoreRange = self.scoreStrategy.getScoreRange();
+    var diff = scoreRange[1] - scoreRange[0];
+
+    scoreRange[0] += scoreRange[0] + pendingRange[0] * diff;
+    scoreRange[1] += scoreRange[0] + pendingRange[1] * diff;
+
+    self._range = scoreRange;
+
+    return self._range;
+};
+
 TChannelPeer.prototype.getScore = function getScore() {
     var self = this;
-    return self.scoreStrategy.getScore();
+    var range = self.getScoreRange();
+    var diff = range[1] - range[0];
+    var rand = self.random();
+    if (rand === 0) {
+        rand = 1;
+    }
+    return range[0] + diff * rand;
 };
 
 module.exports = TChannelPeer;
