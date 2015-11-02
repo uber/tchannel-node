@@ -27,6 +27,7 @@ var StreamingOutRequest = require('./self_out_request').StreamingOutRequest;
 var StreamingOutResponse = require('./self_out_response').StreamingOutResponse;
 
 var inherits = require('util').inherits;
+var process = require('process');
 
 var TChannelConnectionBase = require('./connection_base');
 
