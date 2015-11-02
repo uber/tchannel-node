@@ -262,7 +262,9 @@ RelayRequest.prototype.onResponse = function onResponse(res) {
         streamed: self.inres.streamed,
         headers: self.inres.headers,
         code: self.inres.code
-    })) return;
+    })) {
+        return;
+    }
 
     if (self.outres.streamed) {
         self.inres.arg2.pipe(self.outres.arg2);
@@ -283,7 +285,9 @@ RelayRequest.prototype.onError = function onError(err) {
     }
     self.error = err;
 
-    if (!self.createOutResponse()) return;
+    if (!self.createOutResponse()) {
+        return;
+    }
     var codeName = errors.classify(err) || 'UnexpectedError';
 
     self.outres.sendError(codeName, err.message);
