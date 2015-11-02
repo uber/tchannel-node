@@ -29,6 +29,7 @@ function TChannelPeersBase(channel, options) {
 
     self.channel = channel;
     self.logger = self.channel.logger;
+    self.timers = self.channel.timers;
     self.options = options || {};
     self._map = Object.create(null);
     self._keys = [];
@@ -87,7 +88,7 @@ function sanitySweep(callback) {
                 done(err);
                 return;
             }
-            setImmediate(deferNextPeer);
+            self.timers.setImmediate(deferNextPeer);
         });
 
         function deferNextPeer() {
@@ -103,7 +104,7 @@ function sanitySweep(callback) {
 
         var conn = conns[i];
         conn.ops.sanitySweep(function opsSweepDone() {
-            setImmediate(deferNextConn);
+            self.timers.setImmediate(deferNextConn);
         });
 
         function deferNextConn() {
