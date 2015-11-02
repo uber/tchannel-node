@@ -22,6 +22,9 @@
 
 var errors = require('./errors.js');
 var inherits = require('util').inherits;
+var process = require('process');
+var Buffer = require('buffer').Buffer;
+var setImmediate = require('timers').setImmediate;
 var EventEmitter = require('./lib/event_emitter');
 
 var TOMBSTONE_TTL_OFFSET = 500;
