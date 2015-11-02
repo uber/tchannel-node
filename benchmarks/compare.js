@@ -38,7 +38,9 @@ var argv = parseArgs(process.argv.slice(2), {
 
 if (argv._.length !== 2) {
     console.error('usage: compare.js a.json b.json');
+    /*eslint-disable no-process-exit*/
     process.exit(1);
+    /*eslint-enable no-process-exit*/
 }
 
 readSamples(argv._, function(err, samples) {
