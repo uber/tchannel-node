@@ -364,7 +364,6 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
         errors++;
     }
 
-
     req.operations = null;
     self.pending.out--;
     if (self.draining) {
