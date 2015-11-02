@@ -34,6 +34,7 @@ var Request = require('./request');
 var PreferOutgoing = require('./peer_score_strategies.js').PreferOutgoing;
 var NoPreference = require('./peer_score_strategies.js').NoPreference;
 var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
+var Range = require('./range');
 
 var DEFAULT_REPORT_INTERVAL = 1000;
 
@@ -658,7 +659,7 @@ TChannelPeer.prototype.pendingWeightedRange = function pendingWeightedRange() {
     var max = Math.pow(0.5, pending);
     var min = max / 2;
 
-    return [min, max];
+    return new Range(min, max);
 };
 
 TChannelPeer.prototype.countPending = function countPending() {
@@ -701,14 +702,8 @@ TChannelPeer.prototype.getScoreRange = function getScoreRange() {
 TChannelPeer.prototype.computeScoreRange = function computeScoreRange() {
     var self = this;
 
-    var pendingRange = self.pendingWeightedRange();
-    var scoreRange = self.scoreStrategy.getScoreRange();
-    var diff = scoreRange[1] - scoreRange[0];
-
-    scoreRange[0] += scoreRange[0] + pendingRange[0] * diff;
-    scoreRange[1] += scoreRange[0] + pendingRange[1] * diff;
-
-    self._range = scoreRange;
+    self._range = self.scoreStrategy.getScoreRange();
+    self._range.multiply(self.pendingWeightedRange());
 
     return self._range;
 };
@@ -716,12 +711,12 @@ TChannelPeer.prototype.computeScoreRange = function computeScoreRange() {
 TChannelPeer.prototype.getScore = function getScore() {
     var self = this;
     var range = self.getScoreRange();
-    var diff = range[1] - range[0];
+    var diff = range.hi - range.lo;
     var rand = self.random();
     if (rand === 0) {
         rand = 1;
     }
-    return range[0] + diff * rand;
+    return range.lo + diff * rand;
 };
 
 module.exports = TChannelPeer;

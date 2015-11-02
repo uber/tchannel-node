@@ -20,6 +20,8 @@
 
 'use strict';
 
+var Range = require('./range');
+
 module.exports.PreferOutgoing = PreferOutgoing;
 module.exports.NoPreference = NoPreference;
 module.exports.PreferIncoming = PreferIncoming;
@@ -67,11 +69,9 @@ PreferOutgoing.prototype.getScoreRange = function getScoreRange() {
         case PreferOutgoing.UNCONNECTED:
             /* falls through */
         case PreferOutgoing.FRESH_OUTGOING:
-            //return 0.1 + random * 0.3;
-            return [0.1, 0.4];
+            return new Range(0.1, 0.4);
         case PreferOutgoing.READY_OUTGOING:
-            //return 0.4 + random * 0.6;
-            return [0.4, 1.0];
+            return new Range(0.4, 1.0);
     }
 };
 
@@ -112,11 +112,9 @@ NoPreference.prototype.getScoreRange = function getScoreRange() {
         case NoPreference.UNCONNECTED:
             /* falls through */
         case NoPreference.CONNECTED:
-            //return 0.1 + random * 0.3;
-            return [0.1, 0.4];
+            return new Range(0.1, 0.4);
         case NoPreference.IDENTIFIED:
-            //return 0.4 + random * 0.6;
-            return [0.4, 1.0];
+            return new Range(0.4, 1.0);
     }
 };
 
@@ -163,10 +161,8 @@ PreferIncoming.prototype.getScoreRange = function getScoreRange() {
         case PreferIncoming.UNCONNECTED:
             /* falls through */
         case PreferIncoming.FRESH_INCOMING:
-            //return 0.1 + random * 0.3;
-            return [0.1, 0.4];
+            return new Range(0.1, 0.4);
         case PreferIncoming.READY_INCOMING:
-            //return 0.4 + random * 0.6;
-            return [0.4, 1.0];
+            return new Range(0.1, 0.4);
     }
 };
