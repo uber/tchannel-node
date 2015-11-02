@@ -20,7 +20,6 @@
 
 'use strict';
 
-/* jshint maxparams:5 */
 
 var Buffer = require('buffer').Buffer;
 var assert = require('assert');

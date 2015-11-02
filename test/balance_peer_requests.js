@@ -53,7 +53,6 @@ allocCluster.test('requests are balanced evenly across peers', {
         var responderCounts = {};
         var requestCount = (cluster.channels.length - 1) * requestsPerPeer;
         for (var index = 0; index < requestCount; index++) {
-            /*jshint -W083 */
             jobs.push(function sendRequest(callback) {
                 head.request({
                     serviceName: 'tiberius',
@@ -69,7 +68,6 @@ allocCluster.test('requests are balanced evenly across peers', {
                     callback();
                 }
             });
-            /*jshint +W083 */
         }
 
         parallel(jobs, onDone);

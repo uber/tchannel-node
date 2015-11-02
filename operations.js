@@ -309,7 +309,6 @@ Operations.prototype.checkDrained = function checkDrained() {
 Operations.prototype._isCollDrained = function _isCollDrained(coll) {
     var self = this;
 
-    /* jshint forin:false */
     for (var id in coll) {
         var op = coll[id];
         if (!(op instanceof OperationTombstone) &&

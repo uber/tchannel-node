@@ -47,7 +47,6 @@ allocCluster.test('connection.handler: lazy call handling', 2, function t(cluste
 
     function handleCallLazily(frame) {
         // this is conn.handler
-        // jshint validthis:true
 
         var res = frame.bodyRW.lazy.readService(frame);
         if (res.err) {

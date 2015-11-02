@@ -42,7 +42,6 @@ module.exports.Response = CallResponse;
 // TODO: validate transport header names?
 // TODO: Checksum-like class for tracing
 
-/* jshint maxparams:10 */
 
 // flags:1 ttl:4 tracing:24 traceflags:1 service~1 nh:1 (hk~1 hv~1){nh} csumtype:1 (csum:4){0,1} (arg~2)*
 function CallRequest(flags, ttl, tracing, service, headers, csum, args) {

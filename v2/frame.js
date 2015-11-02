@@ -34,7 +34,6 @@ var errors = require('../errors');
 
 var Types = require('./index.js').Types;
 
-/* jshint maxparams:5 */
 
 function Frame(id, body) {
     var self = this;
