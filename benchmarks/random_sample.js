@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+'use strict';
+
 // Random sampling functions borrowed from python standard library
 
 var RandomSample = module.exports;
