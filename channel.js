@@ -38,6 +38,7 @@ var extend = require('xtend');
 var globalTimers = extend(require('timers'), {
     now: Date.now
 });
+var setImmediate = require('timers').setImmediate;
 var globalRandom = Math.random;
 var net = require('net');
 var format = require('util').format;
@@ -928,15 +929,37 @@ TChannel.prototype.sanitySweep =
 function sanitySweep(callback) {
     var self = this;
 
-    if (self.serverConnections) {
-        var incomingConns = Object.keys(self.serverConnections);
-        for (var i = 0; i < incomingConns.length; i++) {
-            var conn = self.serverConnections[incomingConns[i]];
-            conn.ops.sanitySweep();
-        }
+    if (!self.serverConnections) {
+        self.peers.sanitySweep(callback);
+        return;
     }
 
-    self.peers.sanitySweep(callback);
+    var incomingConns = Object.keys(self.serverConnections);
+
+    nextConn(incomingConns, 0, function connSweepDone(err) {
+        if (err) {
+            callback(err);
+            return;
+        }
+
+        self.peers.sanitySweep(callback);
+    });
+
+    function nextConn(connectionKeys, index, cb) {
+        if (index >= connectionKeys.length) {
+            cb(null);
+            return;
+        }
+
+        var connection = self.serverConnections[connectionKeys[index]];
+        connection.ops.sanitySweep(function opsSweepDone() {
+            setImmediate(deferNextConn);
+        });
+
+        function deferNextConn() {
+            nextConn(connectionKeys, index + 1, cb);
+        }
+    }
 };
 
 TChannel.prototype.setMaxTombstoneTTL =

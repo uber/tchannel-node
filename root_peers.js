@@ -22,6 +22,7 @@
 
 var inherits = require('util').inherits;
 var extend = require('xtend');
+var setImmediate = require('timers').setImmediate;
 
 var TChannelPeersBase = require('./peers_base.js');
 var TChannelPeer = require('./peer');
@@ -57,14 +58,35 @@ TChannelRootPeers.prototype.sanitySweep =
 function sanitySweep(callback) {
     var self = this;
 
-    if (self.selfPeer) {
-        for (var i = 0; i < self.selfPeer.connections.length; i++) {
-            var conn = self.selfPeer.connections[i];
-            conn.ops.sanitySweep();
-        }
+    if (!self.selfPeer) {
+        TChannelPeersBase.prototype.sanitySweep.call(self, callback);
+        return;
     }
 
-    TChannelPeersBase.prototype.sanitySweep.call(self, callback);
+    nextConn(self.selfPeer.connections, 0, function connSweepDone(err) {
+        if (err) {
+            callback(err);
+            return;
+        }
+
+        TChannelPeersBase.prototype.sanitySweep.call(self, callback);
+    });
+
+    function nextConn(connections, index, cb) {
+        if (index >= connections.length) {
+            cb(null);
+            return;
+        }
+
+        var connection = connections[index];
+        connection.ops.sanitySweep(function opsSweepDone() {
+            setImmediate(deferNextConn);
+        });
+
+        function deferNextConn() {
+            nextConn(connections, index + 1, cb);
+        }
+    }
 };
 
 TChannelRootPeers.prototype.getSelfPeer = function getSelfPeer() {
