@@ -24,14 +24,74 @@ module.exports = PeerHeap;
 
 // A max-score (pre-computed) for peer selection
 
+// This is used for every DFS. It will end up being the size of the largest
+// peer list.
+var dfsStack = [];
+
 function PeerHeap() {
     var self = this;
 
     self.array = [];
-    // TODO: worth it to keep a tail free list like TimeHeap?
-    // self.end = 0;
-    self._stack = [];
 }
+
+PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshold, filter) {
+    var self = this;
+
+    var chosenPeer = null;
+    var maxRangeStart = self.array[0].range.lo;
+    var highestProbability = 0;
+    var firstScore = self.array[0].peer.getScore();
+    var stackBegin = 0;
+    var stackEnd = 0;
+
+    if (firstScore > threshold && (!filter || filter(self.array[0].peer))) {
+        chosenPeer = self.array[0].peer;
+        highestProbability = firstScore;
+        dfsStack[0] = 1;
+        dfsStack[1] = 2;
+        stackEnd = 1;
+    } else {
+        dfsStack[0] = 0;
+    }
+
+    var checked = 0;
+
+    while (stackBegin <= stackEnd) {
+        var i = dfsStack[stackBegin];
+
+        stackBegin++;
+        var el = self.array[i];
+
+        if (el.range.hi <= maxRangeStart) {
+            // This range ends before the range with the largest start begins,
+            // so it can't possibly be chosen over any of the ranges we've
+            // seen. All ranges below this one have a smaller end, so this
+            // range and any below it can't be chosen.
+            continue;
+        } else if (!filter || filter(el.peer)) {
+            maxRangeStart = Math.max(maxRangeStart, el.range.lo);
+            var probability = el.peer.getScore();
+
+            checked++;
+
+            if ((probability > highestProbability) && (probability > threshold)) {
+                highestProbability = probability;
+                chosenPeer = el.peer;
+            }
+        }
+
+        var left = 2 * i + 1;
+        var right = left + 1;
+        if (left < self.array.length) {
+            dfsStack[++stackEnd] = left;
+            if (right < self.array.length) {
+                dfsStack[++stackEnd] = right;
+            }
+        }
+    }
+
+    return chosenPeer;
+};
 
 PeerHeap.prototype.choose = function choose(threshold, filter) {
     var self = this;
@@ -40,69 +100,7 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         return null;
     }
 
-    var el;
-    if (filter) {
-        el = self._chooseFilteredEl(threshold, filter);
-    } else {
-        el = self._chooseEl(threshold);
-    }
-
-    if (!el) {
-        return null;
-    }
-
-    return el.peer;
-
-};
-
-PeerHeap.prototype._chooseEl = function _chooseEl(threshold) {
-    var self = this;
-
-    var el = self.array[0];
-    if (el.score <= threshold) { // TODO: why inclusive?
-        return null;
-    }
-
-    return el;
-};
-
-PeerHeap.prototype._chooseFilteredEl = function _chooseFilteredEl(threshold, filter) {
-    var self = this;
-
-    // TODO: is it worth it to unroll the first iteration of the loop below so
-    // that we incur minimal overhead for "the top of heap is okay" case?
-
-    // NOTE: assumes self._stack starts off empty
-    self._stack.push(0);
-    while (self._stack.length) {
-        var i = self._stack.shift();
-
-        var el = self.array[i];
-        if (el.score <= threshold) { // TODO: why inclusive?
-            break;
-        }
-
-        if (!filter || filter(el.peer)) {
-            return el;
-        }
-
-        var left = 2 * i + 1;
-        if (left < self.array.length) {
-            var right = left + 1;
-            if (right < self.array.length) {
-                if (self.array[right].score > self.array[left].score) {
-                    self._stack.push(right, left);
-                } else {
-                    self._stack.push(left, left);
-                }
-            } else {
-                self._stack.push(left);
-            }
-        }
-    }
-    self._stack.length = 0;
-
-    return null;
+    return self.chooseWeightedRandom(threshold, filter);
 };
 
 PeerHeap.prototype.clear = function clear() {
@@ -114,6 +112,7 @@ PeerHeap.prototype.clear = function clear() {
         el.peer = null;
         el.score = 0;
         el.index = 0;
+        el.range = null;
     }
     self.array.length = 0;
 };
@@ -121,8 +120,8 @@ PeerHeap.prototype.clear = function clear() {
 PeerHeap.prototype.add = function add(peer) {
     var self = this;
 
-    var score = peer.getScore();
-    var i = self.push(peer, score);
+    var range = peer.scoreRange;
+    var i = self.push(peer, range);
     var el = self.array[i];
     return el;
 };
@@ -132,7 +131,8 @@ PeerHeap.prototype.rescore = function rescore() {
 
     for (var i = 0; i < self.array.length; i++) {
         var el = self.array[i];
-        el.score = el.peer.getScore();
+        el.range = el.peer.getScoreRange();
+        el.score = el.range.hi;
     }
     self.heapify();
 };
@@ -172,12 +172,13 @@ PeerHeap.prototype.remove = function remove(i) {
     self.siftup(i);
 };
 
-PeerHeap.prototype.push = function push(peer, score) {
+PeerHeap.prototype.push = function push(peer, range) {
     var self = this;
 
     var el = new PeerHeapElement(self);
     el.peer = peer;
-    el.score = score;
+    el.range = range;
+    el.score = range.hi;
     el.index = self.array.length;
 
     self.array.push(el);
@@ -264,20 +265,23 @@ function PeerHeapElement(heap) {
     self.peer = null;
     self.score = 0;
     self.index = 0;
+    self.range = null;
 }
 
-PeerHeapElement.prototype.rescore = function rescore(score) {
+PeerHeapElement.prototype.rescore = function rescore(range) {
     var self = this;
 
     if (!self.heap) {
         return;
     }
 
-    if (score === undefined) {
-        score = self.peer.getScore();
+    if (!range) {
+        self.range = self.peer.scoreRange;
+    } else {
+        self.range = range;
     }
 
-    self.score = score;
+    self.score = self.range.hi;
     self.index = self.heap.siftup(self.index);
     self.index = self.heap.siftdown(self.index);
 };

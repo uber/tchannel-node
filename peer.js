@@ -210,14 +210,14 @@ TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
         scores: []
     } : null;
 
-    var score = self.scoreStrategy.getScoreRange();
+    var range = self.scoreRange;
     for (var i = 0; i < self.heapElements.length; i++) {
         var el = self.heapElements[i];
         if (info) {
-            info.oldScores.push(el.score);
-            info.scores.push(score);
+            info.oldScores.push(el.range);
+            info.scores.push(range);
         }
-        el.rescore(score);
+        el.rescore(range);
     }
 
     if (info) {
