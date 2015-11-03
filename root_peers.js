@@ -57,11 +57,14 @@ TChannelRootPeers.prototype.sanitySweep =
 function sanitySweep(callback) {
     var self = this;
 
-    if (self.selfPeer) {
-        for (var i = 0; i < self.selfPeer.connections.length; i++) {
-            var conn = self.selfPeer.connections[i];
-            conn.ops.sanitySweep();
-        }
+    if (!self.selfPeer) {
+        TChannelPeersBase.prototype.sanitySweep.call(self, callback);
+        return;
+    }
+
+    for (var i = 0; i < self.selfPeer.connections.length; i++) {
+        var conn = self.selfPeer.connections[i];
+        conn.ops.sanitySweep();
     }
 
     TChannelPeersBase.prototype.sanitySweep.call(self, callback);
