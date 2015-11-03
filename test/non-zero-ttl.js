@@ -176,7 +176,7 @@ allocCluster.test('request() with zero timeout (server)', {
     }
 });
 
-allocCluster.test('request() with zero ttl through relay (server)', {
+allocCluster.test('request() with zero ttl through eager relay (server)', {
     numPeers: 3
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'resetting connection');
@@ -185,6 +185,9 @@ allocCluster.test('request() with zero ttl through relay (server)', {
     var client = cluster.channels[0];
     var relay = cluster.channels[1];
     var server = cluster.channels[2];
+
+    relay.setLazyHandling(false);
+    relay.setLazyRelaying(false);
 
     var relayToServer = relay.makeSubChannel({
         serviceName: 'server',
