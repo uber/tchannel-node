@@ -25,6 +25,7 @@ var bufrw = require('bufrw');
 var errors = require('../errors');
 
 var Frame = require('./frame.js');
+var Types = require('./index.js').Types;
 
 module.exports = LazyFrame;
 
@@ -67,7 +68,15 @@ LazyFrame.prototype.readBody = function readBody() {
     }
 
     var res = self.bodyRW.readFrom(self.buffer, LazyFrame.BodyOffset);
-    if (!res.err) {
+
+    if (res.err) {
+        if (self.type === Types.CallRequest ||
+            self.type === Types.CallRequestCont
+        ) {
+            // TODO: wrapped?
+            res.err.frameId = self.id;
+        }
+    } else {
         self.body = res.value;
     }
 

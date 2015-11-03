@@ -144,9 +144,11 @@ allocCluster.test('request() with zero timeout (server)', {
 
         var clientLine = cluster.logger.items()[1];
 
-        assert.equal(clientLine && clientLine.levelName, 'warn');
+        assert.equal(clientLine && clientLine.levelName, 'warn',
+            'clientLine should be warning');
         assert.equal(clientLine && clientLine.msg,
-            'got errorframe without call request');
+            'got errorframe without call request',
+            'clientLine message should be errorframe without call req');
         assert.equal(clientLine && clientLine.meta.error.type,
             'tchannel.protocol');
         assert.ok(clientLine && clientLine.meta.error.message.indexOf(
