@@ -928,12 +928,15 @@ TChannel.prototype.sanitySweep =
 function sanitySweep(callback) {
     var self = this;
 
-    if (self.serverConnections) {
-        var incomingConns = Object.keys(self.serverConnections);
-        for (var i = 0; i < incomingConns.length; i++) {
-            var conn = self.serverConnections[incomingConns[i]];
-            conn.ops.sanitySweep();
-        }
+    if (!self.serverConnections) {
+        self.peers.sanitySweep(callback);
+        return;
+    }
+
+    var incomingConns = Object.keys(self.serverConnections);
+    for (var i = 0; i < incomingConns.length; i++) {
+        var conn = self.serverConnections[incomingConns[i]];
+        conn.ops.sanitySweep();
     }
 
     self.peers.sanitySweep(callback);
