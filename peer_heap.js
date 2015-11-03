@@ -54,8 +54,6 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
         dfsStack[0] = 0;
     }
 
-    var checked = 0;
-
     while (stackBegin <= stackEnd) {
         var i = dfsStack[stackBegin];
 
@@ -71,8 +69,6 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
         } else if (!filter || filter(el.peer)) {
             maxRangeStart = Math.max(maxRangeStart, el.range.lo);
             var probability = el.peer.getScore();
-
-            checked++;
 
             if ((probability > highestProbability) && (probability > threshold)) {
                 highestProbability = probability;
