@@ -865,7 +865,7 @@ Errors.logLevel = function errorLogLevel(err, codeName) {
     switch (codeName) {
         case 'ProtocolError':
         case 'UnexpectedError':
-            if (err.isErrorFrame) {
+            if (err.isErrorFrame || Errors.isParseError(err)) {
                 return 'warn';
             }
             return 'error';
@@ -909,4 +909,8 @@ Errors.isPendingError = function isPendingError(codeName) {
         default:
             return false;
     }
+};
+
+Errors.isParseError = function isParseError(error) {
+    return error.isParseError || false;
 };

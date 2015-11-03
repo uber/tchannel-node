@@ -330,6 +330,12 @@ TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
 
 TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
     var self = this;
+
+    if (err.isParseError) {
+        self.sendProtocolError('read', err);
+        return;
+    }
+
     self.resetAll(err);
 };
 

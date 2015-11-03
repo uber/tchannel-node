@@ -51,7 +51,7 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     var rereq = new LazyRelayInReq(conn, reqFrame);
     var err = rereq.initRead();
     if (err) {
-        rereq.onError(err);
+        rereq.onReadError(err);
         return true;
     }
 
@@ -366,6 +366,24 @@ function updateTTL(now) {
     }
 
     return timeout;
+};
+
+LazyRelayInReq.prototype.onReadError =
+function onReadError(err) {
+    var self = this;
+
+    var hasError = !self.alive && self.error;
+    if (hasError) {
+        self.logger.warn(
+            'dropping read error from dead relay request',
+            self.extendLogInfo({
+                error: err
+            })
+        );
+    }
+
+    self.onError(err);
+    self.conn.resetAll(err);
 };
 
 LazyRelayInReq.prototype.onError =

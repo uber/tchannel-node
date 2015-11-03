@@ -172,7 +172,7 @@ TChannelV2Handler.prototype.handleLazyFrame = function handleLazyFrame(frame) {
 
     var res = frame.readBody();
     if (res.err) {
-        self.errorEvent.emit(res.err);
+        self.errorEvent.emit(self, res.err);
         return;
     }
 
