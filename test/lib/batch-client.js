@@ -21,24 +21,44 @@
 'use strict';
 
 var parallel = require('run-parallel');
+var collectParallel = require('collect-parallel/array');
 var setTimeout = require('timers').setTimeout;
+
+module.exports = BatchClient;
 
 function BatchClient(channel, hosts, options) {
     if (!(this instanceof BatchClient)) {
-        return new BatchClient(channel, hosts);
+        return new BatchClient(channel, hosts, options);
     }
 
     var self = this;
 
     self.channel = channel;
     self.hosts = hosts;
+    self.totalRequests = options.totalRequests;
+    self.batchSize = options.batchSize;
+    self.delay = options.delay || 1;
 
-    self.retryFlags = options && options.retryFlags;
+    self.serviceName = 'server';
+    self.endpoint = 'echo';
+    self.body = 'foobar';
+    self.timeout = 500;
 
     self.subChannel = self.channel.makeSubChannel({
-        serviceName: 'server',
+        serviceName: self.serviceName,
         peers: self.hosts
     });
+
+    self.requestOptions = {
+        serviceName: self.serviceName,
+        hasNoParent: true,
+        timeout: self.timeout,
+        retryFlags: options && options.retryFlags,
+        headers: {
+            cn: 'client',
+            as: 'raw'
+        }
+    };
 }
 
 BatchClient.prototype.warmUp = function warmUp(callback) {
@@ -56,72 +76,139 @@ BatchClient.prototype.warmUp = function warmUp(callback) {
     parallel(waiting, callback);
 };
 
-BatchClient.prototype.sendRequests = function sendRequests(options, callback) {
+BatchClient.prototype._sendRequest = function _sendRequest(cb) {
     var self = this;
 
-    var totalRequests = options.totalRequests;
-    var batchSize = options.batchSize;
+    var result = new BatchClientRequestResult(Date.now());
 
-    var callReqThunks = [];
-    for (var i = 0; i < totalRequests; i++) {
-        var req = self.subChannel.request({
-            serviceName: 'server',
-            hasNoParent: true,
-            timeout: 500,
-            retryFlags: self.retryFlags,
-            headers: {
-                cn: 'client',
-                as: 'raw'
-            }
-        });
+    var req = self.subChannel.request(self.requestOptions);
+    req.send(self.endpoint, '', self.body, onResponse);
 
-        callReqThunks.push(makeThunk(req));
-    }
-
-    var errorList = [];
-    var resultList = [];
-    (function loop() {
-        if (callReqThunks.length === 0) {
-            return callback(null, {
-                errors: errorList,
-                results: resultList
-            });
-        }
-
-        var parts = callReqThunks.slice(0, batchSize);
-        callReqThunks = callReqThunks.slice(batchSize);
-
-        parallel(parts, onPartial);
-
-        function onPartial(err2, results) {
-            if (err2) {
-                errorList.push(err2);
-            }
-            // assert.ifError(err2, 'expect no req err');
-
-            resultList = resultList.concat(results);
-            setTimeout(loop, options.delay || 1);
-        }
-    }());
-
-    function makeThunk(request) {
-        return thunk;
-
-        function thunk(cb) {
-            request.send('foo', 'a', 'b', onResponse);
-
-            function onResponse(err, resp) {
-                if (err && !err.isErrorFrame) {
-                    return cb(err);
-                }
-
-                cb(null, {
-                    error: err || null,
-                    response: resp || null
-                });
-            }
-        }
+    function onResponse(err, resp) {
+        result.handleResponse(err, resp, cb);
     }
 };
 
-module.exports = BatchClient;
+BatchClient.prototype.sendRequests = function sendRequests(callback) {
+    var self = this;
+
+    var loop = new BatchClientLoop({
+        start: Date.now(),
+        batchClient: self,
+        onFinish: callback
+    });
+    loop.runNext();
+};
+
+function BatchClientLoop(options) {
+    var self = this;
+
+    self.batchClient = options.batchClient;
+    self.startTime = options.start;
+    self.onFinish = options.onFinish;
+
+    self.requestCounter = 0;
+    self.responseCounter = 0;
+    self.currentRun = 0;
+    self.results = new BatchClientResults();
+
+    self.boundRunAgain = boundRunAgain;
+
+    function boundRunAgain() {
+        self.runNext();
+    }
+}
+
+BatchClientLoop.prototype.runNext = function runNext() {
+    var self = this;
+
+    if (self.requestCounter >= self.batchClient.totalRequests) {
+        return;
+    }
+
+    self.currentRun++;
+    self.requestCounter += self.batchClient.batchSize;
+
+    var jobs = [];
+    for (var i = 0; i < self.batchClient.batchSize; i++) {
+        jobs[i] = self;
+    }
+
+    collectParallel(jobs, makeRequest, onResults);
+
+    var targetTime = self.startTime + (
+        self.currentRun * self.batchClient.delay
+    );
+    var delta = targetTime - Date.now();
+
+    setTimeout(self.boundRunAgain, delta);
+
+    function onResults(err, responses) {
+        self.onResults(err, responses);
+    }
+};
+
+BatchClientLoop.prototype.onResults = function onResults(err, responses) {
+    var self = this;
+
+    if (err) {
+        return self.onFinish(err);
+    }
+
+    for (var j = 0; j < responses.length; j++) {
+        self.responseCounter++;
+        self.results.push(responses[j]);
+    }
+
+    if (self.responseCounter >= self.batchClient.totalRequests) {
+        self.onFinish(null, self.results);
+    }
+};
+
+function makeRequest(loop, _, callback) {
+    loop.batchClient._sendRequest(callback);
+}
+
+function BatchClientResults() {
+    var self = this;
+
+    self.errors = [];
+    self.results = [];
+}
+
+BatchClientResults.prototype.push = function push(result) {
+    var self = this;
+
+    if (result.err) {
+        self.errors.push(result.err);
+    } else {
+        self.results.push(result.value);
+    }
+};
+
+function BatchClientRequestResult(start) {
+    var self = this;
+
+    self.start = start;
+
+    self.error = null;
+    self.responseOk = null;
+    self.duration = null;
+    self.outReqHostPort = null;
+}
+
+BatchClientRequestResult.prototype.handleResponse =
+function handleResponse(err, resp, callback) {
+    var self = this;
+
+    if (err && !err.isErrorFrame) {
+        return callback(err);
+    }
+
+    self.error = err || null;
+    self.responseOk = resp ? resp.ok : false;
+    self.duration = Date.now() - self.start;
+    self.outReqHostPort = resp ? resp.remoteAddr : null;
+
+    callback(null, self);
+};
