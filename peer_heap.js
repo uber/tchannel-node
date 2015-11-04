@@ -32,6 +32,11 @@ function PeerHeap() {
     var self = this;
 
     self.array = [];
+
+    // We cache the range los and his so they can be stored as a contiguous
+    // array of boxed doubles. This has a noticable speed increase.
+    self.rangehis = [];
+    self.rangelos = [];
 }
 
 PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshold, filter) {
@@ -54,19 +59,27 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
 
     while (stackBegin <= stackEnd) {
         var i = dfsStack[stackBegin];
-
         stackBegin++;
+
         var el = self.array[i];
 
-        if (el.range.hi <= maxRangeStart) {
+        if (self.rangehis[i] <= maxRangeStart) {
             // This range ends before the range with the largest start begins,
             // so it can't possibly be chosen over any of the ranges we've
             // seen. All ranges below this one have a smaller end, so this
             // range and any below it can't be chosen.
             continue;
         } else if (!filter || filter(el.peer)) {
-            maxRangeStart = Math.max(maxRangeStart, el.range.lo);
-            var probability = el.peer.getScore();
+            maxRangeStart = Math.max(maxRangeStart, self.rangelos[i]);
+
+            // INLINE of TChannelPeer#getScore
+            var lo = self.rangelos[i];
+            var hi = self.rangehis[i];
+            var rand = Math.random();
+            if (rand === 0) {
+                rand = 1;
+            }
+            var probability = lo + ((hi - lo) * Math.random());
 
             if ((probability > highestProbability) && (probability > threshold)) {
                 highestProbability = probability;
@@ -109,6 +122,8 @@ PeerHeap.prototype.clear = function clear() {
         el.range = null;
     }
     self.array.length = 0;
+    self.rangehis.length = 0;
+    self.rangelos.length = 0;
 };
 
 PeerHeap.prototype.add = function add(peer) {
@@ -171,8 +186,8 @@ PeerHeap.prototype.push = function push(peer, range) {
 
     var el = new PeerHeapElement(self);
     el.peer = peer;
-    el.range = range;
-    el.score = range.hi;
+    el.range = peer.scoreRange;
+    el.score = peer.scoreRange.hi;
     el.index = self.array.length;
 
     self.array.push(el);
@@ -205,6 +220,8 @@ PeerHeap.prototype.siftdown = function siftdown(i) {
     while (true) {
         var left = (2 * i) + 1;
         if (left >= self.array.length) {
+            self.rangehis[i] = self.array[i].range.hi;
+            self.rangelos[i] = self.array[i].range.lo;
             return i;
         }
 
@@ -219,6 +236,8 @@ PeerHeap.prototype.siftdown = function siftdown(i) {
             self.swap(i, child);
             i = child;
         } else {
+            self.rangehis[i] = self.array[i].range.hi;
+            self.rangelos[i] = self.array[i].range.lo;
             return i;
         }
     }
@@ -233,9 +252,14 @@ PeerHeap.prototype.siftup = function siftup(i) {
             self.swap(i, par);
             i = par;
         } else {
+            self.rangehis[i] = self.array[i].range.hi;
+            self.rangelos[i] = self.array[i].range.lo;
             return i;
         }
     }
+
+    self.rangehis[0] = self.array[0].range.hi;
+    self.rangelos[0] = self.array[0].range.lo;
 
     return 0;
 };
@@ -250,6 +274,12 @@ PeerHeap.prototype.swap = function swap(i, j) {
     self.array[j] = a;
     b.index = i;
     a.index = j;
+
+    self.rangehis[j] = a.range.hi;
+    self.rangelos[j] = a.range.lo;
+
+    self.rangehis[i] = b.range.hi;
+    self.rangelos[i] = b.range.lo;
 };
 
 function PeerHeapElement(heap) {
@@ -269,12 +299,7 @@ PeerHeapElement.prototype.rescore = function rescore(range) {
         return;
     }
 
-    if (!range) {
-        self.range = self.peer.scoreRange;
-    } else {
-        self.range = range;
-    }
-
+    self.range = self.peer.scoreRange;
     self.score = self.range.hi;
     self.index = self.heap.siftup(self.index);
     self.index = self.heap.siftdown(self.index);

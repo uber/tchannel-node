@@ -66,6 +66,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionClose = onConnectionClose;
     self.boundOnPendingChange = onPendingChange;
     self.scoreRange = null;
+    self.el = null;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
@@ -217,7 +218,7 @@ TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
             info.oldScores.push(el.range);
             info.scores.push(range);
         }
-        el.rescore(range);
+        el.rescore();
     }
 
     if (info) {
@@ -635,6 +636,7 @@ TChannelPeer.prototype.computeScoreRange = function computeScoreRange() {
 };
 
 TChannelPeer.prototype.getScore = function getScore() {
+    // This is INLINED into peer_heap.js#73
     var self = this;
     var diff = self.scoreRange.hi - self.scoreRange.lo;
     var rand = self.random();
