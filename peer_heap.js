@@ -39,8 +39,12 @@ function PeerHeap() {
     self.rangelos = [];
 }
 
-PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshold, filter) {
+PeerHeap.prototype.choose = function choose(threshold, filter) {
     var self = this;
+
+    if (!self.array.length) {
+        return null;
+    }
 
     var chosenPeer = null;
     var maxRangeStart = self.array[0].range.lo;
@@ -100,16 +104,6 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
     return chosenPeer;
 };
 
-PeerHeap.prototype.choose = function choose(threshold, filter) {
-    var self = this;
-
-    if (!self.array.length) {
-        return null;
-    }
-
-    return self.chooseWeightedRandom(threshold, filter);
-};
-
 PeerHeap.prototype.clear = function clear() {
     var self = this;
 
@@ -117,7 +111,6 @@ PeerHeap.prototype.clear = function clear() {
         var el = self.array[i];
         el.heap = null;
         el.peer = null;
-        el.score = 0;
         el.index = 0;
         el.range = null;
     }
@@ -141,7 +134,6 @@ PeerHeap.prototype.rescore = function rescore() {
     for (var i = 0; i < self.array.length; i++) {
         var el = self.array[i];
         el.range = el.peer.getScoreRange();
-        el.score = el.range.hi;
     }
     self.heapify();
 };
@@ -187,7 +179,6 @@ PeerHeap.prototype.push = function push(peer, range) {
     var el = new PeerHeapElement(self);
     el.peer = peer;
     el.range = peer.scoreRange;
-    el.score = peer.scoreRange.hi;
     el.index = self.array.length;
 
     self.array.push(el);
@@ -228,11 +219,11 @@ PeerHeap.prototype.siftdown = function siftdown(i) {
         var right = left + 1;
         var child = left;
         if (right < self.array.length &&
-            self.array[right].score > self.array[left].score) {
+            self.array[right].range.hi > self.array[left].range.hi) {
             child = right;
         }
 
-        if (self.array[child].score > self.array[i].score) {
+        if (self.array[child].range.hi > self.array[i].range.hi) {
             self.swap(i, child);
             i = child;
         } else {
@@ -248,7 +239,7 @@ PeerHeap.prototype.siftup = function siftup(i) {
 
     while (i > 0) {
         var par = Math.floor((i - 1) / 2);
-        if (self.array[i].score > self.array[par].score) {
+        if (self.array[i].range.hi > self.array[par].range.hi) {
             self.swap(i, par);
             i = par;
         } else {
@@ -287,7 +278,6 @@ function PeerHeapElement(heap) {
 
     self.heap = heap;
     self.peer = null;
-    self.score = 0;
     self.index = 0;
     self.range = null;
 }
@@ -300,7 +290,6 @@ PeerHeapElement.prototype.rescore = function rescore(range) {
     }
 
     self.range = self.peer.scoreRange;
-    self.score = self.range.hi;
     self.index = self.heap.siftup(self.index);
     self.index = self.heap.siftdown(self.index);
 };
