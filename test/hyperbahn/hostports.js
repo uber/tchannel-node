@@ -260,7 +260,6 @@ function runTests(HyperbahnCluster) {
     HyperbahnCluster.test('malformed thrift IDL: empty serviceName with no exception defined', {
         size: 5
     }, function t(cluster, assert) {
-        cluster.logger.whitelist('warn', 'Got unexpected invalid thrift for arg3');
         var bob = cluster.remotes.bob;
         var bobSub = bob.channel.makeSubChannel({
             serviceName: 'hyperbahn',
@@ -286,17 +285,13 @@ function runTests(HyperbahnCluster) {
             onResponse
         );
         function onResponse(err, res) {
-            assert.ok(err, 'should be error');
-            assert.equals(err.type, 'tchannel-thrift-handler.parse-error.body-failed',
-                'error should be parser error');
-            assert.ok(err.message.indexOf(
-                'Could not parse body (arg3) argument.\n' +
-                'Expected Thrift encoded arg3 for endpoint Hyperbahn::discover.') === 0,
-                'error message should be a parsing failure');
+            assert.ifError(err);
 
-            var items = cluster.logger.items();
-            assert.ok(items.length > 0 && items[0].msg === 'Got unexpected invalid thrift for arg3',
-                'Do not miss the error log');
+            assert.ok(res);
+            assert.equal(res.ok, false);
+            var body = res.body;
+
+            assert.equal(body.thrift['1'], 'invalid service name: ');
 
             assert.end();
         }
