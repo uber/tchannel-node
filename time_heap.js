@@ -20,6 +20,8 @@
 
 'use strict';
 
+var process = require('process');
+
 var DRAIN_LOOP_MAX_DURATION = 100; // ms
 
 module.exports = TimeHeap;
@@ -81,6 +83,17 @@ function TimeHeap(options) {
     self.end = 0;
     self.lastRun = 0;
     self.drainUntil = 0;
+
+    self.scheduledDrain = null;
+
+    self.boundDrainExpired = boundDrainExpired;
+
+    function boundDrainExpired() {
+        var now = self.scheduledDrain;
+        self.scheduledDrain = null;
+
+        self.drainExpired(now);
+    }
 }
 
 TimeHeap.prototype.clear = function clear() {
@@ -113,7 +126,7 @@ TimeHeap.prototype.update = function update(item, now) {
         now = self.timers.now();
     }
 
-    self.drainExpired(now);
+    self.scheduleDrainExpired(now);
     var time = now + item.timeout;
     var i = self.push(item, time);
     // update timer if none, or the newly added item is the new root
@@ -121,6 +134,18 @@ TimeHeap.prototype.update = function update(item, now) {
         self.setNextTimer(now);
     }
     return self.array[i];
+};
+
+TimeHeap.prototype.scheduleDrainExpired =
+function scheduleDrainExpired(now) {
+    var self = this;
+
+    if (self.scheduledDrain) {
+        return;
+    }
+
+    self.scheduledDrain = now;
+    process.nextTick(self.boundDrainExpired);
 };
 
 TimeHeap.prototype.setNextTimer = function setNextTimer(now) {
