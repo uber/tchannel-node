@@ -179,7 +179,6 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
     }
 
     function deferInReqTimeoutErrorEmit() {
-
         if (!self.res || self.res.state === States.Initial) {
             self.emitError(timeoutError);
         }
