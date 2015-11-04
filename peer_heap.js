@@ -26,7 +26,7 @@ module.exports = PeerHeap;
 
 // This is used for every DFS. It will end up being the size of the largest
 // peer list.
-var dfsStack = [];
+var dfsStack = [0, 1, 2];
 
 function PeerHeap() {
     var self = this;
@@ -45,14 +45,12 @@ PeerHeap.prototype.chooseWeightedRandom = function chooseWeightedRandom(threshol
     var stackEnd = 0;
 
     if (firstScore > threshold && (!filter || filter(self.array[0].peer))) {
+        // Don't check first peer if it looks good, check its children though
         chosenPeer = self.array[0].peer;
         highestProbability = firstScore;
-        dfsStack[0] = 1;
-        dfsStack[1] = 2;
-        stackEnd = 1;
-    } else {
-        dfsStack[0] = 0;
-    }
+        stackBegin = 1;
+        stackEnd = 2;
+    } 
 
     while (stackBegin <= stackEnd) {
         var i = dfsStack[stackBegin];
