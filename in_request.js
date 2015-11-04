@@ -169,9 +169,6 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
         // TODO: send an error frame response?
         // TODO: emit error on self.res instead / in addition to?
         // TODO: should cancel any pending handler
-        if (self.operations) {
-            self.operations.popInReq(self.id);
-        }
         timeoutError = errors.RequestTimeoutError({
             id: self.id,
             start: self.start,
@@ -182,8 +179,13 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
     }
 
     function deferInReqTimeoutErrorEmit() {
+
         if (!self.res || self.res.state === States.Initial) {
             self.emitError(timeoutError);
+        }
+
+        if (self.operations) {
+            self.operations.popInReq(self.id);
         }
     }
 };
