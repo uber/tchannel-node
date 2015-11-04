@@ -20,13 +20,12 @@
 
 'use strict';
 
-var process = require('process');
-
 var DRAIN_LOOP_MAX_DURATION = 100; // ms
 
 module.exports = TimeHeap;
 
 var globalTimers = {
+    setImmediate: require('timers').setImmediate,
     setTimeout: require('timers').setTimeout,
     clearTimeout: require('timers').clearTimeout,
     now: Date.now
@@ -145,7 +144,7 @@ function scheduleDrainExpired(now) {
     }
 
     self.scheduledDrain = now;
-    process.nextTick(self.boundDrainExpired);
+    self.timers.setImmediate(self.boundDrainExpired);
 };
 
 TimeHeap.prototype.setNextTimer = function setNextTimer(now) {
