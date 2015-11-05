@@ -77,6 +77,8 @@ var DEFAULT_RETRY_FLAGS = new RetryFlags(
     /*onTimeout*/ false
 );
 
+var MAXIMUM_TTL_ALLOWED = 2 * 60 * 1000;
+
 // TODO restore spying
 // var Spy = require('./v2/spy');
 // var dumpEnabled = /\btchannel_dump\b/.test(process.env.NODE_DEBUG || '');
@@ -247,6 +249,8 @@ function TChannel(options) {
     } else {
         self.batchStats = self.topChannel.batchStats;
     }
+
+    self.maximumRelayTTL = MAXIMUM_TTL_ALLOWED;
 
     function doSanitySweep() {
         self.sanityTimer = null;

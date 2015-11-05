@@ -25,7 +25,6 @@ var stat = require('./stat-tags.js');
 
 var LazyRelayInReq = require('./lazy_relay.js').LazyRelayInReq;
 var logError = require('./lazy_relay.js').logError;
-var MAXIMUM_TTL_ALLOWED = require('./lazy_relay.js').MAXIMUM_TTL_ALLOWED;
 
 RelayHandler.RelayRequest = RelayRequest;
 
@@ -179,16 +178,18 @@ RelayRequest.prototype.onIdentified = function onIdentified() {
     var elapsed = self.channel.timers.now() - self.inreq.start;
     var timeout = Math.max(self.inreq.timeout - elapsed, 1);
 
-    if (timeout > MAXIMUM_TTL_ALLOWED) {
+    if (self.channel.maximumRelayTTL !== 0 &&
+        timeout > self.channel.maximumRelayTTL
+    ) {
         self.logger.warn(
             'Clamping timeout to maximum ttl allowed',
             self.extendLogInfo({
                 timeout: timeout,
-                maximumTTL: MAXIMUM_TTL_ALLOWED
+                maximumTTL: self.channel.maximumRelayTTL
             })
         );
 
-        timeout = MAXIMUM_TTL_ALLOWED;
+        timeout = self.channel.maximumRelayTTL;
     }
 
     // TODO use a type for this literal
