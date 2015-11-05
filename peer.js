@@ -636,7 +636,7 @@ TChannelPeer.prototype.computeScoreRange = function computeScoreRange() {
 };
 
 TChannelPeer.prototype.getScore = function getScore() {
-    // This is INLINED into peer_heap.js#73
+    // This is INLINED into peer_heap.js#115
     var self = this;
     var diff = self.scoreRange.hi - self.scoreRange.lo;
     var rand = self.random();
