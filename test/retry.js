@@ -25,7 +25,6 @@ var series = require('run-series');
 var parallel = require('run-parallel');
 var allocCluster = require('./lib/alloc-cluster');
 var TChannel = require('../channel');
-var randSeq = require('./lib/peer_score_random.js').randSeq;
 
 allocCluster.test('retries over conn failures', {
     numPeers: 3
@@ -189,19 +188,7 @@ allocCluster.test('request application retries', {
 
     var client = TChannel({
         timeoutFuzz: 0,
-        random: randSeq([
-            0.0, // chan 1: add peer
-            0.0, // chan 2: add peer
-                 //
-            0.0, // chan 1: connect
-            0.0, // chan 2: connect
-                 //
-            1.0, // chan 1: identified
-            0.9, // chan 2: identified
-                 //
-            0.0, // top of heap is chan 1: rescore to last
-            0.0, // top of heap is chan 2: restore to last
-        ], false /* NOTE: set true to print debug traces */)
+        random: alwaysReturn0
     });
     var chan = client.makeSubChannel({
         serviceName: 'tristan',
@@ -297,21 +284,7 @@ allocCluster.test('retryFlags work', {
 
     var client = TChannel({
         timeoutFuzz: 0,
-        random: randSeq([
-            0.0,  // chan 1: add peer
-            0.0,  // chan 2: add peer
-                  //
-            0.0,  // chan 1: connect
-            0.0,  // chan 2: connect
-                  //
-            1.0,  // chan 1: identified
-            0.9,  // chan 2: identified
-                  //
-            1.0,  // top of heap is chan 1: stays at top
-            1.0,  // top of heap is chan 1: stays at top
-            0.9,  // top of heap is chan 2: stays in place
-            1.0   // top of heap is chan 1: stays at top
-        ], false /* NOTE: set true to print debug traces */)
+        random: alwaysReturn0
     });
     var chan = client.makeSubChannel({
         serviceName: 'tristan',
@@ -450,4 +423,8 @@ function withConnectedClient(chan, cluster, callback) {
         conn.on('identified', ready.signal);
     });
     ready(callback);
+}
+
+function alwaysReturn0() {
+    return 0;
 }
