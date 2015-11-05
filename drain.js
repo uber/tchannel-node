@@ -27,9 +27,11 @@ var errors = require('./errors');
 
 var GOAL_NOOP = 'noop';
 var GOAL_CLOSE_DRAINED = 'close drained connections';
+var GOAL_CLOSE_PEER = 'close peer';
 
 PeerDrain.GOAL_NOOP = GOAL_NOOP;
 PeerDrain.GOAL_CLOSE_DRAINED = GOAL_CLOSE_DRAINED;
+PeerDrain.GOAL_CLOSE_PEER = GOAL_CLOSE_PEER;
 
 // TODO: subsume and unify with channel draining
 
@@ -42,7 +44,8 @@ function PeerDrain(peer, options, callback) {
     assert(!chan.draining, 'cannot drain a peer while channel is draining');
     assert(!options.goal ||
            options.goal === GOAL_NOOP ||
-           options.goal === GOAL_CLOSE_DRAINED,
+           options.goal === GOAL_CLOSE_DRAINED ||
+           options.goal === GOAL_CLOSE_PEER,
            'expected a valid goal (if any)');
 
     self.goal = options.goal || PeerDrain.GOAL_NOOP;
@@ -142,6 +145,10 @@ function start() {
                 self.thenCloseDrained(err);
                 break;
 
+            case GOAL_CLOSE_PEER:
+                self.thenClosePeer(err);
+                break;
+
             default:
                 self.finish(err || new Error('invalid drain goal'), now);
         }
@@ -186,6 +193,29 @@ function thenCloseDrained(err) {
     }
 
     self.peer.closeDrainedConnections(self.thenFinish);
+};
+
+PeerDrain.prototype.thenClosePeer =
+function thenClosePeer(err) {
+    var self = this;
+
+    if (err) {
+        var info = self.peer.extendLogInfo(self.extendLogInfo({
+            error: err
+        }));
+
+        if (err.type === 'tchannel.drain.peer.timed-out') {
+            self.peer.logger.warn(
+                'drain timed out, force closing peer',
+                info);
+        } else {
+            self.peer.logger.warn(
+                'unexpected error draining connections, closing peer anyhow',
+                info);
+        }
+    }
+
+    self.peer.close(self.thenFinish);
 };
 
 PeerDrain.prototype.finish =
