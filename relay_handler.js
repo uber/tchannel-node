@@ -261,7 +261,7 @@ function createOutRequest() {
         return;
     }
 
-    var conn = chooseRelayPeerConnection(self.peer);
+    var conn = self.peer.getInConnection(true);
     if (conn && conn.remoteName && !conn.closing) {
         self.forwardTo(conn);
     } else {
@@ -289,7 +289,7 @@ function onIdentified(err) {
         return;
     }
 
-    var conn = chooseRelayPeerConnection(self.peer);
+    var conn = self.peer.getInConnection(true);
     if (!conn.remoteName) {
         // we get the problem
         self.logger.warn('onIdentified called on unidentified connection', self.extendLogInfo({}));
