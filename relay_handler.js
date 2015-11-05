@@ -55,15 +55,10 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return true;
     }
 
-    rereq.peer = self.channel.peers.choosePeer(null);
-    if (!rereq.peer) {
-        rereq.sendErrorFrame('Declined', 'no peer available for request');
-        self.logger.info('no relay peer available', rereq.extendLogInfo({}));
-        return true;
-    }
-
     if (self.circuits) {
-        var circuit = self.circuits.getCircuit(rereq.callerName, rereq.serviceName, rereq.endpoint);
+        var circuit = self.circuits.getCircuit(
+            rereq.callerName || 'no-cn', rereq.serviceName, rereq.endpoint
+        );
         if (!circuit.state.shouldRequest()) {
             rereq.sendErrorFrame('Declined', 'Service is not healthy');
             return true;
@@ -73,19 +68,15 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         circuit.state.onRequest(rereq);
     }
 
+    rereq.peer = self.channel.peers.choosePeer(null);
+    if (!rereq.peer) {
+        rereq.sendErrorFrame('Declined', 'no peer available for request');
+        self.logger.info('no relay peer available', rereq.extendLogInfo({}));
+        return true;
+    }
+
     conn.ops.addInReq(rereq);
     rereq.createOutRequest();
-
-    self.channel.emitFastStat(
-        'tchannel.inbound.calls.recvd',
-        'counter',
-        1,
-        new stat.InboundCallsRecvdTags(
-            rereq.callerName,
-            rereq.serviceName,
-            rereq.endpoint
-        )
-    );
 
     return true;
 };
@@ -93,23 +84,10 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
 RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     var self = this;
 
-    // TODO add this back in a performant way ??
-    // if (rereq) {
-    //     self.logger.error('relay request already exists for incoming request', {
-    //         inReqId: req.id,
-    //         priorInResId: rereq.inres && rereq.inres.id,
-    //         priorOutResId: rereq.outres && rereq.outres.id,
-    //         priorOutReqId: rereq.outreq && rereq.outreq.id
-    //         // TODO more context, like outreq remote addr
-    //     });
-    //     buildRes().sendError(
-    //         'UnexpectedError', 'request id exists in relay handler'
-    //     );
-    //     return;
-    // }
-
     if (self.circuits) {
-        var circuit = self.circuits.getCircuit(req.headers.cn || 'no-cn', req.serviceName, String(req.arg1));
+        var circuit = self.circuits.getCircuit(
+            req.headers.cn || 'no-cn', req.serviceName, req.endpoint
+        );
         if (!circuit.state.shouldRequest()) {
             buildRes().sendError('Declined', 'Service is not healthy');
             return;
@@ -117,7 +95,6 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
 
         req.circuit = circuit;
         circuit.state.onRequest(req);
-
     }
 
     req.forwardTrace = true;
@@ -284,12 +261,23 @@ function createOutRequest() {
         return;
     }
 
-    var conn = chooseRelayPeerConnection(self.peer);
+    var conn = self.peer.getInConnection(true);
     if (conn && conn.remoteName && !conn.closing) {
         self.forwardTo(conn);
     } else {
         self.peer.waitForIdentified(self.boundOnIdentified);
     }
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.recvd',
+        'counter',
+        1,
+        new stat.InboundCallsRecvdTags(
+            self.callerName,
+            self.serviceName,
+            self.endpoint
+        )
+    );
 };
 
 LazyRelayInReq.prototype.onIdentified =
@@ -301,7 +289,7 @@ function onIdentified(err) {
         return;
     }
 
-    var conn = chooseRelayPeerConnection(self.peer);
+    var conn = self.peer.getInConnection(true);
     if (!conn.remoteName) {
         // we get the problem
         self.logger.warn('onIdentified called on unidentified connection', self.extendLogInfo({}));
@@ -925,7 +913,7 @@ RelayRequest.prototype.createOutRequest = function createOutRequest() {
 RelayRequest.prototype.onIdentified = function onIdentified() {
     var self = this;
 
-    var conn = chooseRelayPeerConnection(self.peer);
+    var conn = self.peer.getInConnection(true);
     if (!conn.remoteName) {
         // we get the problem
         self.logger.error('onIdentified called on no connection identified', {
@@ -1090,13 +1078,4 @@ function logError(logger, err, codeName, extendLogInfo) {
     } else if (level === 'info') {
         logger.info('expected error while forwarding', info);
     }
-}
-
-function chooseRelayPeerConnection(peer) {
-    var conn = null;
-    for (var i = 0; i < peer.connections.length; i++) {
-        conn = peer.connections[i];
-        if (conn.remoteName && !conn.closing) break;
-    }
-    return conn;
 }
