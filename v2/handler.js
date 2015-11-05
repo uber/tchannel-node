@@ -39,6 +39,10 @@ var StreamingInResponse = require('../streaming_in_response');
 var v2 = require('./index');
 var errors = require('../errors');
 
+var TCHANNEL_LANGUAGE = 'node';
+var TCHANNEL_LANGUAGE_VERSION = process.version.slice(1);
+var TCHANNEL_VERSION = require('../package.json').version;
+
 var SERVER_TIMEOUT_DEFAULT = 100;
 var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
 
@@ -580,7 +584,10 @@ TChannelV2Handler.prototype.sendInitRequest = function sendInitRequest() {
     var processName = self.processName;
     var body = new v2.InitRequest(v2.VERSION, {
         host_port: hostPort,
-        process_name: processName
+        process_name: processName,
+        tchannel_language: TCHANNEL_LANGUAGE,
+        tchannel_language_version: TCHANNEL_LANGUAGE_VERSION,
+        tchannel_version: TCHANNEL_VERSION
     });
     var reqFrame = new v2.Frame(id, body);
     self.pushFrame(reqFrame);
@@ -593,7 +600,10 @@ TChannelV2Handler.prototype.sendInitResponse = function sendInitResponse(reqFram
     var processName = self.processName;
     var body = new v2.InitResponse(v2.VERSION, {
         host_port: hostPort,
-        process_name: processName
+        process_name: processName,
+        tchannel_language: TCHANNEL_LANGUAGE,
+        tchannel_language_version: TCHANNEL_LANGUAGE_VERSION,
+        tchannel_version: TCHANNEL_VERSION
     });
     var resFrame = new v2.Frame(id, body);
     self.pushFrame(resFrame);
