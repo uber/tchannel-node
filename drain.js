@@ -115,13 +115,8 @@ function start() {
                 self.timer = null;
             }
         }
-        if (!self.finishedAt) {
-            self.finishedAt = now;
-            if (self.callback) {
-                self.callback(err);
-                self.callback = null;
-            }
-        }
+
+        self.finish(err, now);
     }
 };
 
@@ -140,6 +135,20 @@ function stop() {
     }
 
     self.callback = null;
+};
+
+PeerDrain.prototype.finish =
+function finish(err, now) {
+    var self = this;
+
+    if (!self.finishedAt) {
+        self.finishedAt = now;
+
+        if (self.callback) {
+            self.callback(err);
+            self.callback = null;
+        }
+    }
 };
 
 PeerDrain.prototype.drainConnection =
