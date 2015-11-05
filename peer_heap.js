@@ -20,6 +20,8 @@
 
 'use strict';
 
+var assert = require('assert');
+
 module.exports = PeerHeap;
 
 // A max-score (pre-computed) for peer selection
@@ -28,16 +30,38 @@ module.exports = PeerHeap;
 // peer list.
 var dfsStack = [0, 1, 2];
 
-function PeerHeap() {
+function PeerHeap(random) {
     var self = this;
 
     self.array = [];
+
+    self.random = random || Math.random;
+    assert(typeof self.random === 'function', 'PeerHeap expected random fn');
 
     // We cache the range los and his so they can be stored as a contiguous
     // array of boxed doubles. This has a noticable speed increase.
     self.rangehis = [];
     self.rangelos = [];
 }
+
+PeerHeap.prototype.choose1 = function choose1(threshold, filter) {
+    var self = this;
+    if (self.array[0].range.lo >= threshold && (!filter || filter(self.array[0].peer))) {
+        return self.array[0].peer;
+    }
+};
+
+PeerHeap.prototype.choose2 = function choose2(threshold, filter) {
+    var self = this;
+    var prob1 = self.array[0].peer.getScore();
+    var prob2 = self.array[1].peer.getScore();
+
+    if (prob1 > threshold && prob1 >= prob2 && (!filter || filter(self.array[0].peer))) {
+        return self.array[0].peer;
+    } else if (prob2 > threshold && (!filter || filter(self.array[1].peer))) {
+        return self.array[1].peer;
+    }
+};
 
 PeerHeap.prototype.choose = function choose(threshold, filter) {
     var self = this;
@@ -46,10 +70,20 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         return null;
     }
 
+    if (self.array.length === 1) {
+        return self.choose1(threshold, filter);
+    }
+
+    if (self.array.length === 2) {
+        return self.choose2(threshold, filter);
+    }
+
     var chosenPeer = null;
     var maxRangeStart = self.array[0].range.lo;
     var highestProbability = 0;
     var firstScore = self.array[0].peer.getScore();
+
+    // Pointers into dfsStack
     var stackBegin = 0;
     var stackEnd = 0;
 
@@ -57,6 +91,8 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         // Don't check first peer if it looks good, check its children though
         chosenPeer = self.array[0].peer;
         highestProbability = firstScore;
+        // The array is seeded with 0, 1, 2 so we just have to advance the 
+        // stack pointers
         stackBegin = 1;
         stackEnd = 2;
     } 
@@ -79,11 +115,11 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
             // INLINE of TChannelPeer#getScore
             var lo = self.rangelos[i];
             var hi = self.rangehis[i];
-            var rand = Math.random();
+            var rand = self.random();
             if (rand === 0) {
                 rand = 1;
             }
-            var probability = lo + ((hi - lo) * Math.random());
+            var probability = lo + ((hi - lo) * rand);
 
             if ((probability > highestProbability) && (probability > threshold)) {
                 highestProbability = probability;
@@ -91,6 +127,8 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
             }
         }
 
+        // Continue DFS by 'pushing' left and right indexes onto end of 
+        // dfsStack, if the source array is long enough for that
         var left = 2 * i + 1;
         var right = left + 1;
         if (left < self.array.length) {
