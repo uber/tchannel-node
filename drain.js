@@ -26,8 +26,10 @@ var CountedReadySignal = require('ready-signal/counted');
 var errors = require('./errors');
 
 var GOAL_NOOP = 'noop';
+var GOAL_CLOSE_DRAINED = 'close drained connections';
 
 PeerDrain.GOAL_NOOP = GOAL_NOOP;
+PeerDrain.GOAL_CLOSE_DRAINED = GOAL_CLOSE_DRAINED;
 
 // TODO: subsume and unify with channel draining
 
@@ -39,7 +41,8 @@ function PeerDrain(peer, options, callback) {
     assert(options.reason, 'a reason is required');
     assert(!chan.draining, 'cannot drain a peer while channel is draining');
     assert(!options.goal ||
-           options.goal === GOAL_NOOP,
+           options.goal === GOAL_NOOP ||
+           options.goal === GOAL_CLOSE_DRAINED,
            'expected a valid goal (if any)');
 
     self.goal = options.goal || PeerDrain.GOAL_NOOP;
@@ -54,7 +57,12 @@ function PeerDrain(peer, options, callback) {
     self.startedAt = 0;
     self.stoppedAt = 0;
     self.finishedAt = 0;
+    self.thenFinish = thenFinish;
 
+    function thenFinish(err) {
+        var now = self.channel.timers.now();
+        self.finish(err, now);
+    }
 }
 
 PeerDrain.prototype.extendLogInfo =
@@ -130,6 +138,10 @@ function start() {
                 self.finish(err, now);
                 break;
 
+            case GOAL_CLOSE_DRAINED:
+                self.thenCloseDrained(err);
+                break;
+
             default:
                 self.finish(err || new Error('invalid drain goal'), now);
         }
@@ -151,6 +163,29 @@ function stop() {
     }
 
     self.callback = null;
+};
+
+PeerDrain.prototype.thenCloseDrained =
+function thenCloseDrained(err) {
+    var self = this;
+
+    if (err) {
+        var info = self.peer.extendLogInfo(self.extendLogInfo({
+            error: err
+        }));
+
+        if (err.type === 'tchannel.drain.peer.timed-out') {
+            self.peer.logger.warn(
+                'drain timed out, force closing connections',
+                info);
+        } else {
+            self.peer.logger.warn(
+                'unexpected error draining connections, closing anyhow',
+                info);
+        }
+    }
+
+    self.peer.closeDrainedConnections(self.thenFinish);
 };
 
 PeerDrain.prototype.finish =
