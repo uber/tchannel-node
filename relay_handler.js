@@ -76,17 +76,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     conn.ops.addInReq(rereq);
     rereq.createOutRequest();
 
-    self.channel.emitFastStat(
-        'tchannel.inbound.calls.recvd',
-        'counter',
-        1,
-        new stat.InboundCallsRecvdTags(
-            rereq.callerName,
-            rereq.serviceName,
-            rereq.endpoint
-        )
-    );
-
     return true;
 };
 
@@ -289,6 +278,17 @@ function createOutRequest() {
     } else {
         self.peer.waitForIdentified(self.boundOnIdentified);
     }
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.recvd',
+        'counter',
+        1,
+        new stat.InboundCallsRecvdTags(
+            self.callerName,
+            self.serviceName,
+            self.endpoint
+        )
+    );
 };
 
 LazyRelayInReq.prototype.onIdentified =
