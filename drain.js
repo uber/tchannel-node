@@ -25,6 +25,10 @@ var process = require('process');
 var CountedReadySignal = require('ready-signal/counted');
 var errors = require('./errors');
 
+var GOAL_NOOP = 'noop';
+
+PeerDrain.GOAL_NOOP = GOAL_NOOP;
+
 // TODO: subsume and unify with channel draining
 
 function PeerDrain(peer, options, callback) {
@@ -34,7 +38,11 @@ function PeerDrain(peer, options, callback) {
     assert(options, 'options is required');
     assert(options.reason, 'a reason is required');
     assert(!chan.draining, 'cannot drain a peer while channel is draining');
+    assert(!options.goal ||
+           options.goal === GOAL_NOOP,
+           'expected a valid goal (if any)');
 
+    self.goal = options.goal || PeerDrain.GOAL_NOOP;
     self.channel = chan;
     self.peer = peer;
     self.timeout = options.timeout || 0;
@@ -53,6 +61,7 @@ PeerDrain.prototype.extendLogInfo =
 function extendLogInfo(info) {
     var self = this;
 
+    info.drainGoal = self.goal;
     info.drainReason = self.reason;
     info.drainTimeout = self.timeout;
     info.drainDirection = self.direction;
@@ -116,7 +125,14 @@ function start() {
             }
         }
 
-        self.finish(err, now);
+        switch (self.goal) {
+            case GOAL_NOOP:
+                self.finish(err, now);
+                break;
+
+            default:
+                self.finish(err || new Error('invalid drain goal'), now);
+        }
     }
 };
 
