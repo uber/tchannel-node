@@ -50,7 +50,9 @@ function Agent(options) {
 }
 
 function compareTracingIds(id1, id2) {
-    if (!id1 || !id2) return false;
+    if (!id1 || !id2) {
+        return false;
+    }
     return id1[0] === id2[0] && id1[1] === id2[1];
 }
 
@@ -59,8 +61,9 @@ function compareTracingIds(id1, id2) {
 Agent.prototype.setupNewSpan = function setupNewSpan(options) {
     var self = this;
 
-    var hostPortParts = options.remoteName.split(":");
-    var host = hostPortParts[0], port = parseInt(hostPortParts[1], 10);
+    var hostPortParts = options.remoteName.split(':');
+    var host = hostPortParts[0];
+    var port = parseInt(hostPortParts[1], 10);
 
     var empty = [0, 0];
     if (compareTracingIds(empty, options.parentid)) {
@@ -77,11 +80,11 @@ Agent.prototype.setupNewSpan = function setupNewSpan(options) {
 
     var span = new Span({
         endpoint: new Span.Endpoint(
-            host, 
-            port, 
-            // If a service hasn't been specified on the tracer, use the 
+            host,
+            port,
+            // If a service hasn't been specified on the tracer, use the
             // service on the incoming request. This is to handle the
-            // case of the service router, which has a different service name 
+            // case of the service router, which has a different service name
             // than the one specified in the incoming request.
             self.serviceName || options.serviceName
         ),
@@ -89,7 +92,7 @@ Agent.prototype.setupNewSpan = function setupNewSpan(options) {
         id: options.spanid,
         parentid: options.parentid,
         traceid: options.traceid,
-        flags: self.forceTrace? 1 : options.flags
+        flags: self.forceTrace ? 1 : options.flags
     });
 
     var parentSpan = options.parentSpan;

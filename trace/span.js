@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+'use strict';
+
 var LCG = require('../lib/lcg');
 
 var rng = new LCG();
@@ -59,15 +61,15 @@ function Span(options) {
 Span.prototype.toString = function toString() {
     var self = this;
 
-    var strAnnotations = self.annotations.map(function (ann) {
-        return "[" + ann.value + " " + ann.timestamp + "]";
+    var strAnnotations = self.annotations.map(function eachAnn(ann) {
+        return '[' + ann.value + ' ' + ann.timestamp + ']';
     }).join(' ');
 
-    return "SPAN: traceid: " + self.traceid.toString('hex') + " spanid: " +
-        self.id.toString('hex') + " parentid: " +
-        self.parentid.toString('hex') + " name: " + self.name +
-        " servicename: " + self.endpoint.serviceName + 
-        " annotations: " + strAnnotations;
+    return 'SPAN: traceid: ' + self.traceid.toString('hex') + ' spanid: ' +
+        self.id.toString('hex') + ' parentid: ' +
+        self.parentid.toString('hex') + ' name: ' + self.name +
+        ' servicename: ' + self.endpoint.serviceName +
+        ' annotations: ' + strAnnotations;
 };
 
 Span.prototype.toJSON = function toJSON() {
@@ -166,7 +168,7 @@ function BinaryAnnotation(key, value, type, host) {
 
     self.key = key;
     self.value = value;
-    self.type = type? type : typeof value;
+    self.type = type ? type : typeof value;
     self.host = host;
 }
 
