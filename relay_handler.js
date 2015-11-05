@@ -55,13 +55,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return true;
     }
 
-    rereq.peer = self.channel.peers.choosePeer(null);
-    if (!rereq.peer) {
-        rereq.sendErrorFrame('Declined', 'no peer available for request');
-        self.logger.info('no relay peer available', rereq.extendLogInfo({}));
-        return true;
-    }
-
     if (self.circuits) {
         var circuit = self.circuits.getCircuit(rereq.callerName, rereq.serviceName, rereq.endpoint);
         if (!circuit.state.shouldRequest()) {
@@ -71,6 +64,13 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
 
         rereq.circuit = circuit;
         circuit.state.onRequest(rereq);
+    }
+
+    rereq.peer = self.channel.peers.choosePeer(null);
+    if (!rereq.peer) {
+        rereq.sendErrorFrame('Declined', 'no peer available for request');
+        self.logger.info('no relay peer available', rereq.extendLogInfo({}));
+        return true;
     }
 
     conn.ops.addInReq(rereq);
@@ -117,7 +117,6 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
 
         req.circuit = circuit;
         circuit.state.onRequest(req);
-
     }
 
     req.forwardTrace = true;
