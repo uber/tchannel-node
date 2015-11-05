@@ -66,7 +66,6 @@ function TChannelPeer(channel, hostPort, options) {
     self.boundOnConnectionClose = onConnectionClose;
     self.boundOnPendingChange = onPendingChange;
     self.scoreRange = null;
-    self.el = null;
 
     self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
