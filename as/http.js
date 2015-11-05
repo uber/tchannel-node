@@ -60,6 +60,7 @@ HTTPResArg2.RW = bufrw.Struct(HTTPResArg2, {
 });
 
 // per RFC2616
+/*eslint-disable complexity*/
 HTTPReqArg2.prototype.getHeaders =
 HTTPResArg2.prototype.getHeaders =
 function getHeaders() {
@@ -105,8 +106,10 @@ function getHeaders() {
         }
     }
     return headers;
+    /*eslint-enable complexity*/
 };
 
+/*eslint-disable complexity*/
 HTTPReqArg2.prototype.setHeaders =
 HTTPResArg2.prototype.setHeaders =
 function setHeaders(headers) {
@@ -146,6 +149,7 @@ function setHeaders(headers) {
         }
     }
 };
+/*eslint-enable complexity*/
 
 function TChannelHTTP(options) {
     if (!(this instanceof TChannelHTTP)) {
@@ -157,6 +161,7 @@ function TChannelHTTP(options) {
     }
 }
 
+/*eslint-disable max-statements*/
 TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, callback) {
     var self = this;
     if (typeof options === 'function') {
@@ -164,11 +169,14 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
         options = null;
     }
 
+    var req;
+    var arg2res;
+
     var head = new HTTPReqArg2(hreq.method, hreq.url);
     head.setHeaders(hreq.headers);
 
     var arg1 = ''; // TODO: left empty for now, could compute circuit names heuristically
-    var arg2res = bufrw.toBufferResult(HTTPReqArg2.RW, head);
+    arg2res = bufrw.toBufferResult(HTTPReqArg2.RW, head);
     if (arg2res.err) {
         self.logger.error('Buffer write for arg2 failed', {
             error: arg2res.err
@@ -183,7 +191,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
 
     treq.headers.as = 'http';
     if (treq.streamed) {
-        var req = treq.sendStreams(arg1, arg2, hreq, onStreamResponse);
+        req = treq.sendStreams(arg1, arg2, hreq, onStreamResponse);
         self.channel.emitFastStat(
             'tchannel.http-handler.egress.request-build-latency',
             'timing',
@@ -206,7 +214,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
             callback(err, null, null, null);
             return err;
         }
-        var req = treq.send(arg1, arg2, body, onResponse);
+        req = treq.send(arg1, arg2, body, onResponse);
         self.channel.emitFastStat(
             'tchannel.http-handler.egress.request-build-latency',
             'timing',
@@ -220,41 +228,41 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
         return req;
     }
 
-    function onResponse(err, tres, arg2, arg3) {
-        var start = self.channel.timers.now();
+    function onResponse(err, tres, res1, res2) {
+        var now = self.channel.timers.now();
         if (err) {
             callback(err, null, null, null);
         } else {
-            readArg2(tres, arg2, start);
+            readArg2(tres, res1, now);
         }
     }
 
-    function onStreamResponse(err, treq, tres) {
-        var start = self.channel.timers.now();
-        if (err) {
-            callback(err, null, null, null);
+    function onStreamResponse(err1, treq2, tres) {
+        var now = self.channel.timers.now();
+        if (err1) {
+            callback(err1, null, null, null);
         } else if (tres.streamed) {
             tres.arg2.onValueReady(arg2Ready);
         } else {
             arg2Ready(null, tres.arg2);
         }
-        function arg2Ready(err, arg2) {
-            if (err) {
-                callback(err, null, null, null);
+        function arg2Ready(err2, res1) {
+            if (err2) {
+                callback(err2, null, null, null);
             } else {
-                readArg2(tres, arg2, start);
+                readArg2(tres, res1, now);
             }
         }
     }
 
-    function readArg2(tres, arg2, start) {
-        var arg2res = bufrw.fromBufferResult(HTTPResArg2.RW, arg2);
+    function readArg2(tres, res1, start2) {
+        arg2res = bufrw.fromBufferResult(HTTPResArg2.RW, res1);
         if (arg2res.err) {
             self.logger.error('Buffer read for arg2 failed', {
                 error: arg2res.err
             });
             var fromBufferErr = errors.HTTPReqArg2fromoBufferError(arg2res.err, {
-                arg2: arg2
+                arg2: res1
             });
             callback(fromBufferErr, null, null, null);
         } else {
@@ -266,7 +274,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
             self.channel.emitFastStat(
                 'tchannel.http-handler.egress.response-build-latency',
                 'timing',
-                self.channel.timers.now() - start,
+                self.channel.timers.now() - start2,
                 new stat.HTTPHanlderBuildLatencyTags(
                     treq.serviceName,
                     treq.callerName,
@@ -276,6 +284,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
         }
     }
 };
+/*eslint-enable max-statements*/
 
 TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, statTags, callback) {
     // TODO: map http response codes onto error frames and application errors
@@ -312,7 +321,6 @@ TChannelHTTP.prototype.sendResponse = function send(buildResponse, hres, body, s
         return null;
     }
 
-
     var res = buildResponse({
         streamed: true,
         headers: {
@@ -341,6 +349,7 @@ TChannelHTTP.prototype.forwardToTChannel = function forwardToTChannel(tchannel, 
     self.channel = self.channel || tchannel;
     self.logger = self.logger || tchannel.logger;
     var start = self.channel.timers.now();
+    var treq;
     // TODO: more http state machine integration
 
     var options = tchannel.requestOptions(extendInto({
@@ -348,7 +357,7 @@ TChannelHTTP.prototype.forwardToTChannel = function forwardToTChannel(tchannel, 
     }, requestOptions));
 
     if (!options.streamed) {
-        var treq = tchannel.request(options);
+        treq = tchannel.request(options);
         return self.sendRequest(treq, hreq, start, forwarded);
     }
 
@@ -368,7 +377,7 @@ TChannelHTTP.prototype.forwardToTChannel = function forwardToTChannel(tchannel, 
         }
 
         options.host = peer.hostPort;
-        var treq = tchannel.request(options);
+        treq = tchannel.request(options);
         self.sendRequest(treq, hreq, start, forwarded);
     }
 
@@ -423,7 +432,9 @@ TChannelHTTP.prototype.forwardToHTTP = function forwardToHTTP(tchannel, options,
 TChannelHTTP.prototype._forwardToLBPool = function _forwardToLBPool(options, inreq, outres, callback) {
     var self = this;
     var start = self.channel.timers.now();
-    if (!options) { options = {}; }
+    if (!options) {
+        options = {};
+    }
     options.encoding = null;
     var data = inreq.bodyStream || inreq.bodyArg; // lb_pool likes polymorphism
     self.lbpool.request(options, data, onResponse);

@@ -22,6 +22,7 @@
 
 var format = require('util').format;
 var inherits = require('util').inherits;
+var console = require('console');
 
 module.exports.ChanConnMonitor = ChanConnMonitor;
 
@@ -48,7 +49,9 @@ function ChanConnMonitor(channel, options) {
     }
 }
 
+/*eslint-disable no-console*/
 ChanConnMonitor.prototype.log = console.log;
+/*eslint-enable no-console*/
 
 ChanConnMonitor.prototype.summary = function summary() {
 };
@@ -250,7 +253,6 @@ function reduceByTTL(list) {
 
     return info;
 }
-
 
 function sumCounts(a, b) {
     Object.keys(b).forEach(function eachB(key) {

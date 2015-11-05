@@ -43,7 +43,7 @@ TChannelServices.prototype.errorIfExceedsMaxPending = function errorIfExceedsMax
         });
     }
     if (!req.serviceName) {
-        return;
+        return null;
     }
     var serviceKey = '$' + req.serviceName;
     var service = self.services[serviceKey];

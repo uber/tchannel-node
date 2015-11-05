@@ -25,6 +25,10 @@ var fs = require('fs');
 var ldj = require('ldjson-stream');
 var parallel = require('run-parallel');
 var util = require('util');
+var process = require('process');
+var console = require('console');
+
+/*eslint no-console: 0*/
 
 var argv = parseArgs(process.argv.slice(2), {
     default: {
@@ -34,16 +38,20 @@ var argv = parseArgs(process.argv.slice(2), {
 
 if (argv._.length !== 2) {
     console.error('usage: compare.js a.json b.json');
+    /*eslint-disable no-process-exit*/
     process.exit(1);
+    /*eslint-enable no-process-exit*/
 }
 
-readSamples(argv._, function(err, samples) {
-    if (err) throw err;
+readSamples(argv._, function onSamples(err, samples) {
+    if (err) {
+        throw err;
+    }
 
     var keys = {};
     var maxKeyLen = 0;
-    samples.forEach(function(sample) {
-        Object.keys(sample).forEach(function(key) {
+    samples.forEach(function forSample(sample) {
+        Object.keys(sample).forEach(function forSampleKey(key) {
             maxKeyLen = Math.max(maxKeyLen, key.length);
             keys[key] = true;
         });
@@ -51,7 +59,7 @@ readSamples(argv._, function(err, samples) {
 
     var sampleA = samples[0];
     var sampleB = samples[1];
-    Object.keys(keys).sort().forEach(function(key) {
+    Object.keys(keys).sort().forEach(function compareSample(key) {
         var aData = sampleA[key];
         var bData = sampleB[key];
         if (aData === undefined) {
@@ -99,7 +107,9 @@ readSamples(argv._, function(err, samples) {
 // return basic descriptive stats of some numerical sample
 function descStats(sample) {
     var S = [].concat(sample);
-    S.sort(function(a, b) {return a - b;});
+    S.sort(function sortOrder(a, b) {
+        return a - b;
+    });
     var N = S.length;
     var q1 = S[Math.floor(0.25 * N)];
     var q2 = S[Math.floor(0.50 * N)];
@@ -109,13 +119,15 @@ function descStats(sample) {
     var hi = q3 + tol;
     var whiIndex = N;
     while (--whiIndex > 0) {
-        if (S[whiIndex] <= hi) break;
+        if (S[whiIndex] <= hi) {
+            break;
+        }
     }
-    var whiPct = (whiIndex+1) / N;
+    var whiPct = (whiIndex + 1) / N;
     var whi = S[whiIndex];
     return {
         min: S[0],
-        max: S[N-1],
+        max: S[N - 1],
         q1: q1,
         q2: q2,
         q3: q3,
@@ -205,7 +217,7 @@ function storeResultInto(sample) {
 
 function lpad(input, len, chr) {
     var str = input.toString();
-    chr = chr || " ";
+    chr = chr || ' ';
     while (str.length < len) {
         str = chr + str;
     }
@@ -214,7 +226,7 @@ function lpad(input, len, chr) {
 
 function rpad(input, len, chr) {
     var str = input.toString();
-    chr = chr || " ";
+    chr = chr || ' ';
     while (str.length < len) {
         str = str + chr;
     }
@@ -223,9 +235,11 @@ function rpad(input, len, chr) {
 
 function extractDim(name, sample) {
     var missing = 0;
-    var data = sample.map(function(data) {
-        var d = data[name];
-        if (d === undefined) ++missing;
+    var data = sample.map(function forSample(item) {
+        var d = item[name];
+        if (d === undefined) {
+            ++missing;
+        }
         return d;
     });
     return {

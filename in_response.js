@@ -22,8 +22,9 @@
 
 var EventEmitter = require('./lib/event_emitter');
 var inherits = require('util').inherits;
-var errors = require('./errors');
+var Buffer = require('buffer').Buffer;
 
+var errors = require('./errors');
 var States = require('./reqres_states');
 
 var emptyBuffer = Buffer(0);
@@ -74,8 +75,8 @@ TChannelInResponse.prototype.extendLogInfo = function extendLogInfo(info) {
     return info;
 };
 
-TChannelInResponse.prototype.onFinish = function onFinish(_arg, self) {
-    self.state = States.Done;
+TChannelInResponse.prototype.onFinish = function onFinish(_arg, resp) {
+    resp.state = States.Done;
 };
 
 TChannelInResponse.prototype.handleFrame = function handleFrame(parts, isLast) {

@@ -24,7 +24,6 @@ var test = require('tape');
 var Init = require('../../v2/init.js');
 var testRW = require('bufrw/test_rw');
 
-/* jshint camelcase:false */
 
 test('Init.Request.RW: read/write payload', testRW.cases(Init.Request.RW, [
     [

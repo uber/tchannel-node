@@ -166,7 +166,6 @@ TChannelHandler.prototype.sendInitResponse = function sendInitResponse(reqFrame)
     self.writeFrame(resFrame);
 };
 
-/* jshint maxparams:5 */
 TChannelHandler.prototype.sendRequestFrame = function sendRequestFrame(options, arg1, arg2, arg3, callback) {
     var self = this;
     var id = self.nextFrameId();
@@ -198,7 +197,6 @@ TChannelHandler.prototype.sendResponseFrame = function sendResponseFrame(reqFram
     }
     self.writeFrame(resFrame, callback);
 };
-/* jshint maxparams:4 */
 
 function isError(obj) {
     return typeof obj === 'object' && (

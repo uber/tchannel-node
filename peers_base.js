@@ -21,6 +21,7 @@
 'use strict';
 
 var inherits = require('util').inherits;
+var setImmediate = require('timers').setImmediate;
 var EventEmitter = require('./lib/event_emitter');
 
 function TChannelPeersBase(channel, options) {
@@ -152,7 +153,7 @@ TChannelPeersBase.prototype.delete = function del(hostPort) {
     var peer = self._map[hostPort];
 
     if (!peer) {
-        return;
+        return null;
     }
 
     self._delete(peer);

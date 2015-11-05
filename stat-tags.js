@@ -559,7 +559,6 @@ OutboundResponseSizeTags.prototype.toStatKey = function toStatKey(prefix) {
         clean(self.targetEndpoint, 'no-endpoint');
 };
 
-
 function RateLimiterServiceTags(serviceName) {
     var self = this;
 

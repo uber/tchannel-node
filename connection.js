@@ -53,17 +53,15 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
                     socketRemoteAddr
                 ));
         }
-    } else {
-        if (self.channel.emitConnectionMetrics) {
-            self.channel.emitFastStat(
-                'tchannel.connections.accepted',
-                'counter',
-                1,
-                new stat.ConnectionsAcceptedTags(
-                    self.channel.hostPort,
-                    socketRemoteAddr
-                ));
-        }
+    } else if (self.channel.emitConnectionMetrics) {
+        self.channel.emitFastStat(
+            'tchannel.connections.accepted',
+            'counter',
+            1,
+            new stat.ConnectionsAcceptedTags(
+                self.channel.hostPort,
+                socketRemoteAddr
+            ));
     }
 
     self.socket = socket;
@@ -82,7 +80,6 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
         handleCallLazily: handleCallLazily
     };
 
-    // jshint forin:true
     self.handler = new v2.Handler(opts);
 
     self.mach = ReadMachine(bufrw.UInt16BE, v2.Frame.RW);
@@ -594,6 +591,7 @@ TChannelConnection.prototype.buildOutResponse = function buildOutResponse(req, o
 // In addition to erroring out all of the pending work, we reset the state
 // in case anybody stumbles across this object in a core dump.
 TChannelConnection.prototype.resetAll = function resetAll(err) {
+    /*eslint complexity: [2, 20], max-statements: [2, 40]*/
     var self = this;
 
     self.ops.destroy();

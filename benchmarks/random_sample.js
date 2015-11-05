@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+'use strict';
+
 // Random sampling functions borrowed from python standard library
 
 var RandomSample = module.exports;
@@ -26,7 +28,7 @@ RandomSample.variate = {};
 RandomSample.variate.norm = function normalvariate(mu, sigma, random) {
     var nvMagicConst = 4 * Math.exp(-0.5) / Math.sqrt(2.0);
     return function sampleNormalRandom() {
-        while (true) {
+        for (;;) {
             var u1 = random();
             var u2 = 1.0 - random();
             var z = nvMagicConst * (u1 - 0.5) / u2;
@@ -64,7 +66,7 @@ RandomSample.fromString = function fromString(str, random) {
     }
 
     var args = str.split(',');
-    if (args.length !== variate.length-1) {
+    if (args.length !== variate.length - 1) {
         throw new Error('wrong number of args for random sample kind ' + kind);
     }
 

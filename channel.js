@@ -21,7 +21,10 @@
 'use strict';
 
 var assert = require('assert');
+var process = require('process');
 var version = require('./package.json').version;
+
+/*global global*/
 if (typeof global.tchannelVersion === 'string' &&
     version !== global.tchannelVersion
 ) {
@@ -78,6 +81,7 @@ var DEFAULT_RETRY_FLAGS = new RetryFlags(
 // var Spy = require('./v2/spy');
 // var dumpEnabled = /\btchannel_dump\b/.test(process.env.NODE_DEBUG || '');
 
+/*eslint-disable max-statements*/
 function TChannel(options) {
     if (!(this instanceof TChannel)) {
         return new TChannel(options);
@@ -257,6 +261,7 @@ function TChannel(options) {
     }
 }
 inherits(TChannel, EventEmitter);
+/*eslint-enable max-statements*/
 
 TChannel.prototype.extendLogInfo =
 function extendLogInfo(info) {
@@ -503,7 +508,9 @@ TChannel.prototype.onServerSocketError = function onServerSocketError(err) {
 
 TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
     var self = this;
-    if (!options) options = {};
+    if (!options) {
+        options = {};
+    }
     assert(!self.serviceName, 'arbitrary-depth sub channels are unsupported');
     assert(options.serviceName, 'must specify serviceName');
     assert(!self.subChannels[options.serviceName], 'duplicate sub channel creation');
@@ -607,7 +614,6 @@ TChannel.prototype.requestOptions = function requestOptions(options) {
     var self = this;
     var prop;
     var opts = {};
-    // jshint forin:false
     for (prop in self.requestDefaults) {
         if (prop === 'headers') {
             continue;
@@ -617,9 +623,11 @@ TChannel.prototype.requestOptions = function requestOptions(options) {
     }
     opts.headers = {};
     if (self.requestDefaults.headers) {
+        /*eslint-disable guard-for-in*/
         for (prop in self.requestDefaults.headers) {
             opts.headers[prop] = self.requestDefaults.headers[prop];
         }
+        /*eslint-enable guard-for-in*/
     }
 
     if (options) {
@@ -632,11 +640,12 @@ TChannel.prototype.requestOptions = function requestOptions(options) {
     }
     if (options && options.headers) {
         opts.headers = opts.headers;
+        /*eslint-disable guard-for-in*/
         for (prop in options.headers) {
             opts.headers[prop] = options.headers[prop];
         }
+        /*eslint-enable guard-for-in*/
     }
-    // jshint forin:true
     return opts;
 };
 
@@ -660,6 +669,7 @@ function waitForIdentified(options, callback) {
     For each key in per request options; assign
     For each key in per request headers; assign
 */
+/*eslint max-statements: [2, 50]*/
 TChannel.prototype.fastRequestDefaults =
 function fastRequestDefaults(reqOpts) {
     var self = this;
@@ -700,13 +710,11 @@ function fastRequestDefaults(reqOpts) {
     }
 
     if (defaults.headers) {
-        // jshint forin:false
         for (var key in defaults.headers) {
             if (!reqOpts.headers[key]) {
                 reqOpts.headers[key] = defaults.headers[key];
             }
         }
-        // jshint forin:true
     }
 };
 
@@ -800,7 +808,6 @@ function RequestHeaders() {
 }
 
 TChannel.prototype._request = function _request(opts) {
-    /*eslint max-statements: [2, 25]*/
     var self = this;
 
     assert(!self.destroyed, 'cannot request() to destroyed tchannel');

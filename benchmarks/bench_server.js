@@ -26,6 +26,7 @@ process.title = 'nodejs-benchmarks-bench_server';
 var parseArgs = require('minimist');
 var assert = require('assert');
 var Statsd = require('uber-statsd-client');
+var setTimeout = require('timers').setTimeout;
 
 var Reporter = require('../tcollector/reporter.js');
 var TChannel = require('../channel');
@@ -113,27 +114,26 @@ BenchServer.prototype.setupReporter = function setupReporter() {
 BenchServer.prototype.registerEndpoints = function registerEndpoints() {
     var self = this;
 
+    var pingEndpoint = onPing;
+    var setEndpoint = onSet;
+    var getEndpoint = onGet;
+
     if (overhead.ping) {
-        onPing = withDelay(onPing, overhead.ping);
+        pingEndpoint = withDelay(onPing, overhead.ping);
     }
     if (overhead.set) {
-        onSet = withDelay(onSet, overhead.set);
+        setEndpoint = withDelay(onSet, overhead.set);
     }
     if (overhead.get) {
-        onGet = withDelay(onGet, overhead.get);
+        getEndpoint = withDelay(onGet, overhead.get);
     }
 
-    self.serverChan.register('ping', onPing);
-    self.serverChan.register('set', onSet);
-    self.serverChan.register('get', onGet);
+    self.serverChan.register('ping', pingEndpoint);
+    self.serverChan.register('set', setEndpoint);
+    self.serverChan.register('get', getEndpoint);
 
     self.serverChan.register('bad_set', onBad);
     self.serverChan.register('bad_get', onBad);
-
-    function onPing(req, res) {
-        res.headers.as = 'raw';
-        res.sendOk('pong', null);
-    }
 
     function onSet(req, res, arg2, arg3) {
         var key = arg2.toString('utf8');
@@ -153,12 +153,17 @@ BenchServer.prototype.registerEndpoints = function registerEndpoints() {
             res.sendNotOk('key not found', key);
         }
     }
-
-    function onBad(req, res, arg2, arg3) {
-        res.headers.as = 'raw';
-        res.sendError('BadRequest', 'parse error');
-    }
 };
+
+function onPing(req, res) {
+    res.headers.as = 'raw';
+    res.sendOk('pong', null);
+}
+
+function onBad(req, res, arg2, arg3) {
+    res.headers.as = 'raw';
+    res.sendError('BadRequest', 'parse error');
+}
 
 BenchServer.prototype.listen = function listen() {
     var self = this;

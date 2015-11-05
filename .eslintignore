@@ -1,0 +1,8 @@
+examples/*.js
+scripts/*.js
+test/
+v1/*.js
+
+# TODO remove.
+trace/*.js
+v2/*.js

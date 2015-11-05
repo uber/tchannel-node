@@ -21,6 +21,7 @@
 'use strict';
 
 var inherits = require('util').inherits;
+var process = require('process');
 
 var InResponse = require('./in_response');
 var OutResponse = require('./out_response');
@@ -63,7 +64,7 @@ SelfOutResponse.prototype._sendCallResponse =
 SelfStreamingOutResponse.prototype._sendCallResponse =
 SelfOutResponse.prototype._sendCallResponseCont =
 SelfStreamingOutResponse.prototype._sendCallResponseCont =
-function passResponse(args, isLast ) {
+function passResponse(args, isLast) {
     var self = this;
     self.inres.handleFrame(args, isLast);
     if (self.first) {
@@ -72,7 +73,9 @@ function passResponse(args, isLast ) {
         self.first = false;
         process.nextTick(emitResponse);
     }
-    if (!self.closing) self.conn.ops.lastTimeoutTime = 0;
+    if (!self.closing) {
+        self.conn.ops.lastTimeoutTime = 0;
+    }
 
     function emitResponse() {
         self.inreq.responseEvent.emit(self, self.inres);
@@ -88,7 +91,9 @@ function passError(codeString, message) {
         originalId: self.id,
         message: message
     });
-    if (!self.closing) self.conn.ops.lastTimeoutTime = 0;
+    if (!self.closing) {
+        self.conn.ops.lastTimeoutTime = 0;
+    }
     process.nextTick(emitError);
 
     function emitError() {

@@ -22,6 +22,9 @@
 
 var errors = require('./errors.js');
 var inherits = require('util').inherits;
+var process = require('process');
+var Buffer = require('buffer').Buffer;
+var setImmediate = require('timers').setImmediate;
 var EventEmitter = require('./lib/event_emitter');
 
 var TOMBSTONE_TTL_OFFSET = 500;
@@ -309,7 +312,7 @@ Operations.prototype.checkDrained = function checkDrained() {
 Operations.prototype._isCollDrained = function _isCollDrained(coll) {
     var self = this;
 
-    /* jshint forin:false */
+    /*eslint-disable guard-for-in*/
     for (var id in coll) {
         var op = coll[id];
         if (!(op instanceof OperationTombstone) &&
@@ -320,6 +323,7 @@ Operations.prototype._isCollDrained = function _isCollDrained(coll) {
             return false;
         }
     }
+    /*eslint-enable guard-for-in*/
 
     return true;
 };
@@ -353,13 +357,12 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
     self.requests.out[id] = tombstone;
     tombstone.timeHeapHandle = self.connection.channel.timeHeap.update(tombstone, tombstone.time);
 
-    var errors = 0;
+    var pendingErrors = 0;
 
     if (tombstone.isPendingError) {
         self.pending.errors++;
-        errors++;
+        pendingErrors++;
     }
-
 
     req.operations = null;
     self.pending.out--;
@@ -367,7 +370,7 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
         self.checkDrained();
     }
 
-    self.emitPendingChange(0, -1, errors);
+    self.emitPendingChange(0, -1, pendingErrors);
 
     return req;
 };
@@ -470,6 +473,7 @@ Operations.prototype.sanitySweep = function sanitySweep(callback) {
 };
 
 Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
+    /*eslint max-statements: [2, 40]*/
     var self = this;
 
     // keep track of all pending change made during the sweep so we can

@@ -159,8 +159,8 @@ TimeHeap.prototype.setNextTimer = function setNextTimer(now) {
     self.timer = self.timers.setTimeout(onTimeout, timeout);
 
     function onTimeout() {
-        var now = self.timers.now();
-        self.onTimeout(now);
+        var now2 = self.timers.now();
+        self.onTimeout(now2);
     }
 };
 
@@ -248,7 +248,7 @@ TimeHeap.prototype.pop = function pop() {
 TimeHeap.prototype.siftdown = function siftdown(i) {
     var self = this;
 
-    while (true) {
+    for (;;) {
         var left = (2 * i) + 1;
         var right = left + 1;
         if (left < self.end &&

@@ -81,7 +81,7 @@ module.exports = HyperbahnClient;
 //   * advertisementTimeout: integer. In hardFail mode we default to 5000. If
 //     not in hardFail mode we don't time out advertisements.
 function HyperbahnClient(options) {
-    /*eslint max-statements: [2, 25] complexity: [2, 20] */
+    /*eslint max-statements: [2, 50] complexity: [2, 20] */
     if (!(this instanceof HyperbahnClient)) {
         return new HyperbahnClient(options);
     }
@@ -339,7 +339,6 @@ function advertise(opts) {
     self.emit('advertise-attempt');
 
     function advertiseInternalCb(err, result) {
-        /*eslint max-statements: [2, 40] */
         if (err) {
             self.logger[self.hardFail ? 'error' : 'warn'](
                 'HyperbahnClient: advertisement failure, ' +

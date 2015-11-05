@@ -27,6 +27,7 @@ var inherits = require('util').inherits;
 var errors = require('./errors');
 var States = require('./reqres_states');
 
+/*eslint max-statements: [2, 40]*/
 function TChannelOutResponse(id, options) {
     options = options || {};
     var self = this;
@@ -146,8 +147,11 @@ TChannelOutResponse.prototype.sendCallResponseFrame = function sendCallResponseF
             if (self.span) {
                 self.span.annotate('ss');
             }
-            if (isLast) self.state = States.Done;
-            else self.state = States.Streaming;
+            if (isLast) {
+                self.state = States.Done;
+            } else {
+                self.state = States.Streaming;
+            }
             break;
         case States.Streaming:
             self.emitError(errors.ResponseFrameState({
@@ -169,6 +173,10 @@ TChannelOutResponse.prototype.sendCallResponseFrame = function sendCallResponseF
                 bufArg3: arg3.slice(0, 50),
                 arg3: String(arg3).slice(0, 50)
             }));
+            break;
+        default:
+            // TODO: log warn
+            break;
     }
 };
 
@@ -183,7 +191,9 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
             break;
         case States.Streaming:
             self._sendCallResponseCont(args, isLast);
-            if (isLast) self.state = States.Done;
+            if (isLast) {
+                self.state = States.Done;
+            }
             break;
         case States.Done:
         case States.Error:
@@ -192,6 +202,10 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
                 state: self.state,
                 method: 'sendCallResponseContFrame'
             }));
+            break;
+        default:
+            // TODO: log warn
+            break;
     }
 };
 

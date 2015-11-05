@@ -27,12 +27,13 @@ var EventEmitter = require('./lib/event_emitter');
 var stat = require('./stat-tags.js');
 var inherits = require('util').inherits;
 var parallel = require('run-parallel');
+var process = require('process');
 
 var errors = require('./errors');
 var States = require('./reqres_states');
 
 function TChannelOutRequest(id, options) {
-    /*max-statements: [2, 50]*/
+    /*eslint max-statements: [2, 50], complexity: [2, 25]*/
     var self = this;
 
     EventEmitter.call(self);
@@ -310,6 +311,9 @@ TChannelOutRequest.prototype.sendParts = function sendParts(parts, isLast) {
         case States.Error:
             // TODO: log warn
             break;
+        default:
+            // TODO: log warn
+            break;
     }
 };
 
@@ -322,8 +326,11 @@ TChannelOutRequest.prototype.sendCallRequestFrame = function sendCallRequestFram
                 self.span.annotate('cs');
             }
             self._sendCallRequest(args, isLast);
-            if (isLast) self.state = States.Done;
-            else self.state = States.Streaming;
+            if (isLast) {
+                self.state = States.Done;
+            } else {
+                self.state = States.Streaming;
+            }
             break;
         case States.Streaming:
             self.emitError(errors.RequestFrameState({
@@ -335,6 +342,9 @@ TChannelOutRequest.prototype.sendCallRequestFrame = function sendCallRequestFram
             self.emitError(errors.RequestAlreadyDone({
                 attempted: 'call request'
             }));
+            break;
+        default:
+            // TODO: log warn
             break;
     }
 };
@@ -350,12 +360,17 @@ TChannelOutRequest.prototype.sendCallRequestContFrame = function sendCallRequest
             break;
         case States.Streaming:
             self._sendCallRequestCont(args, isLast);
-            if (isLast) self.state = States.Done;
+            if (isLast) {
+                self.state = States.Done;
+            }
             break;
         case States.Done:
             self.emitError(errors.RequestAlreadyDone({
                 attempted: 'call request continuation'
             }));
+            break;
+        default:
+            // TODO: log warn
             break;
     }
 };
@@ -367,7 +382,7 @@ TChannelOutRequest.prototype.sendArg1 = function sendArg1(arg1) {
         self.emitError(errors.RequestDrained({
             reason: self.drainReason
         }));
-        return;
+        return self;
     }
 
     self.arg1 = arg1;
@@ -390,7 +405,7 @@ TChannelOutRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
         self.emitError(errors.RequestDrained({
             reason: self.drainReason
         }));
-        return;
+        return self;
     }
 
     self.sendArg1(arg1);
@@ -434,13 +449,17 @@ function hookupStreamCallback(callback) {
     self.responseEvent.on(onResponse);
 
     function onError(err) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         callback(err, null, null);
     }
 
     function onResponse(res) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         callback(null, self, res);
     }
@@ -461,13 +480,17 @@ function hookupCallback(callback) {
     self.responseEvent.on(onResponse);
 
     function onError(err) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         callback(err, null, null);
     }
 
     function onResponse(res) {
-        if (called) return;
+        if (called) {
+            return;
+        }
         called = true;
         if (!res.streamed) {
             callback(null, res, res.arg2, res.arg3);
