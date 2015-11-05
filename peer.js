@@ -137,6 +137,7 @@ function extendLogInfo(info) {
 
     info.hostPort = self.hostPort;
     info.peerDraining = !!self.draining;
+    info.scoreRange = self.scoreRange;
 
     return info;
 };
@@ -210,14 +211,14 @@ TChannelPeer.prototype.invalidateScore = function invalidateScore(reason) {
         scores: []
     } : null;
 
-    var score = self.scoreStrategy.getScoreRange();
+    var range = self.scoreRange;
     for (var i = 0; i < self.heapElements.length; i++) {
         var el = self.heapElements[i];
         if (info) {
-            info.oldScores.push(el.score);
-            info.scores.push(score);
+            info.oldScores.push(el.range);
+            info.scores.push(range);
         }
-        el.rescore(score);
+        el.rescore();
     }
 
     if (info) {
@@ -635,6 +636,7 @@ TChannelPeer.prototype.computeScoreRange = function computeScoreRange() {
 };
 
 TChannelPeer.prototype.getScore = function getScore() {
+    // This is INLINED into peer_heap.js#115
     var self = this;
     var diff = self.scoreRange.hi - self.scoreRange.lo;
     var rand = self.random();
