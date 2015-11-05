@@ -26,7 +26,6 @@ var inspect = require('util').inspect;
 var EventEmitter = require('./lib/event_emitter');
 var stat = require('./stat-tags.js');
 var net = require('net');
-var CountedReadySignal = require('ready-signal/counted');
 
 var TChannelConnection = require('./connection');
 var errors = require('./errors');
@@ -35,6 +34,7 @@ var PreferOutgoing = require('./peer_score_strategies.js').PreferOutgoing;
 var NoPreference = require('./peer_score_strategies.js').NoPreference;
 var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
 var Range = require('./range');
+var PeerDrain = require('./drain.js').PeerDrain;
 
 var DEFAULT_REPORT_INTERVAL = 1000;
 
@@ -60,10 +60,7 @@ function TChannelPeer(channel, hostPort, options) {
     self.pendingIdentified = 0;
     self.heapElements = [];
     self.scoreStrategy = null;
-    self.draining = false;
-    self.drainTimer = null;
-    self.drainReason = '';
-    self.drainDirection = '';
+    self.draining = null;
     self.boundOnIdentified = onIdentified;
     self.boundOnConnectionError = onConnectionError;
     self.boundOnConnectionClose = onConnectionClose;
@@ -139,7 +136,7 @@ function extendLogInfo(info) {
     var self = this;
 
     info.hostPort = self.hostPort;
-    info.peerDraining = self.draining;
+    info.peerDraining = !!self.draining;
 
     return info;
 };
@@ -147,84 +144,18 @@ function extendLogInfo(info) {
 TChannelPeer.prototype.drain =
 function drain(options, callback) {
     var self = this;
-    var chan = self.channel.topChannel || self.channel;
-
-    assert(options, 'options is required');
-    assert(options.reason, 'a reason is required');
-    assert(!chan.draining, 'cannot drain a peer while channel is draining');
     assert(!self.draining, 'cannot double drain a peer');
-
-    self.draining = true;
-    self.drainReason = options.reason;
-    self.drainDirection = options.direction || 'both';
-
-    if (options.timeout) {
-        var drainTimer = chan.timers.setTimeout(drainTimedOut, options.timeout);
-        self.drainTimer = drainTimer;
-    }
-
-    var start = chan.timers.now();
-    var finished = false;
-    var drained = CountedReadySignal(1);
-    process.nextTick(drained.signal);
-    drained(drainDone);
-
-    for (var i = 0; i < self.connections.length; i++) {
-        var conn = self.connections[i];
-        if (self.drainDirection === 'both' ||
-            self.drainDirection === conn.direction) {
-            drained.counter++;
-            conn.drain(self.drainReason, drained.signal);
-        }
-    }
-
-    self.logger.info('draining peer', self.extendLogInfo({
-        reason: self.drainReason,
-        direction: self.drainDirection,
-        count: drained.counter
-    }));
-
-    function drainDone() {
-        finish(null);
-    }
-
-    function drainTimedOut() {
-        if (finished) {
-            return;
-        }
-        var now = chan.timers.now();
-        finish(errors.PeerDrainTimedOutError({
-            direction: self.drainDirection,
-            elapsed: now - start,
-            timeout: options.timeout
-        }));
-    }
-
-    function finish(err) {
-        if (drainTimer) {
-            chan.timers.clearTimeout(drainTimer);
-            if (self.drainTimer === drainTimer) {
-                self.drainTimer = null;
-            }
-        }
-        if (!finished) {
-            finished = true;
-            callback(err);
-        }
-    }
+    self.draining = new PeerDrain(self, options, callback);
+    self.draining.start();
 };
 
 TChannelPeer.prototype.clearDrain =
 function clearDrain() {
     var self = this;
-    var chan = self.channel.topChannel || self.channel;
 
-    self.draining = false;
-    self.drainReason = '';
-    self.drainDirection = '';
-    if (self.drainTimer) {
-        chan.timers.clearTimeout(self.drainTimer);
-        self.drainTimer = null;
+    if (self.draining) {
+        self.draining.stop();
+        self.draining = null;
     }
 };
 
@@ -527,10 +458,8 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     if (!conn.draining) {
         if (conn.channel.draining) {
             conn.drain(conn.channel.drainReason, null);
-        } else if (self.draining && (
-                   self.drainDirection === 'both' ||
-                   self.drainDirection === conn.direction)) {
-            conn.drain(self.drainReason, null);
+        } else if (self.draining) {
+            self.draining.drainConnection(conn);
         }
     }
 
