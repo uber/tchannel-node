@@ -63,6 +63,8 @@ PeerHeap.prototype.choose2 = function choose2(threshold, filter) {
     }
 };
 
+/*eslint-disable complexity */
+/*eslint-disable max-statements */
 PeerHeap.prototype.choose = function choose(threshold, filter) {
     var self = this;
 
@@ -91,11 +93,11 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         // Don't check first peer if it looks good, check its children though
         chosenPeer = self.array[0].peer;
         highestProbability = firstScore;
-        // The array is seeded with 0, 1, 2 so we just have to advance the 
+        // The array is seeded with 0, 1, 2 so we just have to advance the
         // stack pointers
         stackBegin = 1;
         stackEnd = 2;
-    } 
+    }
 
     while (stackBegin <= stackEnd) {
         var i = dfsStack[stackBegin];
@@ -127,7 +129,7 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
             }
         }
 
-        // Continue DFS by 'pushing' left and right indexes onto end of 
+        // Continue DFS by 'pushing' left and right indexes onto end of
         // dfsStack, if the source array is long enough for that
         var left = 2 * i + 1;
         var right = left + 1;
@@ -141,6 +143,8 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
 
     return chosenPeer;
 };
+/*eslint-enable complexity */
+/*eslint-enable max-statements */
 
 PeerHeap.prototype.clear = function clear() {
     var self = this;

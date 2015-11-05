@@ -21,6 +21,7 @@
 'use strict';
 
 var assert = require('assert');
+var process = require('process');
 var CountedReadySignal = require('ready-signal/counted');
 var errors = require('./errors');
 

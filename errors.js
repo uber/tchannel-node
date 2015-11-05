@@ -862,6 +862,7 @@ Errors.isFatal = function isFatal(err, codeName) {
     }
 };
 
+/*eslint complexity: [2, 15]*/
 Errors.logLevel = function errorLogLevel(err, codeName) {
     switch (codeName) {
         case 'ProtocolError':
