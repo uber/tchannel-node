@@ -28,11 +28,13 @@ var stat = require('./stat-tags.js');
 
 // "constant" byte buffer used for lookup in LazyRelayInReq#initRead
 var cnBytes = Buffer('cn');
+var MAXIMUM_TTL_ALLOWED = 2 * 60 * 1000;
 
 module.exports = {
     LazyRelayInReq: LazyRelayInReq,
     LazyRelayOutReq: LazyRelayOutReq,
-    logError: logError
+    logError: logError,
+    MAXIMUM_TTL_ALLOWED: MAXIMUM_TTL_ALLOWED
 };
 
 // TODO: lazy reqs
@@ -262,10 +264,23 @@ function updateTTL(now) {
 
     var elapsed = now - self.start;
     var timeout = self.timeout - elapsed;
+
     if (timeout <= 0) {
         self.sendErrorFrame('Timeout', 'relay ttl expired');
         // TODO: log/stat
         return timeout;
+    }
+
+    if (timeout > MAXIMUM_TTL_ALLOWED) {
+        self.logger.warn(
+            'Clamping timeout to maximum ttl allowed',
+            self.extendLogInfo({
+                timeout: timeout,
+                maximumTTL: MAXIMUM_TTL_ALLOWED
+            })
+        );
+
+        timeout = MAXIMUM_TTL_ALLOWED;
     }
 
     var res = self.reqFrame.bodyRW.lazy.writeTTL(timeout, self.reqFrame);
