@@ -138,6 +138,7 @@ function extendLogInfo(info) {
 
     info.hostPort = self.hostPort;
     info.peerDraining = !!self.draining;
+    info.scoreRange = self.scoreRange;
 
     return info;
 };
