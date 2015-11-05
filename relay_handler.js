@@ -56,7 +56,9 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     }
 
     if (self.circuits) {
-        var circuit = self.circuits.getCircuit(rereq.callerName, rereq.serviceName, rereq.endpoint);
+        var circuit = self.circuits.getCircuit(
+            rereq.callerName || 'no-cn', rereq.serviceName, rereq.endpoint
+        );
         if (!circuit.state.shouldRequest()) {
             rereq.sendErrorFrame('Declined', 'Service is not healthy');
             return true;
@@ -83,7 +85,9 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     var self = this;
 
     if (self.circuits) {
-        var circuit = self.circuits.getCircuit(req.headers.cn || 'no-cn', req.serviceName, String(req.arg1));
+        var circuit = self.circuits.getCircuit(
+            req.headers.cn || 'no-cn', req.serviceName, req.endpoint
+        );
         if (!circuit.state.shouldRequest()) {
             buildRes().sendError('Declined', 'Service is not healthy');
             return;
