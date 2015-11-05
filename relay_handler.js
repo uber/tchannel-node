@@ -913,7 +913,7 @@ RelayRequest.prototype.createOutRequest = function createOutRequest() {
 RelayRequest.prototype.onIdentified = function onIdentified() {
     var self = this;
 
-    var conn = chooseRelayPeerConnection(self.peer);
+    var conn = self.peer.getInConnection(true);
     if (!conn.remoteName) {
         // we get the problem
         self.logger.error('onIdentified called on no connection identified', {
@@ -1078,13 +1078,4 @@ function logError(logger, err, codeName, extendLogInfo) {
     } else if (level === 'info') {
         logger.info('expected error while forwarding', info);
     }
-}
-
-function chooseRelayPeerConnection(peer) {
-    var conn = null;
-    for (var i = 0; i < peer.connections.length; i++) {
-        conn = peer.connections[i];
-        if (conn.remoteName && !conn.closing) break;
-    }
-    return conn;
 }
