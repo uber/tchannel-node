@@ -77,6 +77,8 @@ var DEFAULT_RETRY_FLAGS = new RetryFlags(
     /*onTimeout*/ false
 );
 
+var MAXIMUM_TTL_ALLOWED = 2 * 60 * 1000;
+
 // TODO restore spying
 // var Spy = require('./v2/spy');
 // var dumpEnabled = /\btchannel_dump\b/.test(process.env.NODE_DEBUG || '');
@@ -248,6 +250,8 @@ function TChannel(options) {
         self.batchStats = self.topChannel.batchStats;
     }
 
+    self.maximumRelayTTL = MAXIMUM_TTL_ALLOWED;
+
     function doSanitySweep() {
         self.sanityTimer = null;
         self.sanitySweep(sweepDone);
@@ -262,6 +266,20 @@ function TChannel(options) {
 }
 inherits(TChannel, EventEmitter);
 /*eslint-enable max-statements*/
+
+TChannel.prototype.setMaximumRelayTTL =
+function setMaximumRelayTTL(value) {
+    var self = this;
+
+    self.maximumRelayTTL = value;
+
+    var keys = Object.keys(self.subChannels);
+    for (var i = 0; i < keys.length; i++) {
+        var subChan = self.subChannels[keys[i]];
+
+        subChan.maximumRelayTTL = value;
+    }
+};
 
 TChannel.prototype.extendLogInfo =
 function extendLogInfo(info) {
