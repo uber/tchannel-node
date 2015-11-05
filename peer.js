@@ -120,6 +120,10 @@ function TChannelPeer(channel, hostPort, options) {
 
 inherits(TChannelPeer, EventEmitter);
 
+TChannelPeer.prototype.DRAIN_GOAL_NOOP = PeerDrain.GOAL_NOOP;
+TChannelPeer.prototype.DRAIN_GOAL_CLOSE_DRAINED = PeerDrain.GOAL_CLOSE_DRAINED;
+TChannelPeer.prototype.DRAIN_GOAL_CLOSE_PEER = PeerDrain.GOAL_CLOSE_PEER;
+
 TChannelPeer.prototype.toString =
 function toString() {
     var self = this;
