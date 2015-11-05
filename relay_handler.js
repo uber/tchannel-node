@@ -82,21 +82,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
 RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     var self = this;
 
-    // TODO add this back in a performant way ??
-    // if (rereq) {
-    //     self.logger.error('relay request already exists for incoming request', {
-    //         inReqId: req.id,
-    //         priorInResId: rereq.inres && rereq.inres.id,
-    //         priorOutResId: rereq.outres && rereq.outres.id,
-    //         priorOutReqId: rereq.outreq && rereq.outreq.id
-    //         // TODO more context, like outreq remote addr
-    //     });
-    //     buildRes().sendError(
-    //         'UnexpectedError', 'request id exists in relay handler'
-    //     );
-    //     return;
-    // }
-
     if (self.circuits) {
         var circuit = self.circuits.getCircuit(req.headers.cn || 'no-cn', req.serviceName, String(req.arg1));
         if (!circuit.state.shouldRequest()) {
