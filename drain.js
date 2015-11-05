@@ -53,8 +53,8 @@ PeerDrain.prototype.extendLogInfo =
 function extendLogInfo(info) {
     var self = this;
 
-    info.drainTimeout = self.timeout;
     info.drainReason = self.reason;
+    info.drainTimeout = self.timeout;
     info.drainDirection = self.direction;
     info.drainStartedAt = self.startedAt;
     info.drainStoppedAt = self.stoppedAt;
