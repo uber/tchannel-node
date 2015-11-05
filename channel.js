@@ -314,6 +314,15 @@ function setWriteBufferMode(mode) {
     // No-op for back-compat
 };
 
+TChannel.prototype.setChoosePeerWithHeap =
+function setChoosePeerWithHeap(enabled) {
+    var self = this;
+    self.choosePeerWithHeap = enabled;
+    if (self.topChannel) {
+        self.peers.setChoosePeerWithHeap(enabled);
+    }
+};
+
 TChannel.prototype.setLazyHandling =
 function setLazyHandling(enabled) {
     var self = this;

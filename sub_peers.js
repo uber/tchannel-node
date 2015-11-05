@@ -102,6 +102,12 @@ TChannelSubPeers.prototype._delete = function _del(peer) {
     }
 };
 
+TChannelSubPeers.prototype.setChoosePeerWithHeap = function setChoosePeerWithHeap(enabled) {
+    var self = this;
+
+    self.choosePeerWithHeap = enabled;
+};
+
 TChannelSubPeers.prototype.choosePeer = function choosePeer(req) {
     var self = this;
 
