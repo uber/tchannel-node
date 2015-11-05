@@ -33,9 +33,8 @@ function TChannelSubPeers(channel, options) {
     TChannelPeersBase.call(self, channel, options);
 
     self.peerScoreThreshold = self.options.peerScoreThreshold || 0;
-    self._heap = new PeerHeap();
-    //self.choosePeerWithHeap = channel.choosePeerWithHeap;
-    self.choosePeerWithHeap = true;
+    self._heap = new PeerHeap(channel.random);
+    self.choosePeerWithHeap = channel.choosePeerWithHeap;
 }
 
 inherits(TChannelSubPeers, TChannelPeersBase);
