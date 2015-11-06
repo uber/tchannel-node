@@ -25,6 +25,14 @@ var process = require('process');
 var CountedReadySignal = require('ready-signal/counted');
 var errors = require('./errors');
 
+var GOAL_NOOP = 'noop';
+var GOAL_CLOSE_DRAINED = 'close drained connections';
+var GOAL_CLOSE_PEER = 'close peer';
+
+PeerDrain.GOAL_NOOP = GOAL_NOOP;
+PeerDrain.GOAL_CLOSE_DRAINED = GOAL_CLOSE_DRAINED;
+PeerDrain.GOAL_CLOSE_PEER = GOAL_CLOSE_PEER;
+
 // TODO: subsume and unify with channel draining
 
 function PeerDrain(peer, options, callback) {
@@ -34,7 +42,13 @@ function PeerDrain(peer, options, callback) {
     assert(options, 'options is required');
     assert(options.reason, 'a reason is required');
     assert(!chan.draining, 'cannot drain a peer while channel is draining');
+    assert(!options.goal ||
+           options.goal === GOAL_NOOP ||
+           options.goal === GOAL_CLOSE_DRAINED ||
+           options.goal === GOAL_CLOSE_PEER,
+           'expected a valid goal (if any)');
 
+    self.goal = options.goal || PeerDrain.GOAL_NOOP;
     self.channel = chan;
     self.peer = peer;
     self.timeout = options.timeout || 0;
@@ -46,15 +60,21 @@ function PeerDrain(peer, options, callback) {
     self.startedAt = 0;
     self.stoppedAt = 0;
     self.finishedAt = 0;
+    self.thenFinish = thenFinish;
 
+    function thenFinish(err) {
+        var now = self.channel.timers.now();
+        self.finish(err, now);
+    }
 }
 
 PeerDrain.prototype.extendLogInfo =
 function extendLogInfo(info) {
     var self = this;
 
-    info.drainTimeout = self.timeout;
+    info.drainGoal = self.goal;
     info.drainReason = self.reason;
+    info.drainTimeout = self.timeout;
     info.drainDirection = self.direction;
     info.drainStartedAt = self.startedAt;
     info.drainStoppedAt = self.stoppedAt;
@@ -115,12 +135,22 @@ function start() {
                 self.timer = null;
             }
         }
-        if (!self.finishedAt) {
-            self.finishedAt = now;
-            if (self.callback) {
-                self.callback(err);
-                self.callback = null;
-            }
+
+        switch (self.goal) {
+            case GOAL_NOOP:
+                self.finish(err, now);
+                break;
+
+            case GOAL_CLOSE_DRAINED:
+                self.thenCloseDrained(err);
+                break;
+
+            case GOAL_CLOSE_PEER:
+                self.thenClosePeer(err);
+                break;
+
+            default:
+                self.finish(err || new Error('invalid drain goal'), now);
         }
     }
 };
@@ -140,6 +170,66 @@ function stop() {
     }
 
     self.callback = null;
+};
+
+PeerDrain.prototype.thenCloseDrained =
+function thenCloseDrained(err) {
+    var self = this;
+
+    if (err) {
+        var info = self.peer.extendLogInfo(self.extendLogInfo({
+            error: err
+        }));
+
+        if (err.type === 'tchannel.drain.peer.timed-out') {
+            self.peer.logger.warn(
+                'drain timed out, force closing connections',
+                info);
+        } else {
+            self.peer.logger.warn(
+                'unexpected error draining connections, closing anyhow',
+                info);
+        }
+    }
+
+    self.peer.closeDrainedConnections(self.thenFinish);
+};
+
+PeerDrain.prototype.thenClosePeer =
+function thenClosePeer(err) {
+    var self = this;
+
+    if (err) {
+        var info = self.peer.extendLogInfo(self.extendLogInfo({
+            error: err
+        }));
+
+        if (err.type === 'tchannel.drain.peer.timed-out') {
+            self.peer.logger.warn(
+                'drain timed out, force closing peer',
+                info);
+        } else {
+            self.peer.logger.warn(
+                'unexpected error draining connections, closing peer anyhow',
+                info);
+        }
+    }
+
+    self.peer.close(self.thenFinish);
+};
+
+PeerDrain.prototype.finish =
+function finish(err, now) {
+    var self = this;
+
+    if (!self.finishedAt) {
+        self.finishedAt = now;
+
+        if (self.callback) {
+            self.callback(err);
+            self.callback = null;
+        }
+    }
 };
 
 PeerDrain.prototype.drainConnection =
