@@ -394,7 +394,18 @@ TChannelHTTP.prototype.forwardToTChannel = function forwardToTChannel(tchannel, 
                 hres.writeHead(head.statusCode, headers);
             }
             if (bodyStream !== null) {
-                bodyStream.pipe(hres);
+                if (bodyStream._readableState.ended) {
+                    bodyStream.onValueReady(function onValue(err, buffer) {
+                        if (err) {
+                            return self._sendHTTPError(hres, err);
+                        }
+
+                        hres.write(buffer);
+                        hres.end();
+                    });
+                } else {
+                    bodyStream.pipe(hres);
+                }
             } else {
                 hres.end(bodyArg);
             }
