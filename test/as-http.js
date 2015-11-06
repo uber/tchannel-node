@@ -212,7 +212,8 @@ allocHTTPTest('as/http can handle a timeout', {
 });
 
 allocHTTPTest('as/http can do large requests', {
-    onServiceRequest: handleHTTPPipe
+    onServiceRequest: handleHTTPPipe,
+    enableLBPool: true
 }, function t(cluster, assert) {
     var chunks = [];
     for (var i = 0; i < 4096; i++) {
@@ -233,10 +234,11 @@ allocHTTPTest('as/http can do large requests', {
 });
 
 allocHTTPTest('as/http can do massive requests', {
-    onServiceRequest: handleHTTPPipe
+    onServiceRequest: handleHTTPPipe,
+    enableLBPool: true
 }, function t(cluster, assert) {
     var chunks = [];
-    for (var i = 0; i < 96096; i++) {
+    for (var i = 0; i < 95000; i++) {
         chunks.push('A');
     }
 
@@ -287,6 +289,11 @@ function makeRequest(cluster, body, cb) {
 function handleHTTPPipe(hreq, hres) {
     hres.statusCode = 200;
     hreq.pipe(hres);
+    hres.once('finish', onFinish);
+
+    function onFinish() {
+        hreq.connection.destroy();
+    }
 }
 
 function handleTestHTTPTimeout(hreq, hres) {
