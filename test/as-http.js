@@ -26,6 +26,7 @@ var http = require('http');
 var parallel = require('run-parallel');
 var PassThrough = require('stream').PassThrough;
 var test = require('tape');
+var StringDecoder = require('string_decoder').StringDecoder;
 
 var TChannelHTTP = require('../as/http.js');
 var allocCluster = require('./lib/alloc-cluster.js');
@@ -284,6 +285,91 @@ allocHTTPTest('as/http can handle a timeout', {
 
     ], assert.end);
 });
+
+allocHTTPTest('as/http can do large requests', {
+    onServiceRequest: handleHTTPPipe,
+    enableLBPool: true
+}, function t(cluster, assert) {
+    var chunks = [];
+    for (var i = 0; i < 4096; i++) {
+        chunks.push('A');
+    }
+
+    var body = chunks.join('');
+    makeRequest(cluster, body, onResponse);
+
+    function onResponse(err, resp, respBody) {
+        assert.ifError(err);
+
+        assert.equal(resp.statusCode, 200);
+        assert.equal(body, respBody);
+
+        assert.end();
+    }
+});
+
+allocHTTPTest('as/http can do massive requests', {
+    onServiceRequest: handleHTTPPipe,
+    enableLBPool: true
+}, function t(cluster, assert) {
+    var chunks = [];
+    for (var i = 0; i < 95000; i++) {
+        chunks.push('A');
+    }
+
+    var body = chunks.join('');
+    makeRequest(cluster, body, onResponse);
+
+    function onResponse(err, resp, respBody) {
+        assert.ifError(err);
+
+        assert.equal(resp.statusCode, 200);
+        assert.equal(body, respBody);
+
+        assert.end();
+    }
+});
+
+function makeRequest(cluster, body, cb) {
+    var decoder = new StringDecoder('utf8');
+    var chunks = [];
+    var req = http.request({
+        host: cluster.requestOptions.host,
+        port: cluster.requestOptions.port,
+        method: 'POST',
+        path: '/wat'
+    }, onResponse);
+
+    req.on('error', onError);
+    req.end(body);
+
+    function onError(err) {
+        cb(err);
+    }
+
+    function onResponse(resp) {
+        resp.on('data', onData);
+        resp.on('end', onEnd);
+
+        function onData(buffer) {
+            chunks.push(decoder.write(buffer));
+        }
+
+        function onEnd() {
+            cb(null, resp, chunks.join(''));
+        }
+    }
+}
+
+function handleHTTPPipe(hreq, hres) {
+    hres.statusCode = 200;
+    hreq.pipe(hres);
+    hres.once('finish', onFinish);
+
+    function onFinish() {
+        hreq.connection.destroy();
+    }
+}
 
 function handleTestHTTPTimeout(hreq, hres) {
     setTimeout(
