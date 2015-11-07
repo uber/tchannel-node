@@ -40,7 +40,7 @@ function BatchClient(channel, hosts, options) {
     self.delay = options.delay || 1;
 
     self.serviceName = 'server';
-    self.endpoint = 'echo';
+    self.endpoint = options.endpoint || 'echo';
     self.body = 'foobar';
     self.timeout = 500;
 
