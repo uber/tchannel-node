@@ -51,7 +51,7 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
             }
         });
 
-        callReqThunks.push(req.send.bind(req, 'foo', 'a', 'b'));
+        callReqThunks.push(req.send.bind(req, 'echo', 'a', 'b'));
     }
 
     parallel(callReqThunks, onResults);
@@ -62,7 +62,8 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
         // TODO: one of these tests isn't like the others...
         var results = responses.map(function each(res) {
             return {
-                response: res,
+                responseOk: !!res,
+                outReqHostPort: res.remoteAddr,
                 error: null
             };
         });
@@ -91,17 +92,19 @@ allocCluster.test('sending requests to servers over time has good distribution',
 
     var batchClient = new BatchClient(
         cluster.client,
-        cluster.servers.map(getHostPort));
+        cluster.servers.map(getHostPort),
+        {
+            totalRequests: numRequests,
+            batchSize: 15
+        }
+    );
 
     batchClient.warmUp(onWarmedup);
 
     function onWarmedup(err1) {
         assert.ifError(err1, 'expect no initialize error');
 
-        batchClient.sendRequests({
-            totalRequests: numRequests,
-            batchSize: 15
-        }, onResults);
+        batchClient.sendRequests(onResults);
     }
 
     function onResults(err, data) {
@@ -135,17 +138,19 @@ allocCluster.test('sending requests to servers with bad request', {
 
     var batchClient = new BatchClient(
         cluster.client,
-        cluster.servers.map(getHostPort));
+        cluster.servers.map(getHostPort),
+        {
+            totalRequests: numRequests,
+            batchSize: 15
+        }
+    );
 
     batchClient.warmUp(onWarmedup);
 
     function onWarmedup(err1) {
         assert.ifError(err1, 'expect no initialize error');
 
-        batchClient.sendRequests({
-            totalRequests: numRequests,
-            batchSize: 15
-        }, onResults);
+        batchClient.sendRequests(onResults);
     }
 
     function onResults(err, data) {
@@ -179,21 +184,22 @@ allocCluster.test('sending requests to servers with declined', {
 
     var batchClient = new BatchClient(
         cluster.client,
-        cluster.servers.map(getHostPort), {
+        cluster.servers.map(getHostPort),
+        {
             retryFlags: {
                 never: true
-            }
-        });
+            },
+            totalRequests: numRequests,
+            batchSize: 15
+        }
+    );
 
     batchClient.warmUp(onWarmedup);
 
     function onWarmedup(err1) {
         assert.ifError(err1, 'expect no initialize error');
 
-        batchClient.sendRequests({
-            totalRequests: numRequests,
-            batchSize: 15
-        }, onResults);
+        batchClient.sendRequests(onResults);
     }
 
     function onResults(err, data) {
@@ -232,22 +238,23 @@ allocCluster.test('sending requests to servers with declined over time', {
 
     var batchClient = new BatchClient(
         cluster.client,
-        cluster.servers.map(getHostPort), {
+        cluster.servers.map(getHostPort),
+        {
             retryFlags: {
                 never: true
-            }
-        });
+            },
+            totalRequests: numRequests,
+            batchSize: batchSize,
+            delay: batchDelay
+        }
+    );
 
     batchClient.warmUp(onWarmedup);
 
     function onWarmedup(err1) {
         assert.ifError(err1, 'expect no initialize error');
 
-        batchClient.sendRequests({
-            totalRequests: numRequests,
-            batchSize: batchSize,
-            delay: batchDelay
-        }, onResults);
+        batchClient.sendRequests(onResults);
     }
 
     function onResults(err, data) {
@@ -290,21 +297,22 @@ allocCluster.test('sending requests to servers with busy', {
 
     var batchClient = new BatchClient(
         cluster.client,
-        cluster.servers.map(getHostPort), {
+        cluster.servers.map(getHostPort),
+        {
             retryFlags: {
                 never: true
-            }
-        });
+            },
+            totalRequests: numRequests,
+            batchSize: 15
+        }
+    );
 
     batchClient.warmUp(onWarmedup);
 
     function onWarmedup(err1) {
         assert.ifError(err1, 'expect no initialize error');
 
-        batchClient.sendRequests({
-            totalRequests: numRequests,
-            batchSize: 15
-        }, onResults);
+        batchClient.sendRequests(onResults);
     }
 
     function onResults(err, data) {
@@ -344,22 +352,23 @@ allocCluster.test('sending requests to servers with busy over time', {
 
     var batchClient = new BatchClient(
         cluster.client,
-        cluster.servers.map(getHostPort), {
+        cluster.servers.map(getHostPort),
+        {
             retryFlags: {
                 never: true
-            }
-        });
+            },
+            totalRequests: numRequests,
+            batchSize: batchSize,
+            delay: batchDelay
+        }
+    );
 
     batchClient.warmUp(onWarmedup);
 
     function onWarmedup(err1) {
         assert.ifError(err1, 'expect no initialize error');
 
-        batchClient.sendRequests({
-            totalRequests: numRequests,
-            batchSize: batchSize,
-            delay: batchDelay
-        }, onResults);
+        batchClient.sendRequests(onResults);
     }
 
     function onResults(err, data) {
@@ -416,7 +425,7 @@ function makeServer(channel, index) {
         serviceName: 'server'
     });
 
-    serverChan.register('foo', function foo(req, res, arg2, arg3) {
+    serverChan.register('echo', function echo(req, res, arg2, arg3) {
         res.headers.as = 'raw';
         res.sendOk(arg2, arg3 + ' served by ' + chanNum);
     });
@@ -429,7 +438,7 @@ function makeErrorServer(channel, index, codeName) {
         serviceName: 'server'
     });
 
-    serverChan.register('foo', function foo(req, res, arg2, arg3) {
+    serverChan.register('echo', function echo(req, res, arg2, arg3) {
         res.sendError(codeName, 'oops from ' + chanNum);
     });
 }
@@ -444,8 +453,8 @@ function collectByResult(results) {
         var res = results[j];
 
         var key = '';
-        if (res && res.response) {
-            key = String(res.response.arg3);
+        if (res && res.responseOk) {
+            key = String(res.outReqHostPort);
         } else if (res && res.error) {
             key = String(res.error.message);
         }
