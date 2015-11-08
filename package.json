@@ -30,7 +30,6 @@
   "dependencies": {
     "bufrw": "^0.9.25",
     "crc": "^3.2.1",
-    "debug-logtron": "5.0.0",
     "error": "^7.0.1",
     "farmhash": "^0.2.0",
     "hexer": "^1.4.5",
@@ -56,6 +55,7 @@
     "chalk": "^1.0.0",
     "child_pty": "^0.5.1",
     "collect-parallel": "^1.0.1",
+    "debug-logtron": "5.0.0",
     "duplexer": "^0.1.1",
     "eslint": "0.24.0",
     "eslint-config-perf-standard": "1.0.0",
