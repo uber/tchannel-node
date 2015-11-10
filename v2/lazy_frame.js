@@ -38,6 +38,7 @@ function LazyFrame(size, type, id, buffer) {
     self.id = id;
     self.buffer = buffer;
 
+    self._cachedHeaders = null;
     self.body = null;
     self.bodyRW = null;
 }

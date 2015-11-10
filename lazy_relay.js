@@ -97,11 +97,15 @@ function initRead() {
     }
     self.serviceName = res.value;
 
-    res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
-    if (res.err) {
-        return res.err;
+    var headers = self.reqFrame._cachedHeaders;
+    if (!headers) {
+        res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
+        if (res.err) {
+            return res.err;
+        }
+        headers = res.value;
     }
-    var headers = res.value;
+
     var cnHeader = headers.getValue(cnBytes);
     if (cnHeader !== undefined) {
         self.callerName = String(cnHeader);
