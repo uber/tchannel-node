@@ -573,6 +573,7 @@ function handleFrameLazily(frame) {
 
     var now = self.channel.timers.now();
     if (frame.type === v2.Types.CallResponse) {
+	self.channel.successCount++;
         self._observeCallResFrame(frame, now);
     } else if (frame.type === v2.Types.CallResponseCont) {
         self._observeCallResContFrame(frame, now);
