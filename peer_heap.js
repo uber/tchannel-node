@@ -42,6 +42,8 @@ function PeerHeap(random) {
     // array of boxed doubles. This has a noticable speed increase.
     self.rangehis = [];
     self.rangelos = [];
+
+    self.maxRangeStart = 0;
 }
 
 PeerHeap.prototype.choose1 = function choose1(threshold, filter) {
@@ -81,7 +83,6 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
     }
 
     var chosenPeer = null;
-    var maxRangeStart = self.array[0].range.lo;
     var highestProbability = 0;
     var firstScore = self.array[0].peer.getScore();
 
@@ -105,15 +106,13 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
 
         var el = self.array[i];
 
-        if (self.rangehis[i] <= maxRangeStart) {
+        if (self.rangehis[i] <= self.maxRangeStart) {
             // This range ends before the range with the largest start begins,
             // so it can't possibly be chosen over any of the ranges we've
             // seen. All ranges below this one have a smaller end, so this
             // range and any below it can't be chosen.
             continue;
         } else if (!filter || filter(el.peer)) {
-            maxRangeStart = Math.max(maxRangeStart, self.rangelos[i]);
-
             // INLINE of TChannelPeer#getScore
             var lo = self.rangelos[i];
             var hi = self.rangehis[i];
@@ -255,6 +254,7 @@ PeerHeap.prototype.siftdown = function siftdown(i) {
         if (left >= self.array.length) {
             self.rangehis[i] = self.array[i].range.hi;
             self.rangelos[i] = self.array[i].range.lo;
+            self.maxRangeStart = Math.max(self.rangelos[i], self.maxRangeStart);
             return i;
         }
 
@@ -271,6 +271,7 @@ PeerHeap.prototype.siftdown = function siftdown(i) {
         } else {
             self.rangehis[i] = self.array[i].range.hi;
             self.rangelos[i] = self.array[i].range.lo;
+            self.maxRangeStart = Math.max(self.rangelos[i], self.maxRangeStart);
             return i;
         }
     }
@@ -287,12 +288,14 @@ PeerHeap.prototype.siftup = function siftup(i) {
         } else {
             self.rangehis[i] = self.array[i].range.hi;
             self.rangelos[i] = self.array[i].range.lo;
+            self.maxRangeStart = Math.max(self.rangelos[i], self.maxRangeStart);
             return i;
         }
     }
 
     self.rangehis[0] = self.array[0].range.hi;
     self.rangelos[0] = self.array[0].range.lo;
+    self.maxRangeStart = Math.max(self.rangelos[i], self.maxRangeStart);
 
     return 0;
 };
@@ -310,9 +313,11 @@ PeerHeap.prototype.swap = function swap(i, j) {
 
     self.rangehis[j] = a.range.hi;
     self.rangelos[j] = a.range.lo;
+    self.maxRangeStart = Math.max(self.rangelos[j], self.maxRangeStart);
 
     self.rangehis[i] = b.range.hi;
     self.rangelos[i] = b.range.lo;
+    self.maxRangeStart = Math.max(self.rangelos[i], self.maxRangeStart);
 };
 
 function PeerHeapElement(heap) {
