@@ -159,6 +159,12 @@ PeerDrain.prototype.stop =
 function stop(reason) {
     var self = this;
 
+    self.peer.logger.info('stopping peer drain', self.peer.extendLogInfo(
+        self.extendLogInfo({
+            stopReason: reason
+        })
+    ));
+
     self.stoppedAt = self.channel.timers.now();
 
     if (self.timer) {
