@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 'use strict';
-/* eslint disable:1 */
 
 function Range(lo, hi) {
     var self = this;
