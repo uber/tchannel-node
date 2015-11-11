@@ -156,11 +156,11 @@ function drain(options, callback) {
 };
 
 TChannelPeer.prototype.clearDrain =
-function clearDrain() {
+function clearDrain(reason) {
     var self = this;
 
     if (self.draining) {
-        self.draining.stop();
+        self.draining.stop(reason);
         self.draining = null;
     }
 };

@@ -156,7 +156,7 @@ function start() {
 };
 
 PeerDrain.prototype.stop =
-function stop() {
+function stop(reason) {
     var self = this;
 
     self.stoppedAt = self.channel.timers.now();
