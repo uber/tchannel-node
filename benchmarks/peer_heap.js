@@ -19,12 +19,14 @@
 // THE SOFTWARE.
 
 'use strict';
+/* eslint no-console:0 no-process-exit:0 */
 
+var console = require('console');
 var PeerHeap = require('../peer_heap');
+var process = require('process');
 
 function rand(lo, hi) {
     return Math.floor(Math.random() * (hi - lo + 1) + lo);
-    //return (lcg.rand() % (hi - lo + 1)) + lo;
 }
 
 function Peer() {
@@ -54,7 +56,9 @@ Peer.prototype.randPending = function randPending() {
         lo: Math.min(nums[0], nums[1]),
         hi: Math.max(nums[0], nums[1])
     };
-    self.el && self.el.rescore();
+    if (self.el) {
+        self.el.rescore();
+    }
 };
 
 Peer.prototype.getScore = function getScore() {
@@ -65,6 +69,7 @@ Peer.prototype.getScore = function getScore() {
     return score;
 };
 
+/* eslint max-statements: [2, 28] */
 function benchmark(numPeers, numChoices) {
     var heap = new PeerHeap();
     var i;
@@ -87,7 +92,7 @@ function benchmark(numPeers, numChoices) {
         var choice = heap.choose(0);
         if (choice) {
             choice.randPending();
-        
+
             peers[rand(0, peers.length - 1)].randPending();
             peers[rand(0, peers.length - 1)].randPending();
             peers[rand(0, peers.length - 1)].randPending();
@@ -96,7 +101,7 @@ function benchmark(numPeers, numChoices) {
             peers[rand(0, peers.length - 1)].randPending();
 
         } else {
-            console.log("no choice!");
+            console.log('no choice!');
         }
     }
 
@@ -105,7 +110,7 @@ function benchmark(numPeers, numChoices) {
     return time;
 }
 
-console.log("pid:", process.pid);
+console.log('pid:', process.pid);
 
-console.log("benchmark(1000, 50000):", benchmark(1000, 50000));
+console.log('benchmark(1000, 50000):', benchmark(1000, 50000));
 
