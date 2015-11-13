@@ -74,6 +74,7 @@ require('./lazy_conn_handler.js');
 require('./chan_drain.js');
 require('./peer_drain.js');
 require('./relay-clamps-the-ttl.js');
+require('./relay-under-timeouts.js');
 
 require('./trace/basic_server.js');
 require('./trace/server_2_requests.js');
