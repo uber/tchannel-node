@@ -384,11 +384,11 @@ function logUnknownCallResponse(res) {
     var logger = self.channel.logger;
     var tombstone = self.ops.getOutTombstone(res.id);
     var info = self.extendLogInfo(res.extendLogInfo({
-        responseHeaders: res.headers,
-        tombstone: tombstone
+        responseHeaders: res.headers
     }));
 
     if (tombstone) {
+        info = tombstone.extendLogInfo(info);
         logger.info('got call response for timed out call request', info);
     } else {
         logger.warn('got unexpected call response without call request', info);
