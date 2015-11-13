@@ -23,7 +23,7 @@
 
 /*global process */
 
-// Usage: node bin/adhoc.js <serviceName> <port>
+// Usage: node bin/adhoc.js <serviceName> <port> <host>
 // Creates a service on localhost, connected to Autobahn on localhost.
 
 var os = require('os');
@@ -47,7 +47,7 @@ function main() {
     /*eslint no-console: 0*/
     var serviceName = process.argv[2];
     var port = +process.argv[3];
-    var host = getHost();
+    var host = process.argv[4] || getHost();
     var autobahnPort = 21300;
     var autobahnHost = host;
 
