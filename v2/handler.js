@@ -224,6 +224,13 @@ TChannelV2Handler.prototype.handleInitRequest = function handleInitRequest(reqFr
         hostPort: headers.host_port,
         processName: headers.process_name
     };
+
+    if (!validateHostPort(init.hostPort)) {
+        return self.errorEvent.emit(self, errors.InvalidInitHostPortError({
+            hostPort: init.hostPort
+        }));
+    }
+
     self.sendInitResponse(reqFrame);
     self.remoteName = init.hostPort;
     self.initRequestEvent.emit(self, init);
@@ -965,4 +972,39 @@ function InRequestOptions(
     self.connection = connection;
     self.hostPort = hostPort;
     self.tracer = tracer;
+}
+
+function stringIsValidNumber(numAsStr) {
+    var num = parseInt(numAsStr, 10);
+    return num.toString() === numAsStr;
+}
+
+function validateHostPort(hostPort) {
+    var parts = hostPort.split(':');
+    if (parts.length !== 2) {
+        return false;
+    }
+
+    var hostParts = parts[0].split('.');
+    if (hostParts.length !== 4) {
+        return false;
+    }
+
+    var i;
+    for (i = 0; i < 4; i++) {
+        if (!stringIsValidNumber(hostParts[i])) {
+            return false;
+        }
+    }
+
+    if (!stringIsValidNumber(parts[1])) {
+        return false;
+    }
+
+    var portNum = parseInt(parts[1], 10);
+
+    if (portNum < 0 || portNum > 65536) {
+        return false;
+    }
+    return true;
 }

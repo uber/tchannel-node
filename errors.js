@@ -242,6 +242,12 @@ Errors.InvalidHeaderTypeError = TypedError({
     name: null
 });
 
+Errors.InvalidInitHostPortError = TypedError({
+    type: 'tchannel.invalid-init-host-port',
+    message: 'invalid host:port string in init header',
+    hostPort: null
+});
+
 Errors.InvalidJSONBody = TypedError({
     type: 'tchannel-handler.json.invalid-body',
     message: 'Invalid error body, expected a typed-error',
@@ -703,6 +709,7 @@ Errors.classify = function classify(err) {
         case 'tchannel.init.send-call-response-cont-before-indentified':
         case 'tchannel.invalid-error-code':
         case 'tchannel.invalid-frame-type':
+        case 'tchannel.invalid-init-host-port':
         case 'tchannel.missing-init-header':
         case 'tchannel.protocol.invalid-ttl':
         case 'tchannel.protocol.read-failed':
