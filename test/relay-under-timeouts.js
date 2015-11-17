@@ -125,6 +125,104 @@ allocCluster.test('sending a 1000 requests through lazy relay', {
     }
 });
 
+allocCluster.test('sending N requests to black hole with eager relay', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'expected error while forwarding');
+    cluster.logger.whitelist('info', 'forwarding expected error frame');
+
+    var client = cluster.channels[0];
+    var relay = cluster.channels[1];
+
+    setupRelay(cluster);
+    setupTimeoutServer(cluster);
+
+    relay.setLazyHandling(false);
+    relay.setLazyRelaying(false);
+
+    var batchClient = BatchClient(client, [relay.hostPort], {
+        totalRequests: 1000,
+        batchSize: 50,
+        delay: 50,
+        endpoint: 'silent'
+    });
+    batchClient.sendRequests(onResults);
+
+    function onResults(err, data) {
+        assert.ifError(err);
+
+        assert.equal(data.errors.length + data.results.length, 1000);
+
+        var cassert = CollapsedAssert();
+
+        for (var i = 0; i < data.errors.length; i++) {
+            cassert.equal(data.errors[i].type, 'tchannel.request.timeout');
+        }
+
+        for (var j = 0; j < data.results.length; j++) {
+            cassert.equal(data.results[j].responseOk, false);
+            cassert.equal(data.results[j].error.type, 'tchannel.timeout');
+        }
+
+        cassert.report(assert, 'all response are errors');
+
+        setTimeout(finish, 750);
+    }
+
+    function finish() {
+        assert.end();
+    }
+});
+
+allocCluster.test('sending N requests to black hole with lazy relay', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'expected error while forwarding');
+    cluster.logger.whitelist('info', 'forwarding expected error frame');
+
+    var client = cluster.channels[0];
+    var relay = cluster.channels[1];
+
+    setupRelay(cluster);
+    setupTimeoutServer(cluster);
+
+    relay.setLazyHandling(true);
+    relay.setLazyRelaying(true);
+
+    var batchClient = BatchClient(client, [relay.hostPort], {
+        totalRequests: 1000,
+        batchSize: 50,
+        delay: 50,
+        endpoint: 'silent'
+    });
+    batchClient.sendRequests(onResults);
+
+    function onResults(err, data) {
+        assert.ifError(err);
+
+        assert.equal(data.errors.length + data.results.length, 1000);
+
+        var cassert = CollapsedAssert();
+
+        for (var i = 0; i < data.errors.length; i++) {
+            cassert.equal(data.errors[i].type, 'tchannel.request.timeout');
+        }
+
+        for (var j = 0; j < data.results.length; j++) {
+            cassert.equal(data.results[j].responseOk, false);
+            cassert.equal(data.results[j].error.type, 'tchannel.timeout');
+        }
+
+        cassert.report(assert, 'all response are errors');
+
+        setTimeout(finish, 750);
+    }
+
+    function finish() {
+        assert.end();
+    }
+});
+
 function setupRelay(cluster) {
     var relay = cluster.channels[1];
     var server = cluster.channels[2];
@@ -143,9 +241,15 @@ function setupTimeoutServer(cluster) {
         serviceName: 'server'
     });
 
-    subServer.register('bleed', noop);
+    subServer.register('bleed', bleed);
+    subServer.register('silent', silent);
 
-    function noop() {
+    function bleed(req) {
         /* timeout on purpose */
+    }
+
+    function silent(req) {
+        /* do not even Timeout error frame */
+        req.connection.ops.popInReq(req.id);
     }
 }
