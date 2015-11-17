@@ -546,6 +546,11 @@ LazyRelayOutReq.prototype.onTimeout =
 function onTimeout(now) {
     var self = this;
 
+    self.conn.ops.popOutReq(self.id, self.extendLogInfo({
+        info: 'lazy out request timed out',
+        relayDirection: 'out'
+    }));
+
     self.emitError(errors.RequestTimeoutError({
         id: self.id,
         start: self.start,
