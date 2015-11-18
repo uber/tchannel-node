@@ -88,7 +88,7 @@ TChannelJSON.prototype.send = function send(
     var self = this;
 
     if (!self.logger) {
-        self.logger = req.logger;
+        self.logger = req.channel.logger;
     }
 
     assert(typeof endpoint === 'string', 'endpoint must be a string');
