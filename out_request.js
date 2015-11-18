@@ -540,6 +540,9 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
         }
 
         process.nextTick(deferOutReqTimeoutErrorEmit);
+    } else if (self.operations) {
+        self.operations.checkLastTimeoutTime(now);
+        self.operations.popOutReq(self.id);
     }
 
     function deferOutReqTimeoutErrorEmit() {
