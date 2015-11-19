@@ -21,12 +21,10 @@
 'use strict';
 
 var path = require('path');
-var fs = require('fs');
 var assert = require('assert');
 var Buffer = require('buffer').Buffer;
 
 var tcollectorSpecPath = path.join(__dirname, 'tcollector.thrift');
-var tcollectorSpec = fs.readFileSync(tcollectorSpecPath, 'utf8');
 
 module.exports = TCollectorTraceReporter;
 

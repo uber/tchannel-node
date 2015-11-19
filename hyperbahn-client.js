@@ -22,7 +22,6 @@
 
 var assert = require('assert');
 var fs = require('fs');
-var path = require('path');
 var TypedError = require('error/typed');
 var WrappedError = require('error/wrapped');
 var timers = require('timers');
@@ -192,8 +191,7 @@ function getThriftSync(options) {
         logger: options.logger,
         bossMode: options.bossMode,
         channel: channel,
-        isHealthy: options.isHealthy,
-        allowFilesystemAccess: true
+        isHealthy: options.isHealthy
     });
 };
 
