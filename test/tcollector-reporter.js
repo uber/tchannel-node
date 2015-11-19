@@ -31,15 +31,14 @@ var allocCluster = require('./lib/alloc-cluster');
 
 var TCollectorReporter = require('../tcollector/reporter');
 
-var tcollectorSpec = fs.readFileSync(
-    path.join(__dirname, '..', 'tcollector', 'tcollector.thrift'),
-    'utf8'
-);
+var tcollectorSpecPath = path.join(__dirname, '..', 'tcollector', 'tcollector.thrift');
+var tcollectorSpec = fs.readFileSync(tcollectorSpecPath, 'utf8');
 
 test('test of thriftify spec', function t1(assert) {
     var thriftSpec = new thriftrw.Thrift({
-        source: tcollectorSpec,
-        strict: false
+        entryPoint: tcollectorSpecPath,
+        strict: false,
+        allowFilesystemAccess: true
     });
 
     var argsType = thriftSpec.getType('TCollector::submit_args');
@@ -209,7 +208,7 @@ allocCluster.test('functional test', {
     });
 
     var thrift = new serverTChannel.TChannelAsThrift({
-        source: tcollectorSpec,
+        entryPoint: tcollectorSpecPath,
         strict: false
     });
 

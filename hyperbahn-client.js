@@ -185,16 +185,15 @@ function getThriftSync(options) {
     assert(options && options.thriftFile, 'must pass thriftFile');
 
     var channel = self.getClientChannel(options);
-    var thriftSource = fs.readFileSync(options.thriftFile, 'utf8');
 
     return channel.TChannelAsThrift({
-        source: thriftSource,
-        thriftFileName: path.basename(options.thriftFile),
+        entryPoint: options.thriftFile,
         strict: options.strict,
         logger: options.logger,
         bossMode: options.bossMode,
         channel: channel,
-        isHealthy: options.isHealthy
+        isHealthy: options.isHealthy,
+        allowFilesystemAccess: true
     });
 };
 
