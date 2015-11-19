@@ -22,7 +22,6 @@
 
 var assert = require('assert');
 var fs = require('fs');
-var path = require('path');
 var TypedError = require('error/typed');
 var WrappedError = require('error/wrapped');
 var timers = require('timers');
@@ -185,11 +184,9 @@ function getThriftSync(options) {
     assert(options && options.thriftFile, 'must pass thriftFile');
 
     var channel = self.getClientChannel(options);
-    var thriftSource = fs.readFileSync(options.thriftFile, 'utf8');
 
     return channel.TChannelAsThrift({
-        source: thriftSource,
-        thriftFileName: path.basename(options.thriftFile),
+        entryPoint: options.thriftFile,
         strict: options.strict,
         logger: options.logger,
         bossMode: options.bossMode,

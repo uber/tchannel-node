@@ -28,9 +28,8 @@ var fs = require('fs');
 var TChannelAsThrift = require('../as/thrift.js');
 var allocCluster = require('./lib/alloc-cluster.js');
 
-var thriftSource = fs.readFileSync(
-    path.join(__dirname, 'anechoic-chamber.thrift'), 'utf8'
-);
+var thriftSourcePath = path.join(__dirname, 'anechoic-chamber.thrift');
+var thriftSource = fs.readFileSync(thriftSourcePath, 'utf8');
 
 allocCluster.test('thrift works with health check present', {
     numPeers: 2
@@ -67,9 +66,10 @@ allocCluster.test('health check works in good scenarios', {
     });
 
     var client = cluster.channels[1].subChannels.server;
-    var source = fs.readFileSync(path.join(__dirname, '../as/meta.thrift'), 'utf8');
+    var metaThriftFilepath = path.join(__dirname, '../as/meta.thrift');
+    var source = fs.readFileSync(metaThriftFilepath, 'utf8');
     var healthThrift = new TChannelAsThrift({
-        source: source,
+        entryPoint: metaThriftFilepath,
         logParseFailures: false
     });
 
@@ -95,9 +95,10 @@ allocCluster.test('health check works in bad scenarios', {
     });
 
     var client = cluster.channels[1].subChannels.server;
-    var source = fs.readFileSync(path.join(__dirname, '../as/meta.thrift'), 'utf8');
+    var metaThriftFilepath = path.join(__dirname, '../as/meta.thrift');
+    var source = fs.readFileSync(metaThriftFilepath, 'utf8');
     var healthThrift = new TChannelAsThrift({
-        source: source,
+        entryPoint: metaThriftFilepath,
         logParseFailures: false
     });
 
@@ -124,9 +125,11 @@ allocCluster.test('meta returns thrift IDL for the service', {
     });
 
     var client = cluster.channels[1].subChannels.server;
-    var source = fs.readFileSync(path.join(__dirname, '../as/meta.thrift'), 'utf8');
+
+    var metaThriftFilepath = path.join(__dirname, '../as/meta.thrift');
+    var source = fs.readFileSync(metaThriftFilepath, 'utf8');
     var healthThrift = new TChannelAsThrift({
-        source: source,
+        entryPoint: metaThriftFilepath,
         logParseFailures: false
     });
 
@@ -139,8 +142,8 @@ allocCluster.test('meta returns thrift IDL for the service', {
         }
 
         assert.ok(res && res.ok, 'res should be ok');
-        assert.equals(res.body.entryPoint, 'service.thrift', 'expect entryPoint to be service.thrift');
-        assert.equals(res.body.idls['service.thrift'], thriftSource, 'expected IDL should be returned');
+        assert.equals(res.body.entryPoint, 'anechoic-chamber.thrift', 'expect entryPoint to be service.thrift');
+        assert.equals(res.body.idls['anechoic-chamber.thrift'], thriftSource, 'expected IDL should be returned');
         assert.end();
     });
 });
@@ -182,7 +185,7 @@ function makeTChannelThriftServer(cluster, opts) {
     var health = opts.good ? healthGood : healthBad;
 
     var tchannelAsThrift = new TChannelAsThrift({
-        source: thriftSource,
+        entryPoint: thriftSourcePath,
         logParseFailures: false,
         channel: cluster.channels[0].subChannels.server,
         isHealthy: health,

@@ -43,7 +43,7 @@
     "safe-json-parse": "^4.0.0",
     "sse4_crc32": "3.2.0",
     "tape-cluster": "2.1.0",
-    "thriftrw": "2.5.2",
+    "thriftrw": "3.0.1",
     "xtend": "^4.0.0"
   },
   "devDependencies": {

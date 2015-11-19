@@ -21,12 +21,10 @@
 'use strict';
 
 var path = require('path');
-var fs = require('fs');
 var assert = require('assert');
 var Buffer = require('buffer').Buffer;
 
-var tcollectorSpec =
-    fs.readFileSync(path.join(__dirname, 'tcollector.thrift'), 'utf8');
+var tcollectorSpecPath = path.join(__dirname, 'tcollector.thrift');
 
 module.exports = TCollectorTraceReporter;
 
@@ -54,7 +52,7 @@ function TCollectorTraceReporter(options) {
     }
 
     self.tchannelThrift = new self.channel.TChannelAsThrift({
-        source: tcollectorSpec,
+        entryPoint: tcollectorSpecPath,
         strict: false
     });
 }

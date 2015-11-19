@@ -25,7 +25,7 @@ var fs = require('fs');
 var path = require('path');
 var bufrw = require('bufrw');
 var Result = require('bufrw/result');
-var thriftrw = require('thriftrw');
+var Thrift = require('thriftrw').Thrift;
 
 var errors = require('../errors.js');
 var HeaderRW = require('../v2/header.js').header2;
@@ -41,15 +41,24 @@ function TChannelAsThrift(opts) {
 
     var self = this;
 
-    assert(opts && typeof opts.source === 'string',
-        'must pass source as an argument');
+    assert(opts && (
+            typeof opts.source === 'string' ||
+            typeof opts.entryPoint === 'string'
+        ),
+        'must pass either `source` or `entryPoint` as an option');
 
-    self.thriftSource = opts.source;
-    self.thriftFileName = opts.thriftFileName || 'service.thrift';
-    self.spec = new thriftrw.Thrift({
-        source: self.thriftSource,
-        strict: opts.strict
-    });
+    self.thriftFileName = opts.entryPoint || 'service.thrift';
+
+    var thriftOpts = {
+        entryPoint: opts.entryPoint,
+        idls: opts.idls,
+        strict: opts.strict,
+        allowIncludeAlias: opts.allowIncludeAlias,
+        allowFilesystemAccess: opts.allowFilesystemAccess !== undefined ?
+            opts.allowFilesystemAccess : true
+    };
+
+    self.spec = new Thrift(thriftOpts);
 
     self.logger = opts.logger;
 
@@ -105,8 +114,11 @@ TChannelAsThrift.prototype.registerMeta =
 function registerMeta(metaSource) {
     var self = this;
 
-    var metaSpec = new thriftrw.Thrift({
-        source: metaSource
+    var metaSpec = new Thrift({
+        entryPoint: 'source',
+        idls: {
+            source: metaSource
+        }
     });
 
     self.register(self.channel, 'Meta::health', self, health, metaSpec);
@@ -477,14 +489,9 @@ function health(tchannelThrift, req, head, body, callback) {
 }
 
 function thriftIDL(tchannelThrift, req, head, body, callback) {
-    var idls = {};
-    idls[tchannelThrift.thriftFileName] = tchannelThrift.thriftSource;
     return callback(null, {
         ok: true,
-        body: {
-            idls: idls,
-            entryPoint: tchannelThrift.thriftFileName
-        }
+        body: tchannelThrift.spec.getSources()
     });
 }
 

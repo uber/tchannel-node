@@ -28,12 +28,10 @@ var fs = require('fs');
 
 var allocCluster = require('./lib/alloc-cluster.js');
 
-var globalThriftText = fs.readFileSync(
-    path.join(__dirname, 'anechoic-chamber.thrift'), 'utf8'
-);
-var badThriftText = fs.readFileSync(
-    path.join(__dirname, 'bad-anechoic-chamber.thrift'), 'utf8'
-);
+var globalThriftPath = path.join(__dirname, 'anechoic-chamber.thrift');
+var globalThriftText = fs.readFileSync(globalThriftPath, 'utf8');
+var badThriftPath = path.join(__dirname, 'bad-anechoic-chamber.thrift');
+var badThriftText = fs.readFileSync(badThriftPath, 'utf8');
 
 allocCluster.test('send and receiving an ok', {
     numPeers: 2
@@ -341,7 +339,7 @@ allocCluster.test('send with invalid types', {
 
     var client = cluster.channels[1].subChannels.server;
     var tchannelAsThrift = client.TChannelAsThrift({
-        source: badThriftText
+        entryPoint: badThriftPath
     });
 
     tchannelAsThrift.send(client.request({
@@ -411,7 +409,7 @@ allocCluster.test('using register() without channel', {
 
     var serverThrift = server.TChannelAsThrift({
         channel: server,
-        source: globalThriftText
+        entryPoint: globalThriftPath
     });
     serverThrift.register('Chamber::echo', {}, okHandler);
 
@@ -429,7 +427,7 @@ allocCluster.test('using register() without channel', {
 
     var clientThrift = client.TChannelAsThrift({
         channel: client,
-        source: globalThriftText
+        entryPoint: globalThriftPath
     });
 
     clientThrift.request({
@@ -488,7 +486,7 @@ function makeTChannelThriftServer(cluster, opts) {
             networkFailureHandler;
 
     var tchannelAsThrift = cluster.channels[0].TChannelAsThrift({
-        source: opts.thriftText || globalThriftText,
+        entryPoint: opts.entryPoint || globalThriftPath,
         logParseFailures: false,
         channel: cluster.channels[1].subChannels.server
     });

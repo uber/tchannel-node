@@ -745,7 +745,11 @@ function allocThrift(cluster, options) {
         messagesHandler : null;
 
     var tchannelAsThrift = TChannelAsThrift({
-        source: throft
+        entryPoint: 'entryPoint',
+        idls: {
+            entryPoint: throft
+        },
+        allowFilesystemAccess: false
     });
     tchannelAsThrift.register(
         server, 'DoubleResponse::method', {}, handler

@@ -30,17 +30,19 @@ test('calling getThrift', function t(assert) {
     var hypeClient = makeHyperbahnClient();
     var hypeServer = makeHyperbahnClient();
 
+    var thriftFilePath = path.join(__dirname, '..', 'anechoic-chamber.thrift');
+
     var thriftClient = hypeClient.getThriftSync({
         serviceName: 'foo',
-        thriftFile: path.join(__dirname, '..', 'anechoic-chamber.thrift')
+        thriftFile: thriftFilePath
     });
     var thriftServer = hypeServer.getThriftSync({
         serviceName: 'foo',
-        thriftFile: path.join(__dirname, '..', 'anechoic-chamber.thrift')
+        thriftFile: thriftFilePath
     });
 
-    assert.equal(thriftClient.thriftFileName, 'anechoic-chamber.thrift', 'client gets the expected thrift file name');
-    assert.equal(thriftServer.thriftFileName, 'anechoic-chamber.thrift', 'server gets the expected thrift file name');
+    assert.equal(thriftClient.thriftFileName, thriftFilePath, 'client gets the expected thrift file name');
+    assert.equal(thriftServer.thriftFileName, thriftFilePath, 'server gets the expected thrift file name');
 
     thriftServer.register('Chamber::echo', {}, echo);
 
