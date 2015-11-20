@@ -40,6 +40,8 @@ var bench = path.join(__dirname, 'multi_bench.js');
 
 process.stderr.setMaxListeners(Infinity);
 
+var TorchCommand = ['sudo', 'torch'];
+
 module.exports = BenchmarkRunner;
 
 function BenchmarkRunner(opts) {
@@ -351,7 +353,7 @@ function torchCommand() {
         torchPid = self.serverProcs[torchIndex].pid;
     }
 
-    return ['sudo', 'torch', torchPid, torchType, torchTime];
+    return TorchCommand.concat([torchPid, torchType, torchTime]);
 };
 
 BenchmarkRunner.prototype.startTorch =
