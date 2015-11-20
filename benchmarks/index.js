@@ -20,7 +20,8 @@
 
 'use strict';
 
-/* eslint no-console: 0 */
+/* eslint-disable no-console, no-process-env */
+
 var childProcess = require('child_process');
 var parseArgs = require('minimist');
 var path = require('path');
@@ -41,6 +42,9 @@ var bench = path.join(__dirname, 'multi_bench.js');
 process.stderr.setMaxListeners(Infinity);
 
 var TorchCommand = ['sudo', 'torch'];
+if (process.env.TORCH_COMMAND) {
+    TorchCommand = process.env.TORCH_COMMAND.split(/\s+/);
+}
 
 module.exports = BenchmarkRunner;
 
