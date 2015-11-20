@@ -327,7 +327,8 @@ BenchmarkRunner.prototype.close = function close() {
     self.statsdServer.close();
 };
 
-BenchmarkRunner.prototype.startTorch = function startTorch() {
+BenchmarkRunner.prototype.torchCommand =
+function torchCommand() {
     var self = this;
 
     assert(self.opts.torch === 'client' ||
@@ -338,9 +339,7 @@ BenchmarkRunner.prototype.startTorch = function startTorch() {
     assert(self.opts.torchFile, 'torchFile needed');
 
     var torchPid;
-    var torchFile = self.opts.torchFile;
     var torchTime = self.opts.torchTime || '30';
-    var torchDelay = self.opts.torchDelay || 10 * 1000;
     var torchType = self.opts.torchType || 'raw';
     var torchIndex = self.opts.torchIndex || 0;
 
@@ -352,10 +351,20 @@ BenchmarkRunner.prototype.startTorch = function startTorch() {
         torchPid = self.serverProcs[torchIndex].pid;
     }
 
+    return ['sudo', 'torch', torchPid, torchType, torchTime];
+};
+
+BenchmarkRunner.prototype.startTorch =
+function startTorch() {
+    var self = this;
+
+    var torchFile = self.opts.torchFile;
+    var torchDelay = self.opts.torchDelay || 10 * 1000;
+
+    var cmd = self.torchCommand();
+
     setTimeout(function delayTorching() {
-        var torchProc = childProcess.spawn('sudo', [
-            'torch', torchPid, torchType, torchTime
-        ]);
+        var torchProc = childProcess.spawn(cmd[0], cmd.slice(1));
         torchProc.stdout.pipe(
             fs.createWriteStream(torchFile)
         );
