@@ -68,7 +68,7 @@ function BenchmarkRunner(opts) {
     var INSTANCE_COUNT = 72;
     var CLIENT_PORT = 7041;
 
-    self.instanceCount = INSTANCE_COUNT;
+    self.instanceCount = opts.instances || INSTANCE_COUNT;
     self.ports = {
         serverPort: SERVER_PORT,
         traceServerPort: TRACE_SERVER_PORT,
