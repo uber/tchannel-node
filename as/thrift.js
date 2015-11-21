@@ -54,8 +54,7 @@ function TChannelAsThrift(opts) {
         strict: opts.strict,
         allowFilesystemAccess: opts.allowFilesystemAccess,
         allowIncludeAlias: opts.allowIncludeAlias,
-        fs: opts.fs,
-        memo: opts.memo
+        fs: opts.fs
     });
 
     self.logger = opts.logger;
