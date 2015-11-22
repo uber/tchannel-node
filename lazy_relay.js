@@ -366,7 +366,7 @@ function handleFrameLazily(frame) {
     }
 
     frame.setId(self.outreq.id);
-    self.outreq.conn.socket.write(frame.buffer);
+    self.outreq.conn.writeToSocket(frame.buffer);
     if (frame.bodyRW.lazy.isFrameTerminal(frame)) {
         self.alive = false;
         self.conn.ops.popInReq(self.id, self.extendLogInfo({
@@ -568,7 +568,7 @@ function handleFrameLazily(frame) {
     var self = this;
 
     frame.setId(self.inreq.id);
-    self.inreq.conn.socket.write(frame.buffer);
+    self.inreq.conn.writeToSocket(frame.buffer);
     if (frame.bodyRW.lazy.isFrameTerminal(frame)) {
         self.conn.ops.popOutReq(self.id, self.extendLogInfo({
             info: 'lazy relay request done',
