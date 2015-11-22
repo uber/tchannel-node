@@ -159,8 +159,8 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 
     self.setLazyHandling(self.channel.options.useLazyHandling);
 
-    self.handler.write = function write(buf, done) {
-        self.socket.write(buf, null, done);
+    self.handler.write = function write(buf) {
+        self.socket.write(buf);
     };
 
     self.mach.emit = handleReadFrame;
