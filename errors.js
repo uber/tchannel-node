@@ -484,6 +484,12 @@ Errors.SocketError = WrappedError({
     remoteAddr: null
 });
 
+Errors.SocketWriteFullError = TypedError({
+    type: 'tchannel.socket.write-full',
+    message: 'Could not write to socket; socket is full',
+    pendingWrites: null
+});
+
 Errors.TChannelConnectionCloseError = TypedError({
     type: 'tchannel.connection.close',
     message: 'connection closed'
@@ -726,6 +732,7 @@ Errors.classify = function classify(err) {
         case 'tchannel.socket':
         case 'tchannel.socket-closed':
         case 'tchannel.socket-local-closed':
+        case 'tchannel.socket.write-full':
             return 'NetworkError';
 
         case 'tchannel-json-handler.stringify-error.body-failed':

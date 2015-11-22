@@ -33,6 +33,8 @@ var States = require('./reqres_states');
 
 var TChannelConnectionBase = require('./connection_base');
 
+var MAX_PENDING_SOCKET_WRITE_REQ = 100;
+
 function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
     assert(socketRemoteAddr !== channel.hostPort,
         'refusing to create self connection'
@@ -229,6 +231,23 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 TChannelConnection.prototype.writeToSocket =
 function writeToSocket(buf) {
     var self = this;
+
+    if (self.socket._writableState.buffer.length >
+        MAX_PENDING_SOCKET_WRITE_REQ
+    ) {
+        self.logger.warn('resetting connection due to write backup',
+            self.extendLogInfo({
+                bufferLength: self.socket._writableState.buffer.length,
+                maxlen: self.socket._writableState.length
+            })
+        );
+
+        // NUKE THE SOCKET
+        self.resetAll(Error.SocketWriteFullError({
+            pendingWrites: self.socket._writableState.buffer.length
+        }));
+        return;
+    }
 
     self.socket.write(buf);
 };
