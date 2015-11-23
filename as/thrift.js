@@ -49,7 +49,6 @@ function TChannelAsThrift(opts) {
     self.spec = new thriftrw.Thrift({
         entryPoint: opts.entryPoint,
         idls: opts.idls,
-        thrifts: opts.thrifts,
         source: self.thriftSource,
         strict: opts.strict,
         allowFilesystemAccess: opts.allowFilesystemAccess,
