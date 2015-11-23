@@ -47,8 +47,13 @@ function TChannelAsThrift(opts) {
     self.thriftSource = opts.source;
     self.thriftFileName = opts.thriftFileName || 'service.thrift';
     self.spec = new thriftrw.Thrift({
+        entryPoint: opts.entryPoint,
+        idls: opts.idls,
         source: self.thriftSource,
-        strict: opts.strict
+        strict: opts.strict,
+        allowFilesystemAccess: opts.allowFilesystemAccess,
+        allowIncludeAlias: opts.allowIncludeAlias,
+        fs: opts.fs
     });
 
     self.logger = opts.logger;
