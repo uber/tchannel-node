@@ -237,8 +237,8 @@ function writeToSocket(buf) {
     ) {
         self.logger.warn('resetting connection due to write backup',
             self.extendLogInfo({
-                bufferLength: self.socket._writableState.buffer.length,
-                maxlen: self.socket._writableState.length
+                pendingWrites: self.socket._writableState.buffer.length,
+                totalFastBufferBytes: self.socket._writableState.length
             })
         );
 
