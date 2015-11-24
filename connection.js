@@ -243,7 +243,7 @@ function writeToSocket(buf) {
         );
 
         // NUKE THE SOCKET
-        self.resetAll(Error.SocketWriteFullError({
+        self.resetAll(errors.SocketWriteFullError({
             pendingWrites: self.socket._writableState.buffer.length
         }));
         return;
