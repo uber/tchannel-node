@@ -106,7 +106,7 @@ var keyChan = rootChannel.makeSubChannel({
     serviceName: 'keyvalue'
 });
 var keyThrift = TChannelThrift({
-    source: fs.readFileSync('./keyvalue.thrift', 'utf8')
+    entryPoint: path.join(__dirname, 'keyvalue.thrift')
 });
 var ctx = {
     store: {}
@@ -268,7 +268,7 @@ var keyChan = hyperbahnClient.getClientChannel({
     serviceName: 'keyvalue'
 });
 var keyThrift = rootChannel.TChannelAsThrift({
-    source: fs.readFileSync('./keyvalue.thrift', 'utf8'),
+    entryPoint: path.join(__dirname, 'keyvalue.thrift'),
     channel: keyChan
 });
 

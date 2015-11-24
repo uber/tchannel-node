@@ -20,7 +20,7 @@
 
 'use strict';
 
-var TChannelThrift = require('../as/thrift');
+var TChannelAsThrift = require('../as/thrift');
 var TChannel = require('../channel');
 // In sync with ../docs/as-thrift.md hereafter
 var fs = require('fs');
@@ -33,10 +33,10 @@ var echoChannel = client.makeSubChannel({
     serviceName: 'echo',
     peers: ['127.0.0.1:4040']
 });
-var thriftSource = fs.readFileSync(path.join(__dirname, 'echo.thrift'), 'utf8');
-var tchannelThrift = TChannelThrift({
+var thriftPath = path.join(__dirname, 'echo.thrift');
+var tchannelThrift = TChannelAsThrift({
     channel: echoChannel,
-    source: thriftSource
+    entryPoint: thriftPath
 });
 
 var context = {};

@@ -42,7 +42,7 @@ function TChannelAsThrift(opts) {
     var self = this;
 
     self.thriftSource = opts.source;
-    self.thriftFileName = opts.thriftFileName || 'service.thrift';
+    self.thriftFileName = path.basename(opts.entryPoint || 'service.thrift');
     self.spec = new thriftrw.Thrift({
         entryPoint: opts.entryPoint,
         idls: opts.idls,

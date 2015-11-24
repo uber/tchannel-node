@@ -26,7 +26,7 @@ service Echo  {
 `server.js:`
 
 ```js
-var TChannelThrift = require('tchannel/as/thrift');
+var TChannelAsThrift = require('tchannel/as/thrift');
 var TChannel = require('tchannel');
 var fs = require('fs');
 var path = require('path');
@@ -38,14 +38,13 @@ var echoChannel = client.makeSubChannel({
     serviceName: 'echo',
     peers: ['127.0.0.1:4040']
 });
-var thriftSource = fs.readFileSync(path.join(__dirname, 'echo.thrift'), 'utf8');
-var tchannelThrift = TChannelThrift({
+var tchannelAsThrift = TChannelAsThrift({
     channel: echoChannel,
-    source: thriftSource
+    entryPoint: path.join(__dirname, 'keyvalue.thrift')
 });
 
 var context = {};
-tchannelThrift.register(server, 'Echo::echo', context, echo);
+tchannelAsThrift.register(server, 'Echo::echo', context, echo);
 function echo(context, req, head, body, callback) {
     callback(null, {
         ok: true,
@@ -56,7 +55,7 @@ function echo(context, req, head, body, callback) {
 
 server.listen(4040, '127.0.0.1', onListening);
 function onListening() {
-    tchannelThrift.request({
+    tchannelAsThrift.request({
         serviceName: 'echo',
         headers: {
             cn: 'echo'
@@ -81,10 +80,10 @@ function onListening() {
 }
 ```
 
-### `var tchannelThrift = TChannelThrift(opts)`
+### `var tchannelAsThrift = TChannelAsThrift(opts)`
 
-`TChannelThrift` returns a `tchannelThrift` interface with a 
-`.request()`, `.send()` and `.register()` method used to 
+`TChannelAsThrift` returns a `tchannelAsThrift` interface with a
+`.request()`, `.send()` and `.register()` method used to
 send call requests and register call request handlers
 
 It can be passed options.
@@ -105,9 +104,9 @@ It can be passed options.
    `false`; and 2) a field of `message` that indicates the reason for
    current status. `message` is required when `ok` is `false`.
 
-### `tchannelThrift.request(reqOpts).send(endpoint, head, body, cb)`
+### `tchannelAsThrift.request(reqOpts).send(endpoint, head, body, cb)`
 
-You **MUST** pass in a `channel` option to `TChannelThrift()`
+You **MUST** pass in a `channel` option to `TChannelAsThrift()`
 to use this method
 
 The `.request()` method can be used to make an outgoing Thrift
@@ -115,9 +114,9 @@ request.
 
 It returns an object with a `.send()` method used to send requests
 
-This is just sugar for `tchannelThrift.send(...)`
+This is just sugar for `tchannelAsThrift.send(...)`
 
-### `tchannelThrift.send(req, endpoint, head, body, callback(err, response))`
+### `tchannelAsThrift.send(req, endpoint, head, body, callback(err, response))`
 
 The `.send()` method can be used to send to an outgoing request.
 
@@ -134,7 +133,7 @@ request to send to.
  - `response.body` is an object or error that we parsed from a thrift struct. If the response is ok then it's a struct; if the response is not
  ok then it's an error object.
 
-### `tchannelThrift.register(tchannel, arg1, ctx, handlerFn)`
+### `tchannelAsThrift.register(tchannel, arg1, ctx, handlerFn)`
 
 The `.register()` method can be used to register a call request
 handler for a given `arg1`.
@@ -163,7 +162,7 @@ The `handlerFn` takes five arguments, `(ctx, req, head, body, cb(err, response))
  - `response.ok` A boolean whether to return a call response that
     is ok or not.
  - `response.head` an object with string key value pairs that will be serialized to arg2
- - `response.body` If `response.ok` is true then this will be an 
+ - `response.body` If `response.ok` is true then this will be an
     object that is serialized as a thrift struct to arg3.
     If `response.ok` is false then this must be an error that
     is serialized as a thrift exception to  arg3.
