@@ -484,6 +484,12 @@ Errors.SocketError = WrappedError({
     remoteAddr: null
 });
 
+Errors.SocketWriteFullError = TypedError({
+    type: 'tchannel.socket.write-full',
+    message: 'Could not write to socket; socket has {pendingWrites} writes',
+    pendingWrites: null
+});
+
 Errors.TChannelConnectionCloseError = TypedError({
     type: 'tchannel.connection.close',
     message: 'connection closed'
@@ -749,6 +755,7 @@ Errors.classify = function classify(err) {
         case 'tchannel.response-already-started':
         case 'tchannel.response-frame-state':
         case 'tchannel.server.listen-failed':
+        case 'tchannel.socket.write-full':
         case 'tchannel.top-level-register':
         case 'tchannel.top-level-request':
         case 'tchannel.tracer.parent-required':
