@@ -479,14 +479,9 @@ function health(tchannelThrift, req, head, body, callback) {
 }
 
 function thriftIDL(tchannelThrift, req, head, body, callback) {
-    var idls = {};
-    idls[tchannelThrift.thriftFileName] = tchannelThrift.thriftSource;
     return callback(null, {
         ok: true,
-        body: {
-            idls: idls,
-            entryPoint: tchannelThrift.thriftFileName
-        }
+        body: tchannelThrift.spec.getSources()
     });
 }
 
