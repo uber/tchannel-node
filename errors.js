@@ -486,7 +486,7 @@ Errors.SocketError = WrappedError({
 
 Errors.SocketWriteFullError = TypedError({
     type: 'tchannel.socket.write-full',
-    message: 'Could not write to socket; socket is full',
+    message: 'Could not write to socket; socket has {pendingWrites} writes',
     pendingWrites: null
 });
 
