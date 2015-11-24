@@ -20,7 +20,8 @@
 
 'use strict';
 
-/* eslint no-console: 0 */
+/* eslint-disable no-console, no-process-env */
+
 var childProcess = require('child_process');
 var parseArgs = require('minimist');
 var path = require('path');
@@ -39,6 +40,11 @@ var trace = path.join(__dirname, 'trace_server.js');
 var bench = path.join(__dirname, 'multi_bench.js');
 
 process.stderr.setMaxListeners(Infinity);
+
+var TorchCommand = ['sudo', 'torch', '{pid}', 'raw', '{time}'];
+if (process.env.TORCH_COMMAND) {
+    TorchCommand = process.env.TORCH_COMMAND.split(/\s+/);
+}
 
 module.exports = BenchmarkRunner;
 
@@ -68,7 +74,7 @@ function BenchmarkRunner(opts) {
     var INSTANCE_COUNT = 72;
     var CLIENT_PORT = 7041;
 
-    self.instanceCount = INSTANCE_COUNT;
+    self.instanceCount = opts.instances || INSTANCE_COUNT;
     self.ports = {
         serverPort: SERVER_PORT,
         traceServerPort: TRACE_SERVER_PORT,
@@ -327,7 +333,8 @@ BenchmarkRunner.prototype.close = function close() {
     self.statsdServer.close();
 };
 
-BenchmarkRunner.prototype.startTorch = function startTorch() {
+BenchmarkRunner.prototype.torchCommand =
+function torchCommand() {
     var self = this;
 
     assert(self.opts.torch === 'client' ||
@@ -338,10 +345,7 @@ BenchmarkRunner.prototype.startTorch = function startTorch() {
     assert(self.opts.torchFile, 'torchFile needed');
 
     var torchPid;
-    var torchFile = self.opts.torchFile;
     var torchTime = self.opts.torchTime || '30';
-    var torchDelay = self.opts.torchDelay || 10 * 1000;
-    var torchType = self.opts.torchType || 'raw';
     var torchIndex = self.opts.torchIndex || 0;
 
     if (self.opts.torch === 'relay') {
@@ -352,10 +356,28 @@ BenchmarkRunner.prototype.startTorch = function startTorch() {
         torchPid = self.serverProcs[torchIndex].pid;
     }
 
+    return TorchCommand.map(function each(part) {
+        if (part === '{pid}') {
+            return torchPid;
+        } else if (part === '{time}') {
+            return torchTime;
+        } else {
+            return part;
+        }
+    });
+};
+
+BenchmarkRunner.prototype.startTorch =
+function startTorch() {
+    var self = this;
+
+    var torchFile = self.opts.torchFile;
+    var torchDelay = self.opts.torchDelay || 10 * 1000;
+
+    var cmd = self.torchCommand();
+
     setTimeout(function delayTorching() {
-        var torchProc = childProcess.spawn('sudo', [
-            'torch', torchPid, torchType, torchTime
-        ]);
+        var torchProc = childProcess.spawn(cmd[0], cmd.slice(1));
         torchProc.stdout.pipe(
             fs.createWriteStream(torchFile)
         );
