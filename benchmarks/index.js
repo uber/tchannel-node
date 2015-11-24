@@ -41,7 +41,7 @@ var bench = path.join(__dirname, 'multi_bench.js');
 
 process.stderr.setMaxListeners(Infinity);
 
-var TorchCommand = ['sudo', 'torch'];
+var TorchCommand = ['sudo', 'torch', '{pid}', 'raw', '{time}'];
 if (process.env.TORCH_COMMAND) {
     TorchCommand = process.env.TORCH_COMMAND.split(/\s+/);
 }
@@ -346,7 +346,6 @@ function torchCommand() {
 
     var torchPid;
     var torchTime = self.opts.torchTime || '30';
-    var torchType = self.opts.torchType || 'raw';
     var torchIndex = self.opts.torchIndex || 0;
 
     if (self.opts.torch === 'relay') {
@@ -357,7 +356,15 @@ function torchCommand() {
         torchPid = self.serverProcs[torchIndex].pid;
     }
 
-    return TorchCommand.concat([torchPid, torchType, torchTime]);
+    return TorchCommand.map(function each(part) {
+        if (part === '{pid}') {
+            return torchPid;
+        } else if (part === '{time}') {
+            return torchTime;
+        } else {
+            return part;
+        }
+    });
 };
 
 BenchmarkRunner.prototype.startTorch =
