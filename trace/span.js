@@ -20,9 +20,7 @@
 
 'use strict';
 
-var LCG = require('../lib/lcg');
-
-var rng = new LCG();
+var xorshift = require('xorshift');
 
 module.exports = Span;
 module.exports.Endpoint = Endpoint;
@@ -89,14 +87,14 @@ Span.prototype.toJSON = function toJSON() {
 Span.prototype.generateIds = function generateIds() {
     var self = this;
 
-    self.id = self.traceid = [rng.rand(), rng.rand()];
+    self.id = self.traceid = xorshift.randomint();
 };
 
 // Generate just a span id
 Span.prototype.generateSpanid = function generateSpanid() {
     var self = this;
 
-    self.id = [rng.rand(), rng.rand()];
+    self.id = xorshift.randomint();
 };
 
 // ##
