@@ -50,6 +50,27 @@ test('LazyFrame.RW: read/write', testRW.cases(v2.LazyFrame.RW, [
     ]
 ]));
 
+TestBody.testWith('LazyFrame.readFrom, invalid type', function t(assert) {
+    var res = v2.LazyFrame.RW.readFrom(new Buffer([
+        0x00, 0x15,             // size: 2
+        0x50,                   // type: 1
+        0x00,                   // reserved:1
+        0x00, 0x00, 0x00, 0x01, // id:4
+        0x00, 0x00, 0x00, 0x00, // reserved:4
+        0x00, 0x00, 0x00, 0x00, // reserved:4
+
+        0x04, 0x64, 0x6f, 0x67, 0x65 // junk bytes
+    ]), 0);
+
+    var err = res.err;
+
+    assert.equal(err.type, 'tchannel.invalid-frame-type');
+    assert.equal(err.typeNumber, 80);
+
+    assert.end();
+});
+
+
 TestBody.testWith('LazyFrame.readBody', function t(assert) {
     var frame = v2.LazyFrame.RW.readFrom(new Buffer([
         0x00, 0x15,             // size: 2
