@@ -458,7 +458,8 @@ function onCallErrorFrame(errFrame) {
     var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
     var err = codeErrorType({
         originalId: id,
-        message: String(errFrame.body.message)
+        message: String(errFrame.body.message),
+        remoteAddr: self.remoteName
     });
 
     if (req) {
