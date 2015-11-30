@@ -21,6 +21,7 @@
 'use strict';
 
 var TypedError = require('error/typed');
+var setTimeout = require('timers').setTimeout;
 
 var allocCluster = require('./lib/alloc-cluster.js');
 var TChannelAsThrift = require('../as/thrift.js');
@@ -79,12 +80,12 @@ allocCluster.test('sending OK OK', {
     }), 'DoubleResponse::method', null, {
         value: 'foobar'
     }, function onResponse(err, resp) {
-        assert.ifError(err);
+        assert.ifError(err, 'thrift req should not error');
 
-        assert.deepEqual(resp.head, {});
-        assert.ok(resp.body);
+        assert.deepEqual(resp.head, {}, 'resp head is correct');
+        assert.ok(resp.body, 'resp has a body');
 
-        assert.equal(resp.body.value, 'foobar');
+        assert.equal(resp.body.value, 'foobar', 'resp body is correct');
 
         setTimeout(afterTime, 100);
     });
@@ -92,13 +93,13 @@ allocCluster.test('sending OK OK', {
     function afterTime() {
         var lines = cluster.logger.items();
 
-        assert.equal(lines.length, 1);
+        assert.equal(lines.length, 1, 'should have one log');
         var record1 = lines[0];
 
         var err1 = record1.meta.error;
 
         assert.equal(record1.msg, 'outgoing response has an error');
-        assert.equal(record1.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record1.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record1.meta.responseState, 'Done');
         assert.equal(record1.meta.responseOk, true);
         assert.equal(err1.method, 'setOk');
@@ -146,7 +147,7 @@ allocCluster.test('sending OK NOT_OK', {
         var err1 = record1.meta.error;
 
         assert.equal(record1.msg, 'outgoing response has an error');
-        assert.equal(record1.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record1.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record1.meta.responseState, 'Done');
         assert.equal(record1.meta.responseOk, true);
         assert.equal(err1.method, 'setOk');
@@ -205,7 +206,7 @@ allocCluster.test('sending OK ERROR_FRAME', {
         assert.equal(err1.message, 'Error: foobar');
 
         assert.equal(record2.msg, 'outgoing response has an error');
-        assert.equal(record2.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record2.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record2.meta.responseState, 'Done');
         assert.ok(record2.meta.arg3.indexOf('foobar') >= 0);
         assert.equal(err2.method, 'sendError');
@@ -254,7 +255,7 @@ allocCluster.test('sending NOT_OK OK', {
         var err1 = record1.meta.error;
 
         assert.equal(record1.msg, 'outgoing response has an error');
-        assert.equal(record1.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record1.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record1.meta.responseState, 'Done');
         assert.equal(record1.meta.responseOk, false);
         assert.equal(err1.method, 'setOk');
@@ -302,7 +303,7 @@ allocCluster.test('sending NOT_OK NOT_OK', {
         var err1 = record1.meta.error;
 
         assert.equal(record1.msg, 'outgoing response has an error');
-        assert.equal(record1.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record1.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record1.meta.responseState, 'Done');
         assert.equal(record1.meta.responseOk, false);
         assert.equal(err1.method, 'setOk');
@@ -361,7 +362,7 @@ allocCluster.test('sending NOT_OK ERROR_FRAME', {
         assert.equal(err1.message, 'Error: foobar');
 
         assert.equal(record2.msg, 'outgoing response has an error');
-        assert.equal(record2.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record2.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record2.meta.responseState, 'Done');
         assert.ok(record2.meta.arg3.indexOf('foobar') >= 0);
         assert.equal(err2.method, 'sendError');
@@ -420,7 +421,7 @@ allocCluster.test('sending ERROR_FRAME OK', {
         assert.equal(err1.message, 'Error: foobar');
 
         assert.equal(record2.msg, 'outgoing response has an error');
-        assert.equal(record2.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record2.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record2.meta.responseState, 'Error');
         assert.equal(record2.meta.responseCodeString, 'UnexpectedError');
         assert.equal(record2.meta.responseErrorMessage, 'Unexpected Error');
@@ -479,7 +480,7 @@ allocCluster.test('sending ERROR_FRAME NOT_OK', {
         assert.equal(err1.message, 'Error: foobar');
 
         assert.equal(record2.msg, 'outgoing response has an error');
-        assert.equal(record2.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record2.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record2.meta.responseState, 'Error');
         assert.equal(record2.meta.responseCodeString, 'UnexpectedError');
         assert.equal(record2.meta.responseErrorMessage, 'Unexpected Error');
@@ -545,7 +546,7 @@ allocCluster.test('sending ERROR_FRAME ERROR_FRAME', {
         assert.equal(err2.message, 'Error: foobar');
 
         assert.equal(record3.msg, 'outgoing response has an error');
-        assert.equal(record3.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record3.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record3.meta.responseState, 'Error');
         assert.equal(record3.meta.responseCodeString, 'UnexpectedError');
         assert.equal(record3.meta.responseErrorMessage, 'Unexpected Error');
@@ -595,7 +596,7 @@ allocCluster.test('sending INTERNAL_TIMEOUT OK', {
         var err1 = record1.meta.error;
 
         assert.equal(record1.msg, 'error for timed out outgoing response');
-        assert.equal(record1.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record1.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record1.meta.responseState, 'Error');
         assert.equal(record1.meta.responseOk, true);
         assert.equal(record1.meta.responseCodeString, 'Timeout');
@@ -644,7 +645,7 @@ allocCluster.test('sending INTERNAL_TIMEOUT NOT_OK', {
         var err1 = record1.meta.error;
 
         assert.equal(record1.msg, 'error for timed out outgoing response');
-        assert.equal(record1.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record1.meta.inRequestArg1, 'DoubleResponse::method');
         assert.equal(record1.meta.responseState, 'Error');
         assert.equal(record1.meta.responseOk, true);
         assert.equal(record1.meta.responseCodeString, 'Timeout');
@@ -707,7 +708,7 @@ allocCluster.test('sending INTERNAL_TIMEOUT ERROR_FRAME', {
         assert.equal(record2.meta.responseState, 'Error');
         assert.equal(record2.meta.responseOk, true);
         assert.equal(record2.meta.responseCodeString, 'Timeout');
-        assert.equal(record2.meta.requestArg1, 'DoubleResponse::method');
+        assert.equal(record2.meta.inRequestArg1, 'DoubleResponse::method');
 
         assert.equal(err2.method, 'sendError');
         assert.equal(err2.type, 'tchannel.response-already-done');

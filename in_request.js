@@ -82,18 +82,18 @@ TChannelInRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     // - tracing id?
     // - other?
 
-    info.requestId = self.id;
-    info.requestType = self.type;
-    info.requestState = States.describe(self.state);
-    info.requestRemoteAddr = self.remoteAddr;
+    info.inRequestId = self.id;
+    info.inRequestType = self.type;
+    info.inRequestState = States.describe(self.state);
+    info.inRequestRemoteAddr = self.remoteAddr;
     info.serviceName = self.serviceName;
     info.callerName = self.callerName;
-    info.requestErr = self.err;
+    info.inRequestErr = self.err;
 
     if (self.endpoint !== null) {
-        info.requestArg1 = self.endpoint;
+        info.inRequestArg1 = self.endpoint;
     } else {
-        info.requestArg1 = String(self.arg1);
+        info.inRequestArg1 = String(self.arg1);
     }
 
     if (self.connection) {
