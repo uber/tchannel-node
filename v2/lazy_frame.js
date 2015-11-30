@@ -102,13 +102,15 @@ function readLazyFrameFrom(buffer, offset) {
     var id = frameBuffer.readUInt32BE(LazyFrame.IdOffset);
 
     var lazyFrame = new LazyFrame(size, type, id, frameBuffer);
-    lazyFrame.bodyRW = Frame.Types[lazyFrame.type].RW;
+    var BodyType = Frame.Types[lazyFrame.type];
 
-    if (!lazyFrame.bodyRW) {
+    if (!BodyType) {
         return bufrw.ReadResult.error(errors.InvalidFrameTypeError({
             typeNumber: lazyFrame.type
         }), offset + LazyFrame.TypeOffset);
     }
+
+    lazyFrame.bodyRW = BodyType.RW;
 
     return bufrw.ReadResult.just(offset, lazyFrame);
 }
