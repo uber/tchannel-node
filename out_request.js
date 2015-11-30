@@ -240,17 +240,17 @@ TChannelOutRequest.prototype.emitError = function emitError(err) {
 TChannelOutRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     var self = this;
 
-    info.requestId = self.id;
-    info.requestType = self.type;
-    info.requestState = States.describe(self.state);
-    info.requestRemoteAddr = self.remoteAddr;
+    info.outRequestId = self.id;
+    info.outRequestType = self.type;
+    info.outRequestState = States.describe(self.state);
+    info.outRequestRemoteAddr = self.remoteAddr;
     info.serviceName = self.serviceName;
-    info.requestErr = self.err;
+    info.outRequestErr = self.err;
 
     if (self.endpoint !== null) {
-        info.requestArg1 = self.endpoint;
+        info.outRequestArg1 = self.endpoint;
     } else {
-        info.requestArg1 = String(self.arg1);
+        info.outRequestArg1 = String(self.arg1);
     }
 
     return info;
