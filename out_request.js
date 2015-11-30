@@ -532,7 +532,8 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
             start: self.start,
             elapsed: now - self.start,
             logical: self.logical,
-            timeout: self.timeout
+            timeout: self.timeout,
+            remoteAddr: self.remoteAddr
         });
         if (self.operations) {
             self.operations.checkLastTimeoutTime(now);
