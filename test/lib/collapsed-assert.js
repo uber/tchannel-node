@@ -53,6 +53,16 @@ CollapsedAssert.prototype.fail = function fail(msg, extra) {
     self._commands.push(['fail', msg, extra]);
 };
 
+CollapsedAssert.prototype.ok = function ok(bool, msg, extra) {
+    var self = this;
+
+    if (!bool) {
+        self._failed = true;
+    }
+
+    self._commands.push(['ok', bool, msg, extra]);
+};
+
 CollapsedAssert.prototype.report = function report(realAssert, message) {
     var self = this;
 
