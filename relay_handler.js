@@ -126,9 +126,15 @@ function RelayRequest(channel, peer, inreq, buildRes) {
 
     self.error = null;
 
+    inreq.timeoutEvent.on(onTimeout);
+
     self.boundOnError = onError;
     self.boundExtendLogInfo = extendLogInfo;
     self.boundOnIdentified = onIdentified;
+
+    function onTimeout(err) {
+        self.onInRequestTimeout(err);
+    }
 
     function onError(err) {
         self.onError(err);
@@ -307,6 +313,14 @@ RelayRequest.prototype.onError = function onError(err) {
     self.logError(err, codeName);
 };
 
+RelayRequest.prototype.onInRequestTimeout =
+function onInRequestTimeout(err) {
+    var self = this;
+
+    var codeName = errors.classify(err) || 'UnexpectedError';
+    self.logError(err, codeName);
+};
+
 RelayRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     var self = this;
 
@@ -321,5 +335,6 @@ RelayRequest.prototype.extendLogInfo = function extendLogInfo(info) {
 
 RelayRequest.prototype.logError = function relayRequestLogError(err, codeName) {
     var self = this;
+
     logError(self.logger, err, codeName, self.boundExtendLogInfo);
 };
