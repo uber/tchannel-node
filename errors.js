@@ -507,7 +507,7 @@ Errors.TChannelDestroyedError = TypedError({
 
 Errors.TChannelListenError = WrappedError({
     type: 'tchannel.server.listen-failed',
-    message: 'tchannel: {origMessage}',
+    message: 'tchannel: {origMessage}, {host}:{requestedPort}',
     requestedPort: null,
     host: null
 });
