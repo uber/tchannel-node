@@ -732,6 +732,7 @@ Errors.classify = function classify(err) {
         case 'tchannel.socket':
         case 'tchannel.socket-closed':
         case 'tchannel.socket-local-closed':
+        case 'tchannel.socket.write-full':
             return 'NetworkError';
 
         case 'tchannel-json-handler.stringify-error.body-failed':
@@ -755,7 +756,6 @@ Errors.classify = function classify(err) {
         case 'tchannel.response-already-started':
         case 'tchannel.response-frame-state':
         case 'tchannel.server.listen-failed':
-        case 'tchannel.socket.write-full':
         case 'tchannel.top-level-register':
         case 'tchannel.top-level-request':
         case 'tchannel.tracer.parent-required':
