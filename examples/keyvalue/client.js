@@ -21,7 +21,6 @@
 'use strict';
 
 var DebugLogtron = require('debug-logtron');
-var fs = require('fs');
 var path = require('path');
 var process = require('process');
 var console = require('console');
@@ -29,9 +28,7 @@ var console = require('console');
 var TChannel = require('../../');
 var HyperbahnClient = require('../../hyperbahn/');
 
-var thriftSource = fs.readFileSync(
-    path.join(__dirname, 'keyvalue.thrift'), 'utf8'
-);
+var thriftPath = path.join(__dirname, 'keyvalue.thrift');
 
 function Client() {
     if (!(this instanceof Client)) {
@@ -53,7 +50,7 @@ function Client() {
     });
 
     self.keyThrift = self.rootChannel.TChannelAsThrift({
-        source: thriftSource,
+        entryPoint: thriftPath,
         channel: self.hyperbahnClient.getClientChannel({
             serviceName: 'keyvalue'
         })

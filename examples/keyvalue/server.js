@@ -22,15 +22,12 @@
 
 var DebugLogtron = require('debug-logtron');
 var myLocalIp = require('my-local-ip');
-var fs = require('fs');
 var path = require('path');
 
 var TChannel = require('../../');
 var HyperbahnClient = require('../../hyperbahn/');
 
-var thriftSource = fs.readFileSync(
-    path.join(__dirname, 'keyvalue.thrift'), 'utf8'
-);
+var thriftPath = path.join(__dirname, 'keyvalue.thrift');
 
 function Application() {
     if (!(this instanceof Application)) {
@@ -48,7 +45,7 @@ function Application() {
         serviceName: 'keyvalue'
     });
     self.keyThrift = self.rootChannel.TChannelAsThrift({
-        source: thriftSource
+        entryPoint: thriftPath
     });
 
     self.keyThrift.register(
