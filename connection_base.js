@@ -80,6 +80,7 @@ TChannelConnectionBase.prototype.extendLogInfo = function extendLogInfo(info) {
 
     info = self.channel.extendLogInfo(info);
 
+    info.connGUID = self.guid;
     info.connDirection = self.direction;
     info.socketRemoteAddr = self.socketRemoteAddr;
     info.remoteName = self.remoteName;
