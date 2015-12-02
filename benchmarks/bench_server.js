@@ -33,12 +33,11 @@ var TChannel = require('../channel');
 var RandomSample = require('./random_sample.js');
 
 var argv = readBenchConfig({
-    boolean: ['trace'],
-    default: {
-        pingOverhead: 'none',
-        setOverhead: 'none',
-        getOverhead: 'none'
-    }
+    boolean: ['trace']
+}, {
+    pingOverhead: 'none',
+    setOverhead: 'none',
+    getOverhead: 'none'
 });
 
 var SERVER_HOST = '127.0.0.1';

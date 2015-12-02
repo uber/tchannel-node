@@ -29,11 +29,19 @@ var process = require('process');
 
 module.exports = readBenchConfig;
 
-function readBenchConfig(minimistOpts) {
-    var opts = {};
+function readBenchConfig(minimistOpts, defaults) {
+    var opts = defaults || {};
     if (process.env.BENCH_CONFIG) {
         var configParts = process.env.BENCH_CONFIG.split(',');
         opts = mergeConfig(opts, loadConfigParts(configParts));
+    }
+    if (minimistOpts && minimistOpts.boolean) {
+        var def = minimistOpts.defaults || (minimistOpts.defaults = {});
+        for (var i = 0; i < minimistOpts.boolean.length; i++) {
+            var key = minimistOpts.boolean[i];
+            def[key] = opts[key] === undefined ? def[key] || false : opts[key];
+        }
+        delete minimistOpts.boolean;
     }
     opts = mergeConfig(opts, parseArgs(process.argv.slice(2), minimistOpts));
     return opts;
