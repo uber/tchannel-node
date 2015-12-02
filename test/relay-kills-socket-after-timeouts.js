@@ -41,8 +41,10 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
     // Not much to do here lol
     cluster.logger.whitelist('warn', 'stale tombstone');
 
+    var testContext = TimeoutTestContext(cluster);
+
     setupRelayMesh(cluster);
-    setupServerEndpoints(cluster);
+    setupServerEndpoints(cluster, testContext);
 
     var BATCH_SIZE = 20;
     var TOTAL_REQUESTS = 500;
@@ -54,8 +56,6 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
         relay.setLazyHandling(false);
         relay.setLazyRelaying(false);
     }
-
-    var testContext = TimeoutTestContext(cluster);
 
     var batchClient = setupBatchClient(cluster, {
         retryFlags: {
@@ -77,7 +77,22 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
         assert.ifError(err);
 
         var EXPECTED = TOTAL_REQUESTS * 0.1;
+        var EXPECTED_REMAINDER = TOTAL_REQUESTS * 0.5;
         testContext.populateResults(r);
+
+        assert.equal(testContext.serverCounts[1], testContext.errors.length,
+            'expected number of reqs to bad server to equal errors');
+
+        assert.ok(
+            testContext.serverCounts[0] > EXPECTED_REMAINDER * 0.9 &&
+            testContext.serverCounts[0] < EXPECTED_REMAINDER * 1.1,
+            'Expected healthy server to take majority of requests'
+        );
+        assert.ok(
+            testContext.serverCounts[2] > EXPECTED_REMAINDER * 0.9 &&
+            testContext.serverCounts[2] < EXPECTED_REMAINDER * 1.1,
+            'Expected healthy server to take majority of requests'
+        );
 
         assert.ok(
             testContext.errors.length > EXPECTED * 0.25 &&
@@ -131,8 +146,10 @@ allocCluster.test('send a lot of requests to timed out peer through eager relay'
     // Not much to do here lol
     cluster.logger.whitelist('warn', 'stale tombstone');
 
+    var testContext = TimeoutTestContext(cluster);
+
     setupRelayMesh(cluster);
-    setupServerEndpoints(cluster);
+    setupServerEndpoints(cluster, testContext);
 
     var BATCH_SIZE = 20;
     var TOTAL_REQUESTS = 2500;
@@ -144,8 +161,6 @@ allocCluster.test('send a lot of requests to timed out peer through eager relay'
         relay.setLazyHandling(false);
         relay.setLazyRelaying(false);
     }
-
-    var testContext = TimeoutTestContext(cluster);
 
     var batchClient = setupBatchClient(cluster, {
         retryFlags: {
@@ -167,7 +182,22 @@ allocCluster.test('send a lot of requests to timed out peer through eager relay'
         assert.ifError(err);
 
         var EXPECTED = TOTAL_REQUESTS * 0.02;
+        var EXPECTED_REMAINDER = TOTAL_REQUESTS * 0.5;
         testContext.populateResults(r);
+
+        assert.equal(testContext.serverCounts[1], testContext.errors.length,
+            'expected number of reqs to bad server to equal errors');
+
+        assert.ok(
+            testContext.serverCounts[0] > EXPECTED_REMAINDER * 0.97 &&
+            testContext.serverCounts[0] < EXPECTED_REMAINDER * 1.03,
+            'Expected healthy server to take majority of requests'
+        );
+        assert.ok(
+            testContext.serverCounts[2] > EXPECTED_REMAINDER * 0.97 &&
+            testContext.serverCounts[2] < EXPECTED_REMAINDER * 1.03,
+            'Expected healthy server to take majority of requests'
+        );
 
         assert.ok(
             testContext.errors.length > EXPECTED * 0.25 &&
@@ -217,6 +247,7 @@ function TimeoutTestContext(cluster) {
     var self = this;
 
     self.cluster = cluster;
+    self.serverCounts = {};
     self.hostPorts = {
         relays: [],
         servers: [],
@@ -241,6 +272,17 @@ function TimeoutTestContext(cluster) {
         self.hostPorts.servers.push(servers[i].hostPort);
     }
 }
+
+TimeoutTestContext.prototype.updateServerCount =
+function updateServerCount(serverId) {
+    var self = this;
+
+    if (!self.serverCounts[serverId]) {
+        self.serverCounts[serverId] = 0;
+    }
+
+    self.serverCounts[serverId]++;
+};
 
 TimeoutTestContext.prototype.populateResults =
 function populateResults(r) {
@@ -439,7 +481,7 @@ function checkErrorLogs() {
     }
 
     return cassert;
-}
+};
 
 function setupRelayMesh(cluster) {
     var relays = cluster.channels.slice(1, 4);
@@ -462,7 +504,7 @@ function setupRelayMesh(cluster) {
     }
 }
 
-function setupServerEndpoints(cluster) {
+function setupServerEndpoints(cluster, timeoutContext) {
     var servers = cluster.channels.slice(4, 7);
 
     for (var i = 0; i < servers.length; i++) {
@@ -472,7 +514,7 @@ function setupServerEndpoints(cluster) {
         });
 
         if (i === 1) {
-            subChan.register('echo', timeout);
+            subChan.register('echo', timeout(i));
         } else {
             subChan.register('echo', echo(i));
         }
@@ -480,14 +522,20 @@ function setupServerEndpoints(cluster) {
 
     function echo(index) {
         return function echoHandler(req, res, arg2, arg3) {
+            timeoutContext.updateServerCount(index);
+
             res.headers.as = 'raw';
             res.sendOk(arg2, arg3 + ' from ' + index);
         };
     }
 
-    function timeout(req) {
-        req.connection.ops.popInReq(req.id);
-        /* do nothing to emulate time out */
+    function timeout(index) {
+        return function timeoutHandler(req) {
+            timeoutContext.updateServerCount(index);
+
+            req.connection.ops.popInReq(req.id);
+            /* do nothing to emulate time out */
+        };
     }
 }
 
