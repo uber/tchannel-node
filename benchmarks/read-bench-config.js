@@ -27,13 +27,26 @@ var parseArgs = require('minimist');
 var path = require('path');
 var process = require('process');
 
+var extractPartsList = require('../lib/part-list.js').extractPartsList;
+
 module.exports = readBenchConfig;
+
+// TODO: use a topo-sorter to correctly resolve merge order, due to cases like:
+//
+// A extends C
+// B extends C
+//
+// now say C sets foo => 1
+//         A sets foo => 2
+//
+// then the order "A,B" will have the incorrect foo value of 1 since B
+// inherited its parent, and then merged into A overriding it.
 
 function readBenchConfig(minimistOpts, defaults) {
     var opts = defaults || {};
     if (process.env.BENCH_CONFIG) {
-        var configParts = process.env.BENCH_CONFIG.split(',');
-        opts = mergeConfig(opts, loadConfigParts(configParts));
+        var configParts = extractPartsList(process.env.BENCH_CONFIG);
+        opts = mergeConfig(opts, loadConfigParts(configParts.all()));
     }
     if (minimistOpts && minimistOpts.boolean) {
         var def = minimistOpts.defaults || (minimistOpts.defaults = {});
