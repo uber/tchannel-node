@@ -397,11 +397,13 @@ function logMissingOutRequest(id, context) {
     }
 
     // This could be because of a confused / corrupted server.
-    self.logger.info('popOutReq received for unknown or lost id', {
-        context: context,
-        socketRemoteAddr: self.connection.socketRemoteAddr,
-        direction: self.connection.direction
-    });
+    self.logger.info('popOutReq received for unknown or lost id',
+        self.connection.extendLogInfo({
+            context: context,
+            socketRemoteAddr: self.connection.socketRemoteAddr,
+            direction: self.connection.direction
+        })
+    );
 };
 
 Operations.prototype.popInReq = function popInReq(id) {
