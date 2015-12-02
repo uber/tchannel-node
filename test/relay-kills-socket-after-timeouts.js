@@ -38,6 +38,9 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
     cluster.logger.whitelist('warn', 'resetting connection');
     cluster.logger.whitelist('warn', 'Got a connection error');
 
+    // Not much to do here lol
+    cluster.logger.whitelist('warn', 'stale tombstone');
+
     setupRelayMesh(cluster);
     setupServerEndpoints(cluster);
 
@@ -125,6 +128,9 @@ allocCluster.test('send a lot of requests to timed out peer through eager relay'
     cluster.logger.whitelist('warn', 'resetting connection');
     cluster.logger.whitelist('warn', 'Got a connection error');
 
+    // Not much to do here lol
+    cluster.logger.whitelist('warn', 'stale tombstone');
+
     setupRelayMesh(cluster);
     setupServerEndpoints(cluster);
 
@@ -196,6 +202,7 @@ allocCluster.test('send a lot of requests to timed out peer through eager relay'
         cassert = testContext.checkConnTimeoutLogs();
         cassert.report(assert, 'the connection timeout logs are correct');
 
+        cluster.logger.popLogs('stale tombstone');
         assert.ok(cluster.logger.isEmpty(), 'should have no logs');
 
         assert.end();
