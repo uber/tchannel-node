@@ -397,6 +397,9 @@ function parseIntList(str) {
     if (typeof str === 'number') {
         return [str];
     }
+    if (Array.isArray(str)) {
+        return str;
+    }
     return str
         .split(/\s*,\s*/)
         .map(function each(part) {
