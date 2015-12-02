@@ -23,7 +23,6 @@
 
 var Statsd = require('uber-statsd-client');
 var metrics = require('metrics');
-var parseArgs = require('minimist');
 var process = require('process');
 var setTimeout = require('timers').setTimeout;
 var Buffer = require('buffer').Buffer;
@@ -31,6 +30,7 @@ var console = require('console');
 
 process.title = 'nodejs-benchmarks-multi_bench';
 
+var readBenchConfig = require('./read-bench-config.js');
 var TChannel = require('../channel');
 var Reporter = require('../tcollector/reporter.js');
 var base2 = require('../test/lib/base2');
@@ -39,7 +39,7 @@ var errors = require('../errors.js');
 
 // TODO: disentangle the global closure of numClients and numRequestss and move
 // these after the harness class declaration
-var argv = parseArgs(process.argv.slice(2), {
+var argv = readBenchConfig({
     alias: {
         m: 'multiplicity',
         c: 'numClients',
@@ -396,6 +396,9 @@ next(0, 0, function finish(err) {
 function parseIntList(str) {
     if (typeof str === 'number') {
         return [str];
+    }
+    if (Array.isArray(str)) {
+        return str;
     }
     return str
         .split(/\s*,\s*/)
