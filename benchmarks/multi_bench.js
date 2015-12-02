@@ -47,15 +47,15 @@ var argv = readBenchConfig({
         p: 'pipeline',
         s: 'sizes'
     },
-    default: {
-        multiplicity: 1,
-        numClients: 5,
-        numRequests: 20000,
-        pipeline: '10,100,1000,20000',
-        sizes: '4,4096'
-    },
     boolean: ['relay', 'trace', 'bad']
+}, {
+    multiplicity: 1,
+    numClients: 5,
+    numRequests: 20000,
+    pipeline: '10,100,1000,20000',
+    sizes: '4,4096'
 });
+
 var multiplicity = parseInt(argv.multiplicity, 10);
 var numClients = parseInt(argv.numClients, 10);
 var numRequests = parseInt(argv.numRequests, 10);
