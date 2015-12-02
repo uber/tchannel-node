@@ -595,7 +595,10 @@ TChannelConnection.prototype.buildOutRequest = function buildOutRequest(options)
     return req;
 
     function onReqError(err) {
-        self.ops.popOutReq(req.id, err);
+        // The timeout path already popped the error
+        if (self.ops.getOutReq(req.id)) {
+            self.ops.popOutReq(req.id, err);
+        }
     }
 };
 
