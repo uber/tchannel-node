@@ -84,14 +84,18 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
             'expected number of reqs to bad server to equal errors');
 
         assert.ok(
-            testContext.serverCounts[0] > EXPECTED_REMAINDER * 0.9 &&
-            testContext.serverCounts[0] < EXPECTED_REMAINDER * 1.1,
-            'Expected healthy server to take majority of requests'
+            testContext.serverCounts[0] > EXPECTED_REMAINDER * 0.85 &&
+            testContext.serverCounts[0] < EXPECTED_REMAINDER * 1.15,
+            'Expected healthy server to take majority of requests, ' +
+                'count (' + testContext.serverCounts[0] + ') should be > ' +
+                EXPECTED_REMAINDER * 0.85 + ' and < ' + EXPECTED_REMAINDER * 1.15
         );
         assert.ok(
-            testContext.serverCounts[2] > EXPECTED_REMAINDER * 0.9 &&
-            testContext.serverCounts[2] < EXPECTED_REMAINDER * 1.1,
-            'Expected healthy server to take majority of requests'
+            testContext.serverCounts[2] > EXPECTED_REMAINDER * 0.85 &&
+            testContext.serverCounts[2] < EXPECTED_REMAINDER * 1.15,
+            'Expected healthy server to take majority of requests, ' +
+            'count (' + testContext.serverCounts[0] + ') should be > ' +
+                EXPECTED_REMAINDER * 0.85 + ' and < ' + EXPECTED_REMAINDER * 1.15
         );
 
         assert.ok(
