@@ -21,14 +21,14 @@
 'use strict';
 
 var Statsd = require('uber-statsd-client');
-var parseArgs = require('minimist');
+var readBenchConfig = require('./read-bench-config.js');
 var process = require('process');
 var assert = require('assert');
 
 var TChannel = require('../channel.js');
 var RelayHandler = require('../relay_handler.js');
 
-var argv = parseArgs(process.argv.slice(2), {
+var argv = readBenchConfig({
     boolean: ['trace']
 });
 

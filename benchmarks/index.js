@@ -23,7 +23,7 @@
 /* eslint-disable no-console, no-process-env */
 
 var childProcess = require('child_process');
-var parseArgs = require('minimist');
+var readBenchConfig = require('./read-bench-config.js');
 var path = require('path');
 var ldj = require('ldjson-stream');
 var fs = require('fs');
@@ -410,7 +410,7 @@ BenchmarkRunner.prototype.runExternal = function runExternal(cmd, args) {
 };
 
 if (require.main === module) {
-    var argv = parseArgs(process.argv.slice(2), {
+    var argv = readBenchConfig({
         '--': true,
         alias: {
             o: 'output'
