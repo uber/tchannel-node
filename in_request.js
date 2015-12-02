@@ -176,7 +176,8 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
             id: self.id,
             start: self.start,
             elapsed: now - self.start,
-            timeout: self.timeout
+            timeout: self.timeout,
+            remoteAddr: self.remoteAddr
         });
         process.nextTick(deferInReqTimeoutErrorEmit);
     }
