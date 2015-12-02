@@ -136,7 +136,6 @@ allocCluster.test('meta returns thrift IDL for the service', {
         if (err) {
             assert.end(err);
         }
-
         assert.ok(res && res.ok, 'res should be ok');
         assert.equals(res.body.entryPoint, 'anechoic-chamber.thrift', 'expect entryPoint to be anechoic-chamber.thrift');
         assert.equals(res.body.idls['anechoic-chamber.thrift'], thriftSource, 'expected IDL should be returned');
