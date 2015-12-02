@@ -281,6 +281,18 @@ function setMaximumRelayTTL(value) {
     }
 };
 
+TChannel.prototype.setPreferConnectionDirection =
+function setPreferConnectionDirection(direction) {
+    var self = this;
+
+    self.peers.preferConnectionDirection = direction;
+    var peers = self.peers.values();
+
+    for (var i = 0; i < peers.length; i++) {
+        peers[i].setPreferConnectionDirection(direction);
+    }
+};
+
 TChannel.prototype.extendLogInfo =
 function extendLogInfo(info) {
     var self = this;
