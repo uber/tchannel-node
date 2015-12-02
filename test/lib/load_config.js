@@ -28,33 +28,13 @@ var extractParts = require('../../lib/part-list.js').extractParts;
 module.exports = combineConfig;
 
 function combineConfig(configPath) {
+    var parts = extractParts(configPath);
+    var paths = parts.all();
     var config = {};
-    var paths = configPaths(configPath);
     for (var i = 0; i < paths.length; i++) {
         var contents = fs.readFileSync(paths[i], 'utf8');
         var partConfig = JSON.parse(contents);
         extendInto(config, partConfig);
     }
     return config;
-}
-
-function configPaths(configPath) {
-    var parts = extractParts(configPath);
-    var results = [];
-    buildPart('', 0, function each(str) {
-        results.push(str);
-    });
-
-    return results;
-
-    function buildPart(prefix, i, emit) {
-        var part = parts[i];
-        if (!part) {
-            emit(prefix);
-            return;
-        }
-        part.each(function eachSubPart(str) {
-            buildPart(prefix + str, i + 1, emit);
-        });
-    }
 }
