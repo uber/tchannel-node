@@ -552,6 +552,7 @@ function onTimeout(now) {
         info: 'lazy out request timed out',
         relayDirection: 'out'
     }));
+    self.inreq.peer.invalidateScore('lazyOutReq.onTimeout');
 
     self.emitError(errors.RequestTimeoutError({
         id: self.id,
