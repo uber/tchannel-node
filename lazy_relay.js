@@ -239,6 +239,7 @@ function forwardTo(conn) {
 
     self.outreq.timeout = ttl;
     conn.ops.addOutReq(self.outreq);
+    self.peer.invalidateScore('lazyInReq.forwardTo');
     self.handleFrameLazily(self.reqFrame);
     self.reqFrame = null;
 
@@ -547,10 +548,12 @@ LazyRelayOutReq.prototype.onTimeout =
 function onTimeout(now) {
     var self = this;
 
+    self.conn.ops.checkLastTimeoutTime(now);
     self.conn.ops.popOutReq(self.id, self.extendLogInfo({
         info: 'lazy out request timed out',
         relayDirection: 'out'
     }));
+    self.inreq.peer.invalidateScore('lazyOutReq.onTimeout');
 
     self.emitError(errors.RequestTimeoutError({
         id: self.id,
@@ -575,6 +578,7 @@ function handleFrameLazily(frame) {
             info: 'lazy relay request done',
             relayDirection: 'out'
         }));
+        self.inreq.peer.invalidateScore('lazyOutReq.handleFrameLazily');
     }
 
     var now = self.channel.timers.now();

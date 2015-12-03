@@ -186,6 +186,12 @@ OperationTombstone.prototype.onTimeout = function onTimeout(now) {
     self.timeHeapHandle = null;
 };
 
+Operations.prototype.resetLastTimeoutTime = function resetLastTimeoutTime() {
+    var self = this;
+
+    self.lastTimeoutTime = 0;
+};
+
 Operations.prototype.checkLastTimeoutTime = function checkLastTimeoutTime(now) {
     var self = this;
 
