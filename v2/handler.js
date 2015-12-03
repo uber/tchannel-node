@@ -26,6 +26,7 @@ var stat = require('../stat-tags.js');
 var util = require('util');
 var assert = require('assert');
 
+var HostPort = require('../host-port.js');
 var OutRequest = require('./out_request').OutRequest;
 var OutResponse = require('./out_response').OutResponse;
 var StreamingOutRequest = require('./out_request').StreamingOutRequest;
@@ -225,9 +226,11 @@ TChannelV2Handler.prototype.handleInitRequest = function handleInitRequest(reqFr
         processName: headers.process_name
     };
 
-    if (!validateHostPort(init.hostPort)) {
+    var reason = HostPort.validateHostPort(init.hostPort, true);
+    if (reason) {
         return self.errorEvent.emit(self, errors.InvalidInitHostPortError({
-            hostPort: init.hostPort
+            hostPort: init.hostPort,
+            reason: reason
         }));
     }
 
@@ -972,39 +975,4 @@ function InRequestOptions(
     self.connection = connection;
     self.hostPort = hostPort;
     self.tracer = tracer;
-}
-
-function stringIsValidNumber(numAsStr) {
-    var num = parseInt(numAsStr, 10);
-    return num.toString() === numAsStr;
-}
-
-function validateHostPort(hostPort) {
-    var parts = hostPort.split(':');
-    if (parts.length !== 2) {
-        return false;
-    }
-
-    var hostParts = parts[0].split('.');
-    if (hostParts.length !== 4) {
-        return false;
-    }
-
-    var i;
-    for (i = 0; i < 4; i++) {
-        if (!stringIsValidNumber(hostParts[i])) {
-            return false;
-        }
-    }
-
-    if (!stringIsValidNumber(parts[1])) {
-        return false;
-    }
-
-    var portNum = parseInt(parts[1], 10);
-
-    if (portNum < 0 || portNum > 65536) {
-        return false;
-    }
-    return true;
 }
