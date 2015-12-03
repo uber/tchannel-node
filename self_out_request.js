@@ -90,7 +90,7 @@ function passRequestParts(args, isLast) {
     var self = this;
     self.inreq.handleFrame(args, isLast);
     if (!self.closing) {
-        self.conn.ops.lastTimeoutTime = 0;
+        self.conn.ops.resetLastTimeoutTime();
     }
 };
 

@@ -74,7 +74,7 @@ function passResponse(args, isLast) {
         process.nextTick(emitResponse);
     }
     if (!self.closing) {
-        self.conn.ops.lastTimeoutTime = 0;
+        self.conn.ops.resetLastTimeoutTime();
     }
 
     function emitResponse() {
@@ -92,7 +92,7 @@ function passError(codeString, message) {
         message: message
     });
     if (!self.closing) {
-        self.conn.ops.lastTimeoutTime = 0;
+        self.conn.ops.resetLastTimeoutTime();
     }
     process.nextTick(emitError);
 

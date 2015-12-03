@@ -375,7 +375,7 @@ TChannelConnection.prototype.handleReadFrame = function handleReadFrame(frame) {
     var self = this;
 
     if (!self.closing) {
-        self.ops.lastTimeoutTime = 0;
+        self.ops.resetLastTimeoutTime();
     }
 
     self.handler.handleFrame(frame);
