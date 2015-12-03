@@ -36,6 +36,7 @@ function TChannelInRequest(id, options) {
 
     EventEmitter.call(self);
     self.errorEvent = self.defineEvent('error');
+    self.timeoutEvent = self.defineEvent('timeout');
     self.finishEvent = self.defineEvent('finish');
     self.channel = options.channel;
 
@@ -184,6 +185,7 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
 
     function deferInReqTimeoutErrorEmit() {
         if (!self.res || self.res.state === States.Initial) {
+            self.timeoutEvent.emit(self, timeoutError);
             self.emitError(timeoutError);
         }
 
