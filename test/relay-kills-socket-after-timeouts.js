@@ -22,10 +22,13 @@
 
 var setTimeout = require('timers').setTimeout;
 
+var hookupPeerScoreObs = require('./lib/peer_score_obs.js');
 var CollapsedAssert = require('./lib/collapsed-assert.js');
 var allocCluster = require('./lib/alloc-cluster.js');
 var BatchClient = require('./lib/batch-client.js');
 var RelayHandler = require('../relay_handler');
+
+var debug = false; // TODO: less jank affordance
 
 /*eslint max-statements: [2, 60], complexity: [2, 30] */
 allocCluster.test('send some requests to timed out peer through eager relay', {
@@ -53,8 +56,12 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
     for (var i = 0; i < relays.length; i++) {
         var relay = relays[i];
 
-        relay.setLazyHandling(false);
-        relay.setLazyRelaying(false);
+        if (debug) {
+            relay.setObservePeerScoreEvents(true);
+            hookupPeerScoreObs(assert.comment,
+                               relay,
+                               cluster.channels.slice(4, 7));
+        }
     }
 
     var batchClient = setupBatchClient(cluster, {
@@ -94,7 +101,7 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
             testContext.serverCounts[2] > EXPECTED_REMAINDER * 0.85 &&
             testContext.serverCounts[2] < EXPECTED_REMAINDER * 1.15,
             'Expected healthy server to take majority of requests, ' +
-            'count (' + testContext.serverCounts[0] + ') should be > ' +
+            'count (' + testContext.serverCounts[2] + ') should be > ' +
                 EXPECTED_REMAINDER * 0.85 + ' and < ' + EXPECTED_REMAINDER * 1.15
         );
 
@@ -157,14 +164,6 @@ allocCluster.test('send a lot of requests to timed out peer through eager relay'
 
     var BATCH_SIZE = 20;
     var TOTAL_REQUESTS = 2500;
-
-    var relays = cluster.channels.slice(1, 4);
-    for (var i = 0; i < relays.length; i++) {
-        var relay = relays[i];
-
-        relay.setLazyHandling(false);
-        relay.setLazyRelaying(false);
-    }
 
     var batchClient = setupBatchClient(cluster, {
         retryFlags: {
