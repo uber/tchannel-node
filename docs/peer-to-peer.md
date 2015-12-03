@@ -25,6 +25,9 @@ a peer to peer request this is your responsibility
 You can pass in `options.host` to wait for a connection to that
 host to open; your `cb` will be called when it's opened.
 
+`options.host` must be a valid non-ephmeral host port as per the
+[host port rules](./host-port.md)
+
 We may give your `cb` an `err` if the connection failed
 
 ## `subChannel.request({ host: ... })`
@@ -35,6 +38,9 @@ peer request.
 When making an outgoing request on a `subChannel` you can set
 `options.host` to be `'{host}:{port}'` string. This will make
 a direct request to that concrete host.
+
+`options.host` must be a valid non-ephmeral host port as per the
+[host port rules](./host-port.md)
 
 This request is a non-retryable request.
 

@@ -93,6 +93,9 @@ Starts listening on the given port and host.
 
 Both port and host are mandatory.
 
+Port must be a valid port as per [host-port rules](./host-port.md)
+Host must be a valid non-ephemeral host as per [host-port rules](./host-port.md)
+
 The port may be 0, indicating that the operating system must grant an
 available ephemeral port.
 

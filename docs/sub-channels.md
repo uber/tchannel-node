@@ -51,6 +51,9 @@ In the peer to peer use case you will want to specify an array
 of `host:port` strings for all the other instances you want to
 talk to.
 
+The `host:port` strings must be non-ephemeral hostPort as per the
+[host-port rules](./host-port.md)
+
 If you do not specify a `peers` array you must pass a `host`
 option for every outgoing request.
 
