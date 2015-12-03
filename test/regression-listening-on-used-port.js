@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+'use strict';
+
 var test = require('tape');
 
 var TChannel = require('../channel.js');
@@ -27,12 +29,12 @@ test('listening on a used port', function t(assert) {
     var server = TChannel();
 
     otherServer.on('listening', onPortAllocated);
-    otherServer.listen(0, 'localhost');
+    otherServer.listen(0, '127.0.0.1');
 
     function onPortAllocated() {
         server.on('error', onError);
 
-        server.listen(otherServer.address().port, 'localhost');
+        server.listen(otherServer.address().port, '127.0.0.1');
     }
 
     function onError(err) {
@@ -41,7 +43,7 @@ test('listening on a used port', function t(assert) {
         assert.equal(err.type, 'tchannel.server.listen-failed');
         assert.equal(err.requestedPort,
             otherServer.address().port);
-        assert.equal(err.host, 'localhost');
+        assert.equal(err.host, '127.0.0.1');
         assert.equal(err.code, 'EADDRINUSE');
         assert.equal(err.errno, 'EADDRINUSE');
         assert.equal(err.syscall, 'listen');

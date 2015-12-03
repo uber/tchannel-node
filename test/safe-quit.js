@@ -26,7 +26,7 @@ var TChannel = require('../channel.js');
 
 test('can call quit() safely async', function t(assert) {
     var channel = TChannel();
-    channel.listen(0, 'localhost');
+    channel.listen(0, '127.0.0.1');
 
     channel.on('listening', function onListen() {
         assert.doesNotThrow(function noThrow() {
@@ -39,7 +39,7 @@ test('can call quit() safely async', function t(assert) {
 
 test('can call quit() safely sync', function t(assert) {
     var channel = TChannel();
-    channel.listen(0, 'localhost');
+    channel.listen(0, '127.0.0.1');
 
     assert.doesNotThrow(function noThrow() {
         channel.quit();
@@ -49,7 +49,7 @@ test('can call quit() safely sync', function t(assert) {
 
 test('can call quit() safely async w/ callback', function t(assert) {
     var channel = TChannel();
-    channel.listen(0, 'localhost');
+    channel.listen(0, '127.0.0.1');
 
     channel.on('listening', function onListen() {
         assert.doesNotThrow(function noThrow() {
@@ -60,7 +60,7 @@ test('can call quit() safely async w/ callback', function t(assert) {
 
 test('can call quit() safely sync w/ callback', function t(assert) {
     var channel = TChannel();
-    channel.listen(0, 'localhost');
+    channel.listen(0, '127.0.0.1');
     assert.doesNotThrow(function noThrow() {
         channel.quit(assert.end);
     });
