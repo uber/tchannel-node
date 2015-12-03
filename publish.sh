@@ -28,7 +28,22 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-npm version "$1"
+if ! which tac >/dev/null 2>&1; then
+    function tac()
+    {
+        tail -r
+    }
+fi
+
+GIT_TAG=$(npm version "$1")
+
+if [[ $(head -n1 CHANGELOG.md) = '# vNEXT'* ]]; then
+    sed -i -e "/^# vNEXT/s/vNEXT.*/$GIT_TAG/" CHANGELOG.md
+    git commit --amend --no-edit CHANGELOG.md
+    git tag -a -f -F <(
+        git cat-file tag "$GIT_TAG"  | tac | sed -e '/^$/q' | tac | tail -n+2
+        ) "$GIT_TAG" HEAD
+fi
 
 if head_ref=$(git symbolic-ref HEAD 2>/dev/null); then
     branch_name=${head_ref##*/}
