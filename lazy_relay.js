@@ -145,12 +145,13 @@ function _extendLogInfo(info) {
         info = self.conn.extendLogInfo(info);
     }
 
-    info.requestType = self.type;
-    info.inRemoteAddr = self.remoteAddr;
+    info.inRequestType = self.type;
+    info.inRequestRemoteAddr = self.remoteAddr;
     info.inRequestId = self.id;
     info.serviceName = self.serviceName;
     info.callerName = self.callerName;
     info.endpoint = self.endpoint;
+    info.inRequestErr = self.error;
 
     return info;
 };
