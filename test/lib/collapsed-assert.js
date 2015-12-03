@@ -36,6 +36,22 @@ function CollapsedAssert() {
     self._failed = false;
 }
 
+CollapsedAssert.prototype.hasFailed =
+function hasFailed() {
+    var self = this;
+    return self._failed;
+};
+
+CollapsedAssert.prototype.ifError = function ifError(err, msg, extra) {
+    var self = this;
+
+    if (err) {
+        self._failed = true;
+    }
+
+    self._commands.push(['ifError', err, msg, extra]);
+};
+
 CollapsedAssert.prototype.equal = function equal(a, b, msg, extra) {
     var self = this;
 
@@ -44,6 +60,26 @@ CollapsedAssert.prototype.equal = function equal(a, b, msg, extra) {
     }
 
     self._commands.push(['equal', a, b, msg, extra]);
+};
+
+CollapsedAssert.prototype.notEqual = function notEqual(a, b, msg, extra) {
+    var self = this;
+
+    if (a === b) {
+        self._failed = true;
+    }
+
+    self._commands.push(['notEqual', a, b, msg, extra]);
+};
+
+CollapsedAssert.prototype.ok = function ok(bool, msg, extra) {
+    var self = this;
+
+    if (!bool) {
+        self._failed = true;
+    }
+
+    self._commands.push(['ok', bool, msg, extra]);
 };
 
 CollapsedAssert.prototype.fail = function fail(msg, extra) {
@@ -57,10 +93,14 @@ CollapsedAssert.prototype.report = function report(realAssert, message) {
     var self = this;
 
     nodeAssert(message, 'must pass message');
-
-    if (!self._failed) {
-        return realAssert.ok(true, message);
+    realAssert.ok(!self._failed, message);
+    if (self._failed) {
+        self.passthru(realAssert);
     }
+};
+
+CollapsedAssert.prototype.passthru = function passthru(realAssert) {
+    var self = this;
 
     for (var i = 0; i < self._commands.length; i++) {
         var command = self._commands[i];
@@ -68,4 +108,11 @@ CollapsedAssert.prototype.report = function report(realAssert, message) {
         var method = command.shift();
         realAssert[method].apply(realAssert, command);
     }
+};
+
+CollapsedAssert.prototype.comment =
+function comment(msg) {
+    var self = this;
+
+    self._commands.push(['comment', msg]);
 };
