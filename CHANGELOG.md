@@ -1,4 +1,4 @@
-# vNEXT // FIXME
+# v3.6.0
 
 - Added support for thrift includes under tchannel-as-thrift
 - Added protection against TCP socket being full
