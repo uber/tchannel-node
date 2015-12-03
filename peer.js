@@ -530,12 +530,9 @@ function removeConnectionFrom(err, conn) {
     conn.ops.pendingChangeEvent.removeListener(self.boundOnPendingChange);
 
     if (err) {
-        var loggerInfo = {
-            error: err,
-            direction: conn.direction,
-            remoteName: conn.remoteName,
-            socketRemoteAddr: conn.socketRemoteAddr
-        };
+        var loggerInfo = conn.extendLogInfo({
+            error: err
+        });
         var codeName = errors.classify(err);
         if (codeName === 'Timeout') {
             self.logger.warn('Got a connection error', loggerInfo);
