@@ -72,8 +72,13 @@ function RelayServer(opts) {
         statsd: new Statsd({
             host: '127.0.0.1',
             port: 7036
-        })
+        }),
+        choosePeerWithHeap: true
     });
+
+    self.relay.setChoosePeerWithHeap(true);
+    self.relay.setLazyRelaying(true);
+    self.relay.setLazyHandling(true);
 
     // // useful for demonstrating tombstone leak
     // var OpKindMonitor = require('../monitor').OpKindMonitor;

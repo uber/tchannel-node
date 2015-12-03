@@ -33,12 +33,12 @@ function hookupPeerScoreObs(log, client, servers) {
         var mess = format('%s scored peer %s', info.reason, peerDesc);
         if (info.scores) {
             var changes = info.scores.map(function each(score, i) {
-                var change = score / info.oldScores[i] - 1;
+                var change = score.hi / info.oldScores[i].hi - 1;
                 var sign = change > 0 ? '+' : '';
                 var str = sign + (100 * change).toFixed(1);
                 return pad(5, ' ', str) + '%';
             });
-            mess += ' by ' + changes.join(', ') ;
+            mess += ' by ' + changes.join(', ');
         } else {
             mess += ' score=' + info.score;
         }

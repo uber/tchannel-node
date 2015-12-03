@@ -193,6 +193,7 @@ function BatchClientRequestResult(start) {
 
     self.error = null;
     self.responseOk = null;
+    self.responseId = null;
     self.duration = null;
     self.outReqHostPort = null;
 }
@@ -207,6 +208,7 @@ function handleResponse(err, resp, callback) {
 
     self.error = err || null;
     self.responseOk = resp ? resp.ok : false;
+    self.responseId = resp ? resp.id : 0;
     self.duration = Date.now() - self.start;
     self.outReqHostPort = resp ? resp.remoteAddr : null;
 
