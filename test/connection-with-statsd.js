@@ -107,7 +107,7 @@ allocCluster.test('emits connection stats with failure (statsd)', {
     }
 }, function t(cluster, assert) {
     var client = cluster.channels[0];
-    var hostKey = 'localhost';
+    var hostKey = '127-0-0-1';
     var statsd = nullStatsd(2);
 
     client.batchStats.destroy();
@@ -126,7 +126,7 @@ allocCluster.test('emits connection stats with failure (statsd)', {
 
     var subClient = client.makeSubChannel({
         serviceName: 'reservoir',
-        peers: ['localhost:9999']
+        peers: ['127.0.0.1:9999']
     });
     subClient.request({
         serviceName: 'reservoir',
@@ -136,7 +136,7 @@ allocCluster.test('emits connection stats with failure (statsd)', {
     });
 
     client.waitForIdentified({
-        host: 'localhost:9999'
+        host: '127.0.0.1:9999'
     }, onIdentified);
 
     function onIdentified(err) {

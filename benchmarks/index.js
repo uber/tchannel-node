@@ -205,7 +205,7 @@ function startGoServer(serverPort, instances) {
     var self = this;
 
     var serverProc = self.runExternal('../../golang/build/examples/bench/server', [
-        '--host', 'localhost',
+        '--host', '127.0.0.1',
         '--port', String(serverPort),
         '--instances', String(instances)
     ]);
