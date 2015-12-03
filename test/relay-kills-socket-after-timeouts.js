@@ -30,8 +30,9 @@ var RelayHandler = require('../relay_handler');
 
 var debug = false; // TODO: less jank affordance
 
-/*eslint max-statements: [2, 60], complexity: [2, 30] */
-allocCluster.test('send some requests to timed out peer through eager relay', {
+/* eslint max-statements: [2, 60], complexity: [2, 30] */
+
+allocCluster.test('send some requests to timed out peer through relay', {
     numPeers: 7
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'expected error while forwarding');
@@ -144,7 +145,7 @@ allocCluster.test('send some requests to timed out peer through eager relay', {
     }
 });
 
-allocCluster.test('send a lot of requests to timed out peer through eager relay', {
+allocCluster.test('send a lot of requests to timed out peer through relay', {
     numPeers: 7
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'expected error while forwarding');
@@ -541,7 +542,7 @@ function setupServerEndpoints(cluster, timeoutContext) {
             timeoutContext.updateServerCount(index);
 
             req.connection.ops.popInReq(req.id);
-            /* do nothing to emulate time out */
+            // do nothing to emulate time out
         };
     }
 }
