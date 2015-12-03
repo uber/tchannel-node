@@ -1,3 +1,24 @@
+# vNEXT // FIXME
+
+- Added support for thrift includes under tchannel-as-thrift
+- Added protection against TCP socket being full
+- Added TChannel library version init headers
+- Added stricter `host:port` validation for both incoming and outgoing
+  connections
+- Add logging around several edge cases including
+  - unknown error frames
+  - unknown call responses
+- Improved and fixed timeout handling
+- Reduced number of production dependencies
+- Fixed a server-side double response bug
+- Fixed the tracing RNG to be xorshift128 rather than a naive LCG
+- Fixed a uncaught exception under TChannelJSON request sending
+- Fixed a streaming bug in as/http
+- Fixed retries to work around dead hosts
+- Several edge case bug fixes
+- Several other leaks fixed
+- Several performance improvements
+
 # v3.5.23
 
 - This change significantly reduces the weight of buffers latent on the heap by
