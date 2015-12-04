@@ -20,7 +20,7 @@
 
 'use strict';
 
-var validIPv4 = /\d+\.\d+\.\d+\.\d+/;
+var validIPv4 = /^\d+\.\d+\.\d+\.\d+$/;
 
 module.exports.validateHostPort = validateHostPort;
 module.exports.validateHost = validateHost;
