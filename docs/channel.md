@@ -91,9 +91,10 @@ a tcollector reporter that will be wired up for you.
 
 Starts listening on the given port and host.
 
-Both port and host are mandatory.
-
-The port may be 0, indicating that the operating system must grant an
+ - Both port and host are mandatory.
+ - Port must be a valid port as per [host-port rules](./host-port.md)
+ - Host must be a valid non-ephemeral host as per [host-port rules](./host-port.md)
+ - The port may be 0, indicating that the operating system must grant an
 available ephemeral port.
 
 The eventual host and port combination must uniquely identify the

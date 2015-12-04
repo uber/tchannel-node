@@ -45,9 +45,9 @@ var setImmediate = require('timers').setImmediate;
 var globalRandom = Math.random;
 var net = require('net');
 var format = require('util').format;
-
 var inherits = require('util').inherits;
 
+var HostPort = require('./host-port.js');
 var nullLogger = require('./null-logger.js');
 var EndpointHandler = require('./endpoint-handler.js');
 var TChannelRequest = require('./request');
@@ -594,11 +594,21 @@ TChannel.prototype.listen = function listen(port, host, callback) {
     //   available ephemeral port
     // - 127.0.0.1 is a valid host, primarily for testing
     var self = this;
+
     assert(!self.topChannel, 'TChannel must listen on top channel');
     assert(!self.listened, 'TChannel can only listen once');
-    assert(typeof host === 'string', 'TChannel requires host argument');
-    assert(typeof port === 'number', 'TChannel must listen with numeric port');
-    assert(host !== '0.0.0.0', 'TChannel must listen with externally visible host');
+
+    var reason;
+    reason = HostPort.validateHost(host);
+    if (reason) {
+        assert(false, reason);
+    }
+
+    reason = HostPort.validatePort(port, true);
+    if (reason) {
+        assert(false, reason);
+    }
+
     self.listened = true;
     self.requestedPort = port;
     self.host = host;

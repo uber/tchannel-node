@@ -28,6 +28,7 @@ var stat = require('./stat-tags.js');
 var net = require('net');
 
 var TChannelConnection = require('./connection');
+var HostPort = require('./host-port.js');
 var errors = require('./errors');
 var Request = require('./request');
 var PreferOutgoing = require('./peer_score_strategies.js').PreferOutgoing;
@@ -562,13 +563,20 @@ TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
 
 TChannelPeer.prototype.makeOutSocket = function makeOutSocket() {
     var self = this;
+
+    var reason = HostPort.validateHostPort(self.hostPort, false);
+    if (reason) {
+        assert(false, reason);
+    }
+
     var parts = self.hostPort.split(':');
-    assert(parts.length === 2, 'invalid destination ' + self.hostPort);
     var host = parts[0];
-    var port = parts[1];
-    assert(host !== '0.0.0.0', 'cannot connect to ephemeral peer');
-    assert(port !== '0', 'cannot connect to dynamic port');
-    var socket = net.createConnection({host: host, port: port});
+    var port = parseInt(parts[1], 10);
+
+    var socket = net.createConnection({
+        host: host,
+        port: port
+    });
     return socket;
 };
 

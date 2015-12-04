@@ -133,7 +133,7 @@ test('make socket: should throw for invalid destination', function t(assert) {
   server.listen(serverOptions.port, serverOptions.host, function listening() {
     assert.throws(function () {
       server.peers.add('localhost').connect();
-    }, /invalid destination/,
+    }, /Expected hostPort to be {ip}:{port}/,
       'Should reject invalid destination');
     server.quit(assert.end);
   });
