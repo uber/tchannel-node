@@ -1,5 +1,7 @@
-# v3.6.0
+# vNEXT // FIXME
 
+- Added consistent host port validation in listen(), connect(), and init
+  handshake
 - Added support for thrift includes under tchannel-as-thrift
 - Added protection against TCP socket being full
 - Added TChannel library version init headers
