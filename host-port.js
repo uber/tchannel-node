@@ -20,13 +20,9 @@
 
 'use strict';
 
-var HostPort = {
-    validateHostPort: validateHostPort,
-    validateHost: validateHost,
-    validatePort: validatePort
-};
-
-module.exports = HostPort;
+module.exports.validateHostPort = validateHostPort;
+module.exports.validateHost = validateHost;
+module.exports.validatePort = validatePort;
 
 function validateHost(host, allowEmphemeral) {
     if (typeof host !== 'string') {
