@@ -20,6 +20,8 @@
 
 'use strict';
 
+var validIPv4 = /\d+\.\d+\.\d+\.\d+/;
+
 module.exports.validateHostPort = validateHostPort;
 module.exports.validateHost = validateHost;
 module.exports.validatePort = validatePort;
@@ -29,16 +31,8 @@ function validateHost(host, allowEmphemeral) {
         return 'Expected host to be a string';
     }
 
-    var hostParts = host.split('.');
-    if (hostParts.length !== 4) {
+    if (!validIPv4.test(host)) {
         return 'Expected host to contain IPv4';
-    }
-
-    var i;
-    for (i = 0; i < 4; i++) {
-        if (!stringIsValidNumber(hostParts[i])) {
-            return 'Expected each IP section to be integer';
-        }
     }
 
     if (!allowEmphemeral && host === '0.0.0.0') {
