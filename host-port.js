@@ -66,7 +66,7 @@ function validateHostPort(hostPort, allowEmphemeral) {
 
     var parts = hostPort.split(':');
     if (parts.length !== 2) {
-        return 'Expected hostPort to be {ip}:{port}';
+        return 'Expected hostPort to be {ipv4}:{port}';
     }
 
     var host = parts[0];
