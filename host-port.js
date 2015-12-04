@@ -48,7 +48,7 @@ function validatePort(portNum, allowEmphemeral) {
     }
 
     if (!(portNum >= 0 && portNum < 65536)) {
-        return 'Expected port to be between 0 & 65536';
+        return 'Expected port to be between >=0 & <65536';
     }
 
     if (!allowEmphemeral && portNum === 0) {
