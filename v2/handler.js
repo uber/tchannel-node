@@ -223,7 +223,10 @@ TChannelV2Handler.prototype.handleInitRequest = function handleInitRequest(reqFr
     var headers = reqFrame.body.headers;
     var init = {
         hostPort: headers.host_port,
-        processName: headers.process_name
+        processName: headers.process_name,
+        tchannelLanguage: headers.tchannel_language,
+        tchannelLanguageVersion: headers.tchannel_language_version,
+        tchannelVersion: headers.tchannel_version
     };
 
     var reason = HostPort.validateHostPort(init.hostPort, true);
@@ -247,7 +250,10 @@ TChannelV2Handler.prototype.handleInitResponse = function handleInitResponse(res
     var headers = resFrame.body.headers;
     var init = {
         hostPort: headers.host_port,
-        processName: headers.process_name
+        processName: headers.process_name,
+        tchannelLanguage: headers.tchannel_language,
+        tchannelLanguageVersion: headers.tchannel_language_version,
+        tchannelVersion: headers.tchannel_version
     };
     self.remoteName = init.hostPort;
     self.initResponseEvent.emit(self, init);

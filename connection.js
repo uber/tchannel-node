@@ -68,6 +68,7 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
 
     self.socket = socket;
     self.ephemeral = false;
+    self.initHeaders = null;
 
     var opts = {
         logger: self.channel.logger,
@@ -537,6 +538,7 @@ TChannelConnection.prototype.onOutIdentified = function onOutIdentified(init) {
         }));
     }
 
+    self.initHeaders = init;
     self.remoteName = init.hostPort;
     self.identifiedEvent.emit(self, {
         hostPort: init.hostPort,
@@ -555,6 +557,7 @@ TChannelConnection.prototype.onInIdentified = function onInIdentified(init) {
         self.remoteName = init.hostPort;
     }
 
+    self.initHeaders = init;
     self.channel.peers.add(self.remoteName).addConnection(self);
     self.identifiedEvent.emit(self, {
         hostPort: self.remoteName,
