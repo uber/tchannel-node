@@ -23,6 +23,7 @@
 var assert = require('assert');
 var process = require('process');
 var version = require('./package.json').version;
+var PeerFileWatcher = require('./peer-file-watcher.js');
 
 /*global global*/
 if (typeof global.tchannelVersion === 'string' &&
@@ -585,6 +586,13 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
         chan.hostPort = self.hostPort;
     }
 
+    if (options.peerFile) {
+        chan.watcher = new PeerFileWatcher(chan, {
+            peerFile: options.peerFile,
+            refreshInterval: options.refreshInterval
+        });
+    }
+
     return chan;
 };
 
@@ -648,6 +656,71 @@ TChannel.prototype.address = function address() {
         return self.topChannel.address();
     } else {
         return null;
+    }
+};
+
+TChannel.prototype.updatePeers =
+function updatePeers(newPeers) {
+    // Take a snapshot of current, existing peers. This is used to delete old
+    // peers later.
+    var oldPeers = this.peers.keys().slice();
+
+    var i;
+
+    // Load new peers; duplicates are ignored
+    for (i = 0; i < newPeers.length; i++) {
+        if (typeof newPeers[i] === 'string') {
+            this.peers.add(newPeers[i]);
+        }
+    }
+
+    // Drain and delete existing peers that are not in the new peer list
+    for (i = 0; i < oldPeers.length; i++) {
+        if (newPeers.indexOf(oldPeers[i]) === -1) {
+            this.logger.info('TChannel: Removing old peer', {
+                peer: oldPeers[i]
+            });
+
+            var peer = this.peers.get(oldPeers[i]);
+            this.peers.delete(oldPeers[i]);
+
+            this.drainPeer(peer);
+        }
+    }
+
+    this.logger.info('TChannel: Loaded peers', {
+        newPeers: newPeers
+    });
+};
+
+TChannel.prototype.drainPeer = function drainPeer(peer) {
+    var self = this;
+    if (peer.draining) {
+        return;
+    }
+
+    peer.drain({
+        goal: peer.DRAIN_GOAL_CLOSE_PEER,
+        reason: 'peer has been removed from the peer list',
+        direction: 'both',
+        timeout: 5 * 1000
+    }, thenDeleteIt);
+
+    function thenDeleteIt(err) {
+        if (err) {
+            self.logger.warn(
+                'TChannel: error closing peer, deleting anyhow',
+                peer.extendLogInfo(peer.draining.extendLogInfo({
+                    error: err
+                }))
+            );
+        }
+
+        if (self.topChannel) {
+            self.topChannel.peers.delete(peer.hostPort);
+        } else {
+            self.peers.delete(peer.hostPort);
+        }
     }
 };
 
@@ -897,6 +970,10 @@ TChannel.prototype.close = function close(callback) {
     self.destroyed = true;
 
     var counter = 1;
+
+    if (self.watcher) {
+        self.watcher.destroy();
+    }
 
     if (self.sanityTimer) {
         self.timers.clearTimeout(self.sanityTimer);
