@@ -88,17 +88,18 @@ function send(options, onResponse) {
 
     var conn = self.ensureConnection(options.host);
     var reqOpts = new RequestOptions(options);
-    var reqId = self.sendCallRequest(conn, reqOpts);
+
+    var reqId = conn.allocateId();
+    self.sendCallRequest(conn, reqOpts, reqId);
 
     conn.addPendingOutReq(reqId, onResponse, reqOpts.ttl);
 };
 
 PeersCollection.prototype.sendCallRequest =
-function sendCallRequest(conn, reqOpts) {
+function sendCallRequest(conn, reqOpts, reqId) {
     var buffer = conn.globalWriteBuffer;
     var offset = 0;
 
-    var reqId = conn.allocateId();
     offset = V2Frames.writeFrameHeader(buffer, offset, 0, 0x03, reqId);
     offset = V2Frames.writeCallRequestBody(
         buffer, offset, reqOpts.ttl, reqOpts.serviceName, reqOpts.headers,
@@ -110,8 +111,6 @@ function sendCallRequest(conn, reqOpts) {
     buffer.writeUInt16BE(offset, 0, true);
 
     conn.writeFrameCopy(buffer, offset);
-
-    return reqId;
 };
 
 PeersCollection.prototype.ensureConnection =
