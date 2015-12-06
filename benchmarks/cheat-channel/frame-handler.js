@@ -3,7 +3,7 @@
 /*eslint no-console: 0*/
 var console = require('console');
 
-var LazyFrame = require('./lazy-frame.js');
+// var LazyFrame = require('./lazy-frame.js');
 var OutResponse = require('./out-response.js');
 
 module.exports = FrameHandler;
@@ -54,7 +54,7 @@ function handleInitRequest(frame) {
     var conn = frame.sourceConnection;
 
     conn.handleInitRequest(frame);
-    LazyFrame.free(frame);
+    // LazyFrame.free(frame);
 };
 
 FrameHandler.prototype.handleInitResponse =
@@ -62,7 +62,7 @@ function handleInitResponse(frame) {
     var conn = frame.sourceConnection;
 
     conn.handleInitResponse(frame);
-    LazyFrame.free(frame);
+    // LazyFrame.free(frame);
 };
 
 FrameHandler.prototype.handleCallRequest =
@@ -88,7 +88,7 @@ function handleCallRequest(frame) {
     var conn = frame.sourceConnection;
     var resp = new OutResponse(reqFrameId, conn);
     fn(frame, resp);
-    LazyFrame.free(frame);
+    // LazyFrame.free(frame);
 };
 
 FrameHandler.prototype.handleUnknownFrame =
