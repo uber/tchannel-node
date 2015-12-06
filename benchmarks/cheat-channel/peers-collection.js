@@ -109,9 +109,7 @@ function sendCallRequest(conn, reqOpts) {
 
     buffer.writeUInt16BE(offset, 0, true);
 
-    var writeBuffer = new Buffer(offset);
-    buffer.copy(writeBuffer, 0, 0, offset);
-    conn.writeFrame(writeBuffer);
+    conn.writeFrameCopy(buffer, offset);
 
     return reqId;
 };
