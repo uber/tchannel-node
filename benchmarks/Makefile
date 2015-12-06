@@ -30,7 +30,7 @@ top-benchmark:
 	top -d1 -cp `pgrep -f nodejs-benchmarks | tr "\\n" "," | sed 's/,$$//'`;
 
 take:
-	node index.js --noEndpointOverhead -o $$(git rev-parse --short HEAD).json -- \
+	node index.js --cheatServer --noEndpointOverhead -o $$(git rev-parse --short HEAD).json -- \
 		-m 5 -s 4,4096,16384 -p 1000,10000,20000
 	ln -sf $$(git rev-parse --short HEAD).json $$(basename $$(git symbolic-ref HEAD)).json
 
