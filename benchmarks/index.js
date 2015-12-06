@@ -35,6 +35,7 @@ var assert = require('assert');
 var dgram = require('dgram');
 
 var server = path.join(__dirname, 'bench_server.js');
+var cheatServer = path.join(__dirname, 'cheat-channel', 'bench_server.js');
 var relay = path.join(__dirname, 'relay_server.js');
 var trace = path.join(__dirname, 'trace_server.js');
 var bench = path.join(__dirname, 'multi_bench.js');
@@ -75,6 +76,7 @@ function BenchmarkRunner(opts) {
     var CLIENT_PORT = 7041;
 
     self.instanceCount = opts.instances || INSTANCE_COUNT;
+    self.cheatServer = opts.cheatServer || false;
     self.ports = {
         serverPort: SERVER_PORT,
         traceServerPort: TRACE_SERVER_PORT,
@@ -185,7 +187,9 @@ function startServer(serverPort, instances) {
 
     var noOverhead = self.opts.noEndpointOverhead;
 
-    var serverProc = self.run(server, [
+    var program = self.cheatServer ? cheatServer : server;
+
+    var serverProc = self.run(program, [
         self.opts.trace ? '--trace' : '--no-trace',
         '--traceRelayHostPort', '127.0.0.1:' + self.ports.relayTraceServerPort,
         '--port', String(serverPort),
