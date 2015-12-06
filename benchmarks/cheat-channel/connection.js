@@ -28,7 +28,7 @@ function TChannelConnection(socket, channel, direction) {
     self.parser = new FrameParser(self, onParserFrameBuffer);
     self.idCounter = 1;
     self.guid = String(GUID++) + '~';
-    self.outRequestMapping = Object.create(null);
+    self.outRequestMapping = new OutPending();
 
     self.remoteName = null;
     self.initialized = false;
@@ -40,6 +40,70 @@ function TChannelConnection(socket, channel, direction) {
     self.connected = false;
     self.globalWriteBuffer = GLOBAL_WRITE_BUFFER;
 }
+
+function OutPending() {
+    var self = this;
+
+    self.buckets = Object.create(null);
+    self.bucketSize = 1024;
+
+    self.emptyBucket = [];
+    for (var i = 0; i < self.bucketSize; i++) {
+        self.emptyBucket.push(null);
+    }
+}
+
+OutPending.prototype.push =
+function push(id, op) {
+    var self = this;
+
+    var remainder = id % 1024;
+    var bucketStart = id - remainder;
+    var bucket = self.getOrCreateBucket(bucketStart);
+
+    bucket.elements[remainder] = op;
+    bucket.count++;
+};
+
+OutPending.prototype.getOrCreateBucket =
+function getOrCreateBucket(bucketStart) {
+    var self = this;
+
+    var bucket = self.buckets[bucketStart];
+    if (!bucket) {
+        var elems = self.emptyBucket.slice();
+        bucket = self.buckets[bucketStart] = new OutPendingBucket(elems);
+    }
+
+    return bucket;
+};
+
+function OutPendingBucket(elems) {
+    var self = this;
+
+    self.elements = elems;
+    self.count = 0;
+}
+
+OutPending.prototype.pop =
+function pop(id) {
+    var self = this;
+
+    var op = null;
+    var remainder = id % 1024;
+    var bucketStart = id - remainder;
+
+    var bucket = self.buckets[bucketStart];
+    if (bucket) {
+        op = bucket.elements[remainder];
+        bucket.count--;
+        if (bucket.count === 0) {
+            delete self.buckets[bucketStart];
+        }
+    }
+
+    return op;
+};
 
 function PendingOutOperation(onResponse, ttl) {
     var self = this;
@@ -54,19 +118,14 @@ function addPendingOutReq(frameId, onResponse, ttl) {
     var self = this;
 
     var op = new PendingOutOperation(onResponse, ttl);
-    self.outRequestMapping[frameId] = op;
+    self.outRequestMapping.push(frameId, op);
 };
 
 TChannelConnection.prototype.popPendingOutReq =
 function popPendingOutReq(frameId) {
     var self = this;
 
-    var op = self.outRequestMapping[frameId];
-    if (op) {
-        delete self.outRequestMapping[frameId];
-    }
-
-    return op;
+    return self.outRequestMapping.pop(frameId);
 };
 
 TChannelConnection.prototype.accept =
