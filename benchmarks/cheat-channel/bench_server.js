@@ -3,7 +3,6 @@
 var process = require('process');
 process.title = 'nodejs-benchmarks-cheat_bench_server';
 
-var process = require('process');
 var parseArgs = require('minimist');
 var assert = require('assert');
 

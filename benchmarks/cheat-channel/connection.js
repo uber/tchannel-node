@@ -29,6 +29,7 @@ function TChannelConnection(socket, channel, direction) {
     self.idCounter = 1;
     self.guid = String(GUID++) + '~';
     self.outRequestMapping = Object.create(null);
+    self.remoteName = null;
 
     self.initialized = false;
     self.frameQueue = [];
@@ -210,6 +211,13 @@ function handleInitRequest(reqFrame) {
     // console.log('handleInitRequest', magicCounters.in);
 
     reqFrame.readId();
+
+    var initHeaders = reqFrame.readInitReqHeaders();
+    var index = initHeaders.indexOf('host_port');
+    self.remoteName = initHeaders[index + 1];
+
+    self.channel.addConnection(self);
+
     self.sendInitResponse(reqFrame);
 };
 
@@ -264,11 +272,17 @@ function sendInitRequest() {
 };
 
 TChannelConnection.prototype.handleInitResponse =
-function handleInitResponse() {
+function handleInitResponse(resFrame) {
     var self = this;
 
     // magicCounters.out--;
     // console.log('handleInitResponse', magicCounters.out);
+
+    var initHeaders = resFrame.readInitReqHeaders();
+    var index = initHeaders.indexOf('host_port');
+    self.remoteName = initHeaders[index + 1];
+
+    self.channel.addConnection(self);
 
     self.flushPending();
 };

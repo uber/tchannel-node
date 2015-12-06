@@ -5,7 +5,25 @@ var TCP_WRAP = process.binding('tcp_wrap').TCP;
 var console = require('console');
 
 var FrameHandler = require('./frame-handler.js');
-var RelayConnection = require('./connection.js');
+var PeersCollection = require('./peers-collection.js');
+
+/*
+    var channel = Channel();
+
+    channel.listen(port, host, onListening);
+
+    channel.send({
+        host: <HostPort>,
+        ttl: <TTL>,
+        headers: Object<...>,
+        service: String,
+        arg1: String,
+        arg2: String,
+        arg3: String
+    }, cb);
+
+    channel.close();
+*/
 
 module.exports = Channel;
 
@@ -18,13 +36,13 @@ function Channel(opts) {
 
     self.server = new TCP_WRAP();
     self.handler = new FrameHandler();
+    self.peers = new PeersCollection(self);
 
-    self.connections = null;
     self.hostPort = null;
 }
 
 Channel.prototype.listen =
-function listen(port, host) {
+function listen(port, host, onListen) {
     var self = this;
 
     self.server.owner = self;
@@ -41,6 +59,14 @@ function listen(port, host) {
     if (err) {
         console.error('failed to listen()', err);
         return;
+    }
+
+    if (onListen) {
+        process.nextTick(emitListen);
+    }
+
+    function emitListen() {
+        onListen();
     }
 };
 
@@ -65,16 +91,14 @@ Channel.prototype.onSocket =
 function onSocket(socket, direction, hostPort) {
     var self = this;
 
-    var conn = RelayConnection(socket, self, direction);
-    if (direction === 'in') {
-        conn.accept();
-    } else if (direction === 'out') {
-        conn.connect(hostPort);
-    } else {
-        console.error('invalid direction', direction);
-    }
+    return self.peers.onSocket(socket, direction, hostPort);
+};
 
-    return conn;
+Channel.prototype.addConnection =
+function addConnection(conn) {
+    var self = this;
+
+    self.peers.addConnection(conn);
 };
 
 Channel.prototype.handleFrame =
@@ -82,4 +106,19 @@ function handleFrame(frame) {
     var self = this;
 
     self.handler.handleFrame(frame);
+};
+
+Channel.prototype.send =
+function send(options, onResponse) {
+    var self = this;
+
+    self.peers.send(options, onResponse);
+};
+
+Channel.prototype.close =
+function close() {
+    var self = this;
+
+    self.server.close();
+    self.server = null;
 };
