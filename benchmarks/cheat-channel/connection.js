@@ -327,3 +327,16 @@ function onParserFrameBuffer(connection, buffer) {
     connection.onFrameBuffer(buffer);
 }
 
+TChannelConnection.prototype.destroy =
+function destroy() {
+    var self = this;
+
+    self.socket.close(onClose);
+    self.socket.onread = null;
+    self.socket.owner = null;
+    self.socket = null;
+};
+
+function onClose() {
+    // TODO: ???
+}

@@ -166,3 +166,16 @@ function addConnection(conn) {
     self.ensureRemoteName(conn.remoteName);
     self.connections[conn.remoteName].push(conn);
 };
+
+PeersCollection.prototype.close =
+function close() {
+    var self = this;
+
+    for (var i = 0; i < self.remoteNames.length; i++) {
+        var conns = self.connections[self.remoteNames[i]];
+
+        for (var j = 0; j < conns.length; j++) {
+            conns[j].destroy();
+        }
+    }
+};

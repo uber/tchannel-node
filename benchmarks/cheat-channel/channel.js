@@ -121,4 +121,6 @@ function close() {
 
     self.server.close();
     self.server = null;
+
+    self.peers.close();
 };
