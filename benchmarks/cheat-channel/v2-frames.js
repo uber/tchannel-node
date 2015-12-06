@@ -53,13 +53,28 @@ function writeHeaders(buffer, offset, headers) {
     return offset;
 }
 
+function writeInt16Buffer(buffer, offset, arg) {
+    buffer.writeUInt16BE(arg.length, offset, true);
+    arg.copy(buffer, offset + 2, 0, arg.length);
+
+    return offset + 2 + arg.length;
+}
+
+function writeInt16String(buffer, offset, str) {
+    var n = buffer.write(str, offset + 2, buffer.length - offset - 2, 'utf8');
+    buffer.writeUInt16BE(n, offset, true);
+
+    return offset + 2 + n;
+}
+
 /*
     flags:1 ttl:4 tracing:25
     service~1 nh:1 (hk~1 hv~1){nh}
     csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
 */
 function writeCallRequestBody(
-    buffer, offset, ttl, serviceName, headers, arg1, arg2, arg3
+    buffer, offset, ttl, serviceName, headers,
+    arg1str, arg1buf, arg2str, arg2buf, arg3str, arg3buf
 ) {
     // flags:1
     buffer.writeInt8(0x00, offset, true);
@@ -91,23 +106,26 @@ function writeCallRequestBody(
     // TODO: csum
     offset += 0;
 
-    // arg1~2
-    buffer.writeUInt16BE(arg1.length, offset, true);
-    offset += 2;
-    arg1.copy(buffer, offset, 0, arg1.length);
-    offset += arg1.length;
+    if (arg1buf) {
+        // arg1~2
+        offset = writeInt16Buffer(buffer, offset, arg1buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg1str);
+    }
 
     // arg2~2
-    buffer.writeUInt16BE(arg2.length, offset, true);
-    offset += 2;
-    arg2.copy(buffer, offset, 0, arg2.length);
-    offset += arg2.length;
+    if (arg2buf) {
+        offset = writeInt16Buffer(buffer, offset, arg2buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg2str);
+    }
 
     // arg3~2
-    buffer.writeUInt16BE(arg3.length, offset, true);
-    offset += 2;
-    arg3.copy(buffer, offset, 0, arg3.length);
-    offset += arg3.length;
+    if (arg3buf) {
+        offset = writeInt16Buffer(buffer, offset, arg3buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg3str);
+    }
 
     return offset;
 }
