@@ -27,9 +27,9 @@ var PeersCollection = require('./peers-collection.js');
 
 module.exports = Channel;
 
-function Channel(opts) {
+function Channel() {
     if (!(this instanceof Channel)) {
-        return new Channel(opts);
+        return new Channel();
     }
 
     var self = this;
@@ -116,11 +116,13 @@ function send(options, onResponse) {
 };
 
 Channel.prototype.close =
-function close() {
+function close(cb) {
     var self = this;
 
     self.server.close();
     self.server = null;
 
     self.peers.close();
+
+    cb(null);
 };

@@ -126,8 +126,9 @@ function afterConnect(err, socket, req, readable, writable) {
 }
 
 function onRead(buffer, offset, length) {
+    var conn = this.owner;
+
     if (buffer) {
-        var conn = this.owner;
         // console.log('gotn socket buffer', {
         //     guid: conn.guid,
         //     bufStr: buffer.slice(offset, offset + length).toString('utf8')
@@ -139,6 +140,7 @@ function onRead(buffer, offset, length) {
         return;
     } else {
         console.error('read failed', process._errno);
+        conn.destroy();
         return;
     }
 }
