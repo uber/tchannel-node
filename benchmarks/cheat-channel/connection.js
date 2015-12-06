@@ -150,13 +150,13 @@ function allocateId() {
 };
 
 TChannelConnection.prototype.writeFrame =
-function writeFrame(frame) {
+function writeFrame(frameBuffer) {
     var self = this;
 
     if (self.initialized) {
-        self.writeToSocket(frame.frameBuffer);
+        self.writeToSocket(frameBuffer);
     } else {
-        self.frameQueue.push(frame.frameBuffer);
+        self.frameQueue.push(frameBuffer);
     }
 };
 
@@ -277,12 +277,6 @@ function handleInitResponse(resFrame) {
 
     // magicCounters.out--;
     // console.log('handleInitResponse', magicCounters.out);
-
-    var initHeaders = resFrame.readInitReqHeaders();
-    var index = initHeaders.indexOf('host_port');
-    self.remoteName = initHeaders[index + 1];
-
-    self.channel.addConnection(self);
 
     self.flushPending();
 };

@@ -61,12 +61,17 @@ function LazyFrame() {
     self.reqHeadersCount = null;
     self.reqChecksumType = null;
     self.reqArg1Length = null;
+    self.reqArg2Length = null;
+    self.reqArg3Length = null;
     self.reqArg1 = null;
+    self.reqArg2 = null;
+    self.reqArg3 = null;
 
     self.reqHeadersStart = null;
     self.reqChecksumStart = null;
     self.reqArg1Start = null;
     self.reqArg2Start = null;
+    self.reqArg3Start = null;
 }
 
 LazyFrame.prototype.readId =
@@ -136,10 +141,53 @@ function readReqArg1() {
     offset += 2;
 
     self.reqArg2Start = offset + self.reqArg1Length;
-    self.reqArg1 = self.frameBuffer
-        .toString('utf8', offset, self.reqArg2Start);
+    self.reqArg1 = self.frameBuffer.slice(offset, self.reqArg2Start);
 
     return self.reqArg1;
+};
+
+LazyFrame.prototype.readReqArg2 =
+function readReqArg2() {
+    var self = this;
+
+    if (self.reqArg2 !== null) {
+        return self.reqArg2;
+    }
+
+    if (self.reqArg2Start === null) {
+        self.readReqArg1();
+    }
+
+    var offset = self.reqArg2Start;
+    self.reqArg2Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    self.reqArg3Start = offset + self.reqArg2Length;
+    self.reqArg2 = self.frameBuffer.slice(offset, self.reqArg3Start);
+
+    return self.reqArg2;
+};
+
+LazyFrame.prototype.readReqArg3 =
+function readReqArg3() {
+    var self = this;
+
+    if (self.reqArg3 !== null) {
+        return self.reqArg3;
+    }
+
+    if (self.reqArg3Start === null) {
+        self.readReqArg2();
+    }
+
+    var offset = self.reqArg3Start;
+    self.reqArg3Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    var end = offset + self.reqArg3Length;
+    self.reqArg3 = self.frameBuffer.slice(offset, end);
+
+    return self.reqArg3;
 };
 
 LazyFrame.prototype.skipReqHeaders =

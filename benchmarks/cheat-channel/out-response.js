@@ -30,6 +30,20 @@ OutResponse.prototype.sendOk =
 function sendOk(arg2, arg3) {
     var self = this;
 
+    self._sendArgs(0x00, arg2, arg3);
+};
+
+OutResponse.prototype.sendNotOk =
+function sendNotOk(arg2, arg3) {
+    var self = this;
+
+    self._sendArgs(0x01, arg2, arg3);
+};
+
+OutResponse.prototype._sendArgs =
+function _sendArgs(code, arg2, arg3) {
+    var self = this;
+
     if (!arg2) {
         arg2 = EMPTY_BUFFER;
     }
@@ -43,11 +57,11 @@ function sendOk(arg2, arg3) {
         arg3 = new Buffer(arg3);
     }
 
-    self._sendOk(arg2, arg3);
+    self._sendFrame(code, arg2, arg3);
 };
 
-OutResponse.prototype._sendOk =
-function _sendOk(arg2, arg3) {
+OutResponse.prototype._sendFrame =
+function _sendFrame(code, arg2, arg3) {
     var self = this;
 
     var buffer = self.conn.globalWriteBuffer;
@@ -55,7 +69,7 @@ function _sendOk(arg2, arg3) {
 
     offset = V2Frames.writeFrameHeader(buffer, offset, 0, 0x04, self.id);
     offset = V2Frames.writeCallResponseBody(
-        buffer, offset, 0x00, self.respHeaders, arg2, arg3
+        buffer, offset, code, self.respHeaders, arg2, arg3
     );
 
     // Write the correct size of the buffer.
@@ -63,5 +77,5 @@ function _sendOk(arg2, arg3) {
 
     var writeBuffer = new Buffer(offset);
     buffer.copy(writeBuffer, 0, 0, offset);
-    self.conn.writeToSocket(writeBuffer);
+    self.conn.writeFrame(writeBuffer);
 };
