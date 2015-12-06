@@ -24,14 +24,14 @@ create-flame:
 	google-chrome ./flame.svg
 
 kill-dead-benchmarks:
-	pkill -f nodejs-benchmarks;
+	pkill -u $$USER -f '^nodejs-benchmarks' || true
 
 top-benchmark:
 	top -d1 -cp `pgrep -f nodejs-benchmarks | tr "\\n" "," | sed 's/,$$//'`;
 
 take:
 	node index.js --cheatServer --noEndpointOverhead -o $$(git rev-parse --short HEAD).json -- \
-		-m 5 -s 4,4096,16384 -p 1000,10000,20000
+		-m 3 -s 128,4096 -r 50000 -p 5000,10000,20000 --cheatClient
 	ln -sf $$(git rev-parse --short HEAD).json $$(basename $$(git symbolic-ref HEAD)).json
 
 take_relay:
