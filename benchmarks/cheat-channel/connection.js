@@ -236,7 +236,7 @@ function writeFrameCopy(frameBuffer, len) {
 
     var buf = new Buffer(len);
     frameBuffer.copy(buf, 0, 0, len);
-    self.writeFrame(frameBuffer);
+    self.writeFrame(buf);
 };
 
 TChannelConnection.prototype.writeFrame =
