@@ -9,12 +9,10 @@ var EMPTY_BUFFER = new Buffer(0);
 module.exports = OutResponse;
 
 function OutResponse(reqFrameId, conn) {
-    var self = this;
+    this.id = reqFrameId;
+    this.conn = conn;
 
-    self.id = reqFrameId;
-    self.conn = conn;
-
-    self.respHeaders = [];
+    this.respHeaders = [];
 }
 
 // TODO: safety with an indexOf scan for duplicate headers

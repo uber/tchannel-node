@@ -17,17 +17,17 @@ function BenchServer(port) {
 
     var self = this;
 
-    self.port = port;
+    this.port = port;
 
     // TODO: stats
     // TODO: trace propagation
     // TODO: timeouts
-    self.channel = new Channel();
+    this.channel = new Channel();
 
     // TODO: optional trace reporter
 
-    self.keys = {};
-    self.registerEndpoints();
+    this.keys = {};
+    this.registerEndpoints();
 }
 
 BenchServer.prototype.registerEndpoints =

@@ -19,37 +19,33 @@ function TChannelConnection(socket, channel, direction) {
         return new TChannelConnection(socket, channel, direction);
     }
 
-    var self = this;
+    this.socket = socket;
+    this.channel = channel;
+    this.socket.owner = this;
 
-    self.socket = socket;
-    self.channel = channel;
-    self.socket.owner = self;
+    this.parser = new FrameParser(this, onParserFrameBuffer);
+    this.idCounter = 1;
+    this.guid = String(GUID++) + '~';
+    this.outRequestMapping = new OutPending();
 
-    self.parser = new FrameParser(self, onParserFrameBuffer);
-    self.idCounter = 1;
-    self.guid = String(GUID++) + '~';
-    self.outRequestMapping = new OutPending();
+    this.remoteName = null;
+    this.initialized = false;
+    this.frameQueue = [];
+    // this.writeQueue = [];
+    this.direction = direction;
 
-    self.remoteName = null;
-    self.initialized = false;
-    self.frameQueue = [];
-    // self.writeQueue = [];
-    self.direction = direction;
-
-    // self.pendingWrite = false;
-    self.connected = false;
-    self.globalWriteBuffer = GLOBAL_WRITE_BUFFER;
+    // this.pendingWrite = false;
+    this.connected = false;
+    this.globalWriteBuffer = GLOBAL_WRITE_BUFFER;
 }
 
 function OutPending() {
-    var self = this;
+    this.buckets = Object.create(null);
+    this.bucketSize = 1024;
 
-    self.buckets = Object.create(null);
-    self.bucketSize = 1024;
-
-    self.emptyBucket = [];
-    for (var i = 0; i < self.bucketSize; i++) {
-        self.emptyBucket.push(null);
+    this.emptyBucket = [];
+    for (var i = 0; i < this.bucketSize; i++) {
+        this.emptyBucket.push(null);
     }
 }
 
@@ -79,10 +75,8 @@ function getOrCreateBucket(bucketStart) {
 };
 
 function OutPendingBucket(elems) {
-    var self = this;
-
-    self.elements = elems;
-    self.count = 0;
+    this.elements = elems;
+    this.count = 0;
 }
 
 OutPending.prototype.pop =
@@ -106,11 +100,9 @@ function pop(id) {
 };
 
 function PendingOutOperation(onResponse, ttl) {
-    var self = this;
-
-    self.timedOut = false;
-    self.onResponse = onResponse;
-    self.timeout = ttl;
+    this.timedOut = false;
+    this.onResponse = onResponse;
+    this.timeout = ttl;
 }
 
 TChannelConnection.prototype.addPendingOutReq =
