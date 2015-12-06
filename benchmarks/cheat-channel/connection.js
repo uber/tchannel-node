@@ -335,7 +335,6 @@ function destroy() {
 
     self.socket.close(onClose);
     self.socket.onread = null;
-    self.socket.owner = null;
     self.socket = null;
 };
 
