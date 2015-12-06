@@ -2,10 +2,13 @@
 
 var ID_OFFSET = 4;
 var TYPE_OFFSET = 2;
+
 var CREQ_FLAGS_OFFSET = 16;
 var CREQ_TTL_OFFSET = 17;
 var CREQ_TRACING_OFFSET = 21;
 var CREQ_SERVICE_OFFSET = 46;
+
+var IREQ_HEADERS_OFFSET = 18;
 
 LazyFrame.freeList = [];
 for (var iii = 0; iii < 1000; iii++) {
@@ -51,6 +54,8 @@ function LazyFrame() {
     self.oldId = null;
     self.newId = null;
     self.frameType = null;
+
+    self.initReqHeaders = null;
 
     self.reqServiceName = null;
     self.reqHeadersCount = null;
@@ -176,4 +181,39 @@ function skipReqChecksum() {
     }
 
     self.reqArg1Start = offset;
+};
+
+LazyFrame.prototype.readInitReqHeaders =
+function readInitReqHeaders() {
+    var self = this;
+
+    if (self.initReqHeaders !== null) {
+        return self.initReqHeaders;
+    }
+
+    self.initReqHeaders = [];
+    var offset = IREQ_HEADERS_OFFSET;
+    var nh = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    for (var i = 0; i < nh; i++) {
+        var keyLen = self.frameBuffer.readUInt16BE(offset, true);
+        offset += 2;
+
+        var headerKey = self.frameBuffer
+            .toString('utf8', offset, offset + keyLen);
+        offset += keyLen;
+
+        var valueLen = self.frameBuffer.readUInt16BE(offset, true);
+        offset += 2;
+
+        var headerValue = self.frameBuffer
+            .toString('utf8', offset, offset + valueLen);
+        offset += valueLen;
+
+        self.initReqHeaders.push(headerKey);
+        self.initReqHeaders.push(headerValue);
+    }
+
+    return self.initReqHeaders;
 };
