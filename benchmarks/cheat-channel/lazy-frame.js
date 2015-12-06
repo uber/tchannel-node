@@ -59,8 +59,8 @@ function LazyFrame() {
     self.initReqHeaders = null;
 
     self.reqServiceName = null;
-    self.reqHeadersCount = null;
-    self.reqChecksumType = null;
+    self.tHeadersCount = null;
+    self.checksumType = null;
     self.arg1Length = null;
     self.arg2Length = null;
     self.arg3Length = null;
@@ -68,8 +68,8 @@ function LazyFrame() {
     self.arg2 = null;
     self.arg3 = null;
 
-    self.reqHeadersStart = null;
-    self.reqChecksumStart = null;
+    self.tHeadersStart = null;
+    self.checksumStart = null;
     self.arg1Start = null;
     self.arg2Start = null;
     self.arg3Start = null;
@@ -109,6 +109,13 @@ function writeId(newId) {
     return self.newId;
 };
 
+LazyFrame.prototype.markAsCallResponse =
+function markAsCallResponse() {
+    var self = this;
+
+    self.tHeadersStart = CRES_HEADER_OFFSET;
+};
+
 LazyFrame.prototype.readReqServiceName =
 function readReqServiceName() {
     var self = this;
@@ -118,15 +125,15 @@ function readReqServiceName() {
     }
 
     var strLength = self.frameBuffer.readUInt8(CREQ_SERVICE_OFFSET, true);
-    self.reqHeadersStart = CREQ_SERVICE_OFFSET + 1 + strLength;
+    self.tHeadersStart = CREQ_SERVICE_OFFSET + 1 + strLength;
 
     self.reqServiceName = self.frameBuffer
-        .toString('utf8', CREQ_SERVICE_OFFSET + 1, self.reqHeadersStart);
+        .toString('utf8', CREQ_SERVICE_OFFSET + 1, self.tHeadersStart);
     return self.reqServiceName;
 };
 
-LazyFrame.prototype.readReqArg1 =
-function readReqArg1() {
+LazyFrame.prototype.readArg1 =
+function readArg1() {
     var self = this;
 
     if (self.arg1 !== null) {
@@ -134,7 +141,7 @@ function readReqArg1() {
     }
 
     if (self.arg1Start === null) {
-        self.skipReqChecksum();
+        self.skipChecksum();
     }
 
     var offset = self.arg1Start;
@@ -147,8 +154,8 @@ function readReqArg1() {
     return self.arg1;
 };
 
-LazyFrame.prototype.readReqArg2 =
-function readReqArg2() {
+LazyFrame.prototype.readArg2 =
+function readArg2() {
     var self = this;
 
     if (self.arg2 !== null) {
@@ -156,7 +163,7 @@ function readReqArg2() {
     }
 
     if (self.arg2Start === null) {
-        self.readReqArg1();
+        self.readArg1();
     }
 
     var offset = self.arg2Start;
@@ -178,7 +185,7 @@ function readArg3() {
     }
 
     if (self.arg3Start === null) {
-        self.readReqArg2();
+        self.readArg2();
     }
 
     var offset = self.arg3Start;
@@ -191,41 +198,42 @@ function readArg3() {
     return self.arg3;
 };
 
-LazyFrame.prototype.skipReqHeaders =
-function skipReqHeaders() {
+LazyFrame.prototype.skipTransportHeaders =
+function skipTransportHeaders() {
     var self = this;
 
-    if (self.reqHeadersStart === null) {
-        self.readReqServiceName();
+    if (self.tHeadersStart === null) {
+        console.error('could not skipTransportHeaders()');
+        return;
     }
 
-    self.reqHeadersCount = self.frameBuffer
-        .readUInt8(self.reqHeadersStart, true);
+    self.tHeadersCount = self.frameBuffer
+        .readUInt8(self.tHeadersStart, true);
 
-    var offset = self.reqHeadersStart + 1;
-    for (var i = 0; i < self.reqHeadersCount; i++) {
+    var offset = self.tHeadersStart + 1;
+    for (var i = 0; i < self.tHeadersCount; i++) {
         var keyLen = self.frameBuffer.readUInt8(offset, true);
         offset += 1 + keyLen;
         var valueLen = self.frameBuffer.readUInt8(offset, true);
         offset += 1 + valueLen;
     }
 
-    self.reqChecksumStart = offset;
+    self.checksumStart = offset;
 };
 
-LazyFrame.prototype.skipReqChecksum =
-function skipReqChecksum() {
+LazyFrame.prototype.skipChecksum =
+function skipChecksum() {
     var self = this;
 
-    if (self.reqChecksumStart === null) {
-        self.skipReqHeaders();
+    if (self.checksumStart === null) {
+        self.skipTransportHeaders();
     }
 
-    self.reqChecksumType = self.frameBuffer
-        .readUInt8(self.reqChecksumStart, true);
+    self.checksumType = self.frameBuffer
+        .readUInt8(self.checksumStart, true);
 
-    var offset = self.reqChecksumStart + 1;
-    if (self.reqChecksumType !== 0x00) {
+    var offset = self.checksumStart + 1;
+    if (self.checksumType !== 0x00) {
         offset += 4;
     }
 

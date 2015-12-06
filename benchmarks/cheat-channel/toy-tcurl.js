@@ -40,8 +40,8 @@ function main(opts) {
         }
 
         console.log('got resp', {
-            arg2: frame.readResArg2(),
-            arg3: frame.readResArg3()
+            arg2: frame.readArg2().toString('utf8'),
+            arg3: frame.readArg3().toString('utf8')
         });
 
         channel.close();
