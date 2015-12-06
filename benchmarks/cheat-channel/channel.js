@@ -16,7 +16,7 @@ var PeersCollection = require('./peers-collection.js');
         host: <HostPort>,
         ttl: <TTL>,
         headers: Object<...>,
-        service: String,
+        serviceName: String,
         arg1: String,
         arg2: String,
         arg3: String

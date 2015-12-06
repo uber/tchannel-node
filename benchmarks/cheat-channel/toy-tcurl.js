@@ -23,8 +23,10 @@ function main(opts) {
         channel.send({
             host: opts.p || opts.peer,
             ttl: 100,
-            headers: null,
-            service: opts._[0],
+            headers: {
+                as: 'raw'
+            },
+            serviceName: opts._[0],
             arg1: opts._[1],
             arg2: opts['2'],
             arg3: opts['3']

@@ -7,6 +7,7 @@ module.exports = {
     initFrameSize: initFrameSize,
     writeInitBody: writeInitBody,
     writeCallResponseBody: writeCallResponseBody,
+    writeCallRequestBody: writeCallRequestBody,
     writeFrameHeader: writeFrameHeader
 };
 
@@ -24,26 +25,7 @@ function initFrameSize(hostPort) {
     return bufferLength;
 }
 
-/*
-    flags:1 code:1 tracing:25
-    nh:1 (hk~1 hv~1){nh}
-    csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
-*/
-function writeCallResponseBody(
-    buffer, offset, code, headers, arg2, arg3
-) {
-    // flags:1
-    buffer.writeInt8(0x00, offset, true);
-    offset += 1;
-
-    // code:1
-    buffer.writeInt8(code, offset, true);
-    offset += 1;
-
-    // tracing:25
-    // TODO: tracing
-    offset += 25;
-
+function writeHeaders(buffer, offset, headers) {
     var numHeaders = headers.length / 2;
     // nh:1
     buffer.writeInt8(numHeaders, offset, true);
@@ -67,6 +49,91 @@ function writeCallResponseBody(
         buffer.write(headerValue, offset, headerValue.length, 'utf8');
         offset += headerValue.length;
     }
+
+    return offset;
+}
+
+/*
+    flags:1 ttl:4 tracing:25
+    service~1 nh:1 (hk~1 hv~1){nh}
+    csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
+*/
+function writeCallRequestBody(
+    buffer, offset, ttl, serviceName, headers, arg1, arg2, arg3
+) {
+    // flags:1
+    buffer.writeInt8(0x00, offset, true);
+    offset += 1;
+
+    // ttl:4
+    buffer.writeUInt32BE(ttl, offset, true);
+    offset += 4;
+
+    // tracing:25
+    // TODO: tracing
+    offset += 25;
+
+    // service~1
+    buffer.writeInt8(serviceName.length, offset, true);
+    offset += 1;
+    buffer.write(serviceName, offset, serviceName.length, 'utf8');
+    offset += serviceName.length;
+    // Buffer.byteLength(str)
+
+    // headers
+    offset = writeHeaders(buffer, offset, headers);
+
+    // csumtype:1
+    buffer.writeInt8(0x00, offset, true);
+    offset += 1;
+
+    // csum:4{0, 1}
+    // TODO: csum
+    offset += 0;
+
+    // arg1~2
+    buffer.writeUInt16BE(arg1.length, offset, true);
+    offset += 2;
+    arg1.copy(buffer, offset, 0, arg1.length);
+    offset += arg1.length;
+
+    // arg2~2
+    buffer.writeUInt16BE(arg2.length, offset, true);
+    offset += 2;
+    arg2.copy(buffer, offset, 0, arg2.length);
+    offset += arg2.length;
+
+    // arg3~2
+    buffer.writeUInt16BE(arg3.length, offset, true);
+    offset += 2;
+    arg3.copy(buffer, offset, 0, arg3.length);
+    offset += arg3.length;
+
+    return offset;
+}
+
+/*
+    flags:1 code:1 tracing:25
+    nh:1 (hk~1 hv~1){nh}
+    csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
+*/
+function writeCallResponseBody(
+    buffer, offset, code, headers, arg2, arg3
+) {
+    // flags:1
+    buffer.writeInt8(0x00, offset, true);
+    offset += 1;
+
+    // code:1
+    buffer.writeInt8(code, offset, true);
+    offset += 1;
+
+    // tracing:25
+    // TODO: tracing
+    offset += 25;
+
+    // headers
+    offset = writeHeaders(buffer, offset, headers);
 
     // csumtype:1
     buffer.writeInt8(0x00, offset, true);
