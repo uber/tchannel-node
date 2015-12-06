@@ -230,6 +230,15 @@ function allocateId() {
     return self.idCounter++;
 };
 
+TChannelConnection.prototype.writeFrameCopy =
+function writeFrameCopy(frameBuffer, len) {
+    var self = this;
+
+    var buf = new Buffer(len);
+    frameBuffer.copy(buf, 0, 0, len);
+    self.writeFrame(frameBuffer);
+};
+
 TChannelConnection.prototype.writeFrame =
 function writeFrame(frameBuffer) {
     var self = this;

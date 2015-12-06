@@ -73,7 +73,5 @@ function _sendFrame(code, arg2, arg3) {
     // Write the correct size of the buffer.
     buffer.writeUInt16BE(offset, 0, true);
 
-    var writeBuffer = new Buffer(offset);
-    buffer.copy(writeBuffer, 0, 0, offset);
-    self.conn.writeFrame(writeBuffer);
+    self.conn.writeFrameCopy(buffer, offset);
 };
