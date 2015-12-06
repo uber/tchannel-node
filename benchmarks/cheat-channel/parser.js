@@ -12,16 +12,14 @@ function FrameParser(context, onFrameBuffer) {
         return new FrameParser(context, onFrameBuffer);
     }
 
-    var self = this;
+    this.remainderBuffer = null;
+    this.hasTempRemainderBuffer = false;
+    this.remainderOffset = 0;
 
-    self.remainderBuffer = null;
-    self.hasTempRemainderBuffer = false;
-    self.remainderOffset = 0;
+    this.frameLength = 0;
 
-    self.frameLength = 0;
-
-    self._context = context;
-    self._onFrameBuffer = onFrameBuffer;
+    this._context = context;
+    this._onFrameBuffer = onFrameBuffer;
 }
 
 FrameParser.prototype.write =

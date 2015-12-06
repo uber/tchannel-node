@@ -13,9 +13,7 @@ function FrameHandler() {
         return new FrameHandler();
     }
 
-    var self = this;
-
-    self.services = Object.create(null);
+    this.services = Object.create(null);
 }
 
 FrameHandler.prototype.register =

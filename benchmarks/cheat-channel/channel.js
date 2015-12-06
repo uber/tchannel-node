@@ -32,13 +32,11 @@ function Channel() {
         return new Channel();
     }
 
-    var self = this;
+    this.server = new TCP_WRAP();
+    this.handler = new FrameHandler();
+    this.peers = new PeersCollection(this);
 
-    self.server = new TCP_WRAP();
-    self.handler = new FrameHandler();
-    self.peers = new PeersCollection(self);
-
-    self.hostPort = null;
+    this.hostPort = null;
 }
 
 Channel.prototype.listen =

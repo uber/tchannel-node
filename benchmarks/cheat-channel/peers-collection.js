@@ -18,12 +18,10 @@ function PeersCollection(channel) {
         return new PeersCollection(channel);
     }
 
-    var self = this;
+    this.channel = channel;
 
-    self.channel = channel;
-
-    self.connections = Object.create(null);
-    self.remoteNames = [];
+    this.connections = Object.create(null);
+    this.remoteNames = [];
 }
 
 PeersCollection.prototype.onSocket =

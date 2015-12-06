@@ -35,44 +35,39 @@ function allocLazyFrame(sourceConnection, frameBuffer) {
     var frame;
 
     // if (LazyFrame.freeList.length === 0) {
-    frame = new LazyFrame();
+    frame = new LazyFrame(sourceConnection, frameBuffer);
     // } else {
     //     frame = LazyFrame.freeList.pop();
     // }
 
-    frame.sourceConnection = sourceConnection;
-    frame.frameBuffer = frameBuffer;
-
     return frame;
 }
 
-function LazyFrame() {
-    var self = this;
+function LazyFrame(sourceConnection, frameBuffer) {
+    this.sourceConnection = sourceConnection;
+    this.frameBuffer = frameBuffer;
 
-    self.sourceConnection = null;
-    self.frameBuffer = null;
+    this.oldId = null;
+    this.newId = null;
+    this.frameType = null;
 
-    self.oldId = null;
-    self.newId = null;
-    self.frameType = null;
+    this.initReqHeaders = null;
 
-    self.initReqHeaders = null;
+    this.reqServiceName = null;
+    this.tHeadersCount = null;
+    this.checksumType = null;
+    this.arg1Length = null;
+    this.arg2Length = null;
+    this.arg3Length = null;
+    this.arg1 = null;
+    this.arg2 = null;
+    this.arg3 = null;
 
-    self.reqServiceName = null;
-    self.tHeadersCount = null;
-    self.checksumType = null;
-    self.arg1Length = null;
-    self.arg2Length = null;
-    self.arg3Length = null;
-    self.arg1 = null;
-    self.arg2 = null;
-    self.arg3 = null;
-
-    self.tHeadersStart = null;
-    self.checksumStart = null;
-    self.arg1Start = null;
-    self.arg2Start = null;
-    self.arg3Start = null;
+    this.tHeadersStart = null;
+    this.checksumStart = null;
+    this.arg1Start = null;
+    this.arg2Start = null;
+    this.arg3Start = null;
 }
 
 LazyFrame.prototype.readId =
