@@ -22,7 +22,7 @@ function PeersCollection(channel) {
 
     self.channel = channel;
 
-    self.connections = {};
+    self.connections = Object.create(null);
     self.remoteNames = [];
 }
 
@@ -97,15 +97,16 @@ function send(options, onResponse) {
     var self = this;
 
     var conn = self.ensureConnection(options.host);
-    self.sendCallRequest(conn, new RequestOptions(options));
+    var reqOpts = new RequestOptions(options);
+    var reqId = self.sendCallRequest(conn, reqOpts);
+
+    conn.addPendingOutReq(reqId, onResponse, reqOpts.ttl);
 };
 
 PeersCollection.prototype.sendCallRequest =
 function sendCallRequest(conn, reqOpts) {
     var buffer = conn.globalWriteBuffer;
     var offset = 0;
-
-    console.log('write', reqOpts);
 
     var reqId = conn.allocateId();
     offset = V2Frames.writeFrameHeader(buffer, offset, 0, 0x03, reqId);
@@ -119,6 +120,8 @@ function sendCallRequest(conn, reqOpts) {
     var writeBuffer = new Buffer(offset);
     buffer.copy(writeBuffer, 0, 0, offset);
     conn.writeFrame(writeBuffer);
+
+    return reqId;
 };
 
 PeersCollection.prototype.ensureConnection =

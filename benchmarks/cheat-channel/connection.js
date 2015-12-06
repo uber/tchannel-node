@@ -29,17 +29,45 @@ function TChannelConnection(socket, channel, direction) {
     self.idCounter = 1;
     self.guid = String(GUID++) + '~';
     self.outRequestMapping = Object.create(null);
-    self.remoteName = null;
 
+    self.remoteName = null;
     self.initialized = false;
     self.frameQueue = [];
-    self.writeQueue = [];
+    // self.writeQueue = [];
     self.direction = direction;
 
-    self.pendingWrite = false;
+    // self.pendingWrite = false;
     self.connected = false;
     self.globalWriteBuffer = GLOBAL_WRITE_BUFFER;
 }
+
+function PendingOutOperation(onResponse, ttl) {
+    var self = this;
+
+    self.timedOut = false;
+    self.onResponse = onResponse;
+    self.timeout = ttl;
+}
+
+TChannelConnection.prototype.addPendingOutReq =
+function addPendingOutReq(frameId, onResponse, ttl) {
+    var self = this;
+
+    var op = new PendingOutOperation(onResponse, ttl);
+    self.outRequestMapping[frameId] = op;
+};
+
+TChannelConnection.prototype.popPendingOutReq =
+function popPendingOutReq(frameId) {
+    var self = this;
+
+    var op = self.outRequestMapping[frameId];
+    if (op) {
+        delete self.outRequestMapping[frameId];
+    }
+
+    return op;
+};
 
 TChannelConnection.prototype.accept =
 function accept() {
