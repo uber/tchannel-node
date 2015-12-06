@@ -52,18 +52,20 @@ function toFlatArray(object) {
     return flatList;
 }
 
+/*eslint complexity: 0*/
 function RequestOptions(options) {
-    var self = this;
-
-    self.serviceName = options.serviceName;
+    this.serviceName = options.serviceName;
 
     var arg1 = options.arg1;
-    if (typeof arg1 === 'string') {
-        arg1 = new Buffer(arg1);
-    }
-    self.arg1 = arg1;
+    var arg2 = options.arg2 || EMPTY_BUFFER;
+    var arg3 = options.arg3 || EMPTY_BUFFER;
 
-    self.ttl = options.ttl || 100;
+    var arg1str = typeof arg1 === 'string' ? arg1 : null;
+    var arg1buf = Buffer.isBuffer(arg1) ? arg1 : null;
+    this.arg1str = arg1str;
+    this.arg1buf = arg1buf;
+
+    this.ttl = options.ttl || 100;
 
     var headers = options.headers;
     if (!headers) {
@@ -71,23 +73,13 @@ function RequestOptions(options) {
     } else if (!Array.isArray(headers)) {
         headers = toFlatArray(headers);
     }
-    self.headers = headers;
+    this.headers = headers;
 
-    var arg2 = options.arg2;
-    if (!arg2) {
-        arg2 = EMPTY_BUFFER;
-    } else if (typeof arg2 === 'string') {
-        arg2 = new Buffer(arg2);
-    }
-    self.arg2 = arg2;
+    this.arg2str = typeof arg2 === 'string' ? arg2 : null;
+    this.arg2buf = Buffer.isBuffer(arg2) ? arg2 : null;
 
-    var arg3 = options.arg3;
-    if (!arg3) {
-        arg3 = EMPTY_BUFFER;
-    } else if (typeof arg3 === 'string') {
-        arg3 = new Buffer(arg3);
-    }
-    self.arg3 = arg3;
+    this.arg3str = typeof arg3 === 'string' ? arg3 : null;
+    this.arg3buf = Buffer.isBuffer(arg3) ? arg3 : null;
 }
 
 PeersCollection.prototype.send =
@@ -109,8 +101,10 @@ function sendCallRequest(conn, reqOpts) {
     var reqId = conn.allocateId();
     offset = V2Frames.writeFrameHeader(buffer, offset, 0, 0x03, reqId);
     offset = V2Frames.writeCallRequestBody(
-        buffer, offset, reqOpts.ttl, reqOpts.serviceName,
-        reqOpts.headers, reqOpts.arg1, reqOpts.arg2, reqOpts.arg3
+        buffer, offset, reqOpts.ttl, reqOpts.serviceName, reqOpts.headers,
+        reqOpts.arg1str, reqOpts.arg1buf,
+        reqOpts.arg2str, reqOpts.arg2buf,
+        reqOpts.arg3str, reqOpts.arg3buf
     );
 
     buffer.writeUInt16BE(offset, 0, true);
