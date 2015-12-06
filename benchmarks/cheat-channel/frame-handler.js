@@ -15,7 +15,7 @@ function FrameHandler() {
 
     var self = this;
 
-    self.services = {};
+    self.services = Object.create(null);
 }
 
 FrameHandler.prototype.register =
@@ -23,7 +23,7 @@ function register(serviceName, endpoint, fn) {
     var self = this;
 
     if (!self.services[serviceName]) {
-        self.services[serviceName] = {};
+        self.services[serviceName] = Object.create(null);
     }
 
     self.services[serviceName][endpoint] = fn;
@@ -43,7 +43,7 @@ function handleFrame(frame) {
         case 0x03:
             return self.handleCallRequest(frame);
         case 0x04:
-            throw new Error('not implemented');
+            return self.handleCallResponse(frame);
         default:
             return self.handleUnknownFrame(frame);
     }
@@ -88,6 +88,22 @@ function handleCallRequest(frame) {
     var conn = frame.sourceConnection;
     var resp = new OutResponse(reqFrameId, conn);
     fn(frame, resp);
+    // LazyFrame.free(frame);
+};
+
+FrameHandler.prototype.handleCallResponse =
+function handleCallRequest(frame) {
+    var conn = frame.sourceConnection;
+    var resFrameId = frame.readId();
+
+    var outOp = conn.popPendingOutReq(resFrameId);
+    if (!outOp) {
+        console.error('got call response for unknown id: %d', resFrameId);
+        return;
+    }
+
+    var onResponse = outOp.onResponse;
+    onResponse(null, frame);
     // LazyFrame.free(frame);
 };
 
