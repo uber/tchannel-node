@@ -1,6 +1,7 @@
 'use strict';
 
 var Buffer = require('buffer').Buffer;
+var SlowBuffer = require('buffer').SlowBuffer;
 var process = require('process');
 var console = require('console');
 
@@ -10,6 +11,13 @@ var v2Frames = require('./v2-frames.js');
 
 var GUID = 1;
 var GLOBAL_WRITE_BUFFER = new Buffer(65536);
+var SLOW_BUFFER_POOL_SIZE = 512 * 1024;
+var _pool;
+
+function allocPool() {
+    _pool = new SlowBuffer(SLOW_BUFFER_POOL_SIZE);
+    _pool.used = 0;
+}
 
 /*eslint no-console: 0*/
 module.exports = TChannelConnection;
@@ -234,7 +242,14 @@ TChannelConnection.prototype.writeFrameCopy =
 function writeFrameCopy(frameBuffer, len) {
     var self = this;
 
-    var buf = new Buffer(len);
+    if (!_pool || _pool.length - _pool.used < len) {
+        allocPool();
+    }
+
+    var buf = new Buffer(_pool, len, _pool.used);
+    // Align on 8 byte boundary to avoid alignment issues on ARM.
+    _pool.used = (_pool.used + len + 7) & ~7;
+
     frameBuffer.copy(buf, 0, 0, len);
     self.writeFrame(buf);
 };
