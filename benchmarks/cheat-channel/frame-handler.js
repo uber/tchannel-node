@@ -78,6 +78,7 @@ function handleCallRequest(frame) {
         console.error('Could not find serviceName: %s', reqServiceName);
         return;
     }
+
     var fn = endpoints[reqArg1];
     if (!fn) {
         console.error('Could not find arg1: %s', reqArg1);
@@ -87,6 +88,7 @@ function handleCallRequest(frame) {
     var conn = frame.sourceConnection;
     var resp = new OutResponse(reqFrameId, conn);
     fn(frame, resp);
+    LazyFrame.free(frame);
 };
 
 FrameHandler.prototype.handleUnknownFrame =

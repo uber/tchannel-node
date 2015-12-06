@@ -38,9 +38,28 @@ function allocLazyFrame(sourceConnection, frameBuffer) {
 function freeLazyFrame(frame) {
     frame.sourceConnection = null;
     frame.frameBuffer = null;
+
     frame.oldId = null;
     frame.newId = null;
     frame.frameType = null;
+
+    frame.initReqHeaders = null;
+
+    frame.reqServiceName = null;
+    frame.reqHeadersCount = null;
+    frame.reqChecksumType = null;
+    frame.reqArg1Length = null;
+    frame.reqArg2Length = null;
+    frame.reqArg3Length = null;
+    frame.reqArg1 = null;
+    frame.reqArg2 = null;
+    frame.reqArg3 = null;
+
+    frame.reqHeadersStart = null;
+    frame.reqChecksumStart = null;
+    frame.reqArg1Start = null;
+    frame.reqArg2Start = null;
+    frame.reqArg3Start = null;
 
     LazyFrame.freeList.push(frame);
 }
@@ -224,7 +243,7 @@ function skipReqChecksum() {
         .readUInt8(self.reqChecksumStart, true);
 
     var offset = self.reqChecksumStart + 1;
-    if (self.reqChecksumStart !== 0x00) {
+    if (self.reqChecksumType !== 0x00) {
         offset += 4;
     }
 
