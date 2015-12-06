@@ -32,6 +32,7 @@ process.title = 'nodejs-benchmarks-multi_bench';
 
 var readBenchConfig = require('./read-bench-config.js');
 var TChannel = require('../channel');
+var CheatChannel = require('./cheat-channel/channel.js');
 var Reporter = require('../tcollector/reporter.js');
 var base2 = require('../test/lib/base2');
 var LCGStream = require('../test/lib/rng_stream');
@@ -61,6 +62,8 @@ var numClients = parseInt(argv.numClients, 10);
 var numRequests = parseInt(argv.numRequests, 10);
 argv.pipeline = parseIntList(argv.pipeline);
 argv.sizes = parseIntList(argv.sizes);
+
+var CHEAT_CLIENT = argv.cheatClient;
 
 var DESTINATION_SERVER;
 var TRACE_SERVER;
@@ -134,7 +137,10 @@ Test.prototype.run = function run(callback) {
 Test.prototype.newClient = function newClient(id, callback) {
     var self = this;
     var port = CLIENT_PORT + id;
-    var clientChan = TChannel({
+
+    var channelConstr = CHEAT_CLIENT ? CheatChannel : TChannel;
+
+    var clientChan = channelConstr({
         statTags: {
             app: 'my-client'
         },
@@ -154,7 +160,7 @@ Test.prototype.newClient = function newClient(id, callback) {
     //     interval: 5000,
     // })).run();
 
-    if (argv.trace) {
+    if (argv.trace && !CHEAT_CLIENT) {
         var reporter = Reporter({
             channel: clientChan.makeSubChannel({
                 serviceName: 'tcollector',
@@ -171,36 +177,67 @@ Test.prototype.newClient = function newClient(id, callback) {
         };
     }
 
-    var client = clientChan.makeSubChannel({
-        serviceName: 'benchmark',
-        peers: [DESTINATION_SERVER]
-    });
+    var client;
+    if (CHEAT_CLIENT) {
+        client = clientChan;
+    } else {
+        client = clientChan.makeSubChannel({
+            serviceName: 'benchmark',
+            peers: [DESTINATION_SERVER]
+        });
+    }
+
     client.createTime = Date.now();
-    clientChan.listen(port, '127.0.0.1', function listened(err) {
+    clientChan.listen(port, '127.0.0.1', onListen);
+
+    function onListen(err) {
         if (err) {
             return callback(err);
         }
         self.clients[id] = client;
         // sending a ping to pre-connect the socket
-        client
-            .request({
+
+        if (CHEAT_CLIENT) {
+            client.send({
+                host: DESTINATION_SERVER,
                 serviceName: 'benchmark',
-                hasNoParent: true,
-                timeout: 30 * 1000,
+                ttl: 30 * 1000,
                 headers: {
                     as: 'raw',
                     cn: 'multi_bench'
-                }
-            })
-            .send('ping', null, null, function pinged(err2) {
-                if (err2) {
-                    return callback(err2);
-                }
-                self.connectLatency.update(Date.now() - client.createTime);
-                self.readyLatency.update(Date.now() - client.createTime);
-                callback();
-            });
-    });
+                },
+                arg1: 'ping',
+                arg2: null,
+                arg3: null
+            }, pinged);
+        } else {
+            client
+                .request({
+                    serviceName: 'benchmark',
+                    hasNoParent: true,
+                    timeout: 30 * 1000,
+                    headers: {
+                        as: 'raw',
+                        cn: 'multi_bench'
+                    }
+                })
+                .send('ping', null, null, pinged);
+        }
+
+        function pinged(err2, frame) {
+            if (err2) {
+                return callback(err2);
+            }
+
+            if (CHEAT_CLIENT) {
+                frame.readArg3();
+            }
+
+            self.connectLatency.update(Date.now() - client.createTime);
+            self.readyLatency.update(Date.now() - client.createTime);
+            callback();
+        }
+    }
 };
 
 Test.prototype.start = function start(callback) {
@@ -229,7 +266,7 @@ Test.prototype.stopClients = function stopClients(callback) {
     var count = 1;
     this.clients.forEach(function each(client) {
         count++;
-        (client.topChannel || client).quit(closed);
+        (client.topChannel || client).close(closed);
     });
     closed();
 
@@ -245,27 +282,50 @@ Test.prototype.sendNext = function sendNext() {
     var curClient = this.commandsSent % this.clients.length;
     var start = Date.now();
 
-    var req = this.clients[curClient].request({
-        serviceName: 'benchmark',
-        hasNoParent: true,
-        timeout: 30000,
-        headers: {
-            as: 'raw',
-            cn: 'multi_bench',
-            benchHeader1: 'bench value one',
-            benchHeader2: 'bench value two',
-            benchHeader3: 'bench value three'
-        }
-    });
-    req.send(this.arg1, this.arg2, this.arg3, done);
+    if (CHEAT_CLIENT) {
+        this.clients[curClient].send({
+            host: DESTINATION_SERVER,
+            serviceName: 'benchmark',
+            ttl: 30 * 1000,
+            headers: {
+                as: 'raw',
+                cn: 'multi_bench',
+                benchHeader1: 'bench value one',
+                benchHeader2: 'bench value two',
+                benchHeader3: 'bench value three'
+            },
+            arg1: this.arg1,
+            arg2: this.arg2,
+            arg3: this.arg3
+        }, done);
+    } else {
+        var req = this.clients[curClient].request({
+            serviceName: 'benchmark',
+            hasNoParent: true,
+            timeout: 30000,
+            headers: {
+                as: 'raw',
+                cn: 'multi_bench',
+                benchHeader1: 'bench value one',
+                benchHeader2: 'bench value two',
+                benchHeader3: 'bench value three'
+            }
+        });
+        req.send(this.arg1, this.arg2, this.arg3, done);
+    }
 
-    function done(err, res) {
+    function done(err, frame) {
         if (err) {
             if (!self.expectedError ||
-                !self.expectedError(err, req, res)) {
+                !self.expectedError(err)) {
                 throw err;
             }
         }
+
+        if (CHEAT_CLIENT) {
+            frame.readArg3();
+        }
+
         self.commandsCompleted++;
         self.commandLatency.update(Date.now() - start);
         self.fillPipeline(onRageQuit);

@@ -85,7 +85,7 @@ function RequestOptions(options) {
 
     var arg3 = options.arg3;
     if (!arg3) {
-        arg2 = EMPTY_BUFFER;
+        arg3 = EMPTY_BUFFER;
     } else if (typeof arg3 === 'string') {
         arg3 = new Buffer(arg3);
     }
@@ -131,7 +131,7 @@ function ensureConnection(remoteName) {
     if (self.connections[remoteName] &&
         self.connections[remoteName][0]
     ) {
-        return self.connnections[remoteName][0];
+        return self.connections[remoteName][0];
     }
 
     return self.createConnection(remoteName);
