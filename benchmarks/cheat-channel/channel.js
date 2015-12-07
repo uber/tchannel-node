@@ -6,6 +6,7 @@ var console = require('console');
 
 var FrameHandler = require('./frame-handler.js');
 var PeersCollection = require('./peers-collection.js');
+var buildFastClient = require('./fast-client.js');
 
 /*
     var channel = Channel();
@@ -133,6 +134,13 @@ function handleFrame(frame) {
     var self = this;
 
     self.handler.handleFrame(frame);
+};
+
+Channel.prototype.createClient =
+function createClient(serviceName, opts) {
+    var self = this;
+
+    return buildFastClient(self, serviceName, opts);
 };
 
 Channel.prototype.send =

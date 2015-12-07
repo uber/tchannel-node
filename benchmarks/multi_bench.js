@@ -85,11 +85,13 @@ function Test(args) {
     this.args = args;
 
     this.arg1 = new Buffer(args.command);
+    this.command = args.command;
     this.arg2 = args.arg2 || null;
     this.arg3 = args.arg3 || null;
 
     this.callback = null;
     this.clients = [];
+    this.channels = [];
     this.clientsReady = 0;
     this.commandsSent = 0;
     this.commandsCompleted = 0;
@@ -179,7 +181,38 @@ Test.prototype.newClient = function newClient(id, callback) {
 
     var client;
     if (CHEAT_CLIENT) {
-        client = clientChan;
+        client = clientChan.createClient('benchmark', {
+            ping: {
+                headers: {
+                    as: 'raw',
+                    cn: 'multi_bench',
+                    benchHeader1: 'bench value one',
+                    benchHeader2: 'bench value two',
+                    benchHeader3: 'bench value three'
+                },
+                ttl: 30 * 1000
+            },
+            get: {
+                headers: {
+                    as: 'raw',
+                    cn: 'multi_bench',
+                    benchHeader1: 'bench value one',
+                    benchHeader2: 'bench value two',
+                    benchHeader3: 'bench value three'
+                },
+                ttl: 30 * 1000
+            },
+            set: {
+                headers: {
+                    as: 'raw',
+                    cn: 'multi_bench',
+                    benchHeader1: 'bench value one',
+                    benchHeader2: 'bench value two',
+                    benchHeader3: 'bench value three'
+                },
+                ttl: 30 * 1000
+            }
+        });
     } else {
         client = clientChan.makeSubChannel({
             serviceName: 'benchmark',
@@ -195,18 +228,12 @@ Test.prototype.newClient = function newClient(id, callback) {
             return callback(err);
         }
         self.clients[id] = client;
+        self.channels[id] = clientChan;
         // sending a ping to pre-connect the socket
 
         if (CHEAT_CLIENT) {
-            client.send({
+            client.sendPing({
                 host: DESTINATION_SERVER,
-                serviceName: 'benchmark',
-                ttl: 30 * 1000,
-                headers: {
-                    as: 'raw',
-                    cn: 'multi_bench'
-                },
-                arg1: 'ping',
                 arg2: null,
                 arg3: null
             }, pinged);
@@ -264,9 +291,9 @@ Test.prototype.stopClients = function stopClients(callback) {
     var self = this;
 
     var count = 1;
-    this.clients.forEach(function each(client) {
+    this.clients.forEach(function each(client, index) {
         count++;
-        (client.topChannel || client).close(closed);
+        self.channels[index].close(closed);
     });
     closed();
 
@@ -283,21 +310,20 @@ Test.prototype.sendNext = function sendNext() {
     var start = Date.now();
 
     if (CHEAT_CLIENT) {
-        this.clients[curClient].send({
+        var client = this.clients[curClient];
+        var opts = {
             host: DESTINATION_SERVER,
-            serviceName: 'benchmark',
-            ttl: 30 * 1000,
-            headers: {
-                as: 'raw',
-                cn: 'multi_bench',
-                benchHeader1: 'bench value one',
-                benchHeader2: 'bench value two',
-                benchHeader3: 'bench value three'
-            },
-            arg1: this.arg1,
             arg2: this.arg2,
             arg3: this.arg3
-        }, done);
+        };
+
+        if (this.command === 'ping') {
+            client.sendPing(opts, done);
+        } else if (this.command === 'get') {
+            client.sendGet(opts, done);
+        } else if (this.command === 'set') {
+            client.sendSet(opts, done);
+        }
     } else {
         var req = this.clients[curClient].request({
             serviceName: 'benchmark',
