@@ -35,6 +35,7 @@ function sendSet(options, onResponse) {
 
 */
 
+/*eslint max-statements: 0*/
 function buildFastClient(channel, serviceName, endpoints) {
     var i;
     var endpoint;
@@ -82,18 +83,23 @@ function EndpointSender(channel, serviceName, endpoint, options) {
     this.endpoint = endpoint;
     this.options = options;
 
+    this.ttl = this.options.ttl || 100;
+
     var headers = this.options.headers;
     if (!headers) {
         headers = [];
     } else if (!Array.isArray(headers)) {
         headers = toFlatArray(headers);
     }
-    var headersLen = V2Frames.headersSize(headers);
-    this.headersbuf = new Buffer(headersLen);
-    V2Frames.writeHeaders(this.headersbuf, 0, headers);
 
-    this.ttl = this.options.ttl || 100;
-    this.arg1buf = new Buffer(this.endpoint, 'utf8');
+    var byteLength = V2Frames.partialCallRequestSize(
+        this.serviceName, headers, this.endpoint
+    );
+    this.frameBufferCache = new Buffer(byteLength);
+    this.csumstart = V2Frames.partialCallRequestWriteHead(
+        this.frameBufferCache, 0,
+        this.ttl, this.serviceName, headers, this.endpoint
+    );
 }
 
 EndpointSender.prototype.send = function send(options, onResponse) {
@@ -102,20 +108,17 @@ EndpointSender.prototype.send = function send(options, onResponse) {
     var arg2 = options.arg2 || EMPTY_BUFFER;
     var arg3 = options.arg3 || EMPTY_BUFFER;
 
-    var reqOpts = new RequestOptions(
-        self.serviceName,
+    self.channel.peers._sendCache(
+        this.frameBufferCache,
+        this.csumstart,
         options.host,
-        self.ttl,
-        null,
-        self.headersbuf,
-        null,
-        self.arg1buf,
+        this.ttl,
         typeof arg2 === 'string' ? arg2 : null,
         Buffer.isBuffer(arg2) ? arg2 : null,
         typeof arg3 === 'string' ? arg3 : null,
-        Buffer.isBuffer(arg3) ? arg3 : null
+        Buffer.isBuffer(arg3) ? arg3 : null,
+        onResponse
     );
-    self.channel.peers._send(reqOpts, onResponse);
 };
 
 function toFlatArray(object) {

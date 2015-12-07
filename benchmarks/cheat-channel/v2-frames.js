@@ -11,7 +11,10 @@ module.exports = {
     writeCallRequestBody: writeCallRequestBody,
     writeFrameHeader: writeFrameHeader,
     writeHeaders: writeHeaders,
-    headersSize: headersSize
+    headersSize: headersSize,
+    partialCallRequestSize: partialCallRequestSize,
+    partialCallRequestWriteHead: partialCallRequestWriteHead,
+    partialCallRequestWriteTail: partialCallRequestWriteTail
 };
 
 function initFrameSize(hostPort) {
@@ -26,6 +29,111 @@ function initFrameSize(hostPort) {
         2 + process.title.length; // processNameValue
 
     return bufferLength;
+}
+
+function partialCallRequestSize(serviceName, headers, endpoint) {
+    var byteLength = 0;
+
+    byteLength += 16;
+    byteLength += 1;
+    byteLength += 4;
+    byteLength += 25;
+    byteLength += 1 + Buffer.byteLength(serviceName);
+    byteLength += headersSize(headers);
+    byteLength += 1;
+    byteLength += 2 + Buffer.byteLength(endpoint);
+
+    return byteLength;
+}
+
+/*
+    flags:1 ttl:4 tracing:25
+    service~1 nh:1 (hk~1 hv~1){nh}
+    csumtype:1 (csum:4){0,1} arg1~2
+*/
+function partialCallRequestWriteHead(
+    buffer, offset, ttl, serviceName, headers, endpoint
+) {
+    // size:2
+    offset += 2;
+
+    // type:1
+    buffer.writeInt8(0x03, offset, true);
+    offset += 1;
+
+    // reserved:1
+    offset += 1;
+
+    // id:1
+    offset += 4;
+
+    // reserved:8
+    offset += 8;
+
+    // flags:1
+    offset += 1;
+
+    // ttl:4
+    buffer.writeUInt32BE(ttl, offset, true);
+    offset += 4;
+
+    // tracing:25
+    // TODO: tracing
+    offset += 25;
+
+    // service~1
+    buffer.writeInt8(serviceName.length, offset, true);
+    offset += 1;
+    buffer.write(serviceName, offset, serviceName.length, 'utf8');
+    offset += serviceName.length;
+
+    offset = writeHeaders(buffer, offset, headers);
+    var csumstart = offset;
+
+    // csumtype:1
+    offset += 1;
+
+    // csum:4{0, 1}
+    // TODO: csum
+    offset += 0;
+
+    offset = writeInt16String(buffer, offset, endpoint);
+
+    return csumstart;
+}
+
+function partialCallRequestWriteTail(
+    buffer, offset, csumstart, id, headBuf,
+    arg2str, arg2buf, arg3str, arg3buf
+) {
+    headBuf.copy(buffer, 0, 0, headBuf.length);
+
+    // id:4
+    buffer.writeUInt32BE(id, offset + 4, true);
+
+    // flags
+    buffer.writeUInt32BE(0x00, offset + 16, true);
+
+    // csumtype:1
+    buffer.writeInt8(0x00, offset + csumstart, true);
+
+    offset = headBuf.length;
+
+    // arg2~2
+    if (arg2buf) {
+        offset = writeInt16Buffer(buffer, offset, arg2buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg2str);
+    }
+
+    // arg3~2
+    if (arg3buf) {
+        offset = writeInt16Buffer(buffer, offset, arg3buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg3str);
+    }
+
+    return offset;
 }
 
 function headersSize(headers) {
@@ -107,7 +215,6 @@ function writeCallRequestBody(
     offset += 1;
     buffer.write(serviceName, offset, serviceName.length, 'utf8');
     offset += serviceName.length;
-    // Buffer.byteLength(str)
 
     // headers
     if (headers) {
