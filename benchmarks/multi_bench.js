@@ -97,7 +97,7 @@ function Test(args) {
     this.commandsSent = 0;
     this.commandsCompleted = 0;
     this.maxPipeline = this.args.pipeline || numRequests;
-    this.maxPerLoop = maxPerLoop || 5000;
+    this.maxPerLoop = maxPerLoop || 20000;
     this.clientOptions = args.clientOptions || {
         returnBuffers: false
     };
@@ -505,7 +505,7 @@ function next(i, j, done) {
         }
         setTimeout(function delayNext() {
             next(i, j + 1, done);
-        }, 1000);
+        }, 20);
     });
 }
 
