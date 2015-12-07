@@ -32,14 +32,13 @@ BenchServer.prototype.registerEndpoints =
 function registerEndpoints() {
     var self = this;
 
-    self.channel.register('benchmark', 'ping', onPing);
-    self.channel.register('benchmark', 'set', onSet);
-    self.channel.register('benchmark', 'get', onGet);
+    self.channel.registerRaw('benchmark', 'ping', onPing);
+    self.channel.registerRaw('benchmark', 'set', onSet);
+    self.channel.registerRaw('benchmark', 'get', onGet);
 
     function onGet(frame, res) {
         var key = frame.readArg2str();
 
-        res.setHeader('as', 'raw');
         if (self.keys[key] !== undefined) {
             var val = self.keys[key];
             res.sendOk(val.length.toString(10), val);
@@ -54,12 +53,10 @@ function registerEndpoints() {
 
         self.keys[key] = val;
 
-        res.setHeader('as', 'raw');
         res.sendOk('ok', 'really ok');
     }
 
     function onPing(frame, res) {
-        res.setHeader('as', 'raw');
         res.sendOk('pong', null);
     }
 };

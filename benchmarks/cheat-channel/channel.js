@@ -105,6 +105,13 @@ function register(serviceName, endpoint, fn) {
     self.handler.register(serviceName, endpoint, fn);
 };
 
+Channel.prototype.registerRaw =
+function registerRaw(serviceName, endpoint, fn) {
+    var self = this;
+
+    self.handler.registerRaw(serviceName, endpoint, fn);
+};
+
 function onConnection(socket) {
     if (!socket) {
         console.error('could not accept / incoming connect');

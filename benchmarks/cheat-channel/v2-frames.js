@@ -14,7 +14,10 @@ module.exports = {
     headersSize: headersSize,
     partialCallRequestSize: partialCallRequestSize,
     partialCallRequestWriteHead: partialCallRequestWriteHead,
-    partialCallRequestWriteTail: partialCallRequestWriteTail
+    partialCallRequestWriteTail: partialCallRequestWriteTail,
+    partialCallResponseSize: partialCallResponseSize,
+    partialCallResponseWriteHead: partialCallResponseWriteHead,
+    partialCallResponseWriteTail: partialCallResponseWriteTail
 };
 
 function initFrameSize(hostPort) {
@@ -46,10 +49,109 @@ function partialCallRequestSize(serviceName, headers, endpoint) {
     return byteLength;
 }
 
+function partialCallResponseSize(headers) {
+    var byteLength = 0;
+
+    byteLength += 16;
+    byteLength += 1;
+    byteLength += 1;
+    byteLength += 25;
+    byteLength += headersSize(headers);
+    byteLength += 1;
+    byteLength += 2;
+
+    return byteLength;
+}
+
 function writeString(buffer, str, offset) {
     return buffer.parent.utf8Write(
         str, buffer.offset + offset, buffer.length - offset
     );
+}
+
+/*
+    flags:1 code:1 tracing:25
+    nh:1 (hk~1 hv~1){nh}
+    csumtype:1 (csum:4){0,1} arg1~2
+*/
+function partialCallResponseWriteHead(
+    buffer, offset, headers
+) {
+    // size: 2
+    offset += 2;
+
+    // type:1
+    buffer.writeInt8(0x04, offset, true);
+    offset += 1;
+
+    // reserved:1
+    offset += 1;
+
+    // id:1
+    offset += 4;
+
+    // reserved:8
+    offset += 8;
+
+    // flags:1
+    offset += 1;
+
+    // code:1
+    offset += 1;
+
+    // tracing:25
+    // TODO: tracing
+    offset += 25;
+
+    offset = writeHeaders(buffer, offset, headers);
+    var csumstart = offset;
+
+    // csumtype:1
+    offset += 1;
+
+    // csum:4{0, 1}
+    // TODO: csum
+    offset += 0;
+
+    // arg1~2
+    buffer.writeUInt16BE(0, offset, true);
+    offset += 2;
+
+    return csumstart;
+}
+
+function partialCallResponseWriteTail(
+    buffer, offset, csumstart, id, headBuf,
+    arg2str, arg2buf, arg3str, arg3buf
+) {
+    headBuf.copy(buffer, 0, 0, headBuf.length);
+
+    // id:4
+    buffer.writeUInt32BE(id, offset + 4, true);
+
+    // flags:1
+    buffer.writeInt8(0x00, offset + 16, true);
+
+    // csumtype:1
+    buffer.writeInt8(0x00, offset + csumstart, true);
+
+    offset = headBuf.length;
+
+    // arg2~2
+    if (arg2buf) {
+        offset = writeInt16Buffer(buffer, offset, arg2buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg2str);
+    }
+
+    // arg3~2
+    if (arg3buf) {
+        offset = writeInt16Buffer(buffer, offset, arg3buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg3str);
+    }
+
+    return offset;
 }
 
 /*
@@ -71,7 +173,7 @@ function partialCallRequestWriteHead(
     // reserved:1
     offset += 1;
 
-    // id:1
+    // id:4
     offset += 4;
 
     // reserved:8
@@ -119,7 +221,7 @@ function partialCallRequestWriteTail(
     buffer.writeUInt32BE(id, offset + 4, true);
 
     // flags
-    buffer.writeUInt32BE(0x00, offset + 16, true);
+    buffer.writeInt8(0x00, offset + 16, true);
 
     // csumtype:1
     buffer.writeInt8(0x00, offset + csumstart, true);
