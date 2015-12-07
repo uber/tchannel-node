@@ -34,6 +34,12 @@ take:
 		-m 3 -s 128,4096 -r 50000 -p 5000,10000,20000 --cheatClient
 	ln -sf $$(git rev-parse --short HEAD).json $$(basename $$(git symbolic-ref HEAD)).json
 
+
+take_cheat_prod:
+	node index.js --cheatServer --noEndpointOverhead -o $$(git rev-parse --short HEAD).json -- \
+		-m 2 -s 128,4096 -r 200000 -p 20000,50000 --cheatClient
+	ln -sf cheat-prod-$$(git rev-parse --short HEAD).json cheat-prod-$$(basename $$(git symbolic-ref HEAD)).json
+
 take_relay:
 	node index.js --relay --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
 		-- --relay --skipPing -m 3 -s 4096,16384 -p 1000,10000,20000
