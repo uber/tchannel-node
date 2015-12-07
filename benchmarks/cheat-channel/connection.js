@@ -140,6 +140,7 @@ TChannelConnection.prototype.readStart =
 function readStart() {
     var self = this;
 
+    self.socket.setNoDelay(true);
     self.socket.onread = onRead;
     var err = self.socket.readStart();
     if (err) {

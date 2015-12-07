@@ -15,18 +15,20 @@ var CREQ_SERVICE_OFFSET = 46;
 
 var IREQ_HEADERS_OFFSET = 18;
 
-/*  REQUEST
-    flags:1 ttl:4 tracing:25
-    service~1 nh:1 (hk~1 hv~1){nh}
-    csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
-*/
+/* TODO:
+        readUtf8 avoid toString()
+        writeUtf8 avoid write()
 
-/*  RESPONSE
-    flags:1 code:1 tracing:25
-    nh:1 (hk~1 hv~1){nh}
-    csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
-*/
+        call readArg1str() in server
+        call readArg2str() in server
+        call readArg3str() in server
 
+        store buffers in the server
+        optimize away headers with RawRegister()
+
+        OutResponse support arg2str & arg2buf pattern for faster
+        shit.
+*/
 LazyFrame.alloc = allocLazyFrame;
 
 module.exports = LazyFrame;
@@ -60,6 +62,7 @@ function LazyFrame(sourceConnection, frameBuffer) {
     this.arg2Length = null;
     this.arg3Length = null;
     this.arg1 = null;
+    this.arg1str = null;
     this.arg2 = null;
     this.arg3 = null;
 
