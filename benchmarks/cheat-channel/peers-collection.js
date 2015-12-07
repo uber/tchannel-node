@@ -114,6 +114,40 @@ function _send(reqOpts, onResponse) {
     conn.addPendingOutReq(reqId, onResponse, reqOpts.ttl);
 };
 
+PeersCollection.prototype._sendCache =
+function _sendCache(
+    cacheBuf, csumstart, host, ttl,
+    arg2str, arg2buf, arg3str, arg3buf, onResponse
+) {
+    var self = this;
+
+    var conn = self.ensureConnection(host);
+    var reqId = conn.allocateId();
+    self.sendCallRequestTail(
+        conn, cacheBuf, csumstart, reqId,
+        arg2str, arg2buf, arg3str, arg3buf
+    );
+
+    conn.addPendingOutReq(reqId, onResponse, ttl);
+};
+
+PeersCollection.prototype.sendCallRequestTail =
+function sendCallRequestTail(
+    conn, cacheBuf, csumstart, reqId, arg2str, arg2buf, arg3str, arg3buf
+) {
+    var buffer = conn.globalWriteBuffer;
+    var offset = 0;
+
+    offset = V2Frames.partialCallRequestWriteTail(
+        buffer, offset, csumstart, reqId, cacheBuf,
+        arg2str, arg2buf, arg3str, arg3buf
+    );
+
+    buffer.writeUInt16BE(offset, 0, true);
+
+    conn.writeFrameCopy(buffer, offset);
+};
+
 PeersCollection.prototype.sendCallRequest =
 function sendCallRequest(conn, reqOpts, reqId) {
     var buffer = conn.globalWriteBuffer;
