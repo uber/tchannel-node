@@ -70,8 +70,6 @@ var DESTINATION_SERVER;
 var TRACE_SERVER;
 var CLIENT_PORT = argv.clientPort;
 
-var FINISHED = false;
-
 if (argv.relay) {
     DESTINATION_SERVER = '127.0.0.1:' + argv.relayServerPort;
 } else {
@@ -311,10 +309,6 @@ Test.prototype.stopClients = function stopClients(callback) {
         count++;
         self.channels[index].close();
     });
-
-    if (FINISHED) {
-        process.exit(0);
-    }
 };
 
 Test.prototype.sendNext = function sendNext() {
@@ -526,8 +520,7 @@ next(0, 0, function finish(err) {
         console.error(err);
         process.exit(1);
     }
-
-    FINISHED = true;
+    process.exit(0);
 });
 
 function parseIntList(str) {
