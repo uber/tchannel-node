@@ -22,7 +22,7 @@
 /* eslint no-console:0 no-process-exit:0 */
 
 var Statsd = require('uber-statsd-client');
-var metrics = require('metrics');
+var FastStats = require('fast-stats').Stats;
 var process = require('process');
 var setTimeout = require('timers').setTimeout;
 var Buffer = require('buffer').Buffer;
@@ -100,9 +100,9 @@ function Test(args) {
         returnBuffers: false
     };
 
-    this.connectLatency = new metrics.Histogram();
-    this.readyLatency = new metrics.Histogram();
-    this.commandLatency = new metrics.Histogram();
+    this.connectLatency = new FastStats();
+    this.readyLatency = new FastStats();
+    this.commandLatency = new FastStats();
 
     this.expectedError = args.expectedError;
 }
@@ -260,8 +260,8 @@ Test.prototype.newClient = function newClient(id, callback) {
                 frame.readArg3();
             }
 
-            self.connectLatency.update(Date.now() - client.createTime);
-            self.readyLatency.update(Date.now() - client.createTime);
+            self.connectLatency.push(Date.now() - client.createTime);
+            self.readyLatency.push(Date.now() - client.createTime);
             callback();
         }
     }
@@ -353,13 +353,31 @@ Test.prototype.sendNext = function sendNext() {
         }
 
         self.commandsCompleted++;
-        self.commandLatency.update(Date.now() - start);
+        var delta = Date.now() - start;
+        self.commandLatency.data.push(delta);
+        self.commandLatency._add_cache(delta);
         self.fillPipeline(onRageQuit);
     }
 };
 
 Test.prototype.getStats = function getStats() {
-    var obj = this.commandLatency.printObj();
+    var s = this.commandLatency;
+    var obj = {
+        mean: s.amean(),
+        median: s.median(),
+        p75: s.percentile(75),
+        p95: s.percentile(95),
+        p99: s.percentile(99),
+        p999: s.percentile(999),
+        type: 'histogram',
+        min: s.range()[0],
+        max: s.range()[1],
+        /*eslint camelcase: 0*/
+        std_dev: s.stddev(),
+        sum: s.sum,
+        count: s.length
+    };
+
     obj.descr = this.args.descr;
     obj.instanceNumber = argv.instanceNumber;
     obj.pipeline = this.args.pipeline;
