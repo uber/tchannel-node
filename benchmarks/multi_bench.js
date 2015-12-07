@@ -60,6 +60,7 @@ var argv = readBenchConfig({
 var multiplicity = parseInt(argv.multiplicity, 10);
 var numClients = parseInt(argv.numClients, 10);
 var numRequests = parseInt(argv.numRequests, 10);
+var maxPerLoop = parseInt(argv.maxPerLoop, 10);
 argv.pipeline = parseIntList(argv.pipeline);
 argv.sizes = parseIntList(argv.sizes);
 
@@ -96,6 +97,7 @@ function Test(args) {
     this.commandsSent = 0;
     this.commandsCompleted = 0;
     this.maxPipeline = this.args.pipeline || numRequests;
+    this.maxPerLoop = maxPerLoop || 5000;
     this.clientOptions = args.clientOptions || {
         returnBuffers: false
     };
@@ -274,8 +276,14 @@ Test.prototype.start = function start(callback) {
 
 Test.prototype.fillPipeline = function fillPipeline(callback) {
     var pipeline = this.commandsSent - this.commandsCompleted;
+    var maxPerLoop = this.maxPerLoop;
+    var sendInLoop = 0;
 
-    while (this.commandsSent < numRequests && pipeline < this.maxPipeline) {
+    while (this.commandsSent < numRequests &&
+        pipeline < this.maxPipeline &&
+        sendInLoop < maxPerLoop
+    ) {
+        sendInLoop++;
         this.commandsSent++;
         pipeline++;
         this.sendNext();
