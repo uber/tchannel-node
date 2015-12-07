@@ -257,7 +257,7 @@ Test.prototype.newClient = function newClient(id, callback) {
             }
 
             if (CHEAT_CLIENT) {
-                frame.readArg3str();
+                frame.readOnlyArg3str();
             }
 
             self.connectLatency.push(Date.now() - client.createTime);
@@ -349,7 +349,7 @@ Test.prototype.sendNext = function sendNext() {
         }
 
         if (CHEAT_CLIENT) {
-            frame.readArg3str();
+            frame.readOnlyArg3str();
         }
 
         self.commandsCompleted++;

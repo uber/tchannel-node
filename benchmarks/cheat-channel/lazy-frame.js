@@ -171,6 +171,25 @@ function readArg1() {
     return self.arg1;
 };
 
+LazyFrame.prototype.skipArg1 =
+function skipArg1() {
+    var self = this;
+
+    if (self.arg2Start !== null) {
+        return;
+    }
+
+    if (self.arg1Start === null) {
+        self.skipChecksum();
+    }
+
+    var offset = self.arg1Start;
+    self.arg1Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    return;
+};
+
 LazyFrame.prototype.readArg2 =
 function readArg2() {
     var self = this;
@@ -191,6 +210,27 @@ function readArg2() {
     self.arg2 = self.frameBuffer.slice(offset, self.arg3Start);
 
     return self.arg2;
+};
+
+LazyFrame.prototype.skipArg2 =
+function skipArg2() {
+    var self = this;
+
+    if (self.arg3Start !== null) {
+        return;
+    }
+
+    if (self.arg2Start === null) {
+        self.skipArg1();
+    }
+
+    var offset = self.arg2Start;
+    self.arg2Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    self.arg3Start = offset + self.arg2Length;
+
+    return;
 };
 
 LazyFrame.prototype.readArg2str =
@@ -247,6 +287,28 @@ function readArg3str() {
 
     if (self.arg3Start === null) {
         self.readArg2str();
+    }
+
+    var offset = self.arg3Start;
+    self.arg3Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    var end = offset + self.arg3Length;
+    self.arg3str = self.frameBuffer.toString('utf8', offset, end);
+
+    return self.arg3str;
+};
+
+LazyFrame.prototype.readOnlyArg3str =
+function readOnlyArg3str() {
+    var self = this;
+
+    if (self.arg3str !== null) {
+        return self.arg3str;
+    }
+
+    if (self.arg3Start === null) {
+        self.skipArg2();
     }
 
     var offset = self.arg3Start;
