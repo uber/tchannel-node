@@ -262,7 +262,7 @@ function writeCallRequestBody(
     csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
 */
 function writeCallResponseBody(
-    buffer, offset, code, headers, arg2, arg3
+    buffer, offset, code, headers, arg2str, arg2buf, arg3str, arg3buf
 ) {
     // flags:1
     buffer.writeInt8(0x00, offset, true);
@@ -292,16 +292,18 @@ function writeCallResponseBody(
     offset += 2;
 
     // arg2~2
-    buffer.writeUInt16BE(arg2.length, offset, true);
-    offset += 2;
-    arg2.copy(buffer, offset, 0, arg2.length);
-    offset += arg2.length;
+    if (arg2buf) {
+        offset = writeInt16Buffer(buffer, offset, arg2buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg2str);
+    }
 
     // arg3~2
-    buffer.writeUInt16BE(arg3.length, offset, true);
-    offset += 2;
-    arg3.copy(buffer, offset, 0, arg3.length);
-    offset += arg3.length;
+    if (arg3buf) {
+        offset = writeInt16Buffer(buffer, offset, arg3buf);
+    } else {
+        offset = writeInt16String(buffer, offset, arg3str);
+    }
 
     return offset;
 }

@@ -42,24 +42,20 @@ OutResponse.prototype._sendArgs =
 function _sendArgs(code, arg2, arg3) {
     var self = this;
 
-    if (!arg2) {
-        arg2 = EMPTY_BUFFER;
-    }
-    if (!arg3) {
-        arg3 = EMPTY_BUFFER;
-    }
-    if (typeof arg2 === 'string') {
-        arg2 = new Buffer(arg2);
-    }
-    if (typeof arg3 === 'string') {
-        arg3 = new Buffer(arg3);
-    }
+    arg2 = arg2 || EMPTY_BUFFER;
+    arg3 = arg3 || EMPTY_BUFFER;
 
-    self._sendFrame(code, arg2, arg3);
+    self._sendFrame(
+        code,
+        typeof arg2 === 'string' ? arg2 : null,
+        Buffer.isBuffer(arg2) ? arg2 : null,
+        typeof arg3 === 'string' ? arg3 : null,
+        Buffer.isBuffer(arg3) ? arg3 : null
+    );
 };
 
 OutResponse.prototype._sendFrame =
-function _sendFrame(code, arg2, arg3) {
+function _sendFrame(code, arg2str, arg2buf, arg3str, arg3buf) {
     var self = this;
 
     var buffer = self.conn.globalWriteBuffer;
@@ -67,7 +63,8 @@ function _sendFrame(code, arg2, arg3) {
 
     offset = V2Frames.writeFrameHeader(buffer, offset, 0, 0x04, self.id);
     offset = V2Frames.writeCallResponseBody(
-        buffer, offset, code, self.respHeaders, arg2, arg3
+        buffer, offset, code, self.respHeaders,
+        arg2str, arg2buf, arg3str, arg3buf
     );
 
     // Write the correct size of the buffer.
