@@ -12,6 +12,35 @@ var PeersCollection = require('./peers-collection.js');
 
     channel.listen(port, host, onListening);
 
+    -- make request: fast-mode
+
+    var client = channel.createClient(serviceName, {
+        ping: {
+            ttl: <TTL>,
+            headers: Object<...>
+        },
+        set: {
+            ttl: <TTL>,
+            headers: Object<...>
+        },
+        get: {
+            ttl: <TTL>,
+            headers: Object<...>
+        }
+    });
+    client.sendPing({
+        host: <HostPort>,
+        arg2: String,
+        arg3: String
+    }, cb);
+    client.sendGet({
+        host: <HostPort>,
+        arg2: String,
+        arg3: String
+    }, cb);
+
+     -- make request: slow-mode
+
     channel.send({
         host: <HostPort>,
         ttl: <TTL>,
