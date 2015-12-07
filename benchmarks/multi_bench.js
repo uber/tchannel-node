@@ -140,7 +140,7 @@ Test.prototype.run = function run(callback) {
 
 Test.prototype.newClient = function newClient(id, callback) {
     var self = this;
-    // var port = CLIENT_PORT + id;
+    var port = CLIENT_PORT + id;
 
     var channelConstr = CHEAT_CLIENT ? CheatChannel : TChannel;
 
@@ -223,7 +223,7 @@ Test.prototype.newClient = function newClient(id, callback) {
     }
 
     client.createTime = Date.now();
-    clientChan.listen(0, '127.0.0.1', onListen);
+    clientChan.listen(port, '127.0.0.1', onListen);
 
     function onListen(err) {
         if (err) {
@@ -276,23 +276,17 @@ Test.prototype.start = function start(callback) {
 
 Test.prototype.fillPipeline = function fillPipeline(callback) {
     var pipeline = this.commandsSent - this.commandsCompleted;
-    var _maxPerLoop = this.maxPerLoop;
+    var maxPerLoop = this.maxPerLoop;
     var sendInLoop = 0;
 
     while (this.commandsSent < numRequests &&
         pipeline < this.maxPipeline &&
-        sendInLoop < _maxPerLoop
+        sendInLoop < maxPerLoop
     ) {
         sendInLoop++;
         this.commandsSent++;
         pipeline++;
         this.sendNext();
-    }
-
-    if (this.commandsSent === numRequests && this.callback) {
-        var cb = this.callback;
-        this.callback = null;
-        cb();
     }
 
     if (this.commandsCompleted === numRequests) {
@@ -307,8 +301,15 @@ Test.prototype.stopClients = function stopClients(callback) {
     var count = 1;
     this.clients.forEach(function each(client, index) {
         count++;
-        self.channels[index].close();
+        self.channels[index].close(closed);
     });
+    closed();
+
+    function closed() {
+        if (--count <= 0) {
+            self.callback(null);
+        }
+    }
 };
 
 Test.prototype.sendNext = function sendNext() {
