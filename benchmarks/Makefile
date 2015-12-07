@@ -1,9 +1,9 @@
 torch-client-bench:
-	node index.js --cheatServer --torch client --torchFile ./flame.raw --torchTime 10 --torchDelay 10000 \
+	node index.js --cheatServer --torch client --torchFile ./flame.raw --torchTime 15 --torchDelay 20000 \
 		-- --skipPing -r 100000 -s 4096,16384 -m 3 -p 20000 --cheatClient
 
 torch-server-bench:
-	node index.js --cheatServer --torch server --torchFile ./flame.raw --torchTime 10 --torchDelay 10000 \
+	node index.js --cheatServer --torch server --torchFile ./flame.raw --torchTime 15 --torchDelay 20000 \
 		-- --skipPing -r 100000 -s 4096,16384 -m 3 -p 20000 --cheatClient
 
 torch-relay-bench:
