@@ -4,6 +4,7 @@ var Buffer = require('buffer').Buffer;
 
 var RequestOptions = require('./peers-collection.js').RequestOptions;
 var indirectEval = require('./_lib-indirect-eval.js');
+var V2Frames = require('./v2-frames.js');
 
 var EMPTY_BUFFER = new Buffer(0);
 
@@ -87,9 +88,11 @@ function EndpointSender(channel, serviceName, endpoint, options) {
     } else if (!Array.isArray(headers)) {
         headers = toFlatArray(headers);
     }
-    this.headers = headers;
-    this.ttl = this.options.ttl || 100;
+    var headersLen = V2Frames.headersSize(headers);
+    this.headersbuf = new Buffer(headersLen);
+    V2Frames.writeHeaders(this.headersbuf, 0, headers);
 
+    this.ttl = this.options.ttl || 100;
     this.arg1buf = new Buffer(this.endpoint, 'utf8');
 }
 
@@ -103,7 +106,8 @@ EndpointSender.prototype.send = function send(options, onResponse) {
         self.serviceName,
         options.host,
         self.ttl,
-        self.headers,
+        null,
+        self.headersbuf,
         null,
         self.arg1buf,
         typeof arg2 === 'string' ? arg2 : null,
