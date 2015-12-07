@@ -38,7 +38,7 @@ take:
 
 take_cheat_prod:
 	node index.js --cheatServer --noEndpointOverhead -o $$(git rev-parse --short HEAD).json -- \
-		-m 2 -s 128,4096 -r 200000 -p 20000,50000 --cheatClient
+		-m 2 -s 128,4096 -r 200000 -p 50000,100000 --cheatClient
 	ln -sf cheat-prod-$$(git rev-parse --short HEAD).json cheat-prod-$$(basename $$(git symbolic-ref HEAD)).json
 
 take_relay:
