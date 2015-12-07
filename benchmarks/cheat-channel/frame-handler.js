@@ -2,8 +2,10 @@
 
 /*eslint no-console: 0*/
 var console = require('console');
+var Buffer = require('buffer').Buffer;
 
 // var LazyFrame = require('./lazy-frame.js');
+var V2Frames = require('./v2-frames.js');
 var OutResponse = require('./out-response.js');
 
 module.exports = FrameHandler;
@@ -24,8 +26,34 @@ function register(serviceName, endpoint, fn) {
         self.services[serviceName] = Object.create(null);
     }
 
-    self.services[serviceName][endpoint] = fn;
+    self.services[serviceName][endpoint] =
+        new EndpointDefinition(fn, null, null);
 };
+
+FrameHandler.prototype.registerRaw =
+function registerRaw(serviceName, endpoint, fn) {
+    var self = this;
+
+    if (!self.services[serviceName]) {
+        self.services[serviceName] = Object.create(null);
+    }
+
+    var headers = ['as', 'raw'];
+    var byteLength = V2Frames.partialCallResponseSize(headers);
+    var cacheBuf = new Buffer(byteLength);
+    var csumstart = V2Frames.partialCallResponseWriteHead(
+        cacheBuf, 0, headers
+    );
+
+    self.services[serviceName][endpoint] =
+        new EndpointDefinition(fn, cacheBuf, csumstart);
+};
+
+function EndpointDefinition(fn, cacheBuf, csumstart) {
+    this.fn = fn;
+    this.cacheBuf = cacheBuf;
+    this.csumstart = csumstart;
+}
 
 FrameHandler.prototype.handleFrame =
 function handleFrame(frame) {
@@ -77,15 +105,17 @@ function handleCallRequest(frame) {
         return;
     }
 
-    var fn = endpoints[reqArg1];
-    if (!fn) {
+    var defn = endpoints[reqArg1];
+    if (!defn) {
         console.error('Could not find arg1: %s', reqArg1);
         return;
     }
 
     var conn = frame.sourceConnection;
-    var resp = new OutResponse(reqFrameId, conn);
-    fn(frame, resp);
+    var resp = new OutResponse(
+        reqFrameId, conn, defn.cacheBuf, defn.csumstart
+    );
+    defn.fn(frame, resp);
     // LazyFrame.free(frame);
 };
 
