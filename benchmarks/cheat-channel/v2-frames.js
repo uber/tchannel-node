@@ -46,6 +46,12 @@ function partialCallRequestSize(serviceName, headers, endpoint) {
     return byteLength;
 }
 
+function writeString(buffer, str, offset) {
+    return buffer.parent.utf8Write(
+        str, buffer.offset + offset, buffer.length - offset
+    );
+}
+
 /*
     flags:1 ttl:4 tracing:25
     service~1 nh:1 (hk~1 hv~1){nh}
@@ -54,6 +60,7 @@ function partialCallRequestSize(serviceName, headers, endpoint) {
 function partialCallRequestWriteHead(
     buffer, offset, ttl, serviceName, headers, endpoint
 ) {
+    var n;
     // size:2
     offset += 2;
 
@@ -84,8 +91,8 @@ function partialCallRequestWriteHead(
     // service~1
     buffer.writeInt8(serviceName.length, offset, true);
     offset += 1;
-    buffer.write(serviceName, offset, serviceName.length, 'utf8');
-    offset += serviceName.length;
+    n = writeString(buffer, serviceName, offset);
+    offset += n;
 
     offset = writeHeaders(buffer, offset, headers);
     var csumstart = offset;
@@ -149,6 +156,7 @@ function headersSize(headers) {
 
 function writeHeaders(buffer, offset, headers) {
     var numHeaders = headers.length / 2;
+    var n;
     // nh:1
     buffer.writeInt8(numHeaders, offset, true);
     offset += 1;
@@ -161,15 +169,15 @@ function writeHeaders(buffer, offset, headers) {
         buffer.writeInt8(headerKey.length, offset, true);
         offset += 1;
 
-        buffer.write(headerKey, offset, headerKey.length, 'utf8');
-        offset += headerKey.length;
+        n = writeString(buffer, headerKey, offset);
+        offset += n;
 
         // hv~1
         buffer.writeInt8(headerValue.length, offset, true);
         offset += 1;
 
-        buffer.write(headerValue, offset, headerValue.length, 'utf8');
-        offset += headerValue.length;
+        n = writeString(buffer, headerValue, offset);
+        offset += n;
     }
 
     return offset;
@@ -183,7 +191,7 @@ function writeInt16Buffer(buffer, offset, arg) {
 }
 
 function writeInt16String(buffer, offset, str) {
-    var n = buffer.write(str, offset + 2, buffer.length - offset - 2, 'utf8');
+    var n = writeString(buffer, str, offset + 2);
     buffer.writeUInt16BE(n, offset, true);
 
     return offset + 2 + n;
@@ -198,6 +206,8 @@ function writeCallRequestBody(
     buffer, offset, ttl, serviceName, headers, headersbuf,
     arg1str, arg1buf, arg2str, arg2buf, arg3str, arg3buf
 ) {
+    var n;
+
     // flags:1
     buffer.writeInt8(0x00, offset, true);
     offset += 1;
@@ -213,8 +223,8 @@ function writeCallRequestBody(
     // service~1
     buffer.writeInt8(serviceName.length, offset, true);
     offset += 1;
-    buffer.write(serviceName, offset, serviceName.length, 'utf8');
-    offset += serviceName.length;
+    n = writeString(buffer, serviceName, offset);
+    offset += n;
 
     // headers
     if (headers) {
@@ -309,6 +319,8 @@ function writeCallResponseBody(
 }
 
 function writeInitBody(buffer, offset, hostPort) {
+    var n;
+
     // Version
     buffer.writeUInt16BE(2, offset, true);
     offset += 2;
@@ -320,29 +332,29 @@ function writeInitBody(buffer, offset, hostPort) {
     buffer.writeUInt16BE('host_port'.length, offset, true);
     offset += 2;
     // key value
-    buffer.write('host_port', offset, 'host_port'.length, 'utf8');
-    offset += 'host_port'.length;
+    n = writeString(buffer, 'host_port', offset);
+    offset += n;
 
     // value length
     buffer.writeUInt16BE(hostPort.length, offset, true);
     offset += 2;
     // value value
-    buffer.write(hostPort, offset, hostPort.length, 'utf8');
-    offset += hostPort.length;
+    n = writeString(buffer, hostPort, offset);
+    offset += n;
 
     // key length
     buffer.writeUInt16BE('process_name'.length, offset, true);
     offset += 2;
     // key value
-    buffer.write('process_name', offset, 'process_name'.length, 'utf8');
-    offset += 'process_name'.length;
+    n = writeString(buffer, 'process_name', offset);
+    offset += n;
 
     // value length
     buffer.writeUInt16BE(process.title.length, offset, true);
     offset += 2;
     // value value
-    buffer.write(process.title, offset, process.title.length, 'utf8');
-    offset += process.title.length;
+    n = writeString(buffer, process.title, offset);
+    offset += n;
 
     return offset;
 }
