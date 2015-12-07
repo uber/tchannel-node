@@ -130,6 +130,28 @@ function readReqServiceName() {
     return self.reqServiceName;
 };
 
+LazyFrame.prototype.readArg1str =
+function readArg1str() {
+    var self = this;
+
+    if (self.arg1str !== null) {
+        return self.arg1str;
+    }
+
+    if (self.arg1Start === null) {
+        self.skipChecksum();
+    }
+
+    var offset = self.arg1Start;
+    self.arg1Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    self.arg2Start = offset + self.arg1Length;
+    self.arg1str = self.frameBuffer.toString('utf8', offset, self.arg2Start);
+
+    return self.arg1str;
+};
+
 LazyFrame.prototype.readArg1 =
 function readArg1() {
     var self = this;
