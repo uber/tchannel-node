@@ -11,6 +11,8 @@ var V2Frames = require('./v2-frames.js');
 
 var EMPTY_BUFFER = new Buffer(0);
 
+PeersCollection.RequestOptions = RequestOptions;
+
 module.exports = PeersCollection;
 
 function PeersCollection(channel) {
