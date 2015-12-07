@@ -115,14 +115,13 @@ FrameParser.prototype._pushFrameBuffer =
 function _pushFrameBuffer(networkBuffer, start, end) {
     var self = this;
 
-    var frameBuffer;
-    if (self.remainderOffset === 0) {
-        // Maybe allocate a new FastBuffer (cheap)
-        frameBuffer = maybeSlice(networkBuffer, start, end);
-    } else {
+    var frameBuffer = networkBuffer;
+    if (self.remainderOffset !== 0) {
         self._addRemainder(networkBuffer, start, end);
 
         frameBuffer = self.remainderBuffer;
+        start = 0;
+        end = frameBuffer.length;
 
         self.remainderBuffer = null;
         self.hasTempRemainderBuffer = false;
@@ -130,7 +129,7 @@ function _pushFrameBuffer(networkBuffer, start, end) {
     }
 
     // console.log('FrameParser._onFrameBuffer()');
-    self._onFrameBuffer(self._context, frameBuffer);
+    self._onFrameBuffer(self._context, frameBuffer, start, end);
     self.frameLength = 0;
 };
 

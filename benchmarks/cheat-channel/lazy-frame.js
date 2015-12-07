@@ -16,9 +16,6 @@ var CREQ_SERVICE_OFFSET = 46;
 var IREQ_HEADERS_OFFSET = 18;
 
 /* TODO:
-        readUtf8 avoid toString()
-        writeUtf8 avoid write()
-
         optimize away headers with RawRegister()
 
         OutResponse support arg2str & arg2buf pattern for faster
@@ -28,21 +25,21 @@ LazyFrame.alloc = allocLazyFrame;
 
 module.exports = LazyFrame;
 
-function allocLazyFrame(sourceConnection, frameBuffer) {
+function allocLazyFrame(sourceConnection, frameBuffer, offset, length) {
     var frame;
 
-    // if (LazyFrame.freeList.length === 0) {
-    frame = new LazyFrame(sourceConnection, frameBuffer);
-    // } else {
-    //     frame = LazyFrame.freeList.pop();
-    // }
+    frame = new LazyFrame(
+        sourceConnection, frameBuffer, offset, length
+    );
 
     return frame;
 }
 
-function LazyFrame(sourceConnection, frameBuffer) {
+function LazyFrame(sourceConnection, frameBuffer, offset, length) {
     this.sourceConnection = sourceConnection;
     this.frameBuffer = frameBuffer;
+    this.offset = offset;
+    this.length = length;
 
     this.oldId = null;
     this.newId = null;
@@ -78,7 +75,9 @@ function readId() {
         return self.oldId;
     }
 
-    self.oldId = self.frameBuffer.readUInt32BE(ID_OFFSET, true);
+    self.oldId = self.frameBuffer.readUInt32BE(
+        self.offset + ID_OFFSET, true
+    );
     return self.oldId;
 };
 
@@ -90,7 +89,9 @@ function readFrameType() {
         return self.frameType;
     }
 
-    self.frameType = self.frameBuffer.readUInt8(TYPE_OFFSET, true);
+    self.frameType = self.frameBuffer.readUInt8(
+        self.offset + TYPE_OFFSET, true
+    );
     return self.frameType;
 };
 
@@ -98,7 +99,7 @@ LazyFrame.prototype.writeId =
 function writeId(newId) {
     var self = this;
 
-    self.frameBuffer.writeUInt32BE(newId, ID_OFFSET, true);
+    self.frameBuffer.writeUInt32BE(newId, self.offset + ID_OFFSET, true);
 
     self.newId = newId;
     return self.newId;
@@ -108,13 +109,11 @@ LazyFrame.prototype.markAsCallResponse =
 function markAsCallResponse() {
     var self = this;
 
-    self.tHeadersStart = CRES_HEADER_OFFSET;
+    self.tHeadersStart = self.offset + CRES_HEADER_OFFSET;
 };
 
 function readString(buffer, offset, end) {
-    return buffer.parent.utf8Slice(
-        buffer.offset + offset, buffer.offset + end
-    );
+    return buffer.utf8Slice(offset, end);
 }
 
 LazyFrame.prototype.readReqServiceName =
@@ -125,11 +124,15 @@ function readReqServiceName() {
         return self.reqServiceName;
     }
 
-    var strLength = self.frameBuffer.readUInt8(CREQ_SERVICE_OFFSET, true);
-    self.tHeadersStart = CREQ_SERVICE_OFFSET + 1 + strLength;
+    var strLength = self.frameBuffer.readUInt8(
+        self.offset + CREQ_SERVICE_OFFSET, true
+    );
+    self.tHeadersStart = self.offset + CREQ_SERVICE_OFFSET + 1 + strLength;
 
     self.reqServiceName = readString(
-        self.frameBuffer, CREQ_SERVICE_OFFSET + 1, self.tHeadersStart
+        self.frameBuffer,
+        self.offset + CREQ_SERVICE_OFFSET + 1,
+        self.tHeadersStart
     );
     return self.reqServiceName;
 };
@@ -383,7 +386,7 @@ function readInitReqHeaders() {
     }
 
     self.initReqHeaders = [];
-    var offset = IREQ_HEADERS_OFFSET;
+    var offset = self.offset + IREQ_HEADERS_OFFSET;
     var nh = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 

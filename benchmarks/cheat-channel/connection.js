@@ -225,10 +225,10 @@ function onSocketBuffer(socketBuffer, start, length) {
 };
 
 TChannelConnection.prototype.onFrameBuffer =
-function onFrameBuffer(frameBuffer) {
+function onFrameBuffer(frameBuffer, offset, length) {
     var self = this;
 
-    var frame = LazyFrame.alloc(self, frameBuffer);
+    var frame = LazyFrame.alloc(self, frameBuffer, offset, length);
     self.channel.handleFrame(frame);
 };
 
@@ -401,8 +401,8 @@ function flushPending() {
     self.frameQueue.length = 0;
 };
 
-function onParserFrameBuffer(connection, buffer) {
-    connection.onFrameBuffer(buffer);
+function onParserFrameBuffer(connection, buffer, offset, length) {
+    connection.onFrameBuffer(buffer, offset, length);
 }
 
 TChannelConnection.prototype.destroy =
