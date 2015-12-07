@@ -426,6 +426,9 @@ argv.sizes.forEach(function each(size) {
     // chop off any "==" trailer
     var str = buf.toString('base64').slice(0, size);
 
+    var keyBuf = new Buffer(key + '0');
+    var strBuf = new Buffer(str);
+
     var expectedErrorTypes = {};
     if (argv.expectedError) {
         argv.expectedError
@@ -440,7 +443,7 @@ argv.sizes.forEach(function each(size) {
 
     argv.pipeline.forEach(function eachPipe(pipeline) {
         tests.push(new Test({
-            descr: 'SET ' + sizeDesc,
+            descr: 'SET str ' + sizeDesc,
             command: 'set' + (argv.bad ? '_bad' : ''),
             arg2: key,
             arg3: str,
@@ -448,9 +451,25 @@ argv.sizes.forEach(function each(size) {
             expectedError: expectedError
         }));
         tests.push(new Test({
-            descr: 'GET ' + sizeDesc,
+            descr: 'GET str ' + sizeDesc,
             command: 'get' + (argv.bad ? '_bad' : ''),
             arg2: key,
+            pipeline: pipeline,
+            expectedError: expectedError
+        }));
+
+        tests.push(new Test({
+            descr: 'SET buf ' + sizeDesc,
+            command: 'set' + (argv.bad ? '_bad' : ''),
+            arg2: keyBuf,
+            arg3: strBuf,
+            pipeline: pipeline,
+            expectedError: expectedError
+        }));
+        tests.push(new Test({
+            descr: 'GET buf ' + sizeDesc,
+            command: 'get' + (argv.bad ? '_bad' : ''),
+            arg2: keyBuf,
             pipeline: pipeline,
             expectedError: expectedError
         }));

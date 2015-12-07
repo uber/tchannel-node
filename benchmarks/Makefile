@@ -1,5 +1,5 @@
 torch-client-bench:
-	node index.js --cheatServer --torch client --torchFile ./flame.raw --torchTime 10 \
+	node index.js --cheatServer --torch client --torchFile ./flame.raw --torchTime 10 --torchDelay 10000 \
 		-- --skipPing -r 100000 -s 4096,16384 -m 5 -p 20000 --cheatClient
 
 torch-server-bench:
