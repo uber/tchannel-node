@@ -50,7 +50,7 @@ function registerEndpoints() {
 
     function onSet(frame, res) {
         var key = frame.readArg2str();
-        var val = frame.readArg3str();
+        var val = frame.readArg3();
 
         self.keys[key] = val;
 

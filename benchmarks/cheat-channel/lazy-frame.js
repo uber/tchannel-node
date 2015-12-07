@@ -17,9 +17,6 @@ var IREQ_HEADERS_OFFSET = 18;
 
 /* TODO:
         optimize away headers with RawRegister()
-
-        OutResponse support arg2str & arg2buf pattern for faster
-        shit.
 */
 LazyFrame.alloc = allocLazyFrame;
 
