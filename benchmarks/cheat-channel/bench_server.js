@@ -15,8 +15,6 @@ function BenchServer(port) {
         return new BenchServer(port);
     }
 
-    var self = this;
-
     this.port = port;
 
     // TODO: stats
@@ -39,7 +37,7 @@ function registerEndpoints() {
     self.channel.register('benchmark', 'get', onGet);
 
     function onGet(frame, res) {
-        var key = frame.readArg2().toString('utf8');
+        var key = frame.readArg2str();
 
         res.setHeader('as', 'raw');
         if (self.keys[key] !== undefined) {
@@ -51,8 +49,8 @@ function registerEndpoints() {
     }
 
     function onSet(frame, res) {
-        var key = frame.readArg2().toString('utf8');
-        var val = frame.readArg3().toString('utf8');
+        var key = frame.readArg2str();
+        var val = frame.readArg3str();
 
         self.keys[key] = val;
 
