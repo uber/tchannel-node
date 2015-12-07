@@ -19,11 +19,6 @@ var IREQ_HEADERS_OFFSET = 18;
         readUtf8 avoid toString()
         writeUtf8 avoid write()
 
-        call readArg1str() in server
-        call readArg2str() in server
-        call readArg3str() in server
-
-        store buffers in the server
         optimize away headers with RawRegister()
 
         OutResponse support arg2str & arg2buf pattern for faster
@@ -64,7 +59,9 @@ function LazyFrame(sourceConnection, frameBuffer) {
     this.arg1 = null;
     this.arg1str = null;
     this.arg2 = null;
+    this.arg2str = null;
     this.arg3 = null;
+    this.arg3str = null;
 
     this.tHeadersStart = null;
     this.checksumStart = null;
@@ -196,6 +193,28 @@ function readArg2() {
     return self.arg2;
 };
 
+LazyFrame.prototype.readArg2str =
+function readArg2str() {
+    var self = this;
+
+    if (self.arg2str !== null) {
+        return self.arg2str;
+    }
+
+    if (self.arg2Start === null) {
+        self.readArg1str();
+    }
+
+    var offset = self.arg2Start;
+    self.arg2Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    self.arg3Start = offset + self.arg2Length;
+    self.arg2str = self.frameBuffer.toString('utf8', offset, self.arg3Start);
+
+    return self.arg2str;
+};
+
 LazyFrame.prototype.readArg3 =
 function readArg3() {
     var self = this;
@@ -216,6 +235,28 @@ function readArg3() {
     self.arg3 = self.frameBuffer.slice(offset, end);
 
     return self.arg3;
+};
+
+LazyFrame.prototype.readArg3str =
+function readArg3str() {
+    var self = this;
+
+    if (self.arg3str !== null) {
+        return self.arg3str;
+    }
+
+    if (self.arg3Start === null) {
+        self.readArg2str();
+    }
+
+    var offset = self.arg3Start;
+    self.arg3Length = self.frameBuffer.readUInt16BE(offset, true);
+    offset += 2;
+
+    var end = offset + self.arg3Length;
+    self.arg3str = self.frameBuffer.toString('utf8', offset, end);
+
+    return self.arg3str;
 };
 
 LazyFrame.prototype.skipTransportHeaders =
