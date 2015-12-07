@@ -69,7 +69,7 @@ function handleCallRequest(frame) {
 
     var reqFrameId = frame.readId();
     var reqServiceName = frame.readReqServiceName();
-    var reqArg1 = frame.readArg1().toString('utf8');
+    var reqArg1 = frame.readArg1str();
 
     var endpoints = self.services[reqServiceName];
     if (!endpoints) {
