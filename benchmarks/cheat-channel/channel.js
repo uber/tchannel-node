@@ -166,5 +166,7 @@ function close(cb) {
 
     self.peers.close();
 
-    cb(null);
+    if (cb) {
+        cb(null);
+    }
 };
