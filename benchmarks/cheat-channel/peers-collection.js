@@ -56,13 +56,14 @@ function toFlatArray(object) {
 
 /*eslint complexity: 0, max-params: 0*/
 function RequestOptions(
-    serviceName, host, ttl, headers,
+    serviceName, host, ttl, headers, headersbuf,
     arg1str, arg1buf, arg2str, arg2buf, arg3str, arg3buf
 ) {
     this.serviceName = serviceName;
     this.host = host;
     this.ttl = ttl;
     this.headers = headers;
+    this.headersbuf = headersbuf;
     this.arg1str = arg1str;
     this.arg1buf = arg1buf;
     this.arg2str = arg2str;
@@ -91,6 +92,7 @@ function send(options, onResponse) {
         options.host,
         options.ttl || 100,
         headers,
+        null,
         typeof arg1 === 'string' ? arg1 : null,
         Buffer.isBuffer(arg1) ? arg1 : null,
         typeof arg2 === 'string' ? arg2 : null,
@@ -119,7 +121,8 @@ function sendCallRequest(conn, reqOpts, reqId) {
 
     offset = V2Frames.writeFrameHeader(buffer, offset, 0, 0x03, reqId);
     offset = V2Frames.writeCallRequestBody(
-        buffer, offset, reqOpts.ttl, reqOpts.serviceName, reqOpts.headers,
+        buffer, offset, reqOpts.ttl, reqOpts.serviceName,
+        reqOpts.headers, reqOpts.headersbuf,
         reqOpts.arg1str, reqOpts.arg1buf,
         reqOpts.arg2str, reqOpts.arg2buf,
         reqOpts.arg3str, reqOpts.arg3buf

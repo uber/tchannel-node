@@ -2,13 +2,16 @@
 
 /*eslint max-params: 0, max-statements: 0 */
 var process = require('process');
+var Buffer = require('buffer').Buffer;
 
 module.exports = {
     initFrameSize: initFrameSize,
     writeInitBody: writeInitBody,
     writeCallResponseBody: writeCallResponseBody,
     writeCallRequestBody: writeCallRequestBody,
-    writeFrameHeader: writeFrameHeader
+    writeFrameHeader: writeFrameHeader,
+    writeHeaders: writeHeaders,
+    headersSize: headersSize
 };
 
 function initFrameSize(hostPort) {
@@ -23,6 +26,17 @@ function initFrameSize(hostPort) {
         2 + process.title.length; // processNameValue
 
     return bufferLength;
+}
+
+function headersSize(headers) {
+    var byteLength = 0;
+
+    byteLength += 1;
+    for (var i = 0; i < headers.length; i++) {
+        byteLength += 1 + Buffer.byteLength(headers[i], 'utf8');
+    }
+
+    return byteLength;
 }
 
 function writeHeaders(buffer, offset, headers) {
@@ -73,7 +87,7 @@ function writeInt16String(buffer, offset, str) {
     csumtype:1 (csum:4){0,1} arg1~2 arg2~2 arg3~2
 */
 function writeCallRequestBody(
-    buffer, offset, ttl, serviceName, headers,
+    buffer, offset, ttl, serviceName, headers, headersbuf,
     arg1str, arg1buf, arg2str, arg2buf, arg3str, arg3buf
 ) {
     // flags:1
@@ -96,7 +110,12 @@ function writeCallRequestBody(
     // Buffer.byteLength(str)
 
     // headers
-    offset = writeHeaders(buffer, offset, headers);
+    if (headers) {
+        offset = writeHeaders(buffer, offset, headers);
+    } else if (headersbuf) {
+        headersbuf.copy(buffer, offset, 0, headersbuf.length);
+        offset += headersbuf.length;
+    }
 
     // csumtype:1
     buffer.writeInt8(0x00, offset, true);
