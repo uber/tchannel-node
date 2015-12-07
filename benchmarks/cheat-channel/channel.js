@@ -6,11 +6,41 @@ var console = require('console');
 
 var FrameHandler = require('./frame-handler.js');
 var PeersCollection = require('./peers-collection.js');
+var buildFastClient = require('./fast-client.js');
 
 /*
     var channel = Channel();
 
     channel.listen(port, host, onListening);
+
+    -- make request: fast-mode
+
+    var client = channel.createClient(serviceName, {
+        ping: {
+            ttl: <TTL>,
+            headers: Object<...>
+        },
+        set: {
+            ttl: <TTL>,
+            headers: Object<...>
+        },
+        get: {
+            ttl: <TTL>,
+            headers: Object<...>
+        }
+    });
+    client.sendPing({
+        host: <HostPort>,
+        arg2: String,
+        arg3: String
+    }, cb);
+    client.sendGet({
+        host: <HostPort>,
+        arg2: String,
+        arg3: String
+    }, cb);
+
+     -- make request: slow-mode
 
     channel.send({
         host: <HostPort>,
@@ -104,6 +134,13 @@ function handleFrame(frame) {
     var self = this;
 
     self.handler.handleFrame(frame);
+};
+
+Channel.prototype.createClient =
+function createClient(serviceName, opts) {
+    var self = this;
+
+    return buildFastClient(self, serviceName, opts);
 };
 
 Channel.prototype.send =

@@ -11,6 +11,8 @@ var V2Frames = require('./v2-frames.js');
 
 var EMPTY_BUFFER = new Buffer(0);
 
+PeersCollection.RequestOptions = RequestOptions;
+
 module.exports = PeersCollection;
 
 function PeersCollection(channel) {
@@ -52,20 +54,31 @@ function toFlatArray(object) {
     return flatList;
 }
 
-/*eslint complexity: 0*/
-function RequestOptions(options) {
-    this.serviceName = options.serviceName;
+/*eslint complexity: 0, max-params: 0*/
+function RequestOptions(
+    serviceName, host, ttl, headers, headersbuf,
+    arg1str, arg1buf, arg2str, arg2buf, arg3str, arg3buf
+) {
+    this.serviceName = serviceName;
+    this.host = host;
+    this.ttl = ttl;
+    this.headers = headers;
+    this.headersbuf = headersbuf;
+    this.arg1str = arg1str;
+    this.arg1buf = arg1buf;
+    this.arg2str = arg2str;
+    this.arg2buf = arg2buf;
+    this.arg3str = arg3str;
+    this.arg3buf = arg3buf;
+}
+
+PeersCollection.prototype.send =
+function send(options, onResponse) {
+    var self = this;
 
     var arg1 = options.arg1;
     var arg2 = options.arg2 || EMPTY_BUFFER;
     var arg3 = options.arg3 || EMPTY_BUFFER;
-
-    var arg1str = typeof arg1 === 'string' ? arg1 : null;
-    var arg1buf = Buffer.isBuffer(arg1) ? arg1 : null;
-    this.arg1str = arg1str;
-    this.arg1buf = arg1buf;
-
-    this.ttl = options.ttl || 100;
 
     var headers = options.headers;
     if (!headers) {
@@ -73,35 +86,43 @@ function RequestOptions(options) {
     } else if (!Array.isArray(headers)) {
         headers = toFlatArray(headers);
     }
-    this.headers = headers;
 
-    this.arg2str = typeof arg2 === 'string' ? arg2 : null;
-    this.arg2buf = Buffer.isBuffer(arg2) ? arg2 : null;
+    var reqOpts = new RequestOptions(
+        options.serviceName,
+        options.host,
+        options.ttl || 100,
+        headers,
+        null,
+        typeof arg1 === 'string' ? arg1 : null,
+        Buffer.isBuffer(arg1) ? arg1 : null,
+        typeof arg2 === 'string' ? arg2 : null,
+        Buffer.isBuffer(arg2) ? arg2 : null,
+        typeof arg3 === 'string' ? arg3 : null,
+        Buffer.isBuffer(arg3) ? arg3 : null
+    );
+    self._send(reqOpts, onResponse);
+};
 
-    this.arg3str = typeof arg3 === 'string' ? arg3 : null;
-    this.arg3buf = Buffer.isBuffer(arg3) ? arg3 : null;
-}
-
-PeersCollection.prototype.send =
-function send(options, onResponse) {
+PeersCollection.prototype._send =
+function _send(reqOpts, onResponse) {
     var self = this;
 
-    var conn = self.ensureConnection(options.host);
-    var reqOpts = new RequestOptions(options);
-    var reqId = self.sendCallRequest(conn, reqOpts);
+    var conn = self.ensureConnection(reqOpts.host);
+    var reqId = conn.allocateId();
+    self.sendCallRequest(conn, reqOpts, reqId);
 
     conn.addPendingOutReq(reqId, onResponse, reqOpts.ttl);
 };
 
 PeersCollection.prototype.sendCallRequest =
-function sendCallRequest(conn, reqOpts) {
+function sendCallRequest(conn, reqOpts, reqId) {
     var buffer = conn.globalWriteBuffer;
     var offset = 0;
 
-    var reqId = conn.allocateId();
     offset = V2Frames.writeFrameHeader(buffer, offset, 0, 0x03, reqId);
     offset = V2Frames.writeCallRequestBody(
-        buffer, offset, reqOpts.ttl, reqOpts.serviceName, reqOpts.headers,
+        buffer, offset, reqOpts.ttl, reqOpts.serviceName,
+        reqOpts.headers, reqOpts.headersbuf,
         reqOpts.arg1str, reqOpts.arg1buf,
         reqOpts.arg2str, reqOpts.arg2buf,
         reqOpts.arg3str, reqOpts.arg3buf
@@ -110,8 +131,6 @@ function sendCallRequest(conn, reqOpts) {
     buffer.writeUInt16BE(offset, 0, true);
 
     conn.writeFrameCopy(buffer, offset);
-
-    return reqId;
 };
 
 PeersCollection.prototype.ensureConnection =
