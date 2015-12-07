@@ -111,6 +111,12 @@ function markAsCallResponse() {
     self.tHeadersStart = CRES_HEADER_OFFSET;
 };
 
+function readString(buffer, offset, end) {
+    return buffer.parent.utf8Slice(
+        buffer.offset + offset, buffer.offset + end
+    );
+}
+
 LazyFrame.prototype.readReqServiceName =
 function readReqServiceName() {
     var self = this;
@@ -122,8 +128,9 @@ function readReqServiceName() {
     var strLength = self.frameBuffer.readUInt8(CREQ_SERVICE_OFFSET, true);
     self.tHeadersStart = CREQ_SERVICE_OFFSET + 1 + strLength;
 
-    self.reqServiceName = self.frameBuffer
-        .toString('utf8', CREQ_SERVICE_OFFSET + 1, self.tHeadersStart);
+    self.reqServiceName = readString(
+        self.frameBuffer, CREQ_SERVICE_OFFSET + 1, self.tHeadersStart
+    );
     return self.reqServiceName;
 };
 
@@ -144,7 +151,9 @@ function readArg1str() {
     offset += 2;
 
     self.arg2Start = offset + self.arg1Length;
-    self.arg1str = self.frameBuffer.toString('utf8', offset, self.arg2Start);
+    self.arg1str = readString(
+        self.frameBuffer, offset, self.arg2Start
+    );
 
     return self.arg1str;
 };
@@ -250,7 +259,9 @@ function readArg2str() {
     offset += 2;
 
     self.arg3Start = offset + self.arg2Length;
-    self.arg2str = self.frameBuffer.toString('utf8', offset, self.arg3Start);
+    self.arg2str = readString(
+        self.frameBuffer, offset, self.arg3Start
+    );
 
     return self.arg2str;
 };
@@ -294,7 +305,7 @@ function readArg3str() {
     offset += 2;
 
     var end = offset + self.arg3Length;
-    self.arg3str = self.frameBuffer.toString('utf8', offset, end);
+    self.arg3str = readString(self.frameBuffer, offset, end);
 
     return self.arg3str;
 };
@@ -316,7 +327,7 @@ function readOnlyArg3str() {
     offset += 2;
 
     var end = offset + self.arg3Length;
-    self.arg3str = self.frameBuffer.toString('utf8', offset, end);
+    self.arg3str = readString(self.frameBuffer, offset, end);
 
     return self.arg3str;
 };
@@ -380,15 +391,17 @@ function readInitReqHeaders() {
         var keyLen = self.frameBuffer.readUInt16BE(offset, true);
         offset += 2;
 
-        var headerKey = self.frameBuffer
-            .toString('utf8', offset, offset + keyLen);
+        var headerKey = readString(
+            self.frameBuffer, offset, offset + keyLen
+        );
         offset += keyLen;
 
         var valueLen = self.frameBuffer.readUInt16BE(offset, true);
         offset += 2;
 
-        var headerValue = self.frameBuffer
-            .toString('utf8', offset, offset + valueLen);
+        var headerValue = readString(
+            self.frameBuffer, offset, offset + valueLen
+        );
         offset += valueLen;
 
         self.initReqHeaders.push(headerKey);
