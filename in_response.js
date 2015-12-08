@@ -39,6 +39,7 @@ function TChannelInResponse(id, options) {
     self.logger = options.logger;
     self.random = options.random;
     self.timers = options.timers;
+    self.flags = options.flags;
 
     self.state = States.Initial;
     self.remoteAddr = null;

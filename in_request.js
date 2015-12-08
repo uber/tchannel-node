@@ -65,6 +65,7 @@ function TChannelInRequest(id, options) {
     self.res = null;
     self.err = null;
     self.circuit = null;
+    self.flags = options.flags;
 
     if (options.tracer) {
         self.setupTracing(options);
