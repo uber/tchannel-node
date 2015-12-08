@@ -57,6 +57,9 @@ function _sendCallRequest(args, isLast) {
     if (!isLast) {
         flags |= CallFlags.Fragment;
     }
+    if (self.streamed) {
+        flags |= CallFlags.Streaming;
+    }
 
     if (args && args[0] && args[0].length > v2.MaxArg1Size) {
         err = errors.Arg1OverLengthLimit({

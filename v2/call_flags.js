@@ -21,5 +21,6 @@
 'use strict';
 
 module.exports = {
-    Fragment: 0x01
+    Fragment: 0x01,
+    Streaming: 0x02
 };

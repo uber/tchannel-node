@@ -57,7 +57,14 @@ function _sendCallResponse(args, isLast) {
         }));
         return;
     }
-    if (!isLast) flags |= CallFlags.Fragment;
+
+    if (!isLast) {
+        flags |= CallFlags.Fragment;
+    }
+    if (self.streamed) {
+        flags |= CallFlags.Streaming;
+    }
+
     self.handler.sendCallResponseFrame(self, flags, args);
 };
 
