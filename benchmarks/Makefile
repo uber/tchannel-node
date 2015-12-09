@@ -6,9 +6,14 @@ torch-server-bench:
 	node index.js --cheatServer --torch server --torchFile ./flame.raw --torchTime 15 --torchDelay 20000 \
 		-- --skipPing -r 100000 -s 4096,16384 -m 3 -p 20000 --cheatClient
 
+# take_relay:
+# 	node index.js --relay --cheatRelay --cheatServer --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
+# 		-- --relay -m 3 --skipPing -s 4096 -r 100000 -p 5000,10000,20000 --cheatClient
+# 	ln -sf $$(git rev-parse --short HEAD).json $$(basename $$(git symbolic-ref HEAD)).json
+
 torch-relay-bench:
-	node index.js --relay --torch relay --torchFile ./flame.raw --torchTime 10 \
-		-- --relay --skipPing -s 4096,16384 -p 1000,1500
+	node index.js --cheatServer --relay --cheatRelay --torch relay --torchFile ./flame.raw --torchTime 15 --torchDelay 20000 \
+		-- --relay --skipPing -r 100000 -s 4096,16384 -m 3 -p 20000 --cheatClient
 
 flame-torch-relay-bench:
 	node index.js --relay --torch relay --torchFile ./flame.html --torchTime 10 --torchType flame \
