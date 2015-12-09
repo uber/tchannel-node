@@ -73,6 +73,8 @@ function handleCallRequest(frame) {
 
 RelayHandler.prototype.handleCallResponse =
 function handleCallResponse(frame) {
+    var self = this;
+
     // VERY IMPORTANT LOL
     frame.markAsCallResponse();
 
