@@ -46,9 +46,14 @@ take_cheat_prod:
 	ln -sf cheat-prod-$$(git rev-parse --short HEAD).json cheat-prod-$$(basename $$(git symbolic-ref HEAD)).json
 
 take_cheat_relay:
-	node index.js --cheatServer --relay --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
+	node index.js --cheatServer --cheatRelay --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
 		-- --relay --skipPing -m 3 -s 4096,16384 -p 1000,10000,20000 --cheatClient
 	ln -sf relay-$$(git rev-parse --short HEAD).json relay-$$(basename $$(git symbolic-ref HEAD)).json
+
+take_cheat_prod_relay:
+	node index.js --relay --cheatRelay --cheatServer --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
+		-- --relay -m 2 -s 128,4096 -r 200000 -p 50000,100000 --cheatClient
+	ln -sf $$(git rev-parse --short HEAD).json $$(basename $$(git symbolic-ref HEAD)).json
 
 take_relay:
 	node index.js --relay --cheatRelay --cheatServer --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
