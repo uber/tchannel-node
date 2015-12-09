@@ -11,6 +11,7 @@ function RelayHandler(channel, destinations) {
 
     this.channel = channel;
     this.peers = new PeersCollection(channel);
+    this.responseCount = 0;
 
     for (var i = 0; i < destinations.length; i++) {
         this.peers.createConnection(destinations[i]);
@@ -75,6 +76,7 @@ function handleCallResponse(frame) {
     // VERY IMPORTANT LOL
     frame.markAsCallResponse();
 
+    self.responseCount++;
     var frameId = frame.readId();
 
     var op = frame.sourceConnection.popPendingOutReq(frameId);
