@@ -32,9 +32,9 @@ BenchServer.prototype.registerEndpoints =
 function registerEndpoints() {
     var self = this;
 
-    self.channel.registerRaw('benchmark', 'ping', onPing);
-    self.channel.registerRaw('benchmark', 'set', onSet);
-    self.channel.registerRaw('benchmark', 'get', onGet);
+    self.channel.handler.registerRaw('benchmark', 'ping', onPing);
+    self.channel.handler.registerRaw('benchmark', 'set', onSet);
+    self.channel.handler.registerRaw('benchmark', 'get', onGet);
 
     function onGet(frame, res) {
         var key = frame.readArg2str();

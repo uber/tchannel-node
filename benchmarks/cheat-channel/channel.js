@@ -7,6 +7,8 @@ var console = require('console');
 var FrameHandler = require('./frame-handler.js');
 var PeersCollection = require('./peers-collection.js');
 var buildFastClient = require('./fast-client.js');
+var TChannelConnection = require('./connection.js');
+var TChannelSender = require('./sender.js');
 
 /*
     var channel = Channel();
@@ -65,6 +67,7 @@ function Channel() {
     this.server = new TCP_WRAP();
     this.handler = new FrameHandler();
     this.peers = new PeersCollection(this);
+    this.sender = new TChannelSender(this);
 
     this.hostPort = null;
 }
@@ -98,20 +101,6 @@ function listen(port, host, onListen) {
     }
 };
 
-Channel.prototype.register =
-function register(serviceName, endpoint, fn) {
-    var self = this;
-
-    self.handler.register(serviceName, endpoint, fn);
-};
-
-Channel.prototype.registerRaw =
-function registerRaw(serviceName, endpoint, fn) {
-    var self = this;
-
-    self.handler.registerRaw(serviceName, endpoint, fn);
-};
-
 function onConnection(socket) {
     if (!socket) {
         console.error('could not accept / incoming connect');
@@ -122,25 +111,28 @@ function onConnection(socket) {
     naiveRelay.onSocket(socket, 'in');
 }
 
+Channel.prototype.allocateConnection =
+function allocateConnection(remoteName) {
+    var self = this;
+
+    var socket = new TCP_WRAP();
+    return self.onSocket(socket, 'out', remoteName);
+};
+
 Channel.prototype.onSocket =
 function onSocket(socket, direction, hostPort) {
     var self = this;
 
-    return self.peers.onSocket(socket, direction, hostPort);
-};
+    var conn = new TChannelConnection(socket, self, direction);
+    if (direction === 'in') {
+        conn.accept();
+    } else if (direction === 'out') {
+        conn.connect(hostPort);
+    } else {
+        console.error('invalid direction', direction);
+    }
 
-Channel.prototype.addConnection =
-function addConnection(conn) {
-    var self = this;
-
-    self.peers.addConnection(conn);
-};
-
-Channel.prototype.handleFrame =
-function handleFrame(frame) {
-    var self = this;
-
-    self.handler.handleFrame(frame);
+    return conn;
 };
 
 Channel.prototype.createClient =
@@ -154,7 +146,7 @@ Channel.prototype.send =
 function send(options, onResponse) {
     var self = this;
 
-    self.peers.send(options, onResponse);
+    self.sender.send(options, onResponse);
 };
 
 Channel.prototype.close =

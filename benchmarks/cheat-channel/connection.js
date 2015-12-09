@@ -23,10 +23,6 @@ function allocPool() {
 module.exports = TChannelConnection;
 
 function TChannelConnection(socket, channel, direction) {
-    if (!(this instanceof TChannelConnection)) {
-        return new TChannelConnection(socket, channel, direction);
-    }
-
     this.socket = socket;
     this.channel = channel;
     this.socket.owner = this;
@@ -153,6 +149,8 @@ TChannelConnection.prototype.connect =
 function connect(hostPort) {
     var self = this;
 
+    self.remoteName = hostPort;
+
     var parts = hostPort.split(':');
     var connectReq = self.socket.connect(parts[0], parts[1]);
     if (connectReq === null) {
@@ -229,7 +227,7 @@ function onFrameBuffer(frameBuffer, offset, length) {
     var self = this;
 
     var frame = LazyFrame.alloc(self, frameBuffer, offset, length);
-    self.channel.handleFrame(frame);
+    self.channel.handler.handleFrame(frame);
 };
 
 TChannelConnection.prototype.allocateId =
@@ -322,8 +320,7 @@ function handleInitRequest(reqFrame) {
     var index = initHeaders.indexOf('host_port');
     self.remoteName = initHeaders[index + 1];
 
-    self.channel.addConnection(self);
-
+    self.channel.peers.addConnection(self);
     self.sendInitResponse(reqFrame);
 };
 

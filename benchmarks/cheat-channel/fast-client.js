@@ -2,7 +2,7 @@
 
 var Buffer = require('buffer').Buffer;
 
-var RequestOptions = require('./peers-collection.js').RequestOptions;
+var RequestOptions = require('./sender.js').RequestOptions;
 var indirectEval = require('./_lib-indirect-eval.js');
 var V2Frames = require('./v2-frames.js');
 
@@ -108,7 +108,7 @@ EndpointSender.prototype.send = function send(options, onResponse) {
     var arg2 = options.arg2 || EMPTY_BUFFER;
     var arg3 = options.arg3 || EMPTY_BUFFER;
 
-    self.channel.peers._sendCache(
+    self.channel.sender._sendCache(
         this.frameBufferCache,
         this.csumstart,
         options.host,
