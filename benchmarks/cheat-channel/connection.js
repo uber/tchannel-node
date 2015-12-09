@@ -103,17 +103,17 @@ function pop(id) {
     return op;
 };
 
-function PendingOutOperation(onResponse, ttl) {
+function PendingOutOperation(data, ttl) {
     this.timedOut = false;
-    this.onResponse = onResponse;
+    this.data = data;
     this.timeout = ttl;
 }
 
 TChannelConnection.prototype.addPendingOutReq =
-function addPendingOutReq(frameId, onResponse, ttl) {
+function addPendingOutReq(frameId, data, ttl) {
     var self = this;
 
-    var op = new PendingOutOperation(onResponse, ttl);
+    var op = new PendingOutOperation(data, ttl);
     self.outRequestMapping.push(frameId, op);
 };
 
@@ -226,7 +226,7 @@ TChannelConnection.prototype.onFrameBuffer =
 function onFrameBuffer(frameBuffer, offset, length) {
     var self = this;
 
-    var frame = LazyFrame.alloc(self, frameBuffer, offset, length);
+    var frame = new LazyFrame(self, frameBuffer, offset, length);
     self.channel.handler.handleFrame(frame);
 };
 

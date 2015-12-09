@@ -15,22 +15,7 @@ var CREQ_SERVICE_OFFSET = 46;
 
 var IREQ_HEADERS_OFFSET = 18;
 
-/* TODO:
-        optimize away headers with RawRegister()
-*/
-LazyFrame.alloc = allocLazyFrame;
-
 module.exports = LazyFrame;
-
-function allocLazyFrame(sourceConnection, frameBuffer, offset, length) {
-    var frame;
-
-    frame = new LazyFrame(
-        sourceConnection, frameBuffer, offset, length
-    );
-
-    return frame;
-}
 
 function LazyFrame(sourceConnection, frameBuffer, offset, length) {
     this.sourceConnection = sourceConnection;

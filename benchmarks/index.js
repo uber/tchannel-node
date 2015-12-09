@@ -36,6 +36,7 @@ var dgram = require('dgram');
 
 var server = path.join(__dirname, 'bench_server.js');
 var cheatServer = path.join(__dirname, 'cheat-channel', 'bench_server.js');
+var cheatRelay = path.join(__dirname, 'cheat-channel', 'relay_server.js');
 var relay = path.join(__dirname, 'relay_server.js');
 var trace = path.join(__dirname, 'trace_server.js');
 var bench = path.join(__dirname, 'multi_bench.js');
@@ -231,6 +232,10 @@ BenchmarkRunner.prototype.startRelay =
 function startRelay(type) {
     var self = this;
 
+    if (self.opts.cheatRelay) {
+        return self.startCheatRelay();
+    }
+
     // type = 'bench-relay'
     var relayProc = self.run(relay, [
         '--benchPort', String(self.ports.serverPort),
@@ -245,6 +250,20 @@ function startRelay(type) {
     self.relayProcs.push(relayProc);
     relayProc.stdout.pipe(process.stderr);
     relayProc.stderr.pipe(process.stderr);
+};
+
+BenchmarkRunner.prototype.startCheatRelay =
+function startCheatRelay() {
+    var self = this;
+
+    var cheatRelayProc = self.run(cheatRelay, [
+        String(self.ports.relayServerPort),
+        '127.0.0.1',
+        '127.0.0.1:' + self.ports.serverPort
+    ]);
+    self.relayProcs.push(cheatRelayProc);
+    cheatRelayProc.stdout.pipe(process.stderr);
+    cheatRelayProc.stderr.pipe(process.stderr);
 };
 
 BenchmarkRunner.prototype.openFileStream =

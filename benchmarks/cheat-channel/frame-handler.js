@@ -133,7 +133,7 @@ function handleCallResponse(frame) {
         return;
     }
 
-    var onResponse = outOp.onResponse;
+    var onResponse = outOp.data;
     onResponse(null, frame);
     // LazyFrame.free(frame);
 };
