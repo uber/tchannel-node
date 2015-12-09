@@ -12,6 +12,7 @@ function PeersCollection(channel) {
     this.connections = Object.create(null);
     this.flatConnections = [];
     this.remoteNames = [];
+    this.roundRobinIndex = 0;
 }
 
 PeersCollection.prototype.ensureConnection =
@@ -29,7 +30,13 @@ function ensureConnection(remoteName) {
 
 PeersCollection.prototype.roundRobinConn =
 function roundRobinConn() {
+    var conn = this.flatConnections[this.roundRobinIndex];
+    this.roundRobinIndex++;
+    if (this.roundRobinIndex === this.flatConnections.length) {
+        this.roundRobinIndex = 0;
+    }
 
+    return conn;
 };
 
 PeersCollection.prototype.createConnection =

@@ -2,7 +2,6 @@
 
 var Buffer = require('buffer').Buffer;
 
-var RequestOptions = require('./sender.js').RequestOptions;
 var indirectEval = require('./_lib-indirect-eval.js');
 var V2Frames = require('./v2-frames.js');
 

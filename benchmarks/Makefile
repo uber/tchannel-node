@@ -46,9 +46,14 @@ take_cheat_relay:
 	ln -sf relay-$$(git rev-parse --short HEAD).json relay-$$(basename $$(git symbolic-ref HEAD)).json
 
 take_relay:
-	node index.js --relay --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
-		-- --relay --skipPing -m 3 -s 4096,16384 -p 1000,10000,20000
-	ln -sf relay-$$(git rev-parse --short HEAD).json relay-$$(basename $$(git symbolic-ref HEAD)).json
+	node index.js --relay --cheatRelay --cheatServer --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
+		-- --relay -m 3 --skipPing -s 4096 -r 100000 -p 5000,10000,20000 --cheatClient
+	ln -sf $$(git rev-parse --short HEAD).json $$(basename $$(git symbolic-ref HEAD)).json
+
+# take_relay:
+# 	node index.js --relay --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
+# 		-- --relay --skipPing -m 3 -s 4096,16384 -p 1000,10000,20000
+# 	ln -sf relay-$$(git rev-parse --short HEAD).json relay-$$(basename $$(git symbolic-ref HEAD)).json
 
 take_trace:
 	# Cannot take --trace flag to multi_bench due to timeout+OOM.
