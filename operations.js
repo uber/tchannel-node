@@ -506,7 +506,8 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
 
         var id = opKeys[i];
         var op = ops[id];
-        if (op === undefined) {
+
+        if (op === undefined && (id in ops)) {
             self.logger.warn('unexpected undefined operation', {
                 direction: direction,
                 id: id
