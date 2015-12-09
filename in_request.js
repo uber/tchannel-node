@@ -27,6 +27,7 @@ var Buffer = require('buffer').Buffer;
 
 var errors = require('./errors');
 var States = require('./reqres_states');
+var CallFlags = require('./v2/call_flags.js');
 
 var emptyBuffer = Buffer(0);
 
@@ -170,7 +171,17 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
     var self = this;
     var timeoutError;
 
-    if (!self.res || self.res.state === States.Initial) {
+    var isStreamed = self.flags & CallFlags.Streaming;
+    var shouldTimeout = !self.res || (
+        !isStreamed ?
+            (self.res.state !== States.Done) :
+            (
+                self.res.state !== States.Done &&
+                self.res.state !== States.Streaming
+            )
+    );
+
+    if (shouldTimeout) {
         // TODO: send an error frame response?
         // TODO: emit error on self.res instead / in addition to?
         // TODO: should cancel any pending handler
@@ -185,7 +196,9 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
     }
 
     function deferInReqTimeoutErrorEmit() {
-        if (!self.res || self.res.state === States.Initial) {
+        if (!self.res || self.res.state === States.Initial ||
+            (!isStreamed && self.res.state === States.Streaming)
+        ) {
             self.timeoutEvent.emit(self, timeoutError);
             self.emitError(timeoutError);
         }
