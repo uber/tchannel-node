@@ -31,15 +31,21 @@ function main(argv) {
     var port = argv[0];
     var host = argv[1];
     var relays = argv[2].split(',');
+    var printRPS = (argv[3] === '1');
 
     var channel = new Channel();
-    channel.listen(port, host, onListen);
+    channel.listen(port, host);
 
     channel.handler = new RelayHandler(channel, relays);
 
-    function onListen() {
-        for (var i = 0; i < relays.length; i++) {
-            channel.peers.ensureConnection(relays[i]);
-        }
+    setTimeout(printRPS, 1000);
+
+    function printRPS() {
+        var rate = channel.handler.responseCount;
+        channel.handler.responseCount = 0;
+
+        console.log('RPS[node_relay]:', rate);
+
+        setTimeout(printRPS, 1000);
     }
 }
