@@ -512,7 +512,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
                 direction: direction,
                 id: id
             });
-        } else if (op.timedOut) {
+        } else if (op && op.timedOut) {
             self.logger.warn('lingering timed-out operation', {
                 direction: direction,
                 id: id
@@ -525,7 +525,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
                 self.popOutReq(id);
                 pendingDirty = true;
             }
-        } else if (op.isTombstone) {
+        } else if (op && op.isTombstone) {
             var heap = self.connection.channel.timeHeap;
             var expireTime = op.time + op.timeout;
 
