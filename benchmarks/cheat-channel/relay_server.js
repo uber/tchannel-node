@@ -13,6 +13,7 @@
 
 var assert = require('assert');
 var process = require('process');
+var setTimeout = require('timers').setTimeout;
 
 var Channel = require('./channel.js');
 var RelayHandler = require('./relay-handler.js');
@@ -31,14 +32,16 @@ function main(argv) {
     var port = argv[0];
     var host = argv[1];
     var relays = argv[2].split(',');
-    var printRPS = (argv[3] === '1');
+    var printRPSEnabled = (argv[3] === '1');
 
     var channel = new Channel();
     channel.listen(port, host);
 
     channel.handler = new RelayHandler(channel, relays);
 
-    setTimeout(printRPS, 1000);
+    if (printRPSEnabled) {
+        setTimeout(printRPS, 1000);
+    }
 
     function printRPS() {
         var rate = channel.handler.responseCount;
