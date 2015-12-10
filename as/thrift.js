@@ -167,6 +167,11 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
         reqOptions.type !== 'tchannel.outgoing-request',
         'invalid reqOptions to TChannelAsThrift.request');
 
+    var shouldApplicationRetry = reqOptions.shouldApplicationRetry;
+    if (shouldApplicationRetry) {
+        reqOptions.shouldApplicationRetry = wrappedShouldRetry;
+    }
+
     var req = new TChannelThriftRequest({
         channel: self.channel,
         reqOptions: reqOptions,
@@ -174,6 +179,18 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
     });
 
     return req;
+
+    function wrappedShouldRetry(req, res, retry, done) {
+        self.parseException(req, res, onException);
+
+        function onException(err, info) {
+            if (err) {
+                return done(err);
+            }
+
+            shouldApplicationRetry(req, res, info, retry, done);
+        }
+    }
 };
 
 TChannelAsThrift.prototype.waitForIdentified =

@@ -130,7 +130,7 @@ allocCluster.test('send and receive a notOk', {
     });
 });
 
-allocCluster.test('as=thrift supports shouldApplicationRetry', {
+allocCluster.test('as=thrift send supports shouldApplicationRetry', {
     numPeers: 3
 }, function t(cluster, assert) {
     var tchannelAsThrift = makeTChannelThriftServer(cluster, {
@@ -176,6 +176,44 @@ allocCluster.test('as=thrift supports shouldApplicationRetry', {
 
             done();
         }
+    }
+});
+
+allocCluster.test('as=thrift request supports shouldApplicationRetry', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    var tchannelAsThrift = makeTChannelThriftServer(cluster, {
+        notOkResponse: true,
+        succeedSecondTime: true,
+        servers: 2
+    });
+
+    tchannelAsThrift.request({
+        serviceName: 'server',
+        hasNoParent: true,
+        shouldApplicationRetry: shouldRetry
+    }).send('Chamber::echo', null, {
+        value: 10
+    }, function onResponse(err, res) {
+        assert.ifError(err);
+
+        assert.ok(res.ok);
+        assert.equal(res.body, 10);
+        assert.equal(res.headers.as, 'thrift');
+
+        assert.end();
+    });
+
+    function shouldRetry(req, res, info, retry, done) {
+        assert.equal(info.exception.value, 10);
+        assert.equal(info.exception.message, 'No echo');
+        assert.equal(info.typeName, 'noEcho');
+
+        if (info.typeName === 'noEcho') {
+            return retry();
+        }
+
+        done();
     }
 });
 
