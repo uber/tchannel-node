@@ -130,6 +130,93 @@ allocCluster.test('send and receive a notOk', {
     });
 });
 
+allocCluster.test('as=thrift send supports shouldApplicationRetry', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    var tchannelAsThrift = makeTChannelThriftServer(cluster, {
+        notOkResponse: true,
+        succeedSecondTime: true,
+        servers: 2
+    });
+
+    var client = cluster.channels[2].subChannels.server;
+
+    tchannelAsThrift.send(client.request({
+        serviceName: 'server',
+        hasNoParent: true,
+        shouldApplicationRetry: shouldRetry
+    }), 'Chamber::echo', null, {
+        value: 10
+    }, function onResponse(err, res) {
+        assert.ifError(err);
+
+        assert.ok(res.ok);
+        assert.equal(res.body, 10);
+        assert.equal(res.headers.as, 'thrift');
+
+        assert.end();
+    });
+
+    function shouldRetry(req, res, retry, done) {
+        tchannelAsThrift.parseException(req, res, onException);
+
+        function onException(err, info) {
+            // Failed to parse thrift response
+            if (err) {
+                return done(err);
+            }
+
+            assert.equal(info.body.value, 10);
+            assert.equal(info.body.message, 'No echo');
+            assert.equal(info.typeName, 'noEcho');
+
+            if (info.typeName === 'noEcho') {
+                return retry();
+            }
+
+            done();
+        }
+    }
+});
+
+allocCluster.test('as=thrift request supports shouldApplicationRetry', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    var tchannelAsThrift = makeTChannelThriftServer(cluster, {
+        notOkResponse: true,
+        succeedSecondTime: true,
+        servers: 2
+    });
+
+    tchannelAsThrift.request({
+        serviceName: 'server',
+        hasNoParent: true,
+        shouldThriftRetry: shouldRetry
+    }).send('Chamber::echo', null, {
+        value: 10
+    }, function onResponse(err, res) {
+        assert.ifError(err);
+
+        assert.ok(res.ok);
+        assert.equal(res.body, 10);
+        assert.equal(res.headers.as, 'thrift');
+
+        assert.end();
+    });
+
+    function shouldRetry(res/*, rawReq, rawRes*/) {
+        assert.equal(res.body.value, 10);
+        assert.equal(res.body.message, 'No echo');
+        assert.equal(res.typeName, 'noEcho');
+
+        if (res.typeName === 'noEcho') {
+            return true;
+        }
+
+        return false;
+    }
+});
+
 allocCluster.test('send and receive a typed notOk', {
     numPeers: 2
 }, function t(cluster, assert) {
@@ -448,8 +535,8 @@ allocCluster.test('using register() without channel', {
     }
 });
 
-function makeTChannelThriftServer(cluster, opts) {
-    var server = cluster.channels[0].makeSubChannel({
+function makeActualServer(channel, opts) {
+    var server = channel.makeSubChannel({
         serviceName: 'server'
     });
     var NoEchoTypedError = TypedError({
@@ -458,21 +545,11 @@ function makeTChannelThriftServer(cluster, opts) {
         value: null
     });
 
-    cluster.channels[1].makeSubChannel({
-        serviceName: 'server',
-        peers: [
-            cluster.channels[0].hostPort
-        ],
-        requestDefaults: {
-            headers: {
-                cn: 'wat'
-            }
-        }
-    });
-
     var options = {
         isOptions: true
     };
+
+    var succeedSecondTime = opts.succeedSecondTime;
 
     var fn = opts.okResponse ? okHandler :
         opts.notOkResponse ? notOkHandler :
@@ -480,17 +557,14 @@ function makeTChannelThriftServer(cluster, opts) {
         opts.networkFailureResponse ? networkFailureHandler :
             networkFailureHandler;
 
-    var tchannelAsThrift = cluster.channels[0].TChannelAsThrift({
+    var tchannelAsThrift = channel.TChannelAsThrift({
         entryPoint: path.join(__dirname, 'anechoic-chamber.thrift'),
-        logParseFailures: false,
-        channel: cluster.channels[1].subChannels.server
+        logParseFailures: false
     });
     tchannelAsThrift.register(server, 'Chamber::echo', options, fn);
     tchannelAsThrift.register(server, 'Chamber::echo_big', options, echoBig);
 
-    return tchannelAsThrift;
-
-    function echoBig(opts, req, head, body, cb) {
+    function echoBig(ctx, req, head, body, cb) {
         return cb(null, {
             ok: true,
             head: null,
@@ -498,7 +572,7 @@ function makeTChannelThriftServer(cluster, opts) {
         });
     }
 
-    function okHandler(opts, req, head, body, cb) {
+    function okHandler(ctx, req, head, body, cb) {
         return cb(null, {
             ok: true,
             head: head,
@@ -506,7 +580,16 @@ function makeTChannelThriftServer(cluster, opts) {
         });
     }
 
-    function notOkHandler(opts, req, head, body, cb) {
+    function notOkHandler(ctx, req, head, body, cb) {
+        opts.count++;
+        if (opts.count === 2 && succeedSecondTime) {
+            return cb(null, {
+                ok: true,
+                head: null,
+                body: body.value
+            });
+        }
+
         return cb(null, {
             ok: false,
             body: NoEchoError(body.value),
@@ -514,7 +597,7 @@ function makeTChannelThriftServer(cluster, opts) {
         });
     }
 
-    function notOkTypedHandler(opts, req, head, body, cb) {
+    function notOkTypedHandler(ctx, req, head, body, cb) {
         cb(null, {
             ok: false,
             body: NoEchoTypedError({
@@ -524,7 +607,7 @@ function makeTChannelThriftServer(cluster, opts) {
         });
     }
 
-    function networkFailureHandler(opts, req, head, body, cb) {
+    function networkFailureHandler(ctx, req, head, body, cb) {
         var networkError = new Error('network failure');
 
         cb(networkError);
@@ -535,4 +618,35 @@ function makeTChannelThriftServer(cluster, opts) {
         err.value = value;
         return err;
     }
+}
+
+function makeTChannelThriftServer(cluster, opts) {
+    var servers = opts.servers || 1;
+    opts.count = opts.count || 0;
+
+    var clientIndex = servers;
+    var peers = [];
+
+    for (var i = 0; i < servers; i++) {
+        makeActualServer(cluster.channels[i], opts);
+        peers.push(cluster.channels[i].hostPort);
+    }
+
+    cluster.channels[clientIndex].makeSubChannel({
+        serviceName: 'server',
+        peers: peers,
+        requestDefaults: {
+            headers: {
+                cn: 'wat'
+            }
+        }
+    });
+
+    var tchannelAsThrift = cluster.channels[clientIndex].TChannelAsThrift({
+        entryPoint: path.join(__dirname, 'anechoic-chamber.thrift'),
+        logParseFailures: false,
+        channel: cluster.channels[clientIndex].subChannels.server
+    });
+
+    return tchannelAsThrift;
 }

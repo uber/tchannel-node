@@ -100,6 +100,38 @@ function registerHealthAsync() {
     }
 };
 
+TChannelAsThrift.prototype.parseException =
+function parseException(request, response, cb) {
+    var self = this;
+
+    response.withArg23(onArgs);
+
+    function onArgs(err, arg2, arg3) {
+        if (err) {
+            return cb(err);
+        }
+
+        parseArgs(arg2, arg3);
+    }
+
+    function parseArgs(arg2, arg3) {
+        var parseResult = self._parse({
+            head: arg2,
+            body: arg3,
+            ok: false,
+            endpoint: request.endpoint,
+            direction: 'in.response'
+        });
+        if (parseResult.err) {
+            return cb(parseResult.err);
+        }
+
+        var v = parseResult.value;
+        var resp = new TChannelThriftResponse(response, v);
+        cb(null, resp);
+    }
+};
+
 TChannelAsThrift.prototype.registerHealthSync =
 function registerHealthSync() {
     var self = this;
@@ -129,6 +161,11 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
         reqOptions.type !== 'tchannel.outgoing-request',
         'invalid reqOptions to TChannelAsThrift.request');
 
+    var shouldApplicationRetry = reqOptions.shouldThriftRetry;
+    if (shouldApplicationRetry) {
+        reqOptions.shouldApplicationRetry = wrappedShouldRetry;
+    }
+
     var req = new TChannelThriftRequest({
         channel: self.channel,
         reqOptions: reqOptions,
@@ -136,6 +173,23 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
     });
 
     return req;
+
+    function wrappedShouldRetry(req2, res, retry, done) {
+        self.parseException(req2, res, onException);
+
+        function onException(err, info) {
+            if (err) {
+                return done(err);
+            }
+
+            var bool = shouldApplicationRetry(info, req, res);
+            if (bool) {
+                retry();
+            } else {
+                done();
+            }
+        }
+    }
 };
 
 TChannelAsThrift.prototype.waitForIdentified =
@@ -310,25 +364,30 @@ TChannelAsThrift.prototype._parse = function parse(opts) {
     var returnName = opts.endpoint + '_result';
     var resultType = spec.getType(returnName);
 
-    var headRes = bufrw.fromBufferResult(HeaderRW, opts.head);
-    if (headRes.err) {
-        var headParseErr = errors.ThriftHeadParserError(headRes.err, {
-            endpoint: opts.endpoint,
-            direction: opts.direction,
-            ok: opts.ok,
-            headBuf: opts.head.slice(0, 10)
-        });
-
-        if (self.logParseFailures) {
-            self.logger.warn('Got unexpected invalid thrift arg2', {
+    var headRes;
+    if (!opts.head) {
+        headRes = new Result(null, null);
+    } else {
+        headRes = bufrw.fromBufferResult(HeaderRW, opts.head);
+        if (headRes.err) {
+            var headParseErr = errors.ThriftHeadParserError(headRes.err, {
                 endpoint: opts.endpoint,
                 direction: opts.direction,
                 ok: opts.ok,
-                headErr: headParseErr
+                headBuf: opts.head.slice(0, 10)
             });
-        }
 
-        return new Result(headParseErr);
+            if (self.logParseFailures) {
+                self.logger.warn('Got unexpected invalid thrift arg2', {
+                    endpoint: opts.endpoint,
+                    direction: opts.direction,
+                    ok: opts.ok,
+                    headErr: headParseErr
+                });
+            }
+
+            return new Result(headParseErr);
+        }
     }
 
     var bodyRes;
