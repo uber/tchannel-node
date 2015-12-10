@@ -498,6 +498,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
 
     nextOp(Object.keys(ops), 0, callback);
 
+    /*eslint complexity: 0*/
     function nextOp(opKeys, i, done) {
         if (i >= opKeys.length) {
             done(null);
@@ -506,7 +507,13 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
 
         var id = opKeys[i];
         var op = ops[id];
-        if (op === undefined) {
+
+        if (!Object.prototype.hasOwnProperty.call(ops, id)) {
+            setImmediate(deferNextOp);
+            return;
+        }
+
+        if (op === undefined && (id in ops)) {
             self.logger.warn('unexpected undefined operation', {
                 direction: direction,
                 id: id
