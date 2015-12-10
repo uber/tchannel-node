@@ -498,6 +498,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
 
     nextOp(Object.keys(ops), 0, callback);
 
+    /*eslint complexity: 0*/
     function nextOp(opKeys, i, done) {
         if (i >= opKeys.length) {
             done(null);
@@ -507,12 +508,17 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
         var id = opKeys[i];
         var op = ops[id];
 
+        if (!Object.prototype.hasOwnProperty.call(ops, id)) {
+            setImmediate(deferNextOp);
+            return;
+        }
+
         if (op === undefined && (id in ops)) {
             self.logger.warn('unexpected undefined operation', {
                 direction: direction,
                 id: id
             });
-        } else if (op && op.timedOut) {
+        } else if (op.timedOut) {
             self.logger.warn('lingering timed-out operation', {
                 direction: direction,
                 id: id
@@ -525,7 +531,7 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction, callback) {
                 self.popOutReq(id);
                 pendingDirty = true;
             }
-        } else if (op && op.isTombstone) {
+        } else if (op.isTombstone) {
             var heap = self.connection.channel.timeHeap;
             var expireTime = op.time + op.timeout;
 
