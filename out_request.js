@@ -540,16 +540,16 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
         });
     }
 
-    var hasValidResponse = self.res && (
-        !self.streamed ? (
-            self.res.state === States.Done
-        ) : (
-            self.res.state === States.Done ||
-            self.res.state === States.Streaming
-        )
-    );
+    var shouldTimeout = true;
+    if (self.res) {
+        shouldTimeout = self.res.state !== States.Done;
+        if (self.streamed) {
+            shouldTimeout = self.res.state !== States.Done &&
+                self.res.state !== States.Streaming;
+        }
+    }
 
-    if (!hasValidResponse) {
+    if (shouldTimeout) {
         timeoutError = errors.RequestTimeoutError({
             id: self.id,
             start: self.start,

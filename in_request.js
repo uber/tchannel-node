@@ -172,14 +172,14 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
     var timeoutError;
 
     var isStreamed = self.flags & CallFlags.Streaming;
-    var shouldTimeout = !self.res || (
-        !isStreamed ?
-            (self.res.state !== States.Done) :
-            (
-                self.res.state !== States.Done &&
-                self.res.state !== States.Streaming
-            )
-    );
+    var shouldTimeout = true;
+    if (self.res) {
+        shouldTimeout = self.res.state !== States.Done;
+        if (isStreamed) {
+            shouldTimeout = self.res.state !== States.Done &&
+                self.res.state !== States.Streaming;
+        }
+    }
 
     if (shouldTimeout) {
         // TODO: send an error frame response?
