@@ -268,7 +268,7 @@ TChannelOutRequest.prototype.emitResponse = function emitResponse(res) {
         self.res.finishEvent.on(onFinished);
     }
 
-    self.responseEvent.emit(self, res);
+    self.responseEvent.emit(self, self.res);
 
     function onFinished() {
         self.markEnd();
