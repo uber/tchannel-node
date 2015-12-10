@@ -8,16 +8,16 @@ LAST=$(grep '^# v' CHANGELOG.md | head -n1 | cut -d' ' -f2)
     echo '# vNEXT // FIXME'
     echo
 
-    git log --first-parent "${LAST}.." | grep -A4 '^Date:' | sed -r \
+    git log --first-parent "${LAST}.." | grep -A4 '^Date:' | sed \
         -e '/^ *$/d' \
         -e '/Merge pull request/d' \
         -e '/^Date:/d' \
         -e '/^--/d' \
         -e '/^commit /d' \
-        -e '/^    \d+\.\d+\.\d+/ s/^    /# v/' \
-        -e '/^    [0-9].[0-9]+.[0-9]+/ s/^    /# v/' \
-        -e '/^# v/i\\' \
-        -e '/^# v/a\\' \
+        -e '/^    [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/ s/^    /# v/' \
+        -e '/^    [0-9]\.[0-9][0-9]*\.[0-9][0-9]*/ s/^    /# v/' \
+        -e '/^# v/i\' \
+        -e '/^# v/a\' \
         -e 's/^    /- /'
 
     echo
