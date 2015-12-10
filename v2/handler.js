@@ -900,7 +900,8 @@ TChannelV2Handler.prototype.buildInRequest = function buildInRequest(reqFrame) {
         v2.parseRetryFlags(reqFrame.body.headers.re),
         self.connection,
         self.hostPort,
-        self.tracer
+        self.tracer,
+        reqFrame.body.flags
     );
 
     var req;
@@ -950,6 +951,7 @@ TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame)
         code: resFrame.body.code,
         checksum: new v2.Checksum(resFrame.body.csum.type),
         streamed: resFrame.body.flags & v2.CallFlags.Fragment,
+        flags: resFrame.body.flags,
         headers: resFrame.body.headers
     };
 
@@ -967,7 +969,7 @@ TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame)
 
 function InRequestOptions(
     channel, timeout, tracing, serviceName, headers, checksum,
-    retryFlags, connection, hostPort, tracer
+    retryFlags, connection, hostPort, tracer, flags
 ) {
     var self = this;
 
@@ -981,4 +983,5 @@ function InRequestOptions(
     self.connection = connection;
     self.hostPort = hostPort;
     self.tracer = tracer;
+    self.flags = flags;
 }
