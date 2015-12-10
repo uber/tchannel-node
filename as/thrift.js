@@ -104,23 +104,19 @@ TChannelAsThrift.prototype.parseException =
 function parseException(request, response, cb) {
     var self = this;
 
-    if (response.streamed) {
-        response.arg3.onValueReady(onArgReady);
-    } else {
-        parseArg3(response.arg3);
-    }
+    response.withArg23(onArgs);
 
-    function onArgReady(err, arg3) {
+    function onArgs(err, arg2, arg3) {
         if (err) {
             return cb(err);
         }
 
-        parseArg3(arg3);
+        parseArgs(arg2, arg3);
     }
 
-    function parseArg3(arg3) {
+    function parseArgs(arg2, arg3) {
         var parseResult = self._parse({
-            head: null,
+            head: arg2,
             body: arg3,
             ok: false,
             endpoint: request.endpoint,
@@ -131,10 +127,8 @@ function parseException(request, response, cb) {
         }
 
         var v = parseResult.value;
-        cb(null, {
-            exception: v.body,
-            typeName: v.typeName
-        });
+        var resp = new TChannelThriftResponse(response, v);
+        cb(null, resp);
     }
 };
 
@@ -188,7 +182,12 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
                 return done(err);
             }
 
-            shouldApplicationRetry(req, res, info, retry, done);
+            var bool = shouldApplicationRetry(info, req, res);
+            if (bool) {
+                retry();
+            } else {
+                done();
+            }
         }
     }
 };

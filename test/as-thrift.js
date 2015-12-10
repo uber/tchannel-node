@@ -166,8 +166,8 @@ allocCluster.test('as=thrift send supports shouldApplicationRetry', {
                 return done(err);
             }
 
-            assert.equal(info.exception.value, 10);
-            assert.equal(info.exception.message, 'No echo');
+            assert.equal(info.body.value, 10);
+            assert.equal(info.body.message, 'No echo');
             assert.equal(info.typeName, 'noEcho');
 
             if (info.typeName === 'noEcho') {
@@ -204,16 +204,16 @@ allocCluster.test('as=thrift request supports shouldApplicationRetry', {
         assert.end();
     });
 
-    function shouldRetry(req, res, info, retry, done) {
-        assert.equal(info.exception.value, 10);
-        assert.equal(info.exception.message, 'No echo');
-        assert.equal(info.typeName, 'noEcho');
+    function shouldRetry(res/*, rawReq, rawRes*/) {
+        assert.equal(res.body.value, 10);
+        assert.equal(res.body.message, 'No echo');
+        assert.equal(res.typeName, 'noEcho');
 
-        if (info.typeName === 'noEcho') {
-            return retry();
+        if (res.typeName === 'noEcho') {
+            return true;
         }
 
-        done();
+        return false;
     }
 });
 
