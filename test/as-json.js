@@ -57,7 +57,7 @@ allocCluster.test('getting an ok response', {
 
         assert.deepEqual(resp, {
             ok: true,
-            head: null,
+            head: {},
             headers: {
                 'as': 'json'
             },
@@ -123,7 +123,7 @@ allocCluster.test('getting a notOk response', {
 
         assert.deepEqual(resp, {
             ok: false,
-            head: null,
+            head: {},
             headers: {
                 'as': 'json'
             },
