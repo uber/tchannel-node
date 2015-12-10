@@ -242,10 +242,31 @@ TChannelJSON.prototype.register = function register(
     }
 };
 
+function stringifyArg2(headers) {
+    headers = headers || {};
+
+    var keys = Object.keys(headers);
+
+    for (var i = 0; i < keys.length; i++) {
+        var fieldName = keys[i];
+        var headerValue = headers[fieldName];
+
+        if (typeof headerValue !== 'string') {
+            var err = new Error(
+                'Expected json arg2 to be strings.\n' +
+                'Found a `' + typeof headerValue + '` for header: ' + fieldName
+            );
+            return new Result(err);
+        }
+    }
+
+    return safeJSONStringify(headers);
+}
+
 TChannelJSON.prototype._stringify = function stringify(opts) {
     var self = this;
 
-    var headR = safeJSONStringify(opts.head);
+    var headR = stringifyArg2(opts.head);
     if (headR.err) {
         var headStringifyErr = errors.JSONHeadStringifyError(headR.err, {
             endpoint: opts.endpoint,
