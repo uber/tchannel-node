@@ -486,6 +486,7 @@ TChannelRequest.prototype.maybeAppRetry = function maybeAppRetry(res) {
         if (self.checkTimeout(null, res)) {
             return;
         }
+
         self.deferResend();
     }
 
