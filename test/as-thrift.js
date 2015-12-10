@@ -191,7 +191,7 @@ allocCluster.test('as=thrift request supports shouldApplicationRetry', {
     tchannelAsThrift.request({
         serviceName: 'server',
         hasNoParent: true,
-        shouldApplicationRetry: shouldRetry
+        shouldThriftRetry: shouldRetry
     }).send('Chamber::echo', null, {
         value: 10
     }, function onResponse(err, res) {

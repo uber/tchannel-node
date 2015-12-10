@@ -167,7 +167,7 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
         reqOptions.type !== 'tchannel.outgoing-request',
         'invalid reqOptions to TChannelAsThrift.request');
 
-    var shouldApplicationRetry = reqOptions.shouldApplicationRetry;
+    var shouldApplicationRetry = reqOptions.shouldThriftRetry;
     if (shouldApplicationRetry) {
         reqOptions.shouldApplicationRetry = wrappedShouldRetry;
     }
@@ -180,8 +180,8 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
 
     return req;
 
-    function wrappedShouldRetry(req, res, retry, done) {
-        self.parseException(req, res, onException);
+    function wrappedShouldRetry(req2, res, retry, done) {
+        self.parseException(req2, res, onException);
 
         function onException(err, info) {
             if (err) {
