@@ -259,6 +259,25 @@ TChannelOutRequest.prototype.extendLogInfo = function extendLogInfo(info) {
 TChannelOutRequest.prototype.emitResponse = function emitResponse(res) {
     var self = this;
 
+    self.res = res;
+    self.res.span = self.span;
+
+    if (!self.res.streamed) {
+        self.markEnd();
+    } else {
+        self.res.finishEvent.on(onFinished);
+    }
+
+    self.responseEvent.emit(self, self.res);
+
+    function onFinished() {
+        self.markEnd();
+    }
+};
+
+TChannelOutRequest.prototype.markEnd = function markEnd() {
+    var self = this;
+
     self.peer.invalidateScore('outreq.emitResponse');
 
     if (self.end) {
@@ -274,13 +293,8 @@ TChannelOutRequest.prototype.emitResponse = function emitResponse(res) {
         self.end = self.channel.timers.now();
     }
 
-    self.res = res;
-    self.res.span = self.span;
-
     self.emitPerAttemptLatency();
-    self.emitPerAttemptResponseStat(res);
-
-    self.responseEvent.emit(self, res);
+    self.emitPerAttemptResponseStat(self.res);
 };
 
 TChannelOutRequest.prototype.sendParts = function sendParts(parts, isLast) {
