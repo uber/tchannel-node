@@ -244,33 +244,6 @@ allocCluster.test('send and receive a typed notOk', {
     });
 });
 
-allocCluster.test('send and receive a typed notOk', {
-    numPeers: 2
-}, function t(cluster, assert) {
-    var tchannelAsThrift = makeTChannelThriftServer(cluster, {
-        notOkTypedResponse: true
-    });
-
-    var client = cluster.channels[1].subChannels.server;
-
-    tchannelAsThrift.send(client.request({
-        serviceName: 'server',
-        hasNoParent: true
-    }), 'Chamber::echo', null, {
-        value: 10
-    }, function onResponse(err, res) {
-        assert.ifError(err);
-
-        assert.ok(!res.ok);
-
-        assert.equal(res.body.value, 10);
-        assert.equal(res.body.message, 'No echo typed error');
-        assert.equal(res.body.type, 'server.no-echo');
-
-        assert.end();
-    });
-});
-
 allocCluster.test('sending and receiving headers', {
     numPeers: 2
 }, function t(cluster, assert) {
