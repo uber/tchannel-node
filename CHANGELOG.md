@@ -1,4 +1,4 @@
-# v3.6.1
+# vNEXT // FIXME
 
 - Added consistent host port validation in listen(), connect(), and init
   handshake
