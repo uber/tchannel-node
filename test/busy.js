@@ -86,8 +86,7 @@ allocCluster.test('request().send() to a busy server', 2, function t(cluster, as
     }
 
     function onResp2(err, res, arg2, arg3) {
-        assert.ok(isError(err), 'got an error');
-
+        assert.ok(err.isErrorFrame, 'got an error frame');
         assert.equals(err.type, 'tchannel.busy');
         assert.ok(err.isErrorFrame, 'err isErrorFrame');
         assert.equals(err.codeName, 'Busy', 'error code name busy');
@@ -98,7 +97,3 @@ allocCluster.test('request().send() to a busy server', 2, function t(cluster, as
         assert.end();
     }
 });
-
-function isError(err) {
-    return Object.prototype.toString.call(err) === '[object Error]';
-}
