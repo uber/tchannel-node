@@ -472,6 +472,7 @@ allocCluster.test('self send() with error frame', 1, function t(cluster, assert)
                 codeName: 'Cancelled',
                 errorCode: 2,
                 originalId: 1,
+                remoteAddr: null,
                 name: 'TchannelCancelledError',
                 message: 'bye lol'
             });
@@ -499,6 +500,7 @@ allocCluster.test('self send() with error frame', 1, function t(cluster, assert)
                 codeName: 'Unhealthy',
                 errorCode: 8,
                 originalId: 2,
+                remoteAddr: null,
                 name: 'TchannelUnhealthyError',
                 message: 'smallest violin'
             });
