@@ -23,7 +23,6 @@
 var bufrw = require('bufrw');
 var WriteResult = bufrw.WriteResult;
 var ReadResult = bufrw.ReadResult;
-var TypedError = require('error/typed');
 var Frame = require('./frame');
 var Tracing = require('./tracing');
 
@@ -66,86 +65,212 @@ CodeNames[Codes.NetworkError] = 'NetworkError';
 CodeNames[Codes.ProtocolError] = 'ProtocolError';
 CodeNames[Codes.Unhealthy] = 'Unhealthy';
 
-var TimeoutError = TypedError({
-    type: 'tchannel.timeout',
-    message: 'TChannel timeout',
-    isErrorFrame: true,
-    codeName: 'Timeout',
-    errorCode: Codes.Timeout,
-    originalId: null
-});
+function TimeoutError(opts) {
+    this.name = 'TchannelTimeoutError';
+    this.fullType = 'tchannel.timeout';
+    this.type = 'tchannel.timeout';
+    this.message = 'TChannel timeout';
+    this.isErrorFrame = true;
+    this.codeName = 'Timeout';
+    this.errorCode = Codes.Timeout;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var CancelledError = TypedError({
-    type: 'tchannel.cancelled',
-    message: 'TChannel cancelled',
-    isErrorFrame: true,
-    codeName: 'Cancelled',
-    errorCode: Codes.Cancelled,
-    originalId: null
-});
+function CancelledError(opts) {
+    this.name = 'TchannelCancelledError';
+    this.fullType = 'tchannel.cancelled';
+    this.type = 'tchannel.cancelled';
+    this.message = 'TChannel cancelled';
+    this.isErrorFrame = true;
+    this.codeName = 'Cancelled';
+    this.errorCode = Codes.Cancelled;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var BusyError = TypedError({
-    type: 'tchannel.busy',
-    message: 'TChannel busy',
-    isErrorFrame: true,
-    codeName: 'Busy',
-    errorCode: Codes.Busy,
-    originalId: null
-});
+function BusyError(opts) {
+    this.name = 'TchannelBusyError';
+    this.fullType = 'tchannel.busy';
+    this.type = 'tchannel.busy';
+    this.message = 'TChannel busy';
+    this.isErrorFrame = true;
+    this.codeName = 'Busy';
+    this.errorCode = Codes.Busy;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var DeclinedError = TypedError({
-    type: 'tchannel.declined',
-    message: 'TChannel declined',
-    isErrorFrame: true,
-    codeName: 'Declined',
-    errorCode: Codes.Declined,
-    originalId: null
-});
+function DeclinedError(opts) {
+    this.name = 'TchannelDeclinedError';
+    this.fullType = 'tchannel.declined';
+    this.type = 'tchannel.declined';
+    this.message = 'TChannel declined';
+    this.isErrorFrame = true;
+    this.codeName = 'Declined';
+    this.errorCode = Codes.Declined;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var UnexpectedErrorError = TypedError({
-    type: 'tchannel.unexpected',
-    message: 'TChannel unexpected error',
-    isErrorFrame: true,
-    codeName: 'UnexpectedError',
-    errorCode: Codes.UnexpectedError,
-    originalId: null
-});
+function UnexpectedErrorError(opts) {
+    this.name = 'TchannelUnexpectedError';
+    this.fullType = 'tchannel.unexpected';
+    this.type = 'tchannel.unexpected';
+    this.message = 'TChannel unexpected error';
+    this.isErrorFrame = true;
+    this.codeName = 'UnexpectedError';
+    this.errorCode = Codes.UnexpectedError;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var BadRequestError = TypedError({
-    type: 'tchannel.bad-request',
-    message: 'TChannel bad request',
-    isErrorFrame: true,
-    codeName: 'BadRequest',
-    errorCode: Codes.BadRequest,
-    originalId: null
-});
+function BadRequestError(opts) {
+    this.name = 'TchannelBad-requestError';
+    this.fullType = 'tchannel.bad-request';
+    this.type = 'tchannel.bad-request';
+    this.message = 'TChannel bad request';
+    this.isErrorFrame = true;
+    this.codeName = 'BadRequest';
+    this.errorCode = Codes.BadRequest;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var NetworkErrorError = TypedError({
-    type: 'tchannel.network',
-    message: 'TChannel network error',
-    isErrorFrame: true,
-    codeName: 'NetworkError',
-    errorCode: Codes.NetworkError,
-    originalId: null
-});
+function NetworkErrorError(opts) {
+    this.name = 'TchannelNetworkError';
+    this.fullType = 'tchannel.network';
+    this.type = 'tchannel.network';
+    this.message = 'TChannel network error';
+    this.isErrorFrame = true;
+    this.codeName = 'NetworkError';
+    this.errorCode = Codes.NetworkError;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var ProtocolErrorError = TypedError({
-    type: 'tchannel.protocol',
-    message: 'TChannel protocol error',
-    isErrorFrame: true,
-    codeName: 'ProtocolError',
-    errorCode: Codes.ProtocolError,
-    originalId: null
-});
+function ProtocolErrorError(opts) {
+    this.name = 'TchannelProtocolError';
+    this.fullType = 'tchannel.protocol';
+    this.type = 'tchannel.protocol';
+    this.message = 'TChannel protocol error';
+    this.isErrorFrame = true;
+    this.codeName = 'ProtocolError';
+    this.errorCode = Codes.ProtocolError;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
-var UnhealthyError = TypedError({
-    type: 'tchannel.unhealthy',
-    message: 'TChannel unhealthy',
-    isErrorFrame: true,
-    codeName: 'Unhealthy',
-    errorCode: Codes.Unhealthy,
-    originalId: null
-});
+function UnhealthyError(opts) {
+    this.name = 'TchannelUnhealthyError';
+    this.fullType = 'tchannel.unhealthy';
+    this.type = 'tchannel.unhealthy';
+    this.message = 'TChannel unhealthy';
+    this.isErrorFrame = true;
+    this.codeName = 'Unhealthy';
+    this.errorCode = Codes.Unhealthy;
+    this.originalId = null;
+    this.remoteAddr = null;
+    if (opts) {
+        if (opts.message !== undefined) {
+            this.message = opts.message;
+        }
+        if (opts.originalId !== undefined) {
+            this.originalId = opts.originalId;
+        }
+        if (opts.remoteAddr !== undefined) {
+            this.remoteAddr = opts.remoteAddr;
+        }
+    }
+}
 
 var CodeErrors = Object.create(null);
 CodeErrors[Codes.Timeout] = TimeoutError;
