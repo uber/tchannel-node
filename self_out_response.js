@@ -87,7 +87,7 @@ SelfStreamingOutResponse.prototype._sendError =
 function passError(codeString, message) {
     var self = this;
     var code = v2.ErrorResponse.Codes[codeString];
-    var err = v2.ErrorResponse.CodeErrors[code]({
+    var err = new v2.ErrorResponse.CodeErrors[code]({
         originalId: self.id,
         message: message
     });

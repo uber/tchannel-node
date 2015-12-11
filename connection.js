@@ -310,8 +310,8 @@ TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
     switch (errFrame.body.code) {
 
     case v2.ErrorResponse.Codes.ProtocolError:
-        var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
-        self.resetAll(codeErrorType({
+        var CodeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+        self.resetAll(new CodeErrorType({
             originalId: errFrame.id,
             message: String(errFrame.body.message)
         }));
@@ -456,8 +456,8 @@ function onCallErrorFrame(errFrame) {
     var req = self.ops.getOutReq(id);
     // TODO: req could rarely be a lazy req, then maybe call req.handleFrameLazily
 
-    var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
-    var err = codeErrorType({
+    var CodeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    var err = new CodeErrorType({
         originalId: id,
         message: String(errFrame.body.message),
         remoteAddr: self.remoteName
