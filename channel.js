@@ -490,7 +490,8 @@ TChannel.prototype.onServerSocketConnection = function onServerSocketConnection(
             error: err
         });
 
-        if (codeName === 'Timeout') {
+        if (codeName === 'Timeout' ||
+            codeName === 'NetworkError') {
             self.logger.warn('Got a connection error', loggerInfo);
         } else {
             self.logger.error('Got an unexpected connection error', loggerInfo);
