@@ -1,4 +1,4 @@
-# vNEXT // FIXME
+# v2.10.6
 
 - Add support for retrying on Thrift exceptions.
 
