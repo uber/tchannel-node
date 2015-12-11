@@ -442,7 +442,7 @@ function checkErrorLogs() {
         if (frameLogLine.inRequestType === 'tchannel.incoming-request') {
             var ids = errorIds[frameLogLine.hostPort];
             cassert.ok(ids.indexOf(frameLogLine.inRequestId) > -1,
-                'error frame should be for request: ' + frameLogLine.inRequestId
+                'error frame log should be for request: ' + frameLogLine.inRequestId
             );
         }
     }
@@ -457,7 +457,7 @@ function checkErrorLogs() {
         if (errorLogLine.inRequestType === 'tchannel.incoming-request') {
             ids = errorIds[errorLogLine.hostPort];
             cassert.ok(ids.indexOf(errorLogLine.inRequestId) > -1,
-                'error log should be for requiest: ' + errorLogs.inRequestId
+                'error log should be for request: ' + errorLogLine.inRequestId
             );
         }
     }
@@ -483,7 +483,7 @@ function checkErrorLogs() {
         if (connErrorLogLine.inRequestType === 'tchannel.incoming-request') {
             ids = errorIds[connErrorLogLine.hostPort];
             cassert.ok(ids.indexOf(connErrorLogLine.inRequestId) > -1,
-                'error log should be for requiest: ' + errorLogs.inRequestId
+                'conn error log should be for request: ' + connErrorLogLine.inRequestId
             );
         }
     }
