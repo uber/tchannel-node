@@ -544,8 +544,7 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
     if (self.res) {
         shouldTimeout = self.res.state !== States.Done;
         if (self.streamed) {
-            shouldTimeout = shouldTimeout &&
-                self.res.state !== States.Streaming;
+            shouldTimeout = shouldTimeout && self.res.state !== States.Streaming;
         }
     }
 
