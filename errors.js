@@ -22,6 +22,7 @@
 
 var TypedError = require('error/typed');
 var WrappedError = require('error/wrapped');
+var bufrwErrors = require('bufrw/errors');
 
 var Errors = module.exports;
 
@@ -648,6 +649,10 @@ Errors.classify = function classify(err) {
         return err.codeName;
     }
 
+    if (err.type.indexOf('bufrw.') > -1) {
+        return classifyBurwError(err);
+    }
+
     switch (err.type) {
         case 'tchannel.request.retry-limit-exceeded':
             return 'Cancelled';
@@ -767,6 +772,21 @@ Errors.classify = function classify(err) {
     }
 };
 /*eslint-enable complexity*/
+
+function classifyBurwError(err) {
+    var bufrwClass = bufrwErrors.classify(err);
+    if (bufrwClass !== null) {
+        switch (bufrwClass) {
+            case 'Read':
+                return 'NetworkError';
+            case 'Write':
+                return 'ProtocolError';
+            case 'Internal':
+            default:
+                return 'UnexpectedError';
+        }
+    }
+}
 
 // To determine whether a circuit should break for each response code.
 // TODO consider whether to keep a circuit healthy if a downstream circuit is
