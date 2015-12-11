@@ -66,6 +66,7 @@ function TChannelConnectionBase(channel, direction, socketRemoteAddr) {
         random: self.random,
         initTimeout: self.channel.initTimeout,
         connectionStalePeriod: self.options.connectionStalePeriod,
+        maxTombstoneTTL: self.options.maxTombstoneTTL,
         connection: self
     });
 
