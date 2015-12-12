@@ -73,14 +73,16 @@ function ArgStream() {
 inherits(ArgStream, EventEmitter);
 
 function InArgStream() {
+    ArgStream.call(this);
+    this.streams = [this.arg2, this.arg3];
+    this._iStream = 0;
+    this.finished = false;
+    this._numFinished = 0;
+
     var self = this;
-    ArgStream.call(self);
-    self.streams = [self.arg2, self.arg3];
-    self._iStream = 0;
-    self.finished = false;
-    self._numFinished = 0;
-    self.arg2.on('finish', argFinished);
-    self.arg3.on('finish', argFinished);
+    this.arg2.on('finish', argFinished);
+    this.arg3.on('finish', argFinished);
+
     function argFinished() {
         if (++self._numFinished >= 2 && !self.finished) {
             self.finished = true;
