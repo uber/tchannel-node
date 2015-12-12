@@ -74,9 +74,6 @@ function ArgStream() {
 inherits(ArgStream, EventEmitter);
 
 function InArgStream() {
-    if (!(this instanceof InArgStream)) {
-        return new InArgStream();
-    }
     var self = this;
     ArgStream.call(self);
     self.streams = [self.arg2, self.arg3];
