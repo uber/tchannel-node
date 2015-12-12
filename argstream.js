@@ -146,24 +146,32 @@ function OutArgStream() {
     self.finished = false;
     self.frame = [Buffer(0)];
     self.currentArgN = 2;
-    self.arg2.on('data', function onArg2Data(chunk) {
-        self._handleFrameChunk(2, chunk);
-    });
-    self.arg3.on('data', function onArg3Data(chunk) {
-        self._handleFrameChunk(3, chunk);
-    });
 
-    self.arg2.on('finish', function onArg2Finish() {
+    self.arg2.on('data', onArg2Data);
+    self.arg3.on('data', onArg3Data);
+    self.arg2.on('finish', onArg2Finish);
+    self.arg3.on('finish', onArg3Finish);
+
+    function onArg2Data(chunk) {
+        self._handleFrameChunk(2, chunk);
+    }
+
+    function onArg3Data(chunk) {
+        self._handleFrameChunk(3, chunk);
+    }
+
+    function onArg2Finish() {
         self._handleFrameChunk(2, null);
-    });
-    self.arg3.on('finish', function onArg3Finish() {
+    }
+
+    function onArg3Finish() {
         if (!self.finished) {
             self._handleFrameChunk(3, null);
             self._flushParts(true);
             self.finished = true;
             self.finishEvent.emit(self);
         }
-    });
+    }
 }
 
 inherits(OutArgStream, ArgStream);
