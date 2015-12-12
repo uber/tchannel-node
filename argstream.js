@@ -47,18 +47,17 @@ var clearImmediate = require('timers').clearImmediate;
 var errors = require('./errors');
 
 function ArgStream() {
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.frameEvent = this.defineEvent('frame');
+    this.finishEvent = this.defineEvent('finish');
+    this.arg2 = new StreamArg();
+    this.arg3 = new StreamArg();
+
     var self = this;
-    EventEmitter.call(self);
-    self.errorEvent = self.defineEvent('error');
-    self.frameEvent = self.defineEvent('frame');
-    self.finishEvent = self.defineEvent('finish');
-
-    self.arg2 = new StreamArg();
-    self.arg3 = new StreamArg();
-
-    self.arg2.on('error', passError);
-    self.arg3.on('error', passError);
-    self.arg3.on('start', onArg3Start);
+    this.arg2.on('error', passError);
+    this.arg3.on('error', passError);
+    this.arg3.on('start', onArg3Start);
 
     function passError(err) {
         self.errorEvent.emit(self, err);
