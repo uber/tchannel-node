@@ -213,6 +213,12 @@ function onIdentified(err) {
     }
 
     var conn = self.peer.getInConnection(true);
+    if (!conn) {
+        self.logger.warn('onIdentified called on non-existing connection', self.extendLogInfo({}));
+        self.onError(errors.NoPeerAvailable());
+        return;
+    }
+
     if (!conn.remoteName) {
         // we get the problem
         self.logger.warn('onIdentified called on unidentified connection', self.extendLogInfo({}));
