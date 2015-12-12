@@ -58,15 +58,17 @@ function ArgStream() {
 
     self.arg2.on('error', passError);
     self.arg3.on('error', passError);
+    self.arg3.on('start', onArg3Start);
+
     function passError(err) {
         self.errorEvent.emit(self, err);
     }
 
-    self.arg3.on('start', function onArg3Start() {
+    function onArg3Start() {
         if (!self.arg2._writableState.ended) {
             self.arg2.end();
         }
-    });
+    }
 }
 
 inherits(ArgStream, EventEmitter);
