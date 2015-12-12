@@ -53,8 +53,8 @@ function ArgStream() {
     self.frameEvent = self.defineEvent('frame');
     self.finishEvent = self.defineEvent('finish');
 
-    self.arg2 = StreamArg();
-    self.arg3 = StreamArg();
+    self.arg2 = new StreamArg();
+    self.arg3 = new StreamArg();
 
     self.arg2.on('error', passError);
     self.arg3.on('error', passError);
@@ -234,9 +234,6 @@ OutArgStream.prototype._flushParts = function _flushParts(isLast) {
 };
 
 function StreamArg(options) {
-    if (!(this instanceof StreamArg)) {
-        return new StreamArg(options);
-    }
     var self = this;
     PassThrough.call(self, options);
     self.started = false;
