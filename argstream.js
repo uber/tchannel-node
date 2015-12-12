@@ -134,9 +134,6 @@ InArgStream.prototype.handleFrame = function handleFrame(parts, isLast) {
 };
 
 function OutArgStream() {
-    if (!(this instanceof OutArgStream)) {
-        return new OutArgStream();
-    }
     var self = this;
     ArgStream.call(self);
     self._flushImmed = null;
