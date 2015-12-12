@@ -246,8 +246,12 @@ function StreamArg(options) {
     var self = this;
     PassThrough.call(self, options);
     self.started = false;
-    self.onValueReady = self.onValueReady.bind(self);
     self.buf = null;
+    self.onValueReady = boundOnValueReady;
+
+    function boundOnValueReady(callback) {
+        self._onValueReady(callback);
+    }
 }
 inherits(StreamArg, PassThrough);
 
@@ -260,7 +264,7 @@ StreamArg.prototype._write = function _write(chunk, encoding, callback) {
     PassThrough.prototype._write.call(self, chunk, encoding, callback);
 };
 
-StreamArg.prototype.onValueReady = function onValueReady(callback) {
+StreamArg.prototype._onValueReady = function onValueReady(callback) {
     var self = this;
     self.onValueReady = Ready();
     bufferStreamData(self, self.onValueReady.signal);
