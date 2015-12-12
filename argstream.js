@@ -235,11 +235,12 @@ OutArgStream.prototype._flushParts = function _flushParts(isLast) {
 };
 
 function StreamArg(options) {
+    PassThrough.call(this, options);
+    this.started = false;
+    this.buf = null;
+    this.onValueReady = boundOnValueReady;
+
     var self = this;
-    PassThrough.call(self, options);
-    self.started = false;
-    self.buf = null;
-    self.onValueReady = boundOnValueReady;
 
     function boundOnValueReady(callback) {
         self._onValueReady(callback);
