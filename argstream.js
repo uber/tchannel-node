@@ -135,17 +135,17 @@ InArgStream.prototype.handleFrame = function handleFrame(parts, isLast) {
 };
 
 function OutArgStream() {
-    var self = this;
-    ArgStream.call(self);
-    self._flushImmed = null;
-    self.finished = false;
-    self.frame = [Buffer(0)];
-    self.currentArgN = 2;
+    ArgStream.call(this);
+    this._flushImmed = null;
+    this.finished = false;
+    this.frame = [Buffer(0)];
+    this.currentArgN = 2;
 
-    self.arg2.on('data', onArg2Data);
-    self.arg3.on('data', onArg3Data);
-    self.arg2.on('finish', onArg2Finish);
-    self.arg3.on('finish', onArg3Finish);
+    var self = this;
+    this.arg2.on('data', onArg2Data);
+    this.arg3.on('data', onArg3Data);
+    this.arg2.on('finish', onArg2Finish);
+    this.arg3.on('finish', onArg3Finish);
 
     function onArg2Data(chunk) {
         self._handleFrameChunk(2, chunk);
