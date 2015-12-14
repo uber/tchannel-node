@@ -91,15 +91,15 @@ function TChannel(options) {
     }
 
     var self = this;
-    EventEmitter.call(self);
-    self.errorEvent = self.defineEvent('error');
-    self.listeningEvent = self.defineEvent('listening');
-    self.connectionEvent = self.defineEvent('connection');
-    self.statEvent = self.defineEvent('stat');
-    self.peerChosenEvent = null;
-    self.peerScoredEvent = null;
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.listeningEvent = this.defineEvent('listening');
+    this.connectionEvent = this.defineEvent('connection');
+    this.statEvent = this.defineEvent('stat');
+    this.peerChosenEvent = null;
+    this.peerScoredEvent = null;
 
-    self.options = extend({
+    this.options = extend({
         useLazyHandling: false,
         useLazyRelaying: true,
         timeoutCheckInterval: 100,
@@ -111,39 +111,39 @@ function TChannel(options) {
         processName: format('%s[%s]', process.title, process.pid)
     }, options);
 
-    self.logger = self.options.logger || nullLogger;
-    self.random = self.options.random || globalRandom;
-    self.timers = self.options.timers || globalTimers;
-    self.initTimeout = self.options.initTimeout || 2000;
-    self.requireAs = self.options.requireAs;
-    self.requireCn = self.options.requireCn;
-    self.emitConnectionMetrics =
-        typeof self.options.emitConnectionMetrics === 'boolean' ?
-        self.options.emitConnectionMetrics : false;
-    self.choosePeerWithHeap = self.options.choosePeerWithHeap || false;
+    this.logger = this.options.logger || nullLogger;
+    this.random = this.options.random || globalRandom;
+    this.timers = this.options.timers || globalTimers;
+    this.initTimeout = this.options.initTimeout || 2000;
+    this.requireAs = this.options.requireAs;
+    this.requireCn = this.options.requireCn;
+    this.emitConnectionMetrics =
+        typeof this.options.emitConnectionMetrics === 'boolean' ?
+        this.options.emitConnectionMetrics : false;
+    this.choosePeerWithHeap = this.options.choosePeerWithHeap || false;
 
-    self.setObservePeerScoreEvents(self.options.observePeerScoreEvents);
+    this.setObservePeerScoreEvents(this.options.observePeerScoreEvents);
 
     // Filled in by the listen call:
-    self.host = null;
-    self.requestedPort = null;
+    this.host = null;
+    this.requestedPort = null;
 
     // Filled in by listening event:
-    self.hostPort = null;
+    this.hostPort = null;
 
     // name of the service running over this channel
-    self.serviceName = '';
-    if (self.options.serviceName) {
-        self.serviceName = self.options.serviceName;
-        delete self.options.serviceName;
+    this.serviceName = '';
+    if (this.options.serviceName) {
+        this.serviceName = this.options.serviceName;
+        delete this.options.serviceName;
     }
 
-    self.topChannel = self.options.topChannel || null;
-    self.subChannels = self.topChannel ? null : {};
+    this.topChannel = this.options.topChannel || null;
+    this.subChannels = this.topChannel ? null : {};
 
     // for processing operation timeouts
-    self.timeHeap = self.options.timeHeap || new TimeHeap({
-        timers: self.timers,
+    this.timeHeap = this.options.timeHeap || new TimeHeap({
+        timers: this.timers,
         // TODO: do we still need/want fuzzing?
         minTimeout: fuzzedMinTimeout
     });
@@ -157,102 +157,102 @@ function TChannel(options) {
     }
 
     // how to handle incoming requests
-    if (!self.options.handler) {
-        if (!self.serviceName) {
-            self.handler = TChannelServiceNameHandler({
-                channel: self,
-                isBusy: self.options.isBusy
+    if (!this.options.handler) {
+        if (!this.serviceName) {
+            this.handler = TChannelServiceNameHandler({
+                channel: this,
+                isBusy: this.options.isBusy
             });
         } else {
-            self.handler = EndpointHandler(self.serviceName);
+            this.handler = EndpointHandler(this.serviceName);
         }
     } else {
-        self.handler = self.options.handler;
-        delete self.options.handler;
+        this.handler = this.options.handler;
+        delete this.options.handler;
     }
 
     // populated by:
     // - manually api (.peers.add etc)
     // - incoming connections on any listening socket
 
-    if (!self.topChannel) {
-        self.peers = new TChannelRootPeers(self, self.options);
+    if (!this.topChannel) {
+        this.peers = new TChannelRootPeers(this, this.options);
     } else {
-        self.peers = new TChannelSubPeers(self, self.options);
+        this.peers = new TChannelSubPeers(this, this.options);
     }
 
     // For tracking the number of pending requests to any service
-    self.services = new TChannelServices();
-    if (self.options.maxPending !== undefined) {
-        self.services.maxPending = self.options.maxPending;
+    this.services = new TChannelServices();
+    if (this.options.maxPending !== undefined) {
+        this.services.maxPending = this.options.maxPending;
     }
-    if (self.options.maxPendingForService !== undefined) {
-        self.services.maxPendingForService = self.options.maxPendingForService;
+    if (this.options.maxPendingForService !== undefined) {
+        this.services.maxPendingForService = this.options.maxPendingForService;
     }
 
     // TChannel advances through the following states.
-    self.listened = false;
-    self.listening = false;
-    self.destroyed = false;
-    self.draining = false;
+    this.listened = false;
+    this.listening = false;
+    this.destroyed = false;
+    this.draining = false;
 
     // set when draining (e.g. graceful shutdown)
-    self.drainReason = '';
-    self.drainExempt = null;
+    this.drainReason = '';
+    this.drainExempt = null;
 
-    var trace = typeof self.options.trace === 'boolean' ?
-        self.options.trace : true;
+    var trace = typeof this.options.trace === 'boolean' ?
+        this.options.trace : true;
 
     if (trace) {
-        self.tracer = new TracingAgent({
-            logger: self.logger,
-            forceTrace: self.options.forceTrace,
-            serviceName: self.options.serviceNameOverwrite,
-            reporter: self.options.traceReporter
+        this.tracer = new TracingAgent({
+            logger: this.logger,
+            forceTrace: this.options.forceTrace,
+            serviceName: this.options.serviceNameOverwrite,
+            reporter: this.options.traceReporter
         });
     }
 
-    if (typeof self.options.traceSample === 'number') {
-        self.traceSample = self.options.traceSample;
+    if (typeof this.options.traceSample === 'number') {
+        this.traceSample = this.options.traceSample;
     } else {
-        self.traceSample = 0.01;
+        this.traceSample = 0.01;
     }
 
     // lazily created by .getServer (usually from .listen)
-    self.serverSocket = null;
-    self.serverConnections = null;
+    this.serverSocket = null;
+    this.serverConnections = null;
 
-    self.TChannelAsThrift = TChannelAsThrift;
-    self.TChannelAsJSON = TChannelAsJSON;
+    this.TChannelAsThrift = TChannelAsThrift;
+    this.TChannelAsJSON = TChannelAsJSON;
 
-    self.statsd = self.options.statsd;
-    self.batchStats = null;
+    this.statsd = this.options.statsd;
+    this.batchStats = null;
 
-    self.requestDefaults = self.options.requestDefaults ?
-        new RequestDefaults(self.options.requestDefaults) : null;
+    this.requestDefaults = this.options.requestDefaults ?
+        new RequestDefaults(this.options.requestDefaults) : null;
 
-    if (!self.topChannel) {
-        if (self.options.batchStats) {
-            self.batchStats = self.options.batchStats;
-            self.batchStatsAllocated = false;
+    if (!this.topChannel) {
+        if (this.options.batchStats) {
+            this.batchStats = this.options.batchStats;
+            this.batchStatsAllocated = false;
         } else {
-            self.batchStats = new BatchStatsd({
-                logger: self.logger,
-                timers: self.timers,
-                statsd: self.statsd,
-                baseTags: self.options.statTags
+            this.batchStats = new BatchStatsd({
+                logger: this.logger,
+                timers: this.timers,
+                statsd: this.statsd,
+                baseTags: this.options.statTags
             });
-            self.batchStatsAllocated = true;
+            this.batchStatsAllocated = true;
 
-            self.batchStats.flushStats();
+            this.batchStats.flushStats();
         }
 
-        self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
+        this.sanityTimer = this.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
     } else {
-        self.batchStats = self.topChannel.batchStats;
+        this.batchStats = this.topChannel.batchStats;
     }
 
-    self.maximumRelayTTL = MAXIMUM_TTL_ALLOWED;
+    this.maximumRelayTTL = MAXIMUM_TTL_ALLOWED;
 
     function doSanitySweep() {
         self.sanityTimer = null;
