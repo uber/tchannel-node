@@ -20,11 +20,15 @@
 
 'use strict';
 
+/* eslint max-statements: [1, 40] max-params: [1, 11] */
+/* eslint-disable curly */
+
 var EventEmitter = require('../lib/event_emitter');
 var Buffer = require('buffer').Buffer;
 var stat = require('../stat-tags.js');
 var util = require('util');
 var assert = require('assert');
+var process = require('process');
 
 var HostPort = require('../host-port.js');
 var OutRequest = require('./out_request').OutRequest;
@@ -46,7 +50,6 @@ var TCHANNEL_VERSION = require('../package.json').version;
 
 var SERVER_TIMEOUT_DEFAULT = 100;
 var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
-
 
 module.exports = TChannelV2Handler;
 
@@ -169,6 +172,8 @@ TChannelV2Handler.prototype.handleLazyFrame = function handleLazyFrame(frame) {
                 return;
             }
             break;
+        default:
+            break;
     }
 
     var res = frame.readBody();
@@ -180,6 +185,7 @@ TChannelV2Handler.prototype.handleLazyFrame = function handleLazyFrame(frame) {
     self.handleEagerFrame(frame);
 };
 
+/* eslint-disable complexity */
 TChannelV2Handler.prototype.handleEagerFrame = function handleEagerFrame(frame) {
     var self = this;
     switch (frame.body.type) {
@@ -211,6 +217,7 @@ TChannelV2Handler.prototype.handleEagerFrame = function handleEagerFrame(frame) 
             }));
     }
 };
+/* eslint-enable complexity */
 
 TChannelV2Handler.prototype.handleInitRequest = function handleInitRequest(reqFrame) {
     var self = this;
@@ -427,7 +434,6 @@ TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(res
     }
 };
 
-
 // TODO  we should implement clearing of self.streaming{Req,Res}
 TChannelV2Handler.prototype.handleCancel = function handleCancel(frame) {
     var self = this;
@@ -595,6 +601,7 @@ TChannelV2Handler.prototype.sendInitRequest = function sendInitRequest() {
     var id = self.nextFrameId(); // TODO: assert(id === 1)?
     var hostPort = self.hostPort || '0.0.0.0:0';
     var processName = self.processName;
+    /* eslint-disable camelcase */
     var body = new v2.InitRequest(v2.VERSION, {
         host_port: hostPort,
         process_name: processName,
@@ -602,6 +609,7 @@ TChannelV2Handler.prototype.sendInitRequest = function sendInitRequest() {
         tchannel_language_version: TCHANNEL_LANGUAGE_VERSION,
         tchannel_version: TCHANNEL_VERSION
     });
+    /* eslint-enable camelcase */
     var reqFrame = new v2.Frame(id, body);
     self.pushFrame(reqFrame);
 };
@@ -611,6 +619,7 @@ TChannelV2Handler.prototype.sendInitResponse = function sendInitResponse(reqFram
     var id = reqFrame.id;
     var hostPort = self.hostPort;
     var processName = self.processName;
+    /* eslint-disable camelcase */
     var body = new v2.InitResponse(v2.VERSION, {
         host_port: hostPort,
         process_name: processName,
@@ -618,6 +627,7 @@ TChannelV2Handler.prototype.sendInitResponse = function sendInitResponse(reqFram
         tchannel_language_version: TCHANNEL_LANGUAGE_VERSION,
         tchannel_version: TCHANNEL_VERSION
     });
+    /* eslint-enable camelcase */
     var resFrame = new v2.Frame(id, body);
     self.pushFrame(resFrame);
 };
@@ -707,7 +717,7 @@ function sendCallResponseFrame(res, flags, args) {
     var self = this;
     if (self.remoteName === null) {
         self.errorEvent.emit(self, errors.SendCallResBeforeIdentifiedError());
-        return;
+        return null;
     }
 
     var err = self.validateCallResponseFrame(res);
@@ -790,6 +800,7 @@ function sendCallBodies(id, body, checksum, chanStat, tags) {
     var frame;
 
     var size = 0;
+    /* eslint-disable no-cond-assign */
     do {
         if (checksum) {
             body.csum = checksum;
@@ -800,6 +811,7 @@ function sendCallBodies(id, body, checksum, chanStat, tags) {
         size += frame.size;
         checksum = body.csum;
     } while (body = body.cont);
+    /* eslint-enable no-cond-assign */
 
     if (chanStat) {
         channel.emitFastStat(chanStat, 'counter', size, tags);

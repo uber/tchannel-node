@@ -27,6 +27,8 @@ var Frame = require('./frame');
 var CallFlags = require('./call_flags');
 var argsrw = new ArgsRW();
 
+/* eslint-disable curly */
+
 // flags:1 csumtype:1 (csum:4){0,1} (arg~2)+
 function CallRequestCont(flags, csum, args) {
     var self = this;
