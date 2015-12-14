@@ -37,7 +37,6 @@ PeerDrain.GOAL_CLOSE_PEER = GOAL_CLOSE_PEER;
 
 function PeerDrain(peer, options, callback) {
     var chan = peer.channel.topChannel || peer.channel;
-    var self = this;
 
     assert(options, 'options is required');
     assert(options.reason, 'a reason is required');
@@ -48,19 +47,21 @@ function PeerDrain(peer, options, callback) {
            options.goal === GOAL_CLOSE_PEER,
            'expected a valid goal (if any)');
 
-    self.goal = options.goal || PeerDrain.GOAL_NOOP;
-    self.channel = chan;
-    self.peer = peer;
-    self.timeout = options.timeout || 0;
-    self.reason = options.reason;
-    self.direction = options.direction || 'both';
-    self.callback = callback || null;
-    self.timer = null;
-    self.drained = null;
-    self.startedAt = 0;
-    self.stoppedAt = 0;
-    self.finishedAt = 0;
-    self.thenFinish = thenFinish;
+    this.goal = options.goal || PeerDrain.GOAL_NOOP;
+    this.channel = chan;
+    this.peer = peer;
+    this.timeout = options.timeout || 0;
+    this.reason = options.reason;
+    this.direction = options.direction || 'both';
+    this.callback = callback || null;
+    this.timer = null;
+    this.drained = null;
+    this.startedAt = 0;
+    this.stoppedAt = 0;
+    this.finishedAt = 0;
+    this.thenFinish = thenFinish;
+
+    var self = this;
 
     function thenFinish(err) {
         var now = self.channel.timers.now();
