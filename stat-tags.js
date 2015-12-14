@@ -62,546 +62,452 @@ module.exports = {
 };
 
 function InboundCallsRecvdTags(cn, serviceName, endpoint) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.callingService = cn || '';
-    self.service = serviceName;
-    self.endpoint = endpoint;
+    this.callingService = cn || '';
+    this.service = serviceName;
+    this.endpoint = endpoint;
 }
 
 InboundCallsRecvdTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callingService, 'no-calling-service') + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.endpoint, 'no-endpoint');
+        clean(this.callingService, 'no-calling-service') + '.' +
+        clean(this.service, 'no-service') + '.' +
+        clean(this.endpoint, 'no-endpoint');
 };
 
 function OutboundCallsAppErrorsTags(serviceName, cn, endpoint, type) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
-    self.type = type;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
+    this.type = type;
 }
 
 OutboundCallsAppErrorsTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint') + '.' +
-        clean(self.type, 'no-type');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint') + '.' +
+        clean(this.type, 'no-type');
 };
 
 function OutboundCallsSuccessTags(serviceName, cn, endpoint) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
 }
 
 OutboundCallsSuccessTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint');
 };
 
 function OutboundCallsPerAttemptAppErrorsTags(
     serviceName, cn, endpoint, type, retryCount
 ) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
-    self.type = type;
-    self.retryCount = retryCount;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
+    this.type = type;
+    this.retryCount = retryCount;
 }
 
 OutboundCallsPerAttemptAppErrorsTags.prototype.toStatKey =
 function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint') + '.' +
-        clean(self.type, 'no-type') + '.' +
-        self.retryCount;
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint') + '.' +
+        clean(this.type, 'no-type') + '.' +
+        this.retryCount;
 };
 
 function OutboundCallsSystemErrorsTags(
     serviceName, cn, endpoint, type, retryCount
 ) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
-    self.type = type;
-    self.retryCount = retryCount;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
+    this.type = type;
+    this.retryCount = retryCount;
 }
 
 OutboundCallsSystemErrorsTags.prototype.toStatKey =
 function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint') + '.' +
-        clean(self.type, 'no-type');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint') + '.' +
+        clean(this.type, 'no-type');
 };
 
 function OutboundCallsOperationalErrorsTags(
     serviceName, cn, endpoint, type
 ) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
-    self.type = type;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
+    this.type = type;
 }
 
 OutboundCallsOperationalErrorsTags.prototype.toStatKey =
 function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint') + '.' +
-        clean(self.type, 'no-type');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint') + '.' +
+        clean(this.type, 'no-type');
 };
 
 function OutboundCallsPerAttemptOperationalErrorsTags(
     serviceName, cn, endpoint, type, retryCount
 ) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
-    self.type = type;
-    self.retryCount = retryCount;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
+    this.type = type;
+    this.retryCount = retryCount;
 }
 
 OutboundCallsPerAttemptOperationalErrorsTags.prototype.toStatKey =
 function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint') + '.' +
-        clean(self.type, 'no-type') + '.' +
-        self.retryCount;
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint') + '.' +
+        clean(this.type, 'no-type') + '.' +
+        this.retryCount;
 };
 
 function OutboundCallsRetriesTags(
     serviceName, cn, endpoint, retryCount
 ) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
-    self.retryCount = retryCount;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
+    this.retryCount = retryCount;
 }
 
 OutboundCallsRetriesTags.prototype.toStatKey =
 function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint') + '.' +
-        self.retryCount;
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint') + '.' +
+        this.retryCount;
 };
 
 function OutboundCallsPerAttemptLatencyTags(
     serviceName, cn, endpoint, remoteAddr, retryCount
 ) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
-    self.peer = remoteAddr;
-    self.retryCount = retryCount;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
+    this.peer = remoteAddr;
+    this.retryCount = retryCount;
 }
 
 OutboundCallsPerAttemptLatencyTags.prototype.toStatKey =
 function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint') + '.' +
-        self.retryCount;
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint') + '.' +
+        this.retryCount;
 };
 
 function OutboundCallsLatencyTags(serviceName, cn, endpoint) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
 }
 
 OutboundCallsLatencyTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint');
 };
 
 function OutboundCallsSentTags(serviceName, cn, endpoint) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
 }
 
 OutboundCallsSentTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint');
 };
 
 function InboundCallsLatencyTags(cn, serviceName, endpoint) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.callingService = cn;
-    self.service = serviceName;
-    self.endpoint = endpoint;
+    this.callingService = cn;
+    this.service = serviceName;
+    this.endpoint = endpoint;
 }
 
 InboundCallsLatencyTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callingService, 'no-calling-service') + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.endpoint, 'no-endpoint');
+        clean(this.callingService, 'no-calling-service') + '.' +
+        clean(this.service, 'no-service') + '.' +
+        clean(this.endpoint, 'no-endpoint');
 };
 
 function InboundCallsSuccessTags(cn, serviceName, endpoint) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.callingService = cn;
-    self.service = serviceName;
-    self.endpoint = endpoint;
+    this.callingService = cn;
+    this.service = serviceName;
+    this.endpoint = endpoint;
 }
 
 InboundCallsSuccessTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callingService, 'no-calling-service') + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.endpoint, 'no-endpoint');
+        clean(this.callingService, 'no-calling-service') + '.' +
+        clean(this.service, 'no-service') + '.' +
+        clean(this.endpoint, 'no-endpoint');
 };
 
 function InboundCallsAppErrorsTags(cn, serviceName, endpoint, type) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.callingService = cn;
-    self.service = serviceName;
-    self.endpoint = endpoint;
-    self.type = type;
+    this.callingService = cn;
+    this.service = serviceName;
+    this.endpoint = endpoint;
+    this.type = type;
 }
 
 InboundCallsAppErrorsTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callingService, 'no-calling-service') + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.endpoint, 'no-endpoint') + '.' +
-        clean(self.type, 'no-type');
+        clean(this.callingService, 'no-calling-service') + '.' +
+        clean(this.service, 'no-service') + '.' +
+        clean(this.endpoint, 'no-endpoint') + '.' +
+        clean(this.type, 'no-type');
 };
 
 function InboundCallsSystemErrorsTags(cn, serviceName, endpoint, type) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.callingService = cn;
-    self.service = serviceName;
-    self.endpoint = endpoint;
-    self.type = type;
+    this.callingService = cn;
+    this.service = serviceName;
+    this.endpoint = endpoint;
+    this.type = type;
 }
 
 InboundCallsSystemErrorsTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callingService, 'no-calling-service') + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.endpoint, 'no-endpoint') + '.' +
-        clean(self.type, 'no-type');
+        clean(this.callingService, 'no-calling-service') + '.' +
+        clean(this.service, 'no-service') + '.' +
+        clean(this.endpoint, 'no-endpoint') + '.' +
+        clean(this.type, 'no-type');
 };
 
 function InboundRequestSizeTags(cn, serviceName, endpoint) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.callingService = cn;
-    self.service = serviceName;
-    self.endpoint = endpoint;
+    this.callingService = cn;
+    this.service = serviceName;
+    this.endpoint = endpoint;
 }
 
 InboundRequestSizeTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callingService, 'no-calling-service') + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.endpoint, 'no-endpoint');
+        clean(this.callingService, 'no-calling-service') + '.' +
+        clean(this.service, 'no-service') + '.' +
+        clean(this.endpoint, 'no-endpoint');
 };
 
 function ConnectionsBytesRcvdTags(hostPort, peerHostPort) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
-    self.peerHostPort = peerHostPort;
+    this.hostPort = hostPort;
+    this.peerHostPort = peerHostPort;
 }
 
 ConnectionsBytesRcvdTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port');
 };
 
 function InboundResponseSizeTags(cn, serviceName, endpoint) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.callingService = cn;
-    self.service = serviceName;
-    self.endpoint = endpoint;
+    this.callingService = cn;
+    this.service = serviceName;
+    this.endpoint = endpoint;
 }
 
 InboundResponseSizeTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callingService, 'no-calling-service') + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.endpoint, 'no-endpoint');
+        clean(this.callingService, 'no-calling-service') + '.' +
+        clean(this.service, 'no-service') + '.' +
+        clean(this.endpoint, 'no-endpoint');
 };
 
 function OutboundRequestSizeTags(serviceName, cn, endpoint) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
 }
 
 OutboundRequestSizeTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint');
 };
 
 function ConnectionsBytesSentTags(hostPort, peer) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
-    self.peerHostPort = peer;
+    this.hostPort = hostPort;
+    this.peerHostPort = peer;
 }
 
 ConnectionsBytesSentTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port');
 };
 
 function OutboundResponseSizeTags(serviceName, cn, endpoint) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.targetService = serviceName;
-    self.service = cn;
-    self.targetEndpoint = endpoint;
+    this.targetService = serviceName;
+    this.service = cn;
+    this.targetEndpoint = endpoint;
 }
 
 OutboundResponseSizeTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.service, 'no-service') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        clean(self.targetEndpoint, 'no-endpoint');
+        clean(this.service, 'no-service') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        clean(this.targetEndpoint, 'no-endpoint');
 };
 
 function RateLimiterServiceTags(serviceName) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.targetService = serviceName;
+    this.targetService = serviceName;
 }
 
 RateLimiterServiceTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.targetService, 'no-target-service');
+        clean(this.targetService, 'no-target-service');
 };
 
 function RateLimiterEdgeTags(edgeName) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.edgeName = edgeName;
+    this.edgeName = edgeName;
 }
 
 RateLimiterEdgeTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.edgeName, 'no-edge-name');
+        clean(this.edgeName, 'no-edge-name');
 };
 
 function RateLimiterEmptyTags() {
-    var self = this;
-
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 }
 
 RateLimiterEmptyTags.prototype.toStatKey = function toStatKey(prefix) {
@@ -609,157 +515,131 @@ RateLimiterEmptyTags.prototype.toStatKey = function toStatKey(prefix) {
 };
 
 function InboundProtocolErrorsTags(peerHostPort) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.peerHostPort = peerHostPort;
+    this.peerHostPort = peerHostPort;
 }
 
 InboundProtocolErrorsTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port');
 };
 
 function ConnectionsActiveTags(hostPort, peerHostPort) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
-    self.peerHostPort = peerHostPort;
+    this.hostPort = hostPort;
+    this.peerHostPort = peerHostPort;
 }
 
 ConnectionsActiveTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port');
 };
 
 function ConnectionsInitiatedTags(hostPort, peerHostPort) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
-    self.peerHostPort = peerHostPort;
+    this.hostPort = hostPort;
+    this.peerHostPort = peerHostPort;
 }
 
 ConnectionsInitiatedTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port');
 };
 
 function ConnectionsConnectErrorsTags(hostPort, peerHostPort) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
-    self.peerHostPort = peerHostPort;
+    this.hostPort = hostPort;
+    this.peerHostPort = peerHostPort;
 }
 
 ConnectionsConnectErrorsTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port');
 };
 
 function ConnectionsAcceptedTags(hostPort, peerHostPort) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
-    self.peerHostPort = peerHostPort;
+    this.hostPort = hostPort;
+    this.peerHostPort = peerHostPort;
 }
 
 ConnectionsAcceptedTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port');
 };
 
 function ConnectionsAcceptErrorsTags(hostPort) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
+    this.hostPort = hostPort;
 }
 
 ConnectionsAcceptErrorsTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.hostPort, 'no-host-port');
+        cleanHostPort(this.hostPort, 'no-host-port');
 };
 
 function ConnectionsErrorsTags(peerHostPort, type) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.peerHostPort = peerHostPort;
-    self.type = type;
+    this.peerHostPort = peerHostPort;
+    this.type = type;
 }
 
 ConnectionsErrorsTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port') + '.' +
-        clean(self.type, 'no-type');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port') + '.' +
+        clean(this.type, 'no-type');
 };
 
 function ConnectionsClosedTags(hostPort, peerHostPort, reason) {
-    var self = this;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
-
-    self.hostPort = hostPort;
-    self.peerHostPort = peerHostPort;
-    self.reason = reason;
+    this.hostPort = hostPort;
+    this.peerHostPort = peerHostPort;
+    this.reason = reason;
 }
 
 ConnectionsClosedTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
     return prefix + '.' +
-        cleanHostPort(self.peerHostPort, 'no-peer-host-port') + '.' +
-        clean(self.reason, 'no-reason');
+        cleanHostPort(this.peerHostPort, 'no-peer-host-port') + '.' +
+        clean(this.reason, 'no-reason');
 };
 
 function RelayLatencyTags() {
-    var self = this;
-
-    self.app = null;
-    self.host = null;
-    self.cluster = null;
-    self.version = null;
+    this.app = null;
+    this.host = null;
+    this.cluster = null;
+    this.version = null;
 }
 
 RelayLatencyTags.prototype.toStatKey = function toStatKey(prefix) {
@@ -767,23 +647,19 @@ RelayLatencyTags.prototype.toStatKey = function toStatKey(prefix) {
 };
 
 function HTTPHanlderBuildLatencyTags(serviceName, callerName, streamed) {
-    var self = this;
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
 
-    self.app = '';
-    self.host = '';
-    self.cluster = '';
-    self.version = '';
-
-    self.targetService = serviceName;
-    self.callerName = callerName;
-    self.streamed = streamed;
+    this.targetService = serviceName;
+    this.callerName = callerName;
+    this.streamed = streamed;
 }
 
 HTTPHanlderBuildLatencyTags.prototype.toStatKey = function toStatKey(prefix) {
-    var self = this;
-
     return prefix + '.' +
-        clean(self.callerName, 'no-caller-name') + '.' +
-        clean(self.targetService, 'no-target-service') + '.' +
-        (self.streamed ? 'streamed' : 'unstreamed');
+        clean(this.callerName, 'no-caller-name') + '.' +
+        clean(this.targetService, 'no-target-service') + '.' +
+        (this.streamed ? 'streamed' : 'unstreamed');
 };
