@@ -145,6 +145,10 @@ function extendLogInfo(info) {
     info.peerDraining = !!self.draining;
     info.scoreRange = self.scoreRange;
 
+    if (self.draining) {
+        self.draining.extendLogInfo(info);
+    }
+
     return info;
 };
 
