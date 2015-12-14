@@ -25,10 +25,9 @@ var Tracing = require('./tracing');
 
 // ttl:4 tracing:25
 function Claim(ttl, tracing) {
-    var self = this;
-    self.type = Claim.TypeCode;
-    self.ttl = ttl || 0;
-    self.tracing = tracing || Tracing.emptyTracing;
+    this.type = Claim.TypeCode;
+    this.ttl = ttl || 0;
+    this.tracing = tracing || Tracing.emptyTracing;
 }
 
 Claim.TypeCode = 0xc1;
