@@ -51,9 +51,6 @@ var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
 module.exports = TChannelV2Handler;
 
 function TChannelV2Handler(options) {
-    if (!(this instanceof TChannelV2Handler)) {
-        return new TChannelV2Handler(options);
-    }
     var self = this;
     EventEmitter.call(self);
     self.errorEvent = self.defineEvent('error');
