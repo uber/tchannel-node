@@ -30,16 +30,14 @@ var Types = require('./index.js').Types;
 module.exports = LazyFrame;
 
 function LazyFrame(size, type, id, buffer) {
-    var self = this;
+    this.isLazy = true;
+    this.size = size;
+    this.type = type;
+    this.id = id;
+    this.buffer = buffer;
 
-    self.isLazy = true;
-    self.size = size;
-    self.type = type;
-    self.id = id;
-    self.buffer = buffer;
-
-    self.body = null;
-    self.bodyRW = null;
+    this.body = null;
+    this.bodyRW = null;
 }
 
 // size:2 type:1 reserved:1 id:4 reserved:8 ...
@@ -50,34 +48,32 @@ LazyFrame.IdOffset = 2 + 1 + 1;
 LazyFrame.BodyOffset = Frame.Overhead;
 
 LazyFrame.prototype.setId = function setId(id) {
-    var self = this;
-    assert.ok(self.buffer, 'must have a buffer supplied');
-    self.id = id;
-    self.buffer.writeUInt32BE(self.id, LazyFrame.IdOffset);
+    assert.ok(this.buffer, 'must have a buffer supplied');
+    this.id = id;
+    this.buffer.writeUInt32BE(this.id, LazyFrame.IdOffset);
 };
 
 LazyFrame.prototype.readBody = function readBody() {
-    var self = this;
-    if (self.body) {
-        return bufrw.ReadResult.just(self.body);
+    if (this.body) {
+        return bufrw.ReadResult.just(this.body);
     }
 
-    if (!self.buffer) {
+    if (!this.buffer) {
         // TODO: typed error
         return bufrw.ReadResult.error(new Error('no buffer to read from'));
     }
 
-    var res = self.bodyRW.readFrom(self.buffer, LazyFrame.BodyOffset);
+    var res = this.bodyRW.readFrom(this.buffer, LazyFrame.BodyOffset);
 
     if (res.err) {
-        if (self.type === Types.CallRequest ||
-            self.type === Types.CallRequestCont
+        if (this.type === Types.CallRequest ||
+            this.type === Types.CallRequestCont
         ) {
             // TODO: wrapped?
-            res.err.frameId = self.id;
+            res.err.frameId = this.id;
         }
     } else {
-        self.body = res.value;
+        this.body = res.value;
     }
 
     return res;
