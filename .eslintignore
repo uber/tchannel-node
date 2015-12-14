@@ -5,4 +5,21 @@ v1/*.js
 benchmarks/d8_peer_heap.js
 
 # TODO remove.
-v2/*.js
+v2/args.js
+v2/call.js
+v2/call_flags.js
+v2/cancel.js
+v2/checksum.js
+v2/claim.js
+v2/cont.js
+v2/error_response.js
+v2/frame.js
+v2/handler.js
+v2/header.js
+v2/index.js
+v2/init.js
+v2/lazy_frame.js
+v2/out_request.js
+v2/out_response.js
+v2/ping.js
+v2/tracing.js
