@@ -850,11 +850,9 @@ function RequestOptions(channel, opts) {
 }
 
 function RequestHeaders() {
-    var self = this;
-
-    self.cn = '';
-    self.as = '';
-    self.re = '';
+    this.cn = '';
+    this.as = '';
+    this.re = '';
 }
 
 TChannel.prototype._request = function _request(opts) {
