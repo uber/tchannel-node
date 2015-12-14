@@ -48,16 +48,15 @@ module.exports.Response = CallResponse;
 
 // flags:1 ttl:4 tracing:24 traceflags:1 service~1 nh:1 (hk~1 hv~1){nh} csumtype:1 (csum:4){0,1} (arg~2)*
 function CallRequest(flags, ttl, tracing, service, headers, csum, args) {
-    var self = this;
-    self.type = CallRequest.TypeCode;
-    self.flags = flags || 0;
-    self.ttl = ttl || 0;
-    self.tracing = tracing || Tracing.emptyTracing;
-    self.service = service || '';
-    self.headers = headers || {};
-    self.csum = Checksum.objOrType(csum);
-    self.args = args || [];
-    self.cont = null;
+    this.type = CallRequest.TypeCode;
+    this.flags = flags || 0;
+    this.ttl = ttl || 0;
+    this.tracing = tracing || Tracing.emptyTracing;
+    this.service = service || '';
+    this.headers = headers || {};
+    this.csum = Checksum.objOrType(csum);
+    this.args = args || [];
+    this.cont = null;
 }
 
 CallRequest.Cont = require('./cont').RequestCont;
@@ -291,21 +290,19 @@ function writeCallReqInto(body, buffer, offset) {
 }
 
 CallRequest.prototype.verifyChecksum = function verifyChecksum() {
-    var self = this;
-    return self.csum.verify(self.args);
+    return this.csum.verify(this.args);
 };
 
 // flags:1 code:1 tracing:24 traceflags:1 nh:1 (hk~1 hv~1){nh} csumtype:1 (csum:4){0,1} (arg~2)*
 function CallResponse(flags, code, tracing, headers, csum, args) {
-    var self = this;
-    self.type = CallResponse.TypeCode;
-    self.flags = flags || 0;
-    self.code = code || CallResponse.Codes.OK;
-    self.tracing = tracing || Tracing.emptyTracing;
-    self.headers = headers || {};
-    self.csum = Checksum.objOrType(csum);
-    self.args = args || [];
-    self.cont = null;
+    this.type = CallResponse.TypeCode;
+    this.flags = flags || 0;
+    this.code = code || CallResponse.Codes.OK;
+    this.tracing = tracing || Tracing.emptyTracing;
+    this.headers = headers || {};
+    this.csum = Checksum.objOrType(csum);
+    this.args = args || [];
+    this.cont = null;
 }
 
 CallResponse.Cont = require('./cont').ResponseCont;
@@ -477,6 +474,5 @@ function writeCallResInto(body, buffer, offset) {
 }
 
 CallResponse.prototype.verifyChecksum = function verifyChecksum() {
-    var self = this;
-    return self.csum.verify(self.args);
+    return this.csum.verify(this.args);
 };
