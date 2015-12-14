@@ -20,6 +20,8 @@
 
 'use strict';
 
+/* eslint-disable curly */
+
 var bufrw = require('bufrw');
 var WriteResult = bufrw.WriteResult;
 var ReadResult = bufrw.ReadResult;
@@ -64,7 +66,6 @@ InitResponse.RW = bufrw.Struct(InitResponse, [
     {name: 'headers', rw: header.header2}, // nh:2 (hk~2 hv~2){nh}
     {call: {readFrom: readFieldGuard}}
 ]);
-
 
 function writeFieldGuard(initBody, buffer, offset) {
     var err = requiredFieldGuard(initBody.headers);
