@@ -73,8 +73,7 @@ function TChannelPeer(channel, hostPort, options) {
         );
     }
 
-    var direction = options.preferConnectionDirection || 'any';
-    self.setPreferConnectionDirection(direction);
+    self.setPreferConnectionDirection(options.preferConnectionDirection || 'any');
 
     function onIdentified(_, conn) {
         self.onIdentified(conn);
