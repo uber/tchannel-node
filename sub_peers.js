@@ -26,9 +26,6 @@ var TChannelPeersBase = require('./peers_base.js');
 var PeerHeap = require('./peer_heap.js');
 
 function TChannelSubPeers(channel, options) {
-    if (!(this instanceof TChannelSubPeers)) {
-        return new TChannelSubPeers(channel, options);
-    }
     var self = this;
     TChannelPeersBase.call(self, channel, options);
 

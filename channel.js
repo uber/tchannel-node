@@ -176,9 +176,9 @@ function TChannel(options) {
     // - incoming connections on any listening socket
 
     if (!self.topChannel) {
-        self.peers = TChannelRootPeers(self, self.options);
+        self.peers = new TChannelRootPeers(self, self.options);
     } else {
-        self.peers = TChannelSubPeers(self, self.options);
+        self.peers = new TChannelSubPeers(self, self.options);
     }
 
     // For tracking the number of pending requests to any service

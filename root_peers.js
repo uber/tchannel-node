@@ -29,10 +29,6 @@ var TChannelPeer = require('./peer');
 var TChannelSelfPeer = require('./self_peer');
 
 function TChannelRootPeers(channel, options) {
-    if (!(this instanceof TChannelRootPeers)) {
-        return new TChannelRootPeers(channel, options);
-    }
-
     var self = this;
     TChannelPeersBase.call(self, channel, options);
 
