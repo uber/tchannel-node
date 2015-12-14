@@ -304,11 +304,11 @@ ErrorResponse.RW = bufrw.Struct(ErrorResponse, [
         if (CodeNames[body.code] === undefined) {
             return ReadResult.error(errors.InvalidErrorCodeError({
                 errorCode: body.code,
-                tracing: body.tracing,
+                tracing: body.tracing
             }), offset);
         }
         return ReadResult.just(offset);
-    }}},
+    }}}
 ]);
 
 ErrorResponse.RW.lazy = {};
