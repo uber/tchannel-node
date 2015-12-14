@@ -93,7 +93,7 @@ TChannelRootPeers.prototype.getSelfPeer = function getSelfPeer() {
     var self = this;
 
     if (!self.selfPeer) {
-        self.selfPeer = TChannelSelfPeer(self.channel);
+        self.selfPeer = new TChannelSelfPeer(self.channel);
     }
     return self.selfPeer;
 };
@@ -113,7 +113,7 @@ TChannelRootPeers.prototype.add = function add(hostPort, options) {
 
     options = options || extend({}, self.peerOptions);
     options.preferConnectionDirection = self.preferConnectionDirection;
-    peer = TChannelPeer(self.channel, hostPort, options);
+    peer = new TChannelPeer(self.channel, hostPort, options);
     self.allocPeerEvent.emit(self, peer);
 
     self._map[hostPort] = peer;

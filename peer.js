@@ -43,9 +43,6 @@ var DEFAULT_REPORT_INTERVAL = 1000;
 function TChannelPeer(channel, hostPort, options) {
     assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
 
-    if (!(this instanceof TChannelPeer)) {
-        return new TChannelPeer(channel, hostPort, options);
-    }
     var self = this;
     options = options || {};
     EventEmitter.call(self);

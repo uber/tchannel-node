@@ -27,11 +27,7 @@ var TChannelPeer = require('./peer');
 var TChannelSelfConnection = require('./self_connection');
 
 function TChannelSelfPeer(channel) {
-    if (!(this instanceof TChannelSelfPeer)) {
-        return new TChannelSelfPeer(channel);
-    }
-    var self = this;
-    TChannelPeer.call(self, channel, channel.hostPort);
+    TChannelPeer.call(this, channel, channel.hostPort);
 }
 inherits(TChannelSelfPeer, TChannelPeer);
 
