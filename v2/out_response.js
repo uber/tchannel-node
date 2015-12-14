@@ -32,17 +32,15 @@ var v2 = require('./index');
 var errors = require('../errors');
 
 function V2OutResponse(handler, id, options) {
-    var self = this;
-    OutResponse.call(self, id, options);
-    self.handler = handler;
+    OutResponse.call(this, id, options);
+    this.handler = handler;
 }
 
 inherits(V2OutResponse, OutResponse);
 
 function V2StreamingOutResponse(handler, id, options) {
-    var self = this;
-    StreamingOutResponse.call(self, id, options);
-    self.handler = handler;
+    StreamingOutResponse.call(this, id, options);
+    this.handler = handler;
 }
 
 inherits(V2StreamingOutResponse, StreamingOutResponse);
@@ -50,33 +48,30 @@ inherits(V2StreamingOutResponse, StreamingOutResponse);
 V2OutResponse.prototype._sendCallResponse =
 V2StreamingOutResponse.prototype._sendCallResponse =
 function _sendCallResponse(args, isLast) {
-    var self = this;
     var flags = 0;
     if (args && args[0] && args[0].length > v2.MaxArg1Size) {
-        self.errorEvent.emit(self, errors.Arg1OverLengthLimit({
+        this.errorEvent.emit(this, errors.Arg1OverLengthLimit({
             length: args[0].length,
             limit: v2.MaxArg1Size
         }));
         return;
     }
     if (!isLast) flags |= CallFlags.Fragment;
-    self.handler.sendCallResponseFrame(self, flags, args);
+    this.handler.sendCallResponseFrame(this, flags, args);
 };
 
 V2OutResponse.prototype._sendCallResponseCont =
 V2StreamingOutResponse.prototype._sendCallResponseCont =
 function _sendCallResponseCont(args, isLast) {
-    var self = this;
     var flags = 0;
     if (!isLast) flags |= CallFlags.Fragment;
-    self.handler.sendCallResponseContFrame(self, flags, args);
+    this.handler.sendCallResponseContFrame(this, flags, args);
 };
 
 V2OutResponse.prototype._sendError =
 V2StreamingOutResponse.prototype._sendError =
 function _sendError(codeString, message) {
-    var self = this;
-    self.handler.sendErrorFrame(self.id, self.tracing, codeString, message);
+    this.handler.sendErrorFrame(this.id, this.tracing, codeString, message);
 };
 
 module.exports.OutResponse = V2OutResponse;
