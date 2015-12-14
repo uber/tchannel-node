@@ -32,33 +32,31 @@ var TOMBSTONE_TTL_OFFSET = 500;
 module.exports = Operations;
 
 function Operations(opts) {
-    var self = this;
+    EventEmitter.call(this);
+    this.draining = false;
+    this.drainEvent = this.defineEvent('drain');
+    this.pendingChangeEvent = this.defineEvent('pendingChange');
+    this.pendingChangeDelta = null;
 
-    EventEmitter.call(self);
-    self.draining = false;
-    self.drainEvent = self.defineEvent('drain');
-    self.pendingChangeEvent = self.defineEvent('pendingChange');
-    self.pendingChangeDelta = null;
-
-    self.timers = opts.timers;
-    self.logger = opts.logger;
-    self.random = opts.random;
-    self.connectionStalePeriod = opts.connectionStalePeriod;
-    self.maxTombstoneTTL = opts.maxTombstoneTTL;
-    self.connection = opts.connection;
+    this.timers = opts.timers;
+    this.logger = opts.logger;
+    this.random = opts.random;
+    this.connectionStalePeriod = opts.connectionStalePeriod;
+    this.maxTombstoneTTL = opts.maxTombstoneTTL;
+    this.connection = opts.connection;
     // TODO need this?
-    self.destroyed = false;
+    this.destroyed = false;
 
-    self.requests = {
+    this.requests = {
         in: Object.create(null),
         out: Object.create(null)
     };
-    self.pending = {
+    this.pending = {
         in: 0,
         out: 0,
         errors: 0
     };
-    self.lastTimeoutTime = 0;
+    this.lastTimeoutTime = 0;
 }
 inherits(Operations, EventEmitter);
 
