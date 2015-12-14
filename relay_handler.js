@@ -31,11 +31,10 @@ RelayHandler.RelayRequest = RelayRequest;
 module.exports = RelayHandler;
 
 function RelayHandler(channel, circuits) {
-    var self = this;
-    self.channel = channel;
-    self.circuits = circuits || null;
-    self.logger = self.channel.logger;
-    self.lazyEnabled = self.channel.options.useLazyRelaying;
+    this.channel = channel;
+    this.circuits = circuits || null;
+    this.logger = this.channel.logger;
+    this.lazyEnabled = this.channel.options.useLazyRelaying;
 }
 
 RelayHandler.prototype.type = 'tchannel.relay-handler';
@@ -113,24 +112,22 @@ RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
 };
 
 function RelayRequest(channel, peer, inreq, buildRes) {
+    this.channel = channel;
+    this.logger = this.channel.logger;
+    this.inreq = inreq;
+    this.inres = null;
+    this.outres = null;
+    this.outreq = null;
+    this.buildRes = buildRes;
+    this.peer = peer;
+    this.error = null;
+
+    this.boundOnError = onError;
+    this.boundExtendLogInfo = extendLogInfo;
+    this.boundOnIdentified = onIdentified;
+
     var self = this;
-
-    self.channel = channel;
-    self.logger = self.channel.logger;
-    self.inreq = inreq;
-    self.inres = null;
-    self.outres = null;
-    self.outreq = null;
-    self.buildRes = buildRes;
-    self.peer = peer;
-
-    self.error = null;
-
     inreq.timeoutEvent.on(onTimeout);
-
-    self.boundOnError = onError;
-    self.boundExtendLogInfo = extendLogInfo;
-    self.boundOnIdentified = onIdentified;
 
     function onTimeout(err) {
         self.onInRequestTimeout(err);
