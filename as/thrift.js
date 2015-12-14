@@ -353,6 +353,10 @@ function send(request, endpoint, outHead, outBody, callback) {
     }
 };
 
+TChannelAsThrift.prototype.getServiceEndpoints = function getEndpoints() {
+    return this.spec.getServiceEndpoints();
+};
+
 /*eslint-disable max-statements */
 TChannelAsThrift.prototype._parse = function parse(opts) {
     var self = this;
