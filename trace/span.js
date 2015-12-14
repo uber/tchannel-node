@@ -28,133 +28,105 @@ module.exports.Annotation = Annotation;
 module.exports.BinaryAnnotation = BinaryAnnotation;
 
 function Span(options) {
-    var self = this;
-
     // TODO: options validation
 
     if (options.id) {
-        self.id = options.id;
+        this.id = options.id;
     }
 
     if (options.traceid) {
-        self.traceid = options.traceid;
+        this.traceid = options.traceid;
     }
 
-    self.endpoint = options.endpoint;
+    this.endpoint = options.endpoint;
 
-    self.name = options.name;
-    self.parentid = options.parentid;
+    this.name = options.name;
+    this.parentid = options.parentid;
     if (!options.parentid) {
-        self.parentid = [0, 0];
+        this.parentid = [0, 0];
     }
-    self.annotations = [];
-    self.binaryAnnotations = [];
-    self.serviceName = options.serviceName;
-    self.flags = options.flags;
+    this.annotations = [];
+    this.binaryAnnotations = [];
+    this.serviceName = options.serviceName;
+    this.flags = options.flags;
 }
 
 Span.prototype.toString = function toString() {
-    var self = this;
-
-    var strAnnotations = self.annotations.map(function eachAnn(ann) {
+    var strAnnotations = this.annotations.map(function eachAnn(ann) {
         return '[' + ann.value + ' ' + ann.timestamp + ']';
     }).join(' ');
-
-    return 'SPAN: traceid: ' + self.traceid.toString('hex') + ' spanid: ' +
-        self.id.toString('hex') + ' parentid: ' +
-        self.parentid.toString('hex') + ' name: ' + self.name +
-        ' servicename: ' + self.endpoint.serviceName +
+    return 'SPAN: traceid: ' + this.traceid.toString('hex') + ' spanid: ' +
+        this.id.toString('hex') + ' parentid: ' +
+        this.parentid.toString('hex') + ' name: ' + this.name +
+        ' servicename: ' + this.endpoint.serviceName +
         ' annotations: ' + strAnnotations;
 };
 
 Span.prototype.toJSON = function toJSON() {
-    var self = this;
     return {
-        name: self.name,
-        endpoint: self.endpoint,
-        traceid: self.traceid,
-        parentid: self.parentid,
-        spanid: self.id,
-        annotations: self.annotations,
-        binaryAnnotations: self.binaryAnnotations
+        name: this.name,
+        endpoint: this.endpoint,
+        traceid: this.traceid,
+        parentid: this.parentid,
+        spanid: this.id,
+        annotations: this.annotations,
+        binaryAnnotations: this.binaryAnnotations
     };
 };
 
 // Generate a trace/span id for this span
 Span.prototype.generateIds = function generateIds() {
-    var self = this;
-
-    self.id = self.traceid = xorshift.randomint();
+    this.id = this.traceid = xorshift.randomint();
 };
 
 // Generate just a span id
 Span.prototype.generateSpanid = function generateSpanid() {
-    var self = this;
-
-    self.id = xorshift.randomint();
+    this.id = xorshift.randomint();
 };
 
 // ##
 Span.prototype.propagateIdsFrom = function propagateIdsFrom(span) {
-    var self = this;
-
-    self.parentid = span.id;
-    self.traceid = span.traceid;
-    self.flags = span.flags;
+    this.parentid = span.id;
+    this.traceid = span.traceid;
+    this.flags = span.flags;
 };
 
 Span.prototype.getTracing = function getTracing() {
-    var self = this;
-
     return {
-        spanid: self.id,
-        traceid: self.traceid,
-        parentid: self.parentid,
-        flags: self.flags
+        spanid: this.id,
+        traceid: this.traceid,
+        parentid: this.parentid,
+        flags: this.flags
     };
 };
 
 Span.prototype.annotate = function annotate(value, timestamp) {
-    var self = this;
-
     timestamp = timestamp || Date.now();
-
-    self.annotations.push(new Annotation(value, self.endpoint, timestamp));
+    this.annotations.push(new Annotation(value, this.endpoint, timestamp));
 };
 
 Span.prototype.annotateBinary =
 function annotateBinary(key, value, type) {
-    var self = this;
-
-    self.binaryAnnotations.push(new BinaryAnnotation(key, value, type, self.endpoint));
+    this.binaryAnnotations.push(new BinaryAnnotation(key, value, type, this.endpoint));
 };
 
 function Endpoint(ipv4, port, serviceName) {
-    var self = this;
-
-    self.ipv4 = ipv4;
-    self.port = port;
-    self.serviceName = serviceName;
+    this.ipv4 = ipv4;
+    this.port = port;
+    this.serviceName = serviceName;
 }
 
 function Annotation(value, host, timestamp) {
-    var self = this;
-
     // TODO: validation
-
-    self.value = value;
-    self.timestamp = timestamp || Date.now();
-    self.host = host;
+    this.value = value;
+    this.timestamp = timestamp || Date.now();
+    this.host = host;
 }
 
 function BinaryAnnotation(key, value, type, host) {
-    var self = this;
-
     // TODO: validation
-
-    self.key = key;
-    self.value = value;
-    self.type = type ? type : typeof value;
-    self.host = host;
+    this.key = key;
+    this.value = value;
+    this.type = type ? type : typeof value;
+    this.host = host;
 }
-
