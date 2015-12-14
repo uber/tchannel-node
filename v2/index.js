@@ -20,6 +20,8 @@
 
 'use strict';
 
+/* eslint-disable curly */
+
 module.exports.VERSION = 2;
 
 var Types = {};
