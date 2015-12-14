@@ -31,12 +31,11 @@ var argsrw = new ArgsRW();
 
 // flags:1 csumtype:1 (csum:4){0,1} (arg~2)+
 function CallRequestCont(flags, csum, args) {
-    var self = this;
-    self.type = CallRequestCont.TypeCode;
-    self.flags = flags || 0;
-    self.csum = Checksum.objOrType(csum);
-    self.args = args || [];
-    self.cont = null;
+    this.type = CallRequestCont.TypeCode;
+    this.flags = flags || 0;
+    this.csum = Checksum.objOrType(csum);
+    this.args = args || [];
+    this.cont = null;
 }
 
 CallRequestCont.TypeCode = 0x13;
@@ -108,18 +107,16 @@ function writeCallReqContInto(body, buffer, offset) {
 }
 
 CallRequestCont.prototype.verifyChecksum = function verifyChecksum(prior) {
-    var self = this;
-    return self.csum.verify(self.args, prior);
+    return this.csum.verify(this.args, prior);
 };
 
 // flags:1 csumtype:1 (csum:4){0,1} (arg~2)+
 function CallResponseCont(flags, csum, args) {
-    var self = this;
-    self.type = CallResponseCont.TypeCode;
-    self.flags = flags || 0;
-    self.csum = Checksum.objOrType(csum);
-    self.args = args || [];
-    self.cont = null;
+    this.type = CallResponseCont.TypeCode;
+    this.flags = flags || 0;
+    this.csum = Checksum.objOrType(csum);
+    this.args = args || [];
+    this.cont = null;
 }
 
 CallResponseCont.TypeCode = 0x14;
@@ -191,8 +188,7 @@ function writeCallResContInto(body, buffer, offset) {
 }
 
 CallResponseCont.prototype.verifyChecksum = function verifyChecksum(prior) {
-    var self = this;
-    return self.csum.verify(self.args, prior);
+    return this.csum.verify(this.args, prior);
 };
 
 module.exports.RequestCont = CallRequestCont;
