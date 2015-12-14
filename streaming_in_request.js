@@ -36,7 +36,7 @@ function StreamingInRequest(id, options) {
     InRequest.call(self, id, options);
 
     self.streamed = true;
-    self._argstream = InArgStream();
+    self._argstream = new InArgStream();
     self.arg2 = self._argstream.arg2;
     self.arg3 = self._argstream.arg3;
 

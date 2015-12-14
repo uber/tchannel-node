@@ -28,9 +28,6 @@ module.exports.Annotation = Annotation;
 module.exports.BinaryAnnotation = BinaryAnnotation;
 
 function Span(options) {
-    if (!(this instanceof Span)) {
-        return new Span(options);
-    }
     var self = this;
 
     // TODO: options validation
@@ -133,9 +130,6 @@ function annotateBinary(key, value, type) {
 };
 
 function Endpoint(ipv4, port, serviceName) {
-    if (!(this instanceof Endpoint)) {
-        return new Endpoint(ipv4, port, serviceName);
-    }
     var self = this;
 
     self.ipv4 = ipv4;
@@ -144,9 +138,6 @@ function Endpoint(ipv4, port, serviceName) {
 }
 
 function Annotation(value, host, timestamp) {
-    if (!(this instanceof Annotation)) {
-        return new Annotation(value, host, timestamp);
-    }
     var self = this;
 
     // TODO: validation
@@ -157,9 +148,6 @@ function Annotation(value, host, timestamp) {
 }
 
 function BinaryAnnotation(key, value, type, host) {
-    if (!(this instanceof BinaryAnnotation)) {
-        return new BinaryAnnotation(key, value, type, host);
-    }
     var self = this;
 
     // TODO: validation

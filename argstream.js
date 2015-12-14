@@ -53,28 +53,27 @@ function ArgStream() {
     self.frameEvent = self.defineEvent('frame');
     self.finishEvent = self.defineEvent('finish');
 
-    self.arg2 = StreamArg();
-    self.arg3 = StreamArg();
+    self.arg2 = new StreamArg();
+    self.arg3 = new StreamArg();
 
     self.arg2.on('error', passError);
     self.arg3.on('error', passError);
+    self.arg3.on('start', onArg3Start);
+
     function passError(err) {
         self.errorEvent.emit(self, err);
     }
 
-    self.arg3.on('start', function onArg3Start() {
+    function onArg3Start() {
         if (!self.arg2._writableState.ended) {
             self.arg2.end();
         }
-    });
+    }
 }
 
 inherits(ArgStream, EventEmitter);
 
 function InArgStream() {
-    if (!(this instanceof InArgStream)) {
-        return new InArgStream();
-    }
     var self = this;
     ArgStream.call(self);
     self.streams = [self.arg2, self.arg3];
@@ -135,33 +134,38 @@ InArgStream.prototype.handleFrame = function handleFrame(parts, isLast) {
 };
 
 function OutArgStream() {
-    if (!(this instanceof OutArgStream)) {
-        return new OutArgStream();
-    }
     var self = this;
     ArgStream.call(self);
     self._flushImmed = null;
     self.finished = false;
     self.frame = [Buffer(0)];
     self.currentArgN = 2;
-    self.arg2.on('data', function onArg2Data(chunk) {
-        self._handleFrameChunk(2, chunk);
-    });
-    self.arg3.on('data', function onArg3Data(chunk) {
-        self._handleFrameChunk(3, chunk);
-    });
 
-    self.arg2.on('finish', function onArg2Finish() {
+    self.arg2.on('data', onArg2Data);
+    self.arg3.on('data', onArg3Data);
+    self.arg2.on('finish', onArg2Finish);
+    self.arg3.on('finish', onArg3Finish);
+
+    function onArg2Data(chunk) {
+        self._handleFrameChunk(2, chunk);
+    }
+
+    function onArg3Data(chunk) {
+        self._handleFrameChunk(3, chunk);
+    }
+
+    function onArg2Finish() {
         self._handleFrameChunk(2, null);
-    });
-    self.arg3.on('finish', function onArg3Finish() {
+    }
+
+    function onArg3Finish() {
         if (!self.finished) {
             self._handleFrameChunk(3, null);
             self._flushParts(true);
             self.finished = true;
             self.finishEvent.emit(self);
         }
-    });
+    }
 }
 
 inherits(OutArgStream, ArgStream);
@@ -230,14 +234,15 @@ OutArgStream.prototype._flushParts = function _flushParts(isLast) {
 };
 
 function StreamArg(options) {
-    if (!(this instanceof StreamArg)) {
-        return new StreamArg(options);
-    }
     var self = this;
     PassThrough.call(self, options);
     self.started = false;
-    self.onValueReady = self.onValueReady.bind(self);
     self.buf = null;
+    self.onValueReady = boundOnValueReady;
+
+    function boundOnValueReady(callback) {
+        self._onValueReady(callback);
+    }
 }
 inherits(StreamArg, PassThrough);
 
@@ -250,7 +255,7 @@ StreamArg.prototype._write = function _write(chunk, encoding, callback) {
     PassThrough.prototype._write.call(self, chunk, encoding, callback);
 };
 
-StreamArg.prototype.onValueReady = function onValueReady(callback) {
+StreamArg.prototype._onValueReady = function onValueReady(callback) {
     var self = this;
     self.onValueReady = Ready();
     bufferStreamData(self, self.onValueReady.signal);

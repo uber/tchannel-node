@@ -29,7 +29,7 @@ var header = require('./header');
 var Tracing = require('./tracing');
 var Frame = require('./frame');
 var CallFlags = require('./call_flags');
-var argsrw = ArgsRW();
+var argsrw = new ArgsRW();
 
 var ResponseCodes = {
     OK: 0x00,

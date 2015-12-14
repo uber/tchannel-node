@@ -29,9 +29,6 @@ var errors = require('../errors');
 // allow for more precise error reporting.
 
 function HeaderRW(countrw, keyrw, valrw, options) {
-    if (!(this instanceof HeaderRW)) {
-        return new HeaderRW(countrw, keyrw, valrw, options);
-    }
     var self = this;
     self.countrw = countrw;
     self.keyrw = keyrw;
@@ -251,13 +248,13 @@ HeaderRW.prototype.lazySkip = function lazySkip(frame, offset) {
 module.exports = HeaderRW;
 
 // nh:1 (hk~1 hv~1){nh}
-module.exports.header1 = HeaderRW(bufrw.UInt8, bufrw.str1, bufrw.str1, {
+module.exports.header1 = new HeaderRW(bufrw.UInt8, bufrw.str1, bufrw.str1, {
     maxHeaderCount: 128,
     maxKeyLength: 16
 });
 
 // nh:2 (hk~2 hv~2){nh}
-module.exports.header2 = HeaderRW(bufrw.UInt16BE, bufrw.str2, bufrw.str2, {
+module.exports.header2 = new HeaderRW(bufrw.UInt16BE, bufrw.str2, bufrw.str2, {
     maxHeaderCount: Infinity,
     maxKeyLength: Infinity
 });

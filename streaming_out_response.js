@@ -32,7 +32,7 @@ function StreamingOutResponse(id, options) {
     var self = this;
     OutResponse.call(self, id, options);
     self.streamed = true;
-    self._argstream = OutArgStream();
+    self._argstream = new OutArgStream();
     self.arg2 = self._argstream.arg2;
     self.arg3 = self._argstream.arg3;
     self._argstream.errorEvent.on(passError);
