@@ -38,41 +38,40 @@ var CONNECTION_BASE_IDENTIFIER = 0;
 function TChannelConnectionBase(channel, direction, socketRemoteAddr) {
     assert(!channel.destroyed, 'refuse to create connection for destroyed channel');
 
-    var self = this;
-    EventEmitter.call(self);
-    self.errorEvent = self.defineEvent('error');
-    self.timedOutEvent = self.defineEvent('timedOut');
-    self.pingResponseEvent = self.defineEvent('pingResonse');
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.timedOutEvent = this.defineEvent('timedOut');
+    this.pingResponseEvent = this.defineEvent('pingResonse');
 
-    self.draining = false;
-    self.drainReason = '';
+    this.draining = false;
+    this.drainReason = '';
 
-    self.closing = false;
-    self.closeError = null;
-    self.closeEvent = self.defineEvent('close');
+    this.closing = false;
+    this.closeError = null;
+    this.closeEvent = this.defineEvent('close');
 
-    self.channel = channel;
-    self.options = self.channel.options;
-    self.logger = channel.logger;
-    self.random = channel.random;
-    self.timers = channel.timers;
-    self.direction = direction;
-    self.socketRemoteAddr = socketRemoteAddr;
-    self.remoteName = null; // filled in by identify message
+    this.channel = channel;
+    this.options = this.channel.options;
+    this.logger = channel.logger;
+    this.random = channel.random;
+    this.timers = channel.timers;
+    this.direction = direction;
+    this.socketRemoteAddr = socketRemoteAddr;
+    this.remoteName = null; // filled in by identify message
 
-    self.ops = new Operations({
-        timers: self.timers,
-        logger: self.logger,
-        random: self.random,
-        initTimeout: self.channel.initTimeout,
-        connectionStalePeriod: self.options.connectionStalePeriod,
-        maxTombstoneTTL: self.options.maxTombstoneTTL,
-        connection: self
+    this.ops = new Operations({
+        timers: this.timers,
+        logger: this.logger,
+        random: this.random,
+        initTimeout: this.channel.initTimeout,
+        connectionStalePeriod: this.options.connectionStalePeriod,
+        maxTombstoneTTL: this.options.maxTombstoneTTL,
+        connection: this
     });
 
-    self.guid = ++CONNECTION_BASE_IDENTIFIER + '~';
+    this.guid = ++CONNECTION_BASE_IDENTIFIER + '~';
 
-    self.tracer = self.channel.tracer;
+    this.tracer = this.channel.tracer;
 }
 inherits(TChannelConnectionBase, EventEmitter);
 
