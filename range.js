@@ -43,26 +43,19 @@
 module.exports = Range;
 
 function Range(lo, hi) {
-    var self = this;
-
-    self.lo = lo;
-    self.hi = hi;
+    this.lo = lo;
+    this.hi = hi;
 }
 
 // Scale this range by another range
 Range.prototype.multiply = function multiply(range) {
-    var self = this;
-
-    var diff = self.hi - self.lo;
-
-    self.hi = self.lo + (range.hi * diff);
-    self.lo += (range.lo * diff);
+    var diff = this.hi - this.lo;
+    this.hi = this.lo + (range.hi * diff);
+    this.lo += (range.lo * diff);
 };
 
 Range.prototype.inspect =
 Range.prototype.toString = function toString() {
-    var self = this;
-
-    return 'Range(' + self.lo + ', ' + self.hi + ')';
+    return 'Range(' + this.lo + ', ' + this.hi + ')';
 };
 
