@@ -26,12 +26,10 @@ var TChannelPeersBase = require('./peers_base.js');
 var PeerHeap = require('./peer_heap.js');
 
 function TChannelSubPeers(channel, options) {
-    var self = this;
-    TChannelPeersBase.call(self, channel, options);
-
-    self.peerScoreThreshold = self.options.peerScoreThreshold || 0;
-    self._heap = new PeerHeap(channel.random);
-    self.choosePeerWithHeap = channel.choosePeerWithHeap;
+    TChannelPeersBase.call(this, channel, options);
+    this.peerScoreThreshold = this.options.peerScoreThreshold || 0;
+    this._heap = new PeerHeap(channel.random);
+    this.choosePeerWithHeap = channel.choosePeerWithHeap;
 }
 
 inherits(TChannelSubPeers, TChannelPeersBase);
