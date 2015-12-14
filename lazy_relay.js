@@ -39,30 +39,30 @@ module.exports = {
 // - audit #extendLogInfo vs regular reqs
 
 function LazyRelayInReq(conn, reqFrame) {
+    this.channel = conn.channel;
+    this.conn = conn;
+    this.start = conn.timers.now();
+    this.remoteAddr = conn.remoteName;
+    this.logger = conn.logger;
+    this.peer = null;
+    this.outreq = null;
+    this.reqFrame = reqFrame;
+    this.id = this.reqFrame.id;
+    this.serviceName = '';
+    this.callerName = '';
+    this.timeout = 0;
+    this.alive = true;
+    this.operations = null;
+    this.timeHeapHandle = null;
+    this.endpoint = '';
+    this.error = null;
+    this.tracing = null;
+    this.reqContFrames = [];
+
+    this.boundExtendLogInfo = extendLogInfo;
+    this.boundOnIdentified = onIdentified;
+
     var self = this;
-
-    self.channel = conn.channel;
-    self.conn = conn;
-    self.start = conn.timers.now();
-    self.remoteAddr = conn.remoteName;
-    self.logger = conn.logger;
-    self.peer = null;
-    self.outreq = null;
-    self.reqFrame = reqFrame;
-    self.id = self.reqFrame.id;
-    self.serviceName = '';
-    self.callerName = '';
-    self.timeout = 0;
-    self.alive = true;
-    self.operations = null;
-    self.timeHeapHandle = null;
-    self.endpoint = '';
-    self.error = null;
-    self.tracing = null;
-    self.reqContFrames = [];
-
-    self.boundExtendLogInfo = extendLogInfo;
-    self.boundOnIdentified = onIdentified;
 
     function extendLogInfo(info) {
         return self.extendLogInfo(info);
@@ -451,20 +451,18 @@ function _observeCallReqContFrame(frame) {
 };
 
 function LazyRelayOutReq(conn, inreq) {
-    var self = this;
-
-    self.channel = conn.channel;
-    self.conn = conn;
-    self.start = conn.timers.now();
-    self.remoteAddr = conn.remoteName;
-    self.logger = conn.logger;
-    self.inreq = inreq;
-    self.id = self.conn.nextFrameId();
-    self.serviceName = self.inreq.serviceName;
-    self.callerName = self.inreq.callerName;
-    self.timeout = 0;
-    self.operations = null;
-    self.timeHeapHandle = null;
+    this.channel = conn.channel;
+    this.conn = conn;
+    this.start = conn.timers.now();
+    this.remoteAddr = conn.remoteName;
+    this.logger = conn.logger;
+    this.inreq = inreq;
+    this.id = this.conn.nextFrameId();
+    this.serviceName = this.inreq.serviceName;
+    this.callerName = this.inreq.callerName;
+    this.timeout = 0;
+    this.operations = null;
+    this.timeHeapHandle = null;
 }
 
 LazyRelayOutReq.prototype.type = 'tchannel.lazy.outgoing-request';
