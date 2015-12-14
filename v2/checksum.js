@@ -34,24 +34,23 @@ module.exports = Checksum;
 
 // csumtype:1 (csum:4){0,1}
 function Checksum(type, val) {
-    var self = this;
-    self.type = type;
-    self.val = val || 0;
-    switch (self.type) {
+    this.type = type;
+    this.val = val || 0;
+    switch (this.type) {
         case 0x00:
-            self._compute = self._computeNone;
+            this._compute = this._computeNone;
             break;
         case 0x01:
-            self._compute = self._computeCrc32;
+            this._compute = this._computeCrc32;
             break;
         case 0x02:
-            self._compute = self._computeFarm32;
+            this._compute = this._computeFarm32;
             break;
         case 0x03:
-            self._compute = self._computeCrc32C;
+            this._compute = this._computeCrc32C;
             break;
         default:
-            assert(false, 'invalid checksum type ' + self.type);
+            assert(false, 'invalid checksum type ' + this.type);
     }
 }
 
@@ -118,13 +117,12 @@ Checksum.RW.lazySkip = function lazySkip(frame, offset) {
 
 Checksum.prototype.compute = function compute(args, prior) {
     if (typeof prior !== 'number') prior = 0;
-    var self = this;
-    if (self.type === Checksum.Types.None) {
+    if (this.type === Checksum.Types.None) {
         return 0;
     } else {
         var csum = prior;
         for (var i = 0; i < args.length; i++) {
-            csum = self._compute(args[i], csum);
+            csum = this._compute(args[i], csum);
         }
         return csum;
     }
@@ -148,27 +146,24 @@ Checksum.prototype._computeFarm32 = function _computeFarm32(arg, prior) {
 };
 
 Checksum.prototype.update1 = function update1(arg, prior) {
-    var self = this;
-    self.val = self._compute(arg, prior);
+    this.val = this._compute(arg, prior);
 };
 
 Checksum.prototype.update = function update(args, prior) {
-    var self = this;
-    self.val = self.compute(args, prior);
+    this.val = this.compute(args, prior);
 };
 
 Checksum.prototype.verify = function verify(args, prior) {
-    var self = this;
-    if (self.type === Checksum.Types.None) {
+    if (this.type === Checksum.Types.None) {
         return null;
     }
-    var val = self.compute(args, prior);
-    if (val === self.val) {
+    var val = this.compute(args, prior);
+    if (val === this.val) {
         return null;
     } else {
         return errors.ChecksumError({
-            checksumType: self.type,
-            expectedValue: self.val,
+            checksumType: this.type,
+            expectedValue: this.val,
             actualValue: val
         });
     }
