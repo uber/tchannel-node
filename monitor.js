@@ -27,25 +27,23 @@ var console = require('console');
 module.exports.ChanConnMonitor = ChanConnMonitor;
 
 function ChanConnMonitor(channel, options) {
-    var self = this;
-
-    self.options = options;
-    self.channel = channel;
-    self.interval = options.interval;
-    self.byBucket = options.byBucket;
-    self.byTTL = options.byTTL;
-    self.timers = channel.timers;
-    self.timer = null;
-    self.running = false;
+    this.options = options;
+    this.channel = channel;
+    this.interval = options.interval;
+    this.byBucket = options.byBucket;
+    this.byTTL = options.byTTL;
+    this.timers = channel.timers;
+    this.timer = null;
+    this.running = false;
 
     if (options.eachConn) {
-        self.eachConn = options.eachConn;
+        this.eachConn = options.eachConn;
     }
     if (options.summary) {
-        self.summary = options.summary;
+        this.summary = options.summary;
     }
     if (options.log) {
-        self.log = options.log;
+        this.log = options.log;
     }
 }
 
@@ -133,10 +131,9 @@ ChanConnMonitor.prototype.tick = function tick() {
 module.exports.OpKindMonitor = OpKindMonitor;
 
 function OpKindMonitor(channel, options) {
-    var self = this;
-    ChanConnMonitor.call(self, channel, options);
-    self.inCounts = [];
-    self.outCounts = [];
+    ChanConnMonitor.call(this, channel, options);
+    this.inCounts = [];
+    this.outCounts = [];
 }
 
 inherits(OpKindMonitor, ChanConnMonitor);
