@@ -31,19 +31,17 @@ module.exports = PeerHeap;
 var dfsStack = [0, 1, 2];
 
 function PeerHeap(random) {
-    var self = this;
+    this.array = [];
 
-    self.array = [];
-
-    self.random = random || Math.random;
-    assert(typeof self.random === 'function', 'PeerHeap expected random fn');
+    this.random = random || Math.random;
+    assert(typeof this.random === 'function', 'PeerHeap expected random fn');
 
     // We cache the range los and his so they can be stored as a contiguous
     // array of boxed doubles. This has a noticable speed increase.
-    self.rangehis = [];
-    self.rangelos = [];
+    this.rangehis = [];
+    this.rangelos = [];
 
-    self.maxRangeStart = 0;
+    this.maxRangeStart = 0;
 }
 
 PeerHeap.prototype.choose1 = function choose1(threshold, filter) {
