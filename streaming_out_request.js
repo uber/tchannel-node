@@ -28,15 +28,16 @@ var TChannelOutRequest = require('./out_request');
 var States = require('./reqres_states');
 
 function StreamingOutRequest(id, options) {
+    TChannelOutRequest.call(this, id, options);
+    this.streamed = true;
+    this._argstream = new OutArgStream();
+    this.arg2 = this._argstream.arg2;
+    this.arg3 = this._argstream.arg3;
+
     var self = this;
-    TChannelOutRequest.call(self, id, options);
-    self.streamed = true;
-    self._argstream = new OutArgStream();
-    self.arg2 = self._argstream.arg2;
-    self.arg3 = self._argstream.arg3;
-    self._argstream.errorEvent.on(passError);
-    self._argstream.frameEvent.on(onFrame);
-    self._argstream.finishEvent.on(onFinish);
+    this._argstream.errorEvent.on(passError);
+    this._argstream.frameEvent.on(onFrame);
+    this._argstream.finishEvent.on(onFinish);
 
     function passError(err) {
         self.errorEvent.emit(self, err);
