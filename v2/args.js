@@ -36,34 +36,30 @@ var ReadResult = bufrw.ReadResult;
 /* eslint-disable curly */
 
 function ArgRW(sizerw) {
-    var self = this;
-    Base.call(self);
-    self.sizerw = sizerw;
-    self.strrw = bufrw.String(self.sizerw, 'utf8');
-    self.bufrw = bufrw.VariableBuffer(self.sizerw);
+    Base.call(this);
+    this.sizerw = sizerw;
+    this.strrw = bufrw.String(this.sizerw, 'utf8');
+    this.bufrw = bufrw.VariableBuffer(this.sizerw);
 }
 
 ArgRW.prototype.byteLength = function byteLength(arg) {
-    var self = this;
     if (typeof arg === 'string') {
-        return self.strrw.byteLength(arg);
+        return this.strrw.byteLength(arg);
     } else {
-        return self.bufrw.byteLength(arg);
+        return this.bufrw.byteLength(arg);
     }
 };
 
 ArgRW.prototype.writeInto = function writeInto(arg, buffer, offset) {
-    var self = this;
     if (typeof arg === 'string') {
-        return self.strrw.writeInto(arg, buffer, offset);
+        return this.strrw.writeInto(arg, buffer, offset);
     } else {
-        return self.bufrw.writeInto(arg, buffer, offset);
+        return this.bufrw.writeInto(arg, buffer, offset);
     }
 };
 
 ArgRW.prototype.readFrom = function readFrom(buffer, offset) {
-    var self = this;
-    return self.bufrw.readFrom(buffer, offset);
+    return this.bufrw.readFrom(buffer, offset);
 };
 
 var arg2 = new ArgRW(bufrw.UInt16BE);
@@ -71,15 +67,13 @@ var arg2 = new ArgRW(bufrw.UInt16BE);
 function ArgsRW(argrw) {
     argrw = argrw || arg2;
     assert(argrw.sizerw && argrw.sizerw.width, 'invalid argrw');
-    var self = this;
-    bufrw.Base.call(self);
-    self.argrw = argrw;
-    self.overhead = self.argrw.sizerw.width;
+    bufrw.Base.call(this);
+    this.argrw = argrw;
+    this.overhead = this.argrw.sizerw.width;
 }
 inherits(ArgsRW, bufrw.Base);
 
 ArgsRW.prototype.byteLength = function byteLength(body) {
-    var self = this;
     var length = 0;
     var res;
 
@@ -99,7 +93,7 @@ ArgsRW.prototype.byteLength = function byteLength(body) {
     }
 
     for (var i = 0; i < body.args.length; i++) {
-        res = self.argrw.byteLength(body.args[i]);
+        res = this.argrw.byteLength(body.args[i]);
         if (res.err) return res;
         length += res.length;
     }
@@ -108,7 +102,6 @@ ArgsRW.prototype.byteLength = function byteLength(body) {
 };
 
 ArgsRW.prototype.writeInto = function writeInto(body, buffer, offset) {
-    var self = this;
     var start = offset;
     var res;
 
@@ -117,15 +110,15 @@ ArgsRW.prototype.writeInto = function writeInto(body, buffer, offset) {
     offset += lenres.length;
 
     if (body.cont === null) {
-        res = self.writeFragmentInto(body, buffer, offset);
+        res = this.writeFragmentInto(body, buffer, offset);
         if (res.err) return res;
         offset = res.offset;
     } else {
         // assume that something else already did the fragmentation correctly
         for (var i = 0; i < body.args.length; i++) {
-            res = self.argrw.writeInto(body.args[i], buffer, offset);
+            res = this.argrw.writeInto(body.args[i], buffer, offset);
             if (res.err) return res;
-            var buf = buffer.slice(offset + self.overhead, res.offset);
+            var buf = buffer.slice(offset + this.overhead, res.offset);
             body.csum.update1(buf, body.csum.val);
             offset = res.offset;
         }
@@ -138,7 +131,6 @@ ArgsRW.prototype.writeInto = function writeInto(body, buffer, offset) {
 };
 
 ArgsRW.prototype.readFrom = function readFrom(body, buffer, offset) {
-    var self = this;
     var res;
 
     // TODO: missing symmetry: verify csum (requires prior somehow)
@@ -150,7 +142,7 @@ ArgsRW.prototype.readFrom = function readFrom(body, buffer, offset) {
 
     body.args = [];
     while (offset < buffer.length) {
-        res = self.argrw.readFrom(buffer, offset);
+        res = this.argrw.readFrom(buffer, offset);
         if (res.err) return res;
         offset = res.offset;
         body.args.push(res.value);
@@ -160,7 +152,6 @@ ArgsRW.prototype.readFrom = function readFrom(body, buffer, offset) {
 };
 
 ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(body, buffer, offset) {
-    var self = this;
     var res;
     var i = 0;
     var remain = buffer.length - offset;
@@ -170,11 +161,11 @@ ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(body, buffer, of
         if (!Buffer.isBuffer(arg)) {
             arg = new Buffer(arg);
         }
-        var min = self.overhead + arg.length ? 1 : 0;
+        var min = this.overhead + arg.length ? 1 : 0;
         if (remain < min) break;
-        var need = self.overhead + arg.length;
+        var need = this.overhead + arg.length;
         if (need > remain) {
-            var j = remain - self.overhead;
+            var j = remain - this.overhead;
             body.args[i] = arg.slice(0, j);
             body.cont = new body.constructor.Cont(
                 body.flags & Flags.Fragment,
@@ -185,13 +176,13 @@ ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(body, buffer, of
             body.flags |= Flags.Fragment;
             arg = body.args[i];
         }
-        res = self.argrw.writeInto(arg, buffer, offset);
+        res = this.argrw.writeInto(arg, buffer, offset);
         if (res.err) return res;
-        var buf = buffer.slice(offset + self.overhead, res.offset);
+        var buf = buffer.slice(offset + this.overhead, res.offset);
         body.csum.update1(buf, body.csum.val);
         offset = res.offset;
         remain = buffer.length - offset;
-    } while (remain >= self.overhead && ++i < body.args.length);
+    } while (remain >= this.overhead && ++i < body.args.length);
 
     return res || WriteResult.just(offset);
 };
