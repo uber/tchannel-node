@@ -78,6 +78,7 @@ var DEFAULT_RETRY_FLAGS = new RetryFlags(
 );
 
 var MAXIMUM_TTL_ALLOWED = 2 * 60 * 1000;
+var MAX_TOMBSTONE_TTL = 5000;
 
 // TODO restore spying
 // var Spy = require('./v2/spy');
@@ -104,6 +105,7 @@ function TChannel(options) {
         timeoutCheckInterval: 100,
         timeoutFuzz: 100,
         connectionStalePeriod: CONN_STALE_PERIOD,
+        maxTombstoneTTL: MAX_TOMBSTONE_TTL,
 
         // TODO: maybe we should always add pid to user-supplied?
         processName: format('%s[%s]', process.title, process.pid)
@@ -1023,10 +1025,14 @@ TChannel.prototype.setMaxTombstoneTTL =
 function setMaxTombstoneTTL(ttl) {
     var self = this;
 
+    if (ttl === self.options.maxTombstoneTTL) {
+        return;
+    }
+
+    self.options.maxTombstoneTTL = ttl;
     var peers = self.peers.values();
     for (var i = 0; i < peers.length; i++) {
         var peer = peers[i];
-
         peer.setMaxTombstoneTTL(ttl);
     }
 };
