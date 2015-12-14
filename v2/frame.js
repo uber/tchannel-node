@@ -20,6 +20,9 @@
 
 'use strict';
 
+/* eslint-disable curly */
+/* eslint max-statements: [1, 30] */
+
 Frame.Overhead = 0x10;
 Frame.MaxSize = 0xffff;
 Frame.MaxBodySize = Frame.MaxSize - Frame.Overhead;
@@ -33,7 +36,6 @@ var bufrw = require('bufrw');
 var errors = require('../errors');
 
 var Types = require('./index.js').Types;
-
 
 function Frame(id, body) {
     var self = this;
