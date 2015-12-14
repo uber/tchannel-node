@@ -3,6 +3,3 @@ scripts/*.js
 test/
 v1/*.js
 benchmarks/d8_peer_heap.js
-
-# TODO remove.
-v2/tracing.js
