@@ -33,9 +33,6 @@ var WriteResult = bufrw.WriteResult;
 var ReadResult = bufrw.ReadResult;
 
 function ArgRW(sizerw) {
-    if (!(this instanceof ArgRW)) {
-        return new ArgRW(sizerw);
-    }
     var self = this;
     Base.call(self);
     self.sizerw = sizerw;
@@ -66,12 +63,9 @@ ArgRW.prototype.readFrom = function readFrom(buffer, offset) {
     return self.bufrw.readFrom(buffer, offset);
 };
 
-var arg2 = ArgRW(bufrw.UInt16BE);
+var arg2 = new ArgRW(bufrw.UInt16BE);
 
 function ArgsRW(argrw) {
-    if (!(this instanceof ArgsRW)) {
-        return new ArgsRW(argrw);
-    }
     argrw = argrw || arg2;
     assert(argrw.sizerw && argrw.sizerw.width, 'invalid argrw');
     var self = this;

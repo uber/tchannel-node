@@ -37,7 +37,7 @@ function TestBody(csum, args) {
 }
 
 TestBody.RW = bufrw.Struct(TestBody, [
-    {call: ArgsRW(bufrw.buf2)}
+    {call: new ArgsRW(bufrw.buf2)}
 ]);
 
 test('ArgsRW: read/write payload', testRW.cases(TestBody.RW, [

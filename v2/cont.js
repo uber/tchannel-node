@@ -25,7 +25,7 @@ var Checksum = require('./checksum');
 var ArgsRW = require('./args');
 var Frame = require('./frame');
 var CallFlags = require('./call_flags');
-var argsrw = ArgsRW();
+var argsrw = new ArgsRW();
 
 // flags:1 csumtype:1 (csum:4){0,1} (arg~2)+
 function CallRequestCont(flags, csum, args) {
