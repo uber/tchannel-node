@@ -23,104 +23,94 @@
 var errors = require('./errors');
 
 function TChannelServices() {
-    var self = this;
     // Maps service name with '$' prefix to service tracking object.
     // The prefix ensures that we cannot be lost or confused if some joker
     // names their service 'toString' or '__proto__'.
     // '_' as a prefix would still be confused by '_proto__', '__' would be
     // confused by 'proto__'.
-    self.services = {};
-    self.maxPendingForService = Infinity;
-    self.maxPending = Infinity;
-    self.pending = 0;
+    this.services = {};
+    this.maxPendingForService = Infinity;
+    this.maxPending = Infinity;
+    this.pending = 0;
 }
 
 TChannelServices.prototype.errorIfExceedsMaxPending = function errorIfExceedsMaxPending(req) {
-    var self = this;
-    if (self.pending >= self.maxPending) {
+    if (this.pending >= this.maxPending) {
         return errors.MaxPendingError({
-            pending: self.pending
+            pending: this.pending
         });
     }
     if (!req.serviceName) {
         return null;
     }
     var serviceKey = '$' + req.serviceName;
-    var service = self.services[serviceKey];
+    var service = this.services[serviceKey];
     return service && service.errorIfExceedsMaxPending();
 };
 
 TChannelServices.prototype.onRequest = function onRequest(req) {
-    var self = this;
-    self.pending++;
+    this.pending++;
     if (!req.serviceName) {
         return;
     }
     var serviceKey = '$' + req.serviceName;
-    var service = self.services[serviceKey];
+    var service = this.services[serviceKey];
     if (!service) {
         service = new TChannelService();
         service.serviceName = req.serviceName;
-        if (self.maxPendingForService !== undefined) {
-            service.maxPending = self.maxPendingForService;
+        if (this.maxPendingForService !== undefined) {
+            service.maxPending = this.maxPendingForService;
         }
-        self.services[serviceKey] = service;
+        this.services[serviceKey] = service;
     }
     service.onRequest();
 };
 
 TChannelServices.prototype.onRequestResponse = function onRequestResponse(req) {
-    var self = this;
-    self.pending--;
+    this.pending--;
     if (!req.serviceName) {
         return;
     }
     var serviceKey = '$' + req.serviceName;
-    var service = self.services[serviceKey];
+    var service = this.services[serviceKey];
     service.onRequestResponse();
 };
 
 TChannelServices.prototype.onRequestError = function onRequestError(req) {
-    var self = this;
-    self.pending--;
+    this.pending--;
     if (!req.serviceName) {
         return;
     }
     var serviceKey = '$' + req.serviceName;
-    var service = self.services[serviceKey];
+    var service = this.services[serviceKey];
     service.onRequestError();
 };
 
 function TChannelService() {
-    var self = this;
-    self.serviceName = null;
-    self.maxPending = Infinity;
-    self.pending = 0;
+    this.serviceName = null;
+    this.maxPending = Infinity;
+    this.pending = 0;
 }
 
 TChannelService.prototype.errorIfExceedsMaxPending = function errorIfExceedsMaxPending() {
-    var self = this;
-    if (self.pending >= self.maxPending) {
+    if (this.pending >= this.maxPending) {
         return errors.MaxPendingForServiceError({
-            serviceName: self.serviceName,
-            pending: self.pending
+            serviceName: this.serviceName,
+            pending: this.pending
         });
     }
 };
 
 TChannelService.prototype.onRequest = function onRequest() {
-    var self = this;
-    self.pending += 1;
+    this.pending += 1;
 };
 
 TChannelService.prototype.onRequestResponse = function onRequestResponse() {
-    var self = this;
-    self.pending -= 1;
+    this.pending -= 1;
 };
 
 TChannelService.prototype.onRequestError = function onRequestError() {
-    var self = this;
-    self.pending -= 1;
+    this.pending -= 1;
 };
 
 module.exports = TChannelServices;
