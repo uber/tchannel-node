@@ -771,28 +771,26 @@ function fastRequestDefaults(reqOpts) {
 };
 
 function RequestDefaults(reqDefaults) {
-    var self = this;
+    this.timeout = reqDefaults.timeout || 0;
+    this.retryLimit = reqDefaults.retryLimit || 0;
+    this.serviceName = reqDefaults.serviceName || '';
 
-    self.timeout = reqDefaults.timeout || 0;
-    self.retryLimit = reqDefaults.retryLimit || 0;
-    self.serviceName = reqDefaults.serviceName || '';
+    this._trackPendingSpecified = typeof reqDefaults.trackPending === 'boolean';
+    this.trackPending = reqDefaults.trackPending;
 
-    self._trackPendingSpecified = typeof reqDefaults.trackPending === 'boolean';
-    self.trackPending = reqDefaults.trackPending;
+    this._checkSumTypeSpecified = typeof reqDefaults.checksumType === 'number';
+    this.checksumType = reqDefaults.checksumType || 0;
 
-    self._checkSumTypeSpecified = typeof reqDefaults.checksumType === 'number';
-    self.checksumType = reqDefaults.checksumType || 0;
+    this._hasNoParentSpecified = typeof reqDefaults.hasNoParent === 'boolean';
+    this.hasNoParent = reqDefaults.hasNoParent || false;
 
-    self._hasNoParentSpecified = typeof reqDefaults.hasNoParent === 'boolean';
-    self.hasNoParent = reqDefaults.hasNoParent || false;
+    this._traceSpecified = typeof reqDefaults.trace === 'boolean';
+    this.trace = reqDefaults.trace || false;
 
-    self._traceSpecified = typeof reqDefaults.trace === 'boolean';
-    self.trace = reqDefaults.trace || false;
+    this.retryFlags = reqDefaults.retryFlags || null;
+    this.shouldApplicationRetry = reqDefaults.shouldApplicationRetry || null;
 
-    self.retryFlags = reqDefaults.retryFlags || null;
-    self.shouldApplicationRetry = reqDefaults.shouldApplicationRetry || null;
-
-    self.headers = reqDefaults.headers;
+    this.headers = reqDefaults.headers;
 }
 
 TChannel.prototype.request = function channelRequest(options) {
