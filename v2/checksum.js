@@ -20,6 +20,8 @@
 
 'use strict';
 
+/* eslint-disable curly */
+
 var assert = require('assert');
 var farm32 = require('farmhash').fingerprint32;
 var crc32 = require('crc').crc32;
