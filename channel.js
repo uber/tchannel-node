@@ -816,39 +816,37 @@ TChannel.prototype.request = function channelRequest(options) {
 
 function RequestOptions(channel, opts) {
     /*eslint complexity: [2, 30]*/
-    var self = this;
+    this.channel = channel;
 
-    self.channel = channel;
-
-    self.host = opts.host || '';
-    self.streamed = opts.streamed || false;
-    self.timeout = opts.timeout || 0;
-    self.retryLimit = opts.retryLimit || 0;
-    self.serviceName = opts.serviceName || '';
-    self._trackPendingSpecified = typeof opts.trackPending === 'boolean';
-    self.trackPending = opts.trackPending || false;
-    self.checksumType = opts.checksumType || null;
-    self._hasNoParentSpecified = typeof opts.hasNoParent === 'boolean';
-    self.hasNoParent = opts.hasNoParent || false;
-    self.forwardTrace = opts.forwardTrace || false;
-    self._traceSpecified = typeof opts.trace === 'boolean';
-    self.trace = self._traceSpecified ? opts.trace : true;
-    self._retryFlagsSpecified = !!opts.retryFlags;
-    self.retryFlags = opts.retryFlags || DEFAULT_RETRY_FLAGS;
-    self.shouldApplicationRetry = opts.shouldApplicationRetry || null;
-    self.parent = opts.parent || null;
-    self.tracing = opts.tracing || null;
-    self.peer = opts.peer || null;
-    self.timeoutPerAttempt = opts.timeoutPerAttempt || 0;
-    self.checksum = opts.checksum || null;
+    this.host = opts.host || '';
+    this.streamed = opts.streamed || false;
+    this.timeout = opts.timeout || 0;
+    this.retryLimit = opts.retryLimit || 0;
+    this.serviceName = opts.serviceName || '';
+    this._trackPendingSpecified = typeof opts.trackPending === 'boolean';
+    this.trackPending = opts.trackPending || false;
+    this.checksumType = opts.checksumType || null;
+    this._hasNoParentSpecified = typeof opts.hasNoParent === 'boolean';
+    this.hasNoParent = opts.hasNoParent || false;
+    this.forwardTrace = opts.forwardTrace || false;
+    this._traceSpecified = typeof opts.trace === 'boolean';
+    this.trace = this._traceSpecified ? opts.trace : true;
+    this._retryFlagsSpecified = !!opts.retryFlags;
+    this.retryFlags = opts.retryFlags || DEFAULT_RETRY_FLAGS;
+    this.shouldApplicationRetry = opts.shouldApplicationRetry || null;
+    this.parent = opts.parent || null;
+    this.tracing = opts.tracing || null;
+    this.peer = opts.peer || null;
+    this.timeoutPerAttempt = opts.timeoutPerAttempt || 0;
+    this.checksum = opts.checksum || null;
 
     // TODO optimize?
-    self.headers = opts.headers || new RequestHeaders();
+    this.headers = opts.headers || new RequestHeaders();
 
-    self.retryCount = 0;
-    self.logical = false;
-    self.remoteAddr = null;
-    self.hostPort = null;
+    this.retryCount = 0;
+    this.logical = false;
+    this.remoteAddr = null;
+    this.hostPort = null;
 }
 
 function RequestHeaders() {
