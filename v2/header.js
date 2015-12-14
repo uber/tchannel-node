@@ -20,6 +20,9 @@
 
 'use strict';
 
+/* eslint-disable curly */
+/* eslint max-statements: [1, 30] */
+
 var bufrw = require('bufrw');
 var inherits = require('util').inherits;
 var errors = require('../errors');
