@@ -5,7 +5,6 @@ v1/*.js
 benchmarks/d8_peer_heap.js
 
 # TODO remove.
-v2/lazy_frame.js
 v2/out_request.js
 v2/out_response.js
 v2/ping.js
