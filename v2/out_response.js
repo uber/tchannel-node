@@ -20,6 +20,8 @@
 
 'use strict';
 
+/* eslint-disable curly */
+
 var inherits = require('util').inherits;
 
 var OutResponse = require('../out_response');
