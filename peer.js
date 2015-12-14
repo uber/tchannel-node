@@ -43,37 +43,38 @@ var DEFAULT_REPORT_INTERVAL = 1000;
 function TChannelPeer(channel, hostPort, options) {
     assert(hostPort !== '0.0.0.0:0', 'Cannot create ephemeral peer');
 
-    var self = this;
     options = options || {};
-    EventEmitter.call(self);
+    EventEmitter.call(this);
 
-    self.stateChangedEvent = self.defineEvent('stateChanged');
-    self.allocConnectionEvent = self.defineEvent('allocConnection');
-    self.removeConnectionEvent = self.defineEvent('removeConnection');
-    self.channel = channel;
-    self.logger = self.channel.logger;
-    self.timers = self.channel.timers;
-    self.random = self.channel.random;
-    self.hostPort = hostPort;
-    self.connections = [];
-    self.pendingIdentified = 0;
-    self.heapElements = [];
-    self.scoreStrategy = null;
-    self.draining = null;
-    self.boundOnIdentified = onIdentified;
-    self.boundOnConnectionError = onConnectionError;
-    self.boundOnConnectionClose = onConnectionClose;
-    self.boundOnPendingChange = onPendingChange;
-    self.scoreRange = null;
+    this.stateChangedEvent = this.defineEvent('stateChanged');
+    this.allocConnectionEvent = this.defineEvent('allocConnection');
+    this.removeConnectionEvent = this.defineEvent('removeConnection');
+    this.channel = channel;
+    this.logger = this.channel.logger;
+    this.timers = this.channel.timers;
+    this.random = this.channel.random;
+    this.hostPort = hostPort;
+    this.connections = [];
+    this.pendingIdentified = 0;
+    this.heapElements = [];
+    this.scoreStrategy = null;
+    this.draining = null;
+    this.boundOnIdentified = onIdentified;
+    this.boundOnConnectionError = onConnectionError;
+    this.boundOnConnectionClose = onConnectionClose;
+    this.boundOnPendingChange = onPendingChange;
+    this.scoreRange = null;
 
-    self.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
-    if (self.reportInterval > 0 && self.channel.emitConnectionMetrics) {
-        self.reportTimer = self.timers.setTimeout(
-            onReport, self.reportInterval
+    this.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
+    if (this.reportInterval > 0 && this.channel.emitConnectionMetrics) {
+        this.reportTimer = this.timers.setTimeout(
+            onReport, this.reportInterval
         );
     }
 
-    self.setPreferConnectionDirection(options.preferConnectionDirection || 'any');
+    this.setPreferConnectionDirection(options.preferConnectionDirection || 'any');
+
+    var self = this;
 
     function onIdentified(_, conn) {
         self.onIdentified(conn);
