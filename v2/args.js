@@ -23,6 +23,7 @@
 var assert = require('assert');
 var inherits = require('util').inherits;
 var bufrw = require('bufrw');
+var Buffer = require('buffer').Buffer;
 var Checksum = require('./checksum');
 var Flags = require('./call_flags');
 var errors = require('../errors');
@@ -31,6 +32,8 @@ var Base = bufrw.Base;
 var LengthResult = bufrw.LengthResult;
 var WriteResult = bufrw.WriteResult;
 var ReadResult = bufrw.ReadResult;
+
+/* eslint-disable curly */
 
 function ArgRW(sizerw) {
     var self = this;

@@ -5,7 +5,6 @@ v1/*.js
 benchmarks/d8_peer_heap.js
 
 # TODO remove.
-v2/args.js
 v2/call.js
 v2/call_flags.js
 v2/cancel.js
