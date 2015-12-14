@@ -25,11 +25,10 @@ var Tracing = require('./tracing');
 
 // ttl:4 tracing:25 why~2
 function Cancel(ttl, tracing, why) {
-    var self = this;
-    self.type = Cancel.TypeCode;
-    self.ttl = ttl || 0;
-    self.tracing = tracing || Tracing.emptyTracing;
-    self.why = why || '';
+    this.type = Cancel.TypeCode;
+    this.ttl = ttl || 0;
+    this.tracing = tracing || Tracing.emptyTracing;
+    this.why = why || '';
 }
 
 Cancel.TypeCode = 0xc0;
