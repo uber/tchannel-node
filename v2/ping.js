@@ -26,16 +26,14 @@ module.exports.Request = PingRequest;
 module.exports.Response = PingResponse;
 
 function PingRequest() {
-    var self = this;
-    self.type = PingRequest.TypeCode;
+    this.type = PingRequest.TypeCode;
 }
 
 PingRequest.TypeCode = 0xd0;
 PingRequest.RW = bufrw.Struct(PingRequest, []);
 
 function PingResponse() {
-    var self = this;
-    self.type = PingResponse.TypeCode;
+    this.type = PingResponse.TypeCode;
 }
 
 PingResponse.TypeCode = 0xd1;

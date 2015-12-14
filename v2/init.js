@@ -34,10 +34,9 @@ module.exports.Response = InitResponse;
 var RequiredHeaderFields = ['host_port', 'process_name'];
 
 function InitRequest(version, headers) {
-    var self = this;
-    self.type = InitRequest.TypeCode;
-    self.version = version || 0;
-    self.headers = headers || {};
+    this.type = InitRequest.TypeCode;
+    this.version = version || 0;
+    this.headers = headers || {};
 }
 
 InitRequest.TypeCode = 0x01;
@@ -52,10 +51,9 @@ InitRequest.RW = bufrw.Struct(InitRequest, [
 // TODO: MissingInitHeaderError check / guard
 
 function InitResponse(version, headers) {
-    var self = this;
-    self.type = InitResponse.TypeCode;
-    self.version = version || 0;
-    self.headers = headers || {};
+    this.type = InitResponse.TypeCode;
+    this.version = version || 0;
+    this.headers = headers || {};
 }
 
 InitResponse.TypeCode = 0x02;

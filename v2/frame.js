@@ -38,16 +38,15 @@ var errors = require('../errors');
 var Types = require('./index.js').Types;
 
 function Frame(id, body) {
-    var self = this;
-    self.isLazy = false;
-    self.size = 0;
-    self.type = (body && body.type) || 0;
+    this.isLazy = false;
+    this.size = 0;
+    this.type = (body && body.type) || 0;
     if (id === null || id === undefined) {
-        self.id = Frame.NullId;
+        this.id = Frame.NullId;
     } else {
-        self.id = id;
+        this.id = id;
     }
-    self.body = body;
+    this.body = body;
 }
 
 // size:2: type:1 reserved:1 id:4 reserved:8 ...
@@ -163,16 +162,13 @@ Frame.fromBuffer = function fromBuffer(buffer) {
 };
 
 Frame.prototype.byteLength = function byteLength() {
-    var self = this;
-    return bufrw.byteLength(Frame.RW, self);
+    return bufrw.byteLength(Frame.RW, this);
 };
 
 Frame.prototype.intoBuffer = function intoBuffer(buffer) {
-    var self = this;
-    return bufrw.intoBuffer(Frame.RW, self, buffer);
+    return bufrw.intoBuffer(Frame.RW, this, buffer);
 };
 
 Frame.prototype.toBuffer = function toBuffer() {
-    var self = this;
-    return bufrw.toBuffer(Frame.RW, self);
+    return bufrw.toBuffer(Frame.RW, this);
 };

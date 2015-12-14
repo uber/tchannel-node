@@ -32,42 +32,40 @@ var errors = require('../errors');
 // allow for more precise error reporting.
 
 function HeaderRW(countrw, keyrw, valrw, options) {
-    var self = this;
-    self.countrw = countrw;
-    self.keyrw = keyrw;
-    self.valrw = valrw;
-    self.maxHeaderCount = options.maxHeaderCount;
-    self.maxKeyLength = options.maxKeyLength;
-    bufrw.Base.call(self);
+    this.countrw = countrw;
+    this.keyrw = keyrw;
+    this.valrw = valrw;
+    this.maxHeaderCount = options.maxHeaderCount;
+    this.maxKeyLength = options.maxKeyLength;
+    bufrw.Base.call(this);
 }
 inherits(HeaderRW, bufrw.Base);
 
 HeaderRW.prototype.byteLength = function byteLength(headers) {
-    var self = this;
     var length = 0;
     var keys = Object.keys(headers);
     var res;
 
-    if (keys.length > self.maxHeaderCount) {
+    if (keys.length > this.maxHeaderCount) {
         return bufrw.LengthResult.error(errors.TooManyHeaders({
             count: keys.length,
-            maxHeaderCount: self.maxHeaderCount
+            maxHeaderCount: this.maxHeaderCount
         }));
     }
 
-    length += self.countrw.width;
+    length += this.countrw.width;
 
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
-        res = self.keyrw.byteLength(key);
+        res = this.keyrw.byteLength(key);
         if (res.err) return res;
         length += res.length;
 
-        res = self.valrw.byteLength(headers[key]);
+        res = this.valrw.byteLength(headers[key]);
         if (res.err) return res;
-        if (res.length > self.maxKeyLength) {
+        if (res.length > this.maxKeyLength) {
             return bufrw.LengthResult.error(errors.TransportHeaderTooLong({
-                maxLength: self.maxKeyLength,
+                maxLength: this.maxKeyLength,
                 headerName: key
             }));
         }
@@ -78,16 +76,15 @@ HeaderRW.prototype.byteLength = function byteLength(headers) {
 };
 
 HeaderRW.prototype.writeInto = function writeInto(headers, buffer, offset) {
-    var self = this;
     var keys = Object.keys(headers);
     var res;
 
-    res = self.countrw.writeInto(keys.length, buffer, offset);
+    res = this.countrw.writeInto(keys.length, buffer, offset);
 
-    if (keys.length > self.maxHeaderCount) {
+    if (keys.length > this.maxHeaderCount) {
         return bufrw.WriteResult.error(errors.TooManyHeaders({
             count: keys.length,
-            maxHeaderCount: self.maxHeaderCount,
+            maxHeaderCount: this.maxHeaderCount,
             offset: offset,
             endOffset: res.offset
         }), offset);
@@ -98,13 +95,13 @@ HeaderRW.prototype.writeInto = function writeInto(headers, buffer, offset) {
         offset = res.offset;
 
         var key = keys[i];
-        res = self.keyrw.writeInto(key, buffer, offset);
+        res = this.keyrw.writeInto(key, buffer, offset);
         if (res.err) return res;
 
         var keyByteLength = res.offset - offset;
-        if (keyByteLength > self.maxKeyLength) {
+        if (keyByteLength > this.maxKeyLength) {
             return bufrw.WriteResult.error(errors.TransportHeaderTooLong({
-                maxLength: self.maxKeyLength,
+                maxLength: this.maxKeyLength,
                 headerName: key,
                 offset: offset,
                 endOffset: res.offset
@@ -120,14 +117,13 @@ HeaderRW.prototype.writeInto = function writeInto(headers, buffer, offset) {
             }), offset);
         }
 
-        res = self.valrw.writeInto(headers[key], buffer, offset);
+        res = this.valrw.writeInto(headers[key], buffer, offset);
     }
 
     return res;
 };
 
 HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
-    var self = this;
     var headers = {};
     var start = 0;
     var n = 0;
@@ -135,15 +131,15 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
     var val = '';
     var res;
 
-    res = self.countrw.readFrom(buffer, offset);
+    res = this.countrw.readFrom(buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     n = res.value;
 
-    if (n > self.maxHeaderCount) {
+    if (n > this.maxHeaderCount) {
         return bufrw.ReadResult.error(errors.TooManyHeaders({
             count: n,
-            maxHeaderCount: self.maxHeaderCount,
+            maxHeaderCount: this.maxHeaderCount,
             offset: offset,
             endOffset: res.offset
         }), offset, headers);
@@ -152,7 +148,7 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
     for (var i = 0; i < n; i++) {
         start = offset;
 
-        res = self.keyrw.readFrom(buffer, offset);
+        res = this.keyrw.readFrom(buffer, offset);
         if (res.err) return res;
         key = res.value;
 
@@ -161,9 +157,9 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
                 offset: offset,
                 endOffset: res.offset
             }), offset, headers);
-        } else if (res.offset - offset > self.maxKeyLength) {
+        } else if (res.offset - offset > this.maxKeyLength) {
             return bufrw.ReadResult.error(errors.TransportHeaderTooLong({
-                maxLength: self.maxKeyLength,
+                maxLength: this.maxKeyLength,
                 headerName: key,
                 offset: offset,
                 endOffset: res.offset
@@ -171,7 +167,7 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
         }
         offset = res.offset;
 
-        res = self.valrw.readFrom(buffer, offset);
+        res = this.valrw.readFrom(buffer, offset);
         if (res.err) return res;
         val = res.value;
 
@@ -193,24 +189,22 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
 };
 
 HeaderRW.prototype.lazyRead = function lazyRead(frame, offset) {
-    var self = this;
-
     // TODO: conspire with Call(Request,Response) to memoize headers start/end
     // offsets, maybe even start of each key?
 
-    var res = self.countrw.readFrom(frame.buffer, offset);
+    var res = this.countrw.readFrom(frame.buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     var keyvals = new KeyVals(frame.buffer, res.value);
     for (var i = 0; i < keyvals.length; i++) {
-        res = self.keyrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.keyrw.sizerw.readFrom(frame.buffer, offset);
         if (res.err) return res;
         var keyOffset = res.offset;
         var keyLength = res.value;
         offset = res.offset + res.value;
 
-        res = self.valrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.valrw.sizerw.readFrom(frame.buffer, offset);
         if (res.err) return res;
         var valOffset = res.offset;
         var valLength = res.value;
@@ -225,22 +219,20 @@ HeaderRW.prototype.lazyRead = function lazyRead(frame, offset) {
 };
 
 HeaderRW.prototype.lazySkip = function lazySkip(frame, offset) {
-    var self = this;
-
     // TODO: conspire with Call(Request,Response) to memoize headers start/end
     // offsets, maybe even start of each key?
 
-    var res = self.countrw.readFrom(frame.buffer, offset);
+    var res = this.countrw.readFrom(frame.buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     var n = res.value;
 
     for (var i = 0; i < n; i++) {
-        res = self.keyrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.keyrw.sizerw.readFrom(frame.buffer, offset);
         if (res.err) return res;
         offset = res.offset + res.value;
 
-        res = self.valrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.valrw.sizerw.readFrom(frame.buffer, offset);
         if (res.err) return res;
         offset = res.offset + res.value;
     }

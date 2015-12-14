@@ -54,43 +54,43 @@ var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
 module.exports = TChannelV2Handler;
 
 function TChannelV2Handler(options) {
-    var self = this;
-    EventEmitter.call(self);
-    self.errorEvent = self.defineEvent('error');
-    self.errorFrameEvent = self.defineEvent('errorFrame');
-    self.callIncomingErrorFrameEvent = self.defineEvent('callIncomingErrorFrame');
-    self.callIncomingRequestEvent = self.defineEvent('callIncomingRequest');
-    self.callIncomingResponseEvent = self.defineEvent('callIncomingResponse');
-    self.cancelEvent = self.defineEvent('cancel');
-    self.initRequestEvent = self.defineEvent('initRequest');
-    self.initResponseEvent = self.defineEvent('initResponse');
-    self.claimEvent = self.defineEvent('claim');
-    self.pingIncomingRequestEvent = self.defineEvent('pingIncomingRequest');
-    self.pingIncomingResponseEvent = self.defineEvent('pingIncomingResponse');
-    self.writeErrorEvent = self.defineEvent('writeError'); // TODO: could use default throw behavior
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.errorFrameEvent = this.defineEvent('errorFrame');
+    this.callIncomingErrorFrameEvent = this.defineEvent('callIncomingErrorFrame');
+    this.callIncomingRequestEvent = this.defineEvent('callIncomingRequest');
+    this.callIncomingResponseEvent = this.defineEvent('callIncomingResponse');
+    this.cancelEvent = this.defineEvent('cancel');
+    this.initRequestEvent = this.defineEvent('initRequest');
+    this.initResponseEvent = this.defineEvent('initResponse');
+    this.claimEvent = this.defineEvent('claim');
+    this.pingIncomingRequestEvent = this.defineEvent('pingIncomingRequest');
+    this.pingIncomingResponseEvent = this.defineEvent('pingIncomingResponse');
+    this.writeErrorEvent = this.defineEvent('writeError'); // TODO: could use default throw behavior
 
-    self.options = options || {};
-    self.logger = self.options.logger;
-    self.random = self.options.random;
-    self.timers = self.options.timers;
-    self.tracer = self.options.tracer;
-    self.hostPort = self.options.hostPort;
-    self.processName = self.options.processName;
-    self.connection = self.options.connection;
-    self.remoteName = null; // filled in by identify message
-    self.lastSentFrameId = 0;
+    this.options = options || {};
+    this.logger = this.options.logger;
+    this.random = this.options.random;
+    this.timers = this.options.timers;
+    this.tracer = this.options.tracer;
+    this.hostPort = this.options.hostPort;
+    this.processName = this.options.processName;
+    this.connection = this.options.connection;
+    this.remoteName = null; // filled in by identify message
+    this.lastSentFrameId = 0;
     // TODO: GC these... maybe that's up to TChannel itself wrt ops
-    self.streamingReq = Object.create(null);
-    self.streamingRes = Object.create(null);
+    this.streamingReq = Object.create(null);
+    this.streamingRes = Object.create(null);
 
-    self.handleCallLazily = self.options.handleCallLazily || null;
-    self.handleFrame = self.handleEagerFrame;
+    this.handleCallLazily = this.options.handleCallLazily || null;
+    this.handleFrame = this.handleEagerFrame;
 
-    self.requireAs = self.options.requireAs === false ? false : true;
-    self.requireCn = self.options.requireCn === false ? false : true;
+    this.requireAs = this.options.requireAs === false ? false : true;
+    this.requireCn = this.options.requireCn === false ? false : true;
 
-    self.boundOnReqError = onReqError;
-    self.boundOnResError = onResError;
+    var self = this;
+    this.boundOnReqError = onReqError;
+    this.boundOnResError = onResError;
 
     function onReqError(err, req) {
         self.onReqError(err, req);
@@ -104,21 +104,17 @@ function TChannelV2Handler(options) {
 util.inherits(TChannelV2Handler, EventEmitter);
 
 TChannelV2Handler.prototype.write = function write() {
-    var self = this;
-    self.errorEvent.emit(self, new Error('write not implemented'));
+    this.errorEvent.emit(this, new Error('write not implemented'));
 };
 
 TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end) {
-    var self = this;
     // TODO: Optimize, allocating SlowBuffer here is slow
     var copy = new Buffer(end - start);
     buffer.copy(copy, 0, start, end);
-    self.write(copy);
+    this.write(copy);
 };
 
 TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
-    var self = this;
-
     var writeBuffer = GLOBAL_WRITE_BUFFER;
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
@@ -129,31 +125,26 @@ TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
             err.buffer = bufCopy;
         }
         if (typeof err.offset !== 'number') err.offset = res.offset;
-        self.writeErrorEvent.emit(self, err);
+        this.writeErrorEvent.emit(this, err);
     } else {
-        self.writeCopy(writeBuffer, 0, res.offset);
+        this.writeCopy(writeBuffer, 0, res.offset);
     }
 };
 
 TChannelV2Handler.prototype.nextFrameId = function nextFrameId() {
-    var self = this;
-    self.lastSentFrameId = (self.lastSentFrameId + 1) % v2.Frame.MaxId;
-    return self.lastSentFrameId;
+    this.lastSentFrameId = (this.lastSentFrameId + 1) % v2.Frame.MaxId;
+    return this.lastSentFrameId;
 };
 
 TChannelV2Handler.prototype.useLazyFrames = function useLazyFrames(enabled) {
-    var self = this;
-
     if (enabled) {
-        self.handleFrame = self.handleLazyFrame;
+        this.handleFrame = this.handleLazyFrame;
     } else {
-        self.handleFrame = self.handleEagerFrame;
+        this.handleFrame = this.handleEagerFrame;
     }
 };
 
 TChannelV2Handler.prototype.handleLazyFrame = function handleLazyFrame(frame) {
-    var self = this;
-
     switch (frame.type) {
         // TODO: make some lazy type handlers?
         // case v2.Types.InitRequest:
@@ -168,7 +159,7 @@ TChannelV2Handler.prototype.handleLazyFrame = function handleLazyFrame(frame) {
         case v2.Types.CallRequestCont:
         case v2.Types.CallResponseCont:
         case v2.Types.ErrorResponse:
-            if (self.handleCallLazily && self.handleCallLazily(frame)) {
+            if (this.handleCallLazily && this.handleCallLazily(frame)) {
                 return;
             }
             break;
@@ -178,41 +169,40 @@ TChannelV2Handler.prototype.handleLazyFrame = function handleLazyFrame(frame) {
 
     var res = frame.readBody();
     if (res.err) {
-        self.errorEvent.emit(self, res.err);
+        this.errorEvent.emit(this, res.err);
         return;
     }
 
-    self.handleEagerFrame(frame);
+    this.handleEagerFrame(frame);
 };
 
 /* eslint-disable complexity */
 TChannelV2Handler.prototype.handleEagerFrame = function handleEagerFrame(frame) {
-    var self = this;
     switch (frame.body.type) {
         case v2.Types.InitRequest:
-            return self.handleInitRequest(frame);
+            return this.handleInitRequest(frame);
         case v2.Types.InitResponse:
-            return self.handleInitResponse(frame);
+            return this.handleInitResponse(frame);
         case v2.Types.CallRequest:
-            return self.handleCallRequest(frame);
+            return this.handleCallRequest(frame);
         case v2.Types.CallResponse:
-            return self.handleCallResponse(frame);
+            return this.handleCallResponse(frame);
         case v2.Types.Cancel:
-            return self.handleCancel(frame);
+            return this.handleCancel(frame);
         case v2.Types.CallRequestCont:
-            return self.handleCallRequestCont(frame);
+            return this.handleCallRequestCont(frame);
         case v2.Types.CallResponseCont:
-            return self.handleCallResponseCont(frame);
+            return this.handleCallResponseCont(frame);
         case v2.Types.Claim:
-            return self.handleClaim(frame);
+            return this.handleClaim(frame);
         case v2.Types.PingRequest:
-            return self.handlePingRequest(frame);
+            return this.handlePingRequest(frame);
         case v2.Types.PingResponse:
-            return self.handlePingResponse(frame);
+            return this.handlePingResponse(frame);
         case v2.Types.ErrorResponse:
-            return self.handleError(frame);
+            return this.handleError(frame);
         default:
-            return self.errorEvent.emit(self, errors.TChannelUnhandledFrameTypeError({
+            return this.errorEvent.emit(this, errors.TChannelUnhandledFrameTypeError({
                 typeCode: frame.body.type
             }));
     }
@@ -220,9 +210,8 @@ TChannelV2Handler.prototype.handleEagerFrame = function handleEagerFrame(frame) 
 /* eslint-enable complexity */
 
 TChannelV2Handler.prototype.handleInitRequest = function handleInitRequest(reqFrame) {
-    var self = this;
-    if (self.remoteName !== null) {
-        return self.errorEvent.emit(self, errors.DuplicateInitRequestError());
+    if (this.remoteName !== null) {
+        return this.errorEvent.emit(this, errors.DuplicateInitRequestError());
     }
     var headers = reqFrame.body.headers;
     var init = {
@@ -235,21 +224,20 @@ TChannelV2Handler.prototype.handleInitRequest = function handleInitRequest(reqFr
 
     var reason = HostPort.validateHostPort(init.hostPort, true);
     if (reason) {
-        return self.errorEvent.emit(self, errors.InvalidInitHostPortError({
+        return this.errorEvent.emit(this, errors.InvalidInitHostPortError({
             hostPort: init.hostPort,
             reason: reason
         }));
     }
 
-    self.sendInitResponse(reqFrame);
-    self.remoteName = init.hostPort;
-    self.initRequestEvent.emit(self, init);
+    this.sendInitResponse(reqFrame);
+    this.remoteName = init.hostPort;
+    this.initRequestEvent.emit(this, init);
 };
 
 TChannelV2Handler.prototype.handleInitResponse = function handleInitResponse(resFrame) {
-    var self = this;
-    if (self.remoteName !== null) {
-        return self.errorEvent.emit(self, errors.DuplicateInitResponseError());
+    if (this.remoteName !== null) {
+        return this.errorEvent.emit(this, errors.DuplicateInitResponseError());
     }
     var headers = resFrame.body.headers;
     var init = {
@@ -259,31 +247,29 @@ TChannelV2Handler.prototype.handleInitResponse = function handleInitResponse(res
         tchannelLanguageVersion: headers.tchannel_language_version,
         tchannelVersion: headers.tchannel_version
     };
-    self.remoteName = init.hostPort;
-    self.initResponseEvent.emit(self, init);
+    this.remoteName = init.hostPort;
+    this.initResponseEvent.emit(this, init);
 };
 
 TChannelV2Handler.prototype.handleCallRequest = function handleCallRequest(reqFrame) {
-    var self = this;
-
-    if (self.remoteName === null) {
-        self.errorEvent.emit(self, errors.CallReqBeforeInitReqError());
+    if (this.remoteName === null) {
+        this.errorEvent.emit(this, errors.CallReqBeforeInitReqError());
         return;
     }
 
-    var req = self.buildInRequest(reqFrame);
+    var req = this.buildInRequest(reqFrame);
 
-    var err = self.checkCallReqFrame(reqFrame);
+    var err = this.checkCallReqFrame(reqFrame);
     if (err) {
         req.errorEvent.emit(req, err);
         return;
     }
 
-    if (self._handleCallFrame(req, reqFrame, self.streamingReq)) {
-        self.callIncomingRequestEvent.emit(self, req);
+    if (this._handleCallFrame(req, reqFrame, this.streamingReq)) {
+        this.callIncomingRequestEvent.emit(this, req);
     }
 
-    var channel = self.connection.channel;
+    var channel = this.connection.channel;
     channel.emitFastStat(
         'tchannel.inbound.request.size',
         'counter',
@@ -295,14 +281,12 @@ TChannelV2Handler.prototype.handleCallRequest = function handleCallRequest(reqFr
         )
     );
 
-    self.emitBytesRecvd(reqFrame);
+    this.emitBytesRecvd(reqFrame);
 };
 
 TChannelV2Handler.prototype.emitBytesRecvd =
 function emitBytesRecvd(frame) {
-    var self = this;
-
-    var channel = self.connection.channel;
+    var channel = this.connection.channel;
     if (channel.emitConnectionMetrics) {
         channel.emitFastStat(
             'tchannel.connections.bytes-recvd',
@@ -310,54 +294,50 @@ function emitBytesRecvd(frame) {
             frame.size,
             new stat.ConnectionsBytesRcvdTags(
                 channel.hostPort || '0.0.0.0:0',
-                self.connection.socketRemoteAddr
+                this.connection.socketRemoteAddr
             )
         );
     }
 };
 
 TChannelV2Handler.prototype.checkCallResFrame = function checkCallResFrame(resFrame) {
-    var self = this;
-
     if (!resFrame.body ||
         !resFrame.body.headers ||
         !resFrame.body.headers.as
     ) {
-        if (self.requireAs) {
+        if (this.requireAs) {
             return errors.InAsHeaderRequired({
                 frame: 'response'
             });
         } else {
-            self.logger.warn('Expected "as" for incoming response', {
+            this.logger.warn('Expected "as" for incoming response', {
                 code: resFrame.body.code,
-                remoteName: self.remoteName,
+                remoteName: this.remoteName,
                 endpoint: String(resFrame.body.args[0]),
-                socketRemoteAddr: self.connection.socketRemoteAddr
+                socketRemoteAddr: this.connection.socketRemoteAddr
             });
         }
     }
 
-    return self.checkCallFrameArgs(resFrame);
+    return this.checkCallFrameArgs(resFrame);
 };
 
 TChannelV2Handler.prototype.checkCallReqFrame = function checkCallReqFrame(reqFrame) {
-    var self = this;
-
     if (!reqFrame.body ||
         !reqFrame.body.headers ||
         !reqFrame.body.headers.as
     ) {
-        if (self.requireAs) {
+        if (this.requireAs) {
             return errors.InAsHeaderRequired({
                 frame: 'request'
             });
         } else {
-            self.logger.warn('Expected "as" header for incoming req', {
+            this.logger.warn('Expected "as" header for incoming req', {
                 arg1: String(reqFrame.body.args[0]),
                 serviceName: reqFrame.body.service,
                 callerName: reqFrame.body.headers.cn,
-                remoteName: self.remoteName,
-                socketRemoteAddr: self.connection.socketRemoteAddr
+                remoteName: this.remoteName,
+                socketRemoteAddr: this.connection.socketRemoteAddr
             });
         }
     }
@@ -366,19 +346,19 @@ TChannelV2Handler.prototype.checkCallReqFrame = function checkCallReqFrame(reqFr
         !reqFrame.body.headers ||
         !reqFrame.body.headers.cn
     ) {
-        if (self.requireCn) {
+        if (this.requireCn) {
             return errors.InCnHeaderRequired();
         } else {
-            self.logger.warn('Expected "cn" header for incoming req', {
+            this.logger.warn('Expected "cn" header for incoming req', {
                 arg1: String(reqFrame.body.args[0]),
                 serviceName: reqFrame.body.service,
-                remoteName: self.remoteName,
-                socketRemoteAddr: self.connection.socketRemoteAddr
+                remoteName: this.remoteName,
+                socketRemoteAddr: this.connection.socketRemoteAddr
             });
         }
     }
 
-    return self.checkCallFrameArgs(reqFrame);
+    return this.checkCallFrameArgs(reqFrame);
 };
 
 TChannelV2Handler.prototype.checkCallFrameArgs = function checkCallFrameArgs(frame) {
@@ -396,24 +376,22 @@ TChannelV2Handler.prototype.checkCallFrameArgs = function checkCallFrameArgs(fra
 };
 
 TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(resFrame) {
-    var self = this;
-
-    if (self.remoteName === null) {
-        self.errorEvent.emit(self, errors.CallResBeforeInitResError());
+    if (this.remoteName === null) {
+        this.errorEvent.emit(this, errors.CallResBeforeInitResError());
         return;
     }
 
-    var res = self.buildInResponse(resFrame);
+    var res = this.buildInResponse(resFrame);
 
-    var err = self.checkCallResFrame(resFrame);
+    var err = this.checkCallResFrame(resFrame);
     if (err) {
         res.errorEvent.emit(res, err);
         return;
     }
 
-    var req = self.connection.ops.getOutReq(res.id);
+    var req = this.connection.ops.getOutReq(res.id);
 
-    var channel = self.connection.channel;
+    var channel = this.connection.channel;
 
     channel.emitFastStat(
         'tchannel.inbound.response.size',
@@ -426,27 +404,25 @@ TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(res
         )
     );
 
-    self.emitBytesRecvd(resFrame);
+    this.emitBytesRecvd(resFrame);
 
-    res.remoteAddr = self.remoteName;
-    if (self._handleCallFrame(res, resFrame, self.streamingRes)) {
-        self.callIncomingResponseEvent.emit(self, res);
+    res.remoteAddr = this.remoteName;
+    if (this._handleCallFrame(res, resFrame, this.streamingRes)) {
+        this.callIncomingResponseEvent.emit(this, res);
     }
 };
 
-// TODO  we should implement clearing of self.streaming{Req,Res}
+// TODO  we should implement clearing of this.streaming{Req,Res}
 TChannelV2Handler.prototype.handleCancel = function handleCancel(frame) {
-    var self = this;
-    self.cancelEvent.emit(self, frame);
+    this.cancelEvent.emit(this, frame);
 };
 
 TChannelV2Handler.prototype.handleCallRequestCont = function handleCallRequestCont(reqFrame, callback) {
-    var self = this;
-    if (self.remoteName === null) {
-        return self.errorEvent.emit(self, errors.CallReqContBeforeInitReqError());
+    if (this.remoteName === null) {
+        return this.errorEvent.emit(this, errors.CallReqContBeforeInitReqError());
     }
     var id = reqFrame.id;
-    var req = self.streamingReq[id];
+    var req = this.streamingReq[id];
     if (!req) {
         // TODO: maybe we should send an error frame directed at the missing
         // request id?  Currently the handler -> connection boundary only
@@ -454,14 +430,14 @@ TChannelV2Handler.prototype.handleCallRequestCont = function handleCallRequestCo
         // option for errors classified as 'BadRequest' to resolve through
         // something like `var refId = errors.badRequestRefId(err); if (refId
         // !== undefined) ...` then we could support it.
-        return self.errorEvent.emit(self, errors.OrphanCallRequestCont({
+        return this.errorEvent.emit(this, errors.OrphanCallRequestCont({
             frameId: id
         }));
     }
 
-    self._handleCallFrame(req, reqFrame, self.streamingReq);
+    this._handleCallFrame(req, reqFrame, this.streamingReq);
 
-    var channel = self.connection.channel;
+    var channel = this.connection.channel;
     channel.emitFastStat(
         'tchannel.inbound.request.size',
         'counter',
@@ -473,25 +449,24 @@ TChannelV2Handler.prototype.handleCallRequestCont = function handleCallRequestCo
         )
     );
 
-    self.emitBytesRecvd(reqFrame);
+    this.emitBytesRecvd(reqFrame);
 };
 
 TChannelV2Handler.prototype.handleCallResponseCont = function handleCallResponseCont(resFrame) {
-    var self = this;
-    if (self.remoteName === null) {
-        return self.errorEvent.emit(self, errors.CallResContBeforeInitResError());
+    if (this.remoteName === null) {
+        return this.errorEvent.emit(this, errors.CallResContBeforeInitResError());
     }
     var id = resFrame.id;
-    var res = self.streamingRes[id];
+    var res = this.streamingRes[id];
     if (!res) {
         // TODO: see note in #handleCallRequestCont
-        return self.errorEvent.emit(self, errors.OrphanCallResponseCont({
+        return this.errorEvent.emit(this, errors.OrphanCallResponseCont({
             frameId: id
         }));
     }
 
-    var req = self.connection.ops.getOutReq(res.id);
-    var channel = self.connection.channel;
+    var req = this.connection.ops.getOutReq(res.id);
+    var channel = this.connection.channel;
 
     channel.emitFastStat(
         'tchannel.inbound.response.size',
@@ -504,39 +479,34 @@ TChannelV2Handler.prototype.handleCallResponseCont = function handleCallResponse
         )
     );
 
-    self.emitBytesRecvd(resFrame);
+    this.emitBytesRecvd(resFrame);
 
-    self._handleCallFrame(res, resFrame, self.streamingRes);
+    this._handleCallFrame(res, resFrame, this.streamingRes);
 };
 
 TChannelV2Handler.prototype.handleClaim = function handleClaim(frame) {
-    var self = this;
-    self.claimEvent.emit(self, frame);
+    this.claimEvent.emit(this, frame);
 };
 
 TChannelV2Handler.prototype.handlePingRequest = function handlePingRequest(pingFrame) {
-    var self = this;
-    self.pingIncomingRequestEvent.emit(self, pingFrame);
-    self.sendPingReponse(pingFrame);
+    this.pingIncomingRequestEvent.emit(this, pingFrame);
+    this.sendPingReponse(pingFrame);
 };
 
 TChannelV2Handler.prototype.handlePingResponse = function handlePingResponse(pingFrame) {
-    var self = this;
-    self.pingIncomingResponseEvent.emit(self, pingFrame);
+    this.pingIncomingResponseEvent.emit(this, pingFrame);
 };
 
 TChannelV2Handler.prototype.handleError = function handleError(errFrame, callback) {
-    var self = this;
-
     if (errFrame.id === v2.Frame.NullId) {
         // error frame not associated with a prior frame
-        self.errorFrameEvent.emit(self, errFrame);
+        this.errorFrameEvent.emit(this, errFrame);
         return;
     }
 
-    delete self.streamingReq[errFrame.id];
-    delete self.streamingRes[errFrame.id];
-    self.callIncomingErrorFrameEvent.emit(self, errFrame);
+    delete this.streamingReq[errFrame.id];
+    delete this.streamingRes[errFrame.id];
+    this.callIncomingErrorFrameEvent.emit(this, errFrame);
 };
 
 TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame) {
@@ -565,10 +535,8 @@ TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame)
 };
 
 TChannelV2Handler.prototype._handleCallFrame = function _handleCallFrame(r, frame, streamingColl) {
-    var self = this;
-
     var isLast = true;
-    var err = self._checkCallFrame(r, frame);
+    var err = this._checkCallFrame(r, frame);
 
     if (!err) {
         // TODO: refactor r.handleFrame to just take the whole frame? or should
@@ -597,10 +565,9 @@ TChannelV2Handler.prototype._handleCallFrame = function _handleCallFrame(r, fram
 };
 
 TChannelV2Handler.prototype.sendInitRequest = function sendInitRequest() {
-    var self = this;
-    var id = self.nextFrameId(); // TODO: assert(id === 1)?
-    var hostPort = self.hostPort || '0.0.0.0:0';
-    var processName = self.processName;
+    var id = this.nextFrameId(); // TODO: assert(id === 1)?
+    var hostPort = this.hostPort || '0.0.0.0:0';
+    var processName = this.processName;
     /* eslint-disable camelcase */
     var body = new v2.InitRequest(v2.VERSION, {
         host_port: hostPort,
@@ -611,14 +578,13 @@ TChannelV2Handler.prototype.sendInitRequest = function sendInitRequest() {
     });
     /* eslint-enable camelcase */
     var reqFrame = new v2.Frame(id, body);
-    self.pushFrame(reqFrame);
+    this.pushFrame(reqFrame);
 };
 
 TChannelV2Handler.prototype.sendInitResponse = function sendInitResponse(reqFrame) {
-    var self = this;
     var id = reqFrame.id;
-    var hostPort = self.hostPort;
-    var processName = self.processName;
+    var hostPort = this.hostPort;
+    var processName = this.processName;
     /* eslint-disable camelcase */
     var body = new v2.InitResponse(v2.VERSION, {
         host_port: hostPort,
@@ -629,18 +595,17 @@ TChannelV2Handler.prototype.sendInitResponse = function sendInitResponse(reqFram
     });
     /* eslint-enable camelcase */
     var resFrame = new v2.Frame(id, body);
-    self.pushFrame(resFrame);
+    this.pushFrame(resFrame);
 };
 
 TChannelV2Handler.prototype.sendCallRequestFrame =
 function sendCallRequestFrame(req, flags, args) {
-    var self = this;
-    if (self.remoteName === null) {
-        self.errorEvent.emit(self, errors.SendCallReqBeforeIdentifiedError());
+    if (this.remoteName === null) {
+        this.errorEvent.emit(this, errors.SendCallReqBeforeIdentifiedError());
         return null;
     }
 
-    var err = self.verifyCallRequestFrame(req, args);
+    var err = this.verifyCallRequestFrame(req, args);
     if (err) {
         return err;
     }
@@ -649,7 +614,7 @@ function sendCallRequestFrame(req, flags, args) {
         flags, req.timeout, req.tracing, req.serviceName, req.headers,
         req.checksum.type, args
     );
-    req.checksum = self.sendCallBodies(
+    req.checksum = this.sendCallBodies(
         req.id, reqBody, null,
         'tchannel.outbound.request.size', new stat.OutboundRequestSizeTags(
             req.serviceName,
@@ -662,9 +627,7 @@ function sendCallRequestFrame(req, flags, args) {
 
 TChannelV2Handler.prototype.emitBytesSent =
 function emitBytesSent(size) {
-    var self = this;
-
-    var channel = self.connection.channel;
+    var channel = this.connection.channel;
     if (channel.emitConnectionMetrics) {
         channel.emitFastStat(
             'tchannel.connections.bytes-sent',
@@ -672,7 +635,7 @@ function emitBytesSent(size) {
             size,
             new stat.ConnectionsBytesSentTags(
                 channel.hostPort || '0.0.0.0:0',
-                self.connection.socketRemoteAddr
+                this.connection.socketRemoteAddr
             )
         );
     }
@@ -680,31 +643,29 @@ function emitBytesSent(size) {
 
 TChannelV2Handler.prototype.verifyCallRequestFrame =
 function verifyCallRequestFrame(req, args) {
-    var self = this;
-
     if (!req.headers || !req.headers.as) {
-        if (self.requireAs) {
+        if (this.requireAs) {
             return errors.OutAsHeaderRequired();
         } else {
-            self.logger.error('Expected "as" header to be set for request', {
+            this.logger.error('Expected "as" header to be set for request', {
                 arg1: req.endpoint,
                 callerName: req.callerName,
-                remoteName: self.remoteName,
+                remoteName: this.remoteName,
                 serviceName: req.serviceName,
-                socketRemoteAddr: self.connection.socketRemoteAddr
+                socketRemoteAddr: this.connection.socketRemoteAddr
             });
         }
     }
 
     if (!req.callerName) {
-        if (self.requireCn) {
+        if (this.requireCn) {
             return errors.OutCnHeaderRequired();
         } else {
-            self.logger.error('Expected "cn" header to be set for request', {
+            this.logger.error('Expected "cn" header to be set for request', {
                 arg1: req.endpoint,
-                remoteName: self.remoteName,
+                remoteName: this.remoteName,
                 serviceName: req.serviceName,
-                socketRemoteAddr: self.connection.socketRemoteAddr
+                socketRemoteAddr: this.connection.socketRemoteAddr
             });
         }
     }
@@ -714,13 +675,12 @@ function verifyCallRequestFrame(req, args) {
 
 TChannelV2Handler.prototype.sendCallResponseFrame =
 function sendCallResponseFrame(res, flags, args) {
-    var self = this;
-    if (self.remoteName === null) {
-        self.errorEvent.emit(self, errors.SendCallResBeforeIdentifiedError());
+    if (this.remoteName === null) {
+        this.errorEvent.emit(this, errors.SendCallResBeforeIdentifiedError());
         return null;
     }
 
-    var err = self.validateCallResponseFrame(res);
+    var err = this.validateCallResponseFrame(res);
     if (err) {
         return err;
     }
@@ -729,7 +689,7 @@ function sendCallResponseFrame(res, flags, args) {
     var resBody = new v2.CallResponse(
         flags, res.code, res.tracing, res.headers,
         res.checksum.type, args);
-    res.checksum = self.sendCallBodies(
+    res.checksum = this.sendCallBodies(
         res.id, resBody, null,
         'tchannel.outbound.response.size', new stat.OutboundResponseSizeTags(
             req.serviceName,
@@ -740,18 +700,16 @@ function sendCallResponseFrame(res, flags, args) {
 
 TChannelV2Handler.prototype.validateCallResponseFrame =
 function validateCallResponseFrame(res) {
-    var self = this;
-
-    if (self.requireAs) {
+    if (this.requireAs) {
         // TODO: consider returning typed error like for req frame validate
         assert(res.headers && res.headers.as,
             'Expected the "as" transport header to be set for response');
     } else if (!res.headers || !res.headers.as) {
-        self.logger.error('Expected "as" header to be set for response', {
+        this.logger.error('Expected "as" header to be set for response', {
             code: res.code,
-            remoteName: self.remoteName,
-            arg1: self.inreq.endpoint,
-            socketRemoteAddr: self.connection.socketRemoteAddr
+            remoteName: this.remoteName,
+            arg1: this.inreq.endpoint,
+            socketRemoteAddr: this.connection.socketRemoteAddr
         });
     }
 
@@ -759,14 +717,13 @@ function validateCallResponseFrame(res) {
 };
 
 TChannelV2Handler.prototype.sendCallRequestContFrame = function sendCallRequestContFrame(req, flags, args) {
-    var self = this;
-    if (self.remoteName === null) {
-        self.errorEvent.emit(self, errors.SendCallReqContBeforeIdentifiedError());
+    if (this.remoteName === null) {
+        this.errorEvent.emit(this, errors.SendCallReqContBeforeIdentifiedError());
         return;
     }
 
     var reqBody = new v2.CallRequestCont(flags, req.checksum.type, args);
-    req.checksum = self.sendCallBodies(
+    req.checksum = this.sendCallBodies(
         req.id, reqBody, req.checksum,
         'tchannel.outbound.request.size', new stat.OutboundRequestSizeTags(
             req ? req.serviceName : '',
@@ -776,15 +733,14 @@ TChannelV2Handler.prototype.sendCallRequestContFrame = function sendCallRequestC
 };
 
 TChannelV2Handler.prototype.sendCallResponseContFrame = function sendCallResponseContFrame(res, flags, args) {
-    var self = this;
-    if (self.remoteName === null) {
-        self.errorEvent.emit(self, errors.SendCallResContBeforeIdentifiedError());
+    if (this.remoteName === null) {
+        this.errorEvent.emit(this, errors.SendCallResContBeforeIdentifiedError());
         return;
     }
 
     var req = res.inreq;
     var resBody = new v2.CallResponseCont(flags, res.checksum.type, args);
-    res.checksum = self.sendCallBodies(
+    res.checksum = this.sendCallBodies(
         res.id, resBody, res.checksum,
         'tchannel.outbound.response.size', new stat.OutboundResponseSizeTags(
             req.serviceName,
@@ -795,8 +751,7 @@ TChannelV2Handler.prototype.sendCallResponseContFrame = function sendCallRespons
 
 TChannelV2Handler.prototype.sendCallBodies =
 function sendCallBodies(id, body, checksum, chanStat, tags) {
-    var self = this;
-    var channel = self.connection.channel;
+    var channel = this.connection.channel;
     var frame;
 
     var size = 0;
@@ -807,7 +762,7 @@ function sendCallBodies(id, body, checksum, chanStat, tags) {
         }
 
         frame = new v2.Frame(id, body);
-        self.pushFrame(frame);
+        this.pushFrame(frame);
         size += frame.size;
         checksum = body.csum;
     } while (body = body.cont);
@@ -816,32 +771,29 @@ function sendCallBodies(id, body, checksum, chanStat, tags) {
     if (chanStat) {
         channel.emitFastStat(chanStat, 'counter', size, tags);
     }
-    self.emitBytesSent(size);
+    this.emitBytesSent(size);
 
     return checksum;
 };
 
 TChannelV2Handler.prototype.sendPingRequest = function sendPingRequest() {
-    var self = this;
-    var id = self.nextFrameId();
+    var id = this.nextFrameId();
     var body = new v2.PingRequest();
     var reqFrame = new v2.Frame(id, body);
-    self.pushFrame(reqFrame);
+    this.pushFrame(reqFrame);
     return id;
 };
 
 TChannelV2Handler.prototype.sendPingReponse = function sendPingReponse(res) {
-    var self = this;
     var body = new v2.PingResponse();
     var resFrame = new v2.Frame(res.id, body);
-    self.pushFrame(resFrame);
+    this.pushFrame(resFrame);
 };
 
 TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing, codeString, message) {
-    var self = this;
     var code = v2.ErrorResponse.Codes[codeString];
     if (code === undefined) {
-        self.logger.error('invalid error frame code string', {
+        this.logger.error('invalid error frame code string', {
             codeString: codeString
         });
         code = v2.ErrorResponse.Codes.UnexpectedError;
@@ -849,12 +801,11 @@ TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing
     }
     var errBody = new v2.ErrorResponse(code, tracing, message);
     var errFrame = new v2.Frame(id, errBody);
-    self.pushFrame(errFrame);
+    this.pushFrame(errFrame);
 };
 
 TChannelV2Handler.prototype.buildOutRequest = function buildOutRequest(options) {
-    var self = this;
-    var id = self.nextFrameId();
+    var id = this.nextFrameId();
 
     if (options.checksumType === null) {
         options.checksumType = v2.Checksum.Types.CRC32C;
@@ -867,21 +818,20 @@ TChannelV2Handler.prototype.buildOutRequest = function buildOutRequest(options) 
     }
 
     if (options.streamed) {
-        return new StreamingOutRequest(self, id, options);
+        return new StreamingOutRequest(this, id, options);
     } else {
-        return new OutRequest(self, id, options);
+        return new OutRequest(this, id, options);
     }
 };
 
 TChannelV2Handler.prototype.buildOutResponse = function buildOutResponse(req, options) {
-    var self = this;
     if (!options) options = {};
 
     options.inreq = req;
     options.channel = req.channel;
-    options.logger = self.logger;
-    options.random = self.random;
-    options.timers = self.timers;
+    options.logger = this.logger;
+    options.random = this.random;
+    options.timers = this.timers;
 
     options.tracing = req.tracing;
     options.span = req.span;
@@ -890,26 +840,24 @@ TChannelV2Handler.prototype.buildOutResponse = function buildOutResponse(req, op
         options.checksum = new v2.Checksum(req.checksum.type);
     }
     if (options.streamed) {
-        return new StreamingOutResponse(self, req.id, options);
+        return new StreamingOutResponse(this, req.id, options);
     } else {
-        return new OutResponse(self, req.id, options);
+        return new OutResponse(this, req.id, options);
     }
 };
 
 TChannelV2Handler.prototype.buildInRequest = function buildInRequest(reqFrame) {
-    var self = this;
-
     var opts = new InRequestOptions(
-        self.connection.channel,
+        this.connection.channel,
         reqFrame.body.ttl || SERVER_TIMEOUT_DEFAULT,
         reqFrame.body.tracing,
         reqFrame.body.service,
         reqFrame.body.headers,
         new v2.Checksum(reqFrame.body.csum.type),
         v2.parseRetryFlags(reqFrame.body.headers.re),
-        self.connection,
-        self.hostPort,
-        self.tracer,
+        this.connection,
+        this.hostPort,
+        this.tracer,
         reqFrame.body.flags
     );
 
@@ -920,43 +868,37 @@ TChannelV2Handler.prototype.buildInRequest = function buildInRequest(reqFrame) {
         req = new InRequest(reqFrame.id, opts);
     }
 
-    req.errorEvent.on(self.boundOnReqError);
+    req.errorEvent.on(this.boundOnReqError);
 
     return req;
 };
 
 TChannelV2Handler.prototype.onReqError = function onReqError(err, req) {
-    var self = this;
-
     var codeName = errors.classify(err);
     if (codeName &&
         codeName !== 'ProtocolError'
     ) {
         // TODO: move req to error state?
         if (!req.res) {
-            req.res = self.buildOutResponse(req);
+            req.res = this.buildOutResponse(req);
         }
         req.res.sendError(codeName, err.message);
     } else {
-        self.errorEvent.emit(self, err);
+        this.errorEvent.emit(this, err);
     }
 };
 
 TChannelV2Handler.prototype.onResError = function onResError(err, res) {
-    var self = this;
-
     // TODO: wrap errors to clarify "errors on responses to req..." ?
-    var req = self.connection.ops.getOutReq(res.id);
+    var req = this.connection.ops.getOutReq(res.id);
     req.errorEvent.emit(req, err);
 };
 
 TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame) {
-    var self = this;
-
     var opts = {
-        logger: self.logger,
-        random: self.random,
-        timers: self.timers,
+        logger: this.logger,
+        random: this.random,
+        timers: this.timers,
         code: resFrame.body.code,
         checksum: new v2.Checksum(resFrame.body.csum.type),
         streamed: resFrame.body.flags & v2.CallFlags.Fragment,
@@ -971,7 +913,7 @@ TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame)
         res = new InResponse(resFrame.id, opts);
     }
 
-    res.errorEvent.on(self.boundOnResError);
+    res.errorEvent.on(this.boundOnResError);
 
     return res;
 };
@@ -980,17 +922,15 @@ function InRequestOptions(
     channel, timeout, tracing, serviceName, headers, checksum,
     retryFlags, connection, hostPort, tracer, flags
 ) {
-    var self = this;
-
-    self.channel = channel;
-    self.timeout = timeout;
-    self.tracing = tracing;
-    self.serviceName = serviceName;
-    self.headers = headers;
-    self.checksum = checksum;
-    self.retryFlags = retryFlags;
-    self.connection = connection;
-    self.hostPort = hostPort;
-    self.tracer = tracer;
-    self.flags = flags;
+    this.channel = channel;
+    this.timeout = timeout;
+    this.tracing = tracing;
+    this.serviceName = serviceName;
+    this.headers = headers;
+    this.checksum = checksum;
+    this.retryFlags = retryFlags;
+    this.connection = connection;
+    this.hostPort = hostPort;
+    this.tracer = tracer;
+    this.flags = flags;
 }

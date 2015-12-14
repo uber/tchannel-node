@@ -36,11 +36,10 @@ emptyParentId.fill(0);
 emptyTraceId.fill(0);
 
 function Tracing(spanid, parentid, traceid, flags) {
-    var self = this;
-    self.spanid = spanid || [0, 0];
-    self.parentid = parentid || [0, 0];
-    self.traceid = traceid || [0, 0];
-    self.flags = flags || 0;
+    this.spanid = spanid || [0, 0];
+    this.parentid = parentid || [0, 0];
+    this.traceid = traceid || [0, 0];
+    this.flags = flags || 0;
 }
 
 Tracing.RW = bufrw.Base(tracingByteLength, readTracingFrom, writeTracingInto);

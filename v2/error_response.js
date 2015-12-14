@@ -33,11 +33,10 @@ var errors = require('../errors');
 
 // code:1 tracing:25 message~2
 function ErrorResponse(code, tracing, message) {
-    var self = this;
-    self.code = code || 0;
-    self.tracing = tracing || Tracing.emptyTracing;
-    self.type = ErrorResponse.TypeCode;
-    self.message = message || '';
+    this.code = code || 0;
+    this.tracing = tracing || Tracing.emptyTracing;
+    this.type = ErrorResponse.TypeCode;
+    this.message = message || '';
 }
 
 ErrorResponse.TypeCode = 0xff;
