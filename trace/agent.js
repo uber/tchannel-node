@@ -26,9 +26,6 @@ var errors = require('../errors.js');
 module.exports = Agent;
 
 function Agent(options) {
-    if (!(this instanceof Agent)) {
-        return new Agent(options);
-    }
     var self = this;
 
     options = options || {};
