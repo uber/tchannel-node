@@ -39,7 +39,7 @@ TChannelSelfPeer.prototype.connect = function connect() {
     }
     var conn = self.connections[0];
     if (!conn) {
-        conn = TChannelSelfConnection(self.channel);
+        conn = new TChannelSelfConnection(self.channel);
         self.addConnection(conn);
     }
     return conn;

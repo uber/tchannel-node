@@ -32,9 +32,6 @@ var process = require('process');
 var TChannelConnectionBase = require('./connection_base');
 
 function TChannelSelfConnection(channel) {
-    if (!(this instanceof TChannelSelfConnection)) {
-        return new TChannelSelfConnection(channel);
-    }
     var self = this;
     TChannelConnectionBase.call(self, channel, 'in', channel.hostPort);
     self.idCount = 1;
