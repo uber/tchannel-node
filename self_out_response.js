@@ -30,33 +30,30 @@ var StreamingOutResponse = require('./streaming_out_response');
 var v2 = require('./v2');
 
 function SelfOutResponse(conn, inreq, id, options) {
-    var self = this;
-    OutResponse.call(self, id, options);
-    self.conn = conn;
-    self.inreq = inreq;
-    self.first = true;
-    self.makeInres(id, options);
+    OutResponse.call(this, id, options);
+    this.conn = conn;
+    this.inreq = inreq;
+    this.first = true;
+    this.makeInres(id, options);
 }
 inherits(SelfOutResponse, OutResponse);
 
 function SelfStreamingOutResponse(conn, inreq, id, options) {
-    var self = this;
-    OutResponse.call(self, id, options);
-    self.conn = conn;
-    self.inreq = inreq;
-    self.first = true;
-    self.makeInres(id, options);
+    OutResponse.call(this, id, options);
+    this.conn = conn;
+    this.inreq = inreq;
+    this.first = true;
+    this.makeInres(id, options);
 }
 inherits(SelfStreamingOutResponse, StreamingOutResponse);
 
 SelfOutResponse.prototype.makeInres =
 SelfStreamingOutResponse.prototype.makeInres =
 function makeInres(id, options) {
-    var self = this;
     if (options.streamed) {
-        self.inres = new StreamingInResponse(self.id, options);
+        this.inres = new StreamingInResponse(this.id, options);
     } else {
-        self.inres = new InResponse(self.id, options);
+        this.inres = new InResponse(this.id, options);
     }
 };
 
