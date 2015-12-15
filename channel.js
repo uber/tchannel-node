@@ -24,11 +24,14 @@ var assert = require('assert');
 var process = require('process');
 var version = require('./package.json').version;
 
+var tainted = global.TCHANNEL_UNSUPPORTED_MODE ===
+    'I promise that I will not ask for support or help or open issues';
+
 /*global global*/
 if (typeof global.tchannelVersion === 'string' &&
     version !== global.tchannelVersion
 ) {
-    assert(global.TCHANNEL_UNSUPPORTED_MODE === 'I know what I am doing',
+    assert(tainted,
         'Must use only a single version of tchannel.\n' +
         'Found two versions: ' + version + ' and ' +
             global.tchannelVersion + '\n'
@@ -98,6 +101,7 @@ function TChannel(options) {
     this.statEvent = this.defineEvent('stat');
     this.peerChosenEvent = null;
     this.peerScoredEvent = null;
+    this.tainted = tainted;
 
     this.options = extend({
         useLazyHandling: false,
@@ -304,6 +308,7 @@ function extendLogInfo(info) {
     info.channelListening = self.listening;
     info.channelDestroyed = self.destroyed;
     info.channelDraining = self.draining;
+    info.channelTainted = self.tainted;
 
     return info;
 };
