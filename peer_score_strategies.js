@@ -27,10 +27,8 @@ module.exports.NoPreference = NoPreference;
 module.exports.PreferIncoming = PreferIncoming;
 
 function PreferOutgoing(peer) {
-    var self = this;
-
-    self.peer = peer;
-    self.lastTier = self.getTier();
+    this.peer = peer;
+    this.lastTier = this.getTier();
 }
 
 PreferOutgoing.UNCONNECTED = 0;
@@ -39,10 +37,8 @@ PreferOutgoing.FRESH_OUTGOING = 2;
 PreferOutgoing.READY_OUTGOING = 3;
 
 PreferOutgoing.prototype.getTier = function getTier() {
-    var self = this;
-
-    var inconn = self.peer.getInConnection();
-    var outconn = self.peer.getIdentifiedOutConnection();
+    var inconn = this.peer.getInConnection();
+    var outconn = this.peer.getIdentifiedOutConnection();
 
     if (!inconn && !outconn) {
         return PreferOutgoing.UNCONNECTED;
@@ -56,13 +52,11 @@ PreferOutgoing.prototype.getTier = function getTier() {
 };
 
 PreferOutgoing.prototype.getScoreRange = function getScoreRange() {
-    var self = this;
-
     // space:
     //   [0.1, 0.4)  peers with no identified outgoing connection
     //   [0.4, 1.0)  identified outgoing connections
-    var tier = self.getTier();
-    self.lastTier = tier;
+    var tier = this.getTier();
+    this.lastTier = tier;
     switch (tier) {
         default:
             /* falls through */
@@ -78,10 +72,8 @@ PreferOutgoing.prototype.getScoreRange = function getScoreRange() {
 };
 
 function NoPreference(peer) {
-    var self = this;
-
-    self.peer = peer;
-    self.lastTier = self.getTier();
+    this.peer = peer;
+    this.lastTier = this.getTier();
 }
 
 NoPreference.UNCONNECTED = 0;
@@ -89,9 +81,7 @@ NoPreference.CONNECTED = 1;
 NoPreference.IDENTIFIED = 2;
 
 NoPreference.prototype.getTier = function getTier() {
-    var self = this;
-
-    var conn = self.peer.getIdentifiedOutConnection();
+    var conn = this.peer.getIdentifiedOutConnection();
 
     if (!conn) {
         return NoPreference.UNCONNECTED;
@@ -103,13 +93,11 @@ NoPreference.prototype.getTier = function getTier() {
 };
 
 NoPreference.prototype.getScoreRange = function getScoreRange() {
-    var self = this;
-
     // space:
     //   (0.1, 0.4]  peers with no identified connection
     //   (0.4, 1.0]  identified connections
-    var tier = self.getTier();
-    self.lastTier = tier;
+    var tier = this.getTier();
+    this.lastTier = tier;
     switch (tier) {
         default:
             /* falls through */
@@ -123,10 +111,8 @@ NoPreference.prototype.getScoreRange = function getScoreRange() {
 };
 
 function PreferIncoming(peer) {
-    var self = this;
-
-    self.peer = peer;
-    self.lastTier = self.getTier();
+    this.peer = peer;
+    this.lastTier = this.getTier();
 }
 
 PreferIncoming.UNCONNECTED = 0;
@@ -135,10 +121,8 @@ PreferIncoming.FRESH_INCOMING = 2;
 PreferIncoming.READY_INCOMING = 3;
 
 PreferIncoming.prototype.getTier = function getTier() {
-    var self = this;
-
-    var outconn = self.peer.getOutConnection();
-    var inconn = self.peer.getIdentifiedInConnection();
+    var outconn = this.peer.getOutConnection();
+    var inconn = this.peer.getIdentifiedInConnection();
 
     if (!inconn && !outconn) {
         return PreferIncoming.UNCONNECTED;
@@ -152,13 +136,11 @@ PreferIncoming.prototype.getTier = function getTier() {
 };
 
 PreferIncoming.prototype.getScoreRange = function getScoreRange() {
-    var self = this;
-
     // space:
     //   [0.1, 0.4)  peers with no identified outgoing connection
     //   [0.4, 1.0)  identified outgoing connections
-    var tier = self.getTier();
-    self.lastTier = tier;
+    var tier = this.getTier();
+    this.lastTier = tier;
     switch (tier) {
         default:
             /* falls through */

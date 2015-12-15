@@ -25,15 +25,13 @@ var setImmediate = require('timers').setImmediate;
 var EventEmitter = require('./lib/event_emitter');
 
 function TChannelPeersBase(channel, options) {
-    var self = this;
-    EventEmitter.call(self);
-
-    self.channel = channel;
-    self.logger = self.channel.logger;
-    self.options = options || {};
-    self._map = Object.create(null);
-    self._keys = [];
-    self.preferConnectionDirection = self.options.preferConnectionDirection || 'any';
+    EventEmitter.call(this);
+    this.channel = channel;
+    this.logger = this.channel.logger;
+    this.options = options || {};
+    this._map = Object.create(null);
+    this._keys = [];
+    this.preferConnectionDirection = this.options.preferConnectionDirection || 'any';
 }
 
 inherits(TChannelPeersBase, EventEmitter);

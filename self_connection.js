@@ -32,14 +32,13 @@ var process = require('process');
 var TChannelConnectionBase = require('./connection_base');
 
 function TChannelSelfConnection(channel) {
-    var self = this;
-    TChannelConnectionBase.call(self, channel, 'in', channel.hostPort);
-    self.idCount = 1;
+    TChannelConnectionBase.call(this, channel, 'in', channel.hostPort);
+    this.idCount = 1;
 
-    // populate the remoteName as self
-    self.remoteName = channel.hostPort;
+    // populate the remoteName as this
+    this.remoteName = channel.hostPort;
 
-    self.peer = channel.peers.getSelfPeer();
+    this.peer = channel.peers.getSelfPeer();
 }
 inherits(TChannelSelfConnection, TChannelConnectionBase);
 

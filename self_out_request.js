@@ -28,18 +28,16 @@ var StreamingInRequest = require('./streaming_in_request');
 var StreamingOutRequest = require('./streaming_out_request');
 
 function SelfOutRequest(conn, id, options) {
-    var self = this;
-    OutRequest.call(self, id, options);
-    self.conn = conn;
-    self.makeInreq(id, options);
+    OutRequest.call(this, id, options);
+    this.conn = conn;
+    this.makeInreq(id, options);
 }
 inherits(SelfOutRequest, OutRequest);
 
 function SelfStreamingOutRequest(conn, id, options) {
-    var self = this;
-    OutRequest.call(self, id, options);
-    self.conn = conn;
-    self.makeInreq(id, options);
+    OutRequest.call(this, id, options);
+    this.conn = conn;
+    this.makeInreq(id, options);
 }
 inherits(SelfStreamingOutRequest, StreamingOutRequest);
 
@@ -87,10 +85,9 @@ SelfStreamingOutRequest.prototype._sendCallRequest =
 SelfOutRequest.prototype._sendCallRequestCont =
 SelfStreamingOutRequest.prototype._sendCallRequestCont =
 function passRequestParts(args, isLast) {
-    var self = this;
-    self.inreq.handleFrame(args, isLast);
-    if (!self.closing) {
-        self.conn.ops.resetLastTimeoutTime();
+    this.inreq.handleFrame(args, isLast);
+    if (!this.closing) {
+        this.conn.ops.resetLastTimeoutTime();
     }
 };
 

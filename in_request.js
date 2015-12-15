@@ -32,43 +32,42 @@ var emptyBuffer = Buffer(0);
 
 function TChannelInRequest(id, options) {
     /*eslint max-statements: [2, 40]*/
-    var self = this;
 
-    EventEmitter.call(self);
-    self.errorEvent = self.defineEvent('error');
-    self.timeoutEvent = self.defineEvent('timeout');
-    self.finishEvent = self.defineEvent('finish');
-    self.channel = options.channel;
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.timeoutEvent = this.defineEvent('timeout');
+    this.finishEvent = this.defineEvent('finish');
+    this.channel = options.channel;
 
-    self.timeout = options.timeout || 0;
-    self.tracing = options.tracing || null;
-    self.serviceName = options.serviceName || '';
-    self.callerName = options.headers && options.headers.cn || '';
-    self.headers = options.headers || {};
-    self.checksum = options.checksum || null;
-    self.retryFlags = options.retryFlags || null;
-    self.connection = options.connection || null;
+    this.timeout = options.timeout || 0;
+    this.tracing = options.tracing || null;
+    this.serviceName = options.serviceName || '';
+    this.callerName = options.headers && options.headers.cn || '';
+    this.headers = options.headers || {};
+    this.checksum = options.checksum || null;
+    this.retryFlags = options.retryFlags || null;
+    this.connection = options.connection || null;
 
-    self.state = States.Initial;
-    self.operations = null;
-    self.timeHeapHandle = null;
-    self.id = id || 0;
-    self.remoteAddr = null;
-    self.streamed = false;
-    self.arg1 = emptyBuffer;
-    self.endpoint = null;
-    self.arg2 = emptyBuffer;
-    self.arg3 = emptyBuffer;
-    self.forwardTrace = false;
-    self.span = null;
-    self.start = self.channel.timers.now();
-    self.res = null;
-    self.err = null;
-    self.circuit = null;
-    self.flags = options.flags;
+    this.state = States.Initial;
+    this.operations = null;
+    this.timeHeapHandle = null;
+    this.id = id || 0;
+    this.remoteAddr = null;
+    this.streamed = false;
+    this.arg1 = emptyBuffer;
+    this.endpoint = null;
+    this.arg2 = emptyBuffer;
+    this.arg3 = emptyBuffer;
+    this.forwardTrace = false;
+    this.span = null;
+    this.start = this.channel.timers.now();
+    this.res = null;
+    this.err = null;
+    this.circuit = null;
+    this.flags = options.flags;
 
     if (options.tracer) {
-        self.setupTracing(options);
+        this.setupTracing(options);
     }
 }
 

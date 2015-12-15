@@ -29,13 +29,10 @@ var TChannelPeer = require('./peer');
 var TChannelSelfPeer = require('./self_peer');
 
 function TChannelRootPeers(channel, options) {
-    var self = this;
-    TChannelPeersBase.call(self, channel, options);
-
-    self.allocPeerEvent = self.defineEvent('allocPeer');
-    self.peerOptions = self.options.peerOptions || {};
-
-    self.selfPeer = null;
+    TChannelPeersBase.call(this, channel, options);
+    this.allocPeerEvent = this.defineEvent('allocPeer');
+    this.peerOptions = this.options.peerOptions || {};
+    this.selfPeer = null;
 }
 
 inherits(TChannelRootPeers, TChannelPeersBase);

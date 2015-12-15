@@ -35,46 +35,44 @@ function TChannelRequest(options) {
     /*eslint max-statements: [2, 40]*/
     assert(!options.streamed, 'streaming request federation not implemented');
 
-    var self = this;
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.responseEvent = this.defineEvent('response');
 
-    EventEmitter.call(self);
-    self.errorEvent = self.defineEvent('error');
-    self.responseEvent = self.defineEvent('response');
+    this.channel = options.channel;
 
-    self.channel = options.channel;
+    this.options = options;
 
-    self.options = options;
-
-    self.triedRemoteAddrs = null;
-    self.outReqs = [];
-    self.timeout = self.options.timeout || TChannelRequest.defaultTimeout;
-    if (self.options.timeoutPerAttempt) {
-        self.options.retryFlags = new RetryFlags(
-            self.options.retryFlags.never,
-            self.options.retryFlags.onConnectionError,
+    this.triedRemoteAddrs = null;
+    this.outReqs = [];
+    this.timeout = this.options.timeout || TChannelRequest.defaultTimeout;
+    if (this.options.timeoutPerAttempt) {
+        this.options.retryFlags = new RetryFlags(
+            this.options.retryFlags.never,
+            this.options.retryFlags.onConnectionError,
             true
         );
     }
-    self.timeoutPerAttempt = self.options.timeoutPerAttempt || self.timeout;
-    self.limit = self.options.retryLimit || TChannelRequest.defaultRetryLimit;
-    self.start = 0;
-    self.end = 0;
-    self.elapsed = 0;
-    self.resendSanity = 0;
-    self.trackPending = self.options.trackPending || false;
+    this.timeoutPerAttempt = this.options.timeoutPerAttempt || this.timeout;
+    this.limit = this.options.retryLimit || TChannelRequest.defaultRetryLimit;
+    this.start = 0;
+    this.end = 0;
+    this.elapsed = 0;
+    this.resendSanity = 0;
+    this.trackPending = this.options.trackPending || false;
 
-    self.serviceName = options.serviceName || '';
-    self.callerName = options.headers && options.headers.cn || '';
+    this.serviceName = options.serviceName || '';
+    this.callerName = options.headers && options.headers.cn || '';
     // so that as-foo can punch req.headers.X
-    self.headers = self.options.headers;
+    this.headers = this.options.headers;
 
-    self.endpoint = null;
-    self.arg1 = null;
-    self.arg2 = null;
-    self.arg3 = null;
+    this.endpoint = null;
+    this.arg1 = null;
+    this.arg2 = null;
+    this.arg3 = null;
 
-    self.err = null;
-    self.res = null;
+    this.err = null;
+    this.res = null;
 }
 
 inherits(TChannelRequest, EventEmitter);

@@ -47,18 +47,17 @@ var clearImmediate = require('timers').clearImmediate;
 var errors = require('./errors');
 
 function ArgStream() {
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.frameEvent = this.defineEvent('frame');
+    this.finishEvent = this.defineEvent('finish');
+    this.arg2 = new StreamArg();
+    this.arg3 = new StreamArg();
+
     var self = this;
-    EventEmitter.call(self);
-    self.errorEvent = self.defineEvent('error');
-    self.frameEvent = self.defineEvent('frame');
-    self.finishEvent = self.defineEvent('finish');
-
-    self.arg2 = new StreamArg();
-    self.arg3 = new StreamArg();
-
-    self.arg2.on('error', passError);
-    self.arg3.on('error', passError);
-    self.arg3.on('start', onArg3Start);
+    this.arg2.on('error', passError);
+    this.arg3.on('error', passError);
+    this.arg3.on('start', onArg3Start);
 
     function passError(err) {
         self.errorEvent.emit(self, err);
@@ -74,14 +73,16 @@ function ArgStream() {
 inherits(ArgStream, EventEmitter);
 
 function InArgStream() {
+    ArgStream.call(this);
+    this.streams = [this.arg2, this.arg3];
+    this._iStream = 0;
+    this.finished = false;
+    this._numFinished = 0;
+
     var self = this;
-    ArgStream.call(self);
-    self.streams = [self.arg2, self.arg3];
-    self._iStream = 0;
-    self.finished = false;
-    self._numFinished = 0;
-    self.arg2.on('finish', argFinished);
-    self.arg3.on('finish', argFinished);
+    this.arg2.on('finish', argFinished);
+    this.arg3.on('finish', argFinished);
+
     function argFinished() {
         if (++self._numFinished >= 2 && !self.finished) {
             self.finished = true;
@@ -134,17 +135,17 @@ InArgStream.prototype.handleFrame = function handleFrame(parts, isLast) {
 };
 
 function OutArgStream() {
-    var self = this;
-    ArgStream.call(self);
-    self._flushImmed = null;
-    self.finished = false;
-    self.frame = [Buffer(0)];
-    self.currentArgN = 2;
+    ArgStream.call(this);
+    this._flushImmed = null;
+    this.finished = false;
+    this.frame = [Buffer(0)];
+    this.currentArgN = 2;
 
-    self.arg2.on('data', onArg2Data);
-    self.arg3.on('data', onArg3Data);
-    self.arg2.on('finish', onArg2Finish);
-    self.arg3.on('finish', onArg3Finish);
+    var self = this;
+    this.arg2.on('data', onArg2Data);
+    this.arg3.on('data', onArg3Data);
+    this.arg2.on('finish', onArg2Finish);
+    this.arg3.on('finish', onArg3Finish);
 
     function onArg2Data(chunk) {
         self._handleFrameChunk(2, chunk);
@@ -234,11 +235,12 @@ OutArgStream.prototype._flushParts = function _flushParts(isLast) {
 };
 
 function StreamArg(options) {
+    PassThrough.call(this, options);
+    this.started = false;
+    this.buf = null;
+    this.onValueReady = boundOnValueReady;
+
     var self = this;
-    PassThrough.call(self, options);
-    self.started = false;
-    self.buf = null;
-    self.onValueReady = boundOnValueReady;
 
     function boundOnValueReady(callback) {
         self._onValueReady(callback);

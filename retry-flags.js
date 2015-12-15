@@ -23,9 +23,7 @@
 module.exports = RetryFlags;
 
 function RetryFlags(never, onConnectionError, onTimeout) {
-    var self = this;
-
-    self.never = never;
-    self.onConnectionError = onConnectionError;
-    self.onTimeout = onTimeout;
+    this.never = never;
+    this.onConnectionError = onConnectionError;
+    this.onTimeout = onTimeout;
 }

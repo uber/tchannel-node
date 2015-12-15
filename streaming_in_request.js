@@ -32,16 +32,16 @@ var InArgStream = require('./argstream').InArgStream;
 var emptyBuffer = Buffer(0);
 
 function StreamingInRequest(id, options) {
+    InRequest.call(this, id, options);
+
+    this.streamed = true;
+    this._argstream = new InArgStream();
+    this.arg2 = this._argstream.arg2;
+    this.arg3 = this._argstream.arg3;
+
     var self = this;
-    InRequest.call(self, id, options);
-
-    self.streamed = true;
-    self._argstream = new InArgStream();
-    self.arg2 = self._argstream.arg2;
-    self.arg3 = self._argstream.arg3;
-
-    self._argstream.errorEvent.on(passError);
-    self._argstream.finishEvent.on(onFinish);
+    this._argstream.errorEvent.on(passError);
+    this._argstream.finishEvent.on(onFinish);
 
     function passError(err) {
         self.errorEvent.emit(self, err);

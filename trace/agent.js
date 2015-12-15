@@ -26,23 +26,21 @@ var errors = require('../errors.js');
 module.exports = Agent;
 
 function Agent(options) {
-    var self = this;
-
     options = options || {};
 
-    self.logger = options.logger;
+    this.logger = options.logger;
 
     // If this is set to true in a call to Agent#configure, all incoming
     // requests will have their traceflags forced to 1. It's intended to be
     // set on the 'top level service'.
-    self.forceTrace = options.forceTrace || false;
+    this.forceTrace = options.forceTrace || false;
 
     // 'our' service name that is used as the service name on spans for
     // incoming reuqests
-    self.serviceName = options.serviceName || null;
+    this.serviceName = options.serviceName || null;
 
     if (options.reporter) {
-        self.reporter = options.reporter;
+        this.reporter = options.reporter;
     }
 }
 
@@ -56,8 +54,6 @@ function compareTracingIds(id1, id2) {
 // ## setupNewSpan
 // Sets up a new span for an outgoing rpc
 Agent.prototype.setupNewSpan = function setupNewSpan(options) {
-    var self = this;
-
     var hostPortParts = options.remoteName.split(':');
     var host = hostPortParts[0];
     var port = parseInt(hostPortParts[1], 10);
@@ -83,13 +79,13 @@ Agent.prototype.setupNewSpan = function setupNewSpan(options) {
             // service on the incoming request. This is to handle the
             // case of the service router, which has a different service name
             // than the one specified in the incoming request.
-            self.serviceName || options.serviceName
+            this.serviceName || options.serviceName
         ),
         name: options.name,
         id: options.spanid,
         parentid: options.parentid,
         traceid: options.traceid,
-        flags: self.forceTrace ? 1 : options.flags
+        flags: this.forceTrace ? 1 : options.flags
     });
 
     var parentSpan = options.parentSpan;
@@ -116,10 +112,8 @@ Agent.prototype.setupNewSpan = function setupNewSpan(options) {
 };
 
 Agent.prototype.report = function report(span) {
-    var self = this;
-
     if (span.flags === 1) {
-        self.reporter(span);
+        this.reporter(span);
     }
 };
 
