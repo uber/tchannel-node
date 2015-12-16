@@ -535,6 +535,21 @@ allocCluster.test('using register() without channel', {
     }
 });
 
+allocCluster.test('expose service endpoints', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var tchannelAsThrift = makeTChannelThriftServer(cluster, {
+        okResponse: true
+    });
+    var hostPort = cluster.channels[0].hostPort;
+
+    var expected = ['Chamber::echo', 'Chamber::echo_big'];
+
+    var endpoints = tchannelAsThrift.getServiceEndpoints();
+    assert.deepEqual(endpoints, expected);
+    assert.end();
+});
+
 function makeActualServer(channel, opts) {
     var server = channel.makeSubChannel({
         serviceName: 'server'
