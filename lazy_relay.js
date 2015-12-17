@@ -213,13 +213,28 @@ function onIdentified(err) {
     }
 
     var conn = self.peer.getInConnection(true);
+    if (!conn) {
+        self.logger.warn(
+            'onIdentified called on non-existing connection',
+            self.extendLogInfo(self.peer.extendLogInfo({}))
+        );
+        self.onError(errors.NoPeerAvailable());
+        return;
+    }
+
     if (!conn.remoteName) {
         // we get the problem
-        self.logger.warn('onIdentified called on unidentified connection', self.extendLogInfo({}));
+        self.logger.warn(
+            'onIdentified called on unidentified connection',
+            self.extendLogInfo(self.peer.extendLogInfo({}))
+        );
     }
     if (conn.closing) {
         // most likely
-        self.logger.warn('onIdentified called on closing connection', self.extendLogInfo({}));
+        self.logger.warn(
+            'onIdentified called on closing connection',
+            self.extendLogInfo(self.peer.extendLogInfo({}))
+        );
     }
 
     self.forwardTo(conn);
