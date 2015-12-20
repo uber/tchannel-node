@@ -127,18 +127,15 @@ function _addRemainder(networkBuffer, start, end) {
     }
 
     var remainderBuffer = self.remainderBuffer;
-    if (remainderBuffer === null) {
-        var oldRemainder;
-        if (self.hasTempRemainderBuffer) {
-            oldRemainder = self.remainderBuffer;
-        }
+    if (remainderBuffer === null || self.hasTempRemainderBuffer) {
+        var oldRemainder = self.remainderBuffer;
 
         // Allocate a SlowBuffer (expensive)
         remainderBuffer = self.remainderBuffer = new Buffer(self.frameLength);
         self.hasTempRemainderBuffer = false;
 
         if (oldRemainder) {
-            oldRemainder.copy(self.remainderBuffer, 0);
+            oldRemainder.copy(remainderBuffer, 0);
         }
     }
 

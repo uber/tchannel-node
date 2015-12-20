@@ -64,16 +64,15 @@ var TCP_WRAP = require("net").TCP_WRAP
 
 type IOnListenFn = () => void;
 type IOnCloseFn = (err: Error | null) => void;
-type IPeersCollection = {};
+
 type ITChannelSender = {};
-type IConnection = {};
 
 type IFastClient = any;
 
 declare class Channel {
     server: TCP_WRAP;
     handler: FrameHandler;
-    peers: IPeersCollection;
+    peers: PeersCollection;
     sender: ITChannelSender;
 
     hostPort: ?string;
@@ -81,10 +80,10 @@ declare class Channel {
     constructor(): void;
     listen: (port: number, host: string, onListen?: IOnListenFn) => void;
     delayEmitListen: (onListen: IOnListenFn) => void;
-    allocateConnection: (remoteName: string) => IConnection;
+    allocateConnection: (remoteName: string) => TChannelConnection;
     onSocket: (
         socket: TCP_WRAP, direction: string, hostPort: string | null
-    ) => IConnection;
+    ) => TChannelConnection;
     createClient: (serviceName: string, opts: {
 
     }) => IFastClient;

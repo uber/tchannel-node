@@ -1,23 +1,43 @@
 'use strict';
 
+/* @flow */
+
+/*::
+var Channel = require('./channel.js');
+var Connection = require('./connection.js');
+
+declare class PeersCollection {
+    channel: Channel;
+    connections: { [key: string]: Array<Connection> };
+    flatConnections: Array<Connection>;
+    remoteNames: Array<string>;
+    roundRobinIndex: number;
+
+    constructor(channel: Channel): void;
+    ensureConnection: (remoteName: string) => Connection;
+    roundRobinConn: () => Connection;
+    createConnection: (remoteName: string) => Connection;
+    ensureRemoteName: (remoteName: string) => void;
+    addConnection: (conn: Connection) => void;
+    close: () => void;
+}
+*/
 module.exports = PeersCollection;
 
 function PeersCollection(channel) {
-    if (!(this instanceof PeersCollection)) {
-        return new PeersCollection(channel);
-    }
+    var self/*:PeersCollection*/ = this;
 
-    this.channel = channel;
+    self.channel = channel;
 
-    this.connections = Object.create(null);
-    this.flatConnections = [];
-    this.remoteNames = [];
-    this.roundRobinIndex = 0;
+    self.connections = Object.create(null);
+    self.flatConnections = [];
+    self.remoteNames = [];
+    self.roundRobinIndex = 0;
 }
 
 PeersCollection.prototype.ensureConnection =
 function ensureConnection(remoteName) {
-    var self = this;
+    var self/*:PeersCollection*/ = this;
 
     if (self.connections[remoteName] &&
         self.connections[remoteName][0]
@@ -30,10 +50,12 @@ function ensureConnection(remoteName) {
 
 PeersCollection.prototype.roundRobinConn =
 function roundRobinConn() {
-    var conn = this.flatConnections[this.roundRobinIndex];
-    this.roundRobinIndex++;
-    if (this.roundRobinIndex === this.flatConnections.length) {
-        this.roundRobinIndex = 0;
+    var self/*:PeersCollection*/ = this;
+
+    var conn = self.flatConnections[self.roundRobinIndex];
+    self.roundRobinIndex++;
+    if (self.roundRobinIndex === self.flatConnections.length) {
+        self.roundRobinIndex = 0;
     }
 
     return conn;
@@ -41,7 +63,7 @@ function roundRobinConn() {
 
 PeersCollection.prototype.createConnection =
 function createConnection(remoteName) {
-    var self = this;
+    var self/*:PeersCollection*/ = this;
 
     var conn = self.channel.allocateConnection(remoteName);
     self.addConnection(conn);
@@ -51,7 +73,7 @@ function createConnection(remoteName) {
 
 PeersCollection.prototype.ensureRemoteName =
 function ensureRemoteName(remoteName) {
-    var self = this;
+    var self/*:PeersCollection*/ = this;
 
     if (!self.connections[remoteName]) {
         self.connections[remoteName] = [];
@@ -61,16 +83,21 @@ function ensureRemoteName(remoteName) {
 
 PeersCollection.prototype.addConnection =
 function addConnection(conn) {
-    var self = this;
+    var self/*:PeersCollection*/ = this;
 
-    self.ensureRemoteName(conn.remoteName);
-    self.connections[conn.remoteName].push(conn);
+    var remoteName = 'unknown-remote-name';
+    if (conn.remoteName) {
+        remoteName = conn.remoteName;
+    }
+
+    self.ensureRemoteName(remoteName);
+    self.connections[remoteName].push(conn);
     self.flatConnections.push(conn);
 };
 
 PeersCollection.prototype.close =
 function close() {
-    var self = this;
+    var self/*:PeersCollection*/ = this;
 
     for (var i = 0; i < self.flatConnections.length; i++) {
         var conn = self.flatConnections[i];
