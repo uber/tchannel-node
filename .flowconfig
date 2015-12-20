@@ -3,6 +3,7 @@
 [include]
 
 [libs]
+flow/console.js.flow
 
 [options]
 module.system=node

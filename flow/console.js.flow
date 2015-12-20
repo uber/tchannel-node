@@ -1,0 +1,3 @@
+declare module "console" {
+    declare function error(msg: string, opts?: any): void;
+}

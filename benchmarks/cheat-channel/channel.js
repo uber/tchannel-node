@@ -1,5 +1,7 @@
 'use strict';
 
+/* @flow */
+
 var process = require('process');
 var TCP_WRAP = process.binding('tcp_wrap').TCP;
 var console = require('console');
@@ -57,13 +59,32 @@ var TChannelSender = require('./sender.js');
     channel.close();
 */
 
+/*::
+type OnListenFn = () => void;
+type OnCloseFn = (err: Error | null) => void;
+
+declare class Channel {
+    server: any;
+    handler: any;
+    peers: any;
+    sender: any;
+
+    hostPort: ?string;
+
+    constructor(): void;
+    listen: (port: number, host: string, onListen?: OnListenFn) => void;
+    delayEmitListen: (onListen: OnListenFn) => void;
+    allocateConnection: (remoteName: string) => any;
+    onSocket: (socket: any, direction: string, hostPort: string) => any;
+    createClient: (serviceName: string, opts: any) => any;
+    send: (options: any, onResponse: () => void) => void;
+    close: (cb: OnCloseFn) => void;
+}
+*/
+
 module.exports = Channel;
 
 function Channel() {
-    if (!(this instanceof Channel)) {
-        return new Channel();
-    }
-
     this.server = new TCP_WRAP();
     this.handler = new FrameHandler();
     this.peers = new PeersCollection(this);
@@ -93,8 +114,13 @@ function listen(port, host, onListen) {
     }
 
     if (onListen) {
-        process.nextTick(emitListen);
+        self.delayEmitListen(onListen);
     }
+};
+
+Channel.prototype.delayEmitListen =
+function delayEmitListen(onListen) {
+    process.nextTick(emitListen);
 
     function emitListen() {
         onListen();

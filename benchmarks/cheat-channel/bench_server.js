@@ -15,7 +15,7 @@ var SERVER_HOST = '127.0.0.1';
 /*::
 declare class BenchServer {
     port: number;
-    channel: {};
+    channel: Channel;
     keys: { [key: string]: Buffer };
 
     constructor(port: number): void;
