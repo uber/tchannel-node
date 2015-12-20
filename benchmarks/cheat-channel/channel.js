@@ -205,5 +205,7 @@ function close(cb) {
     self.server.close();
     self.peers.close();
 
-    cb(null);
+    if (cb) {
+        cb(null);
+    }
 };
