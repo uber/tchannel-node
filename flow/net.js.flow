@@ -1,5 +1,3 @@
-var Buffer = require('buffer').Buffer;
-
 type net$IONRead = (
     buffer: Buffer, offset: number, length: number
 ) => void;

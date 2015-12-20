@@ -1,15 +1,29 @@
+
+declare class buffer$Buffer {
+    length: number;
+    [i: number]: number;
+
+    readUInt32BE(offset: number, noCheck: boolean): number;
+    readUInt16BE(offset: number, noCheck: boolean): number;
+    readUInt8(offset: number, noCheck: boolean): number;
+
+    writeUInt32BE(value: number, offset: number, noCheck: boolean): void;
+    writeUInt16BE(value: number, offset: number, noCheck: boolean): void;
+
+    utf8Slice(offset: number, end: number): string;
+    slice(offset: number, end: number): Buffer;
+    copy(
+        target: buffer$Buffer, srcOffset: number,
+        targetStart?: number, targetEnd?: number
+    ): void;
+
+    static isBuffer(buf: buffer$Buffer): boolean;
+}
+
+export type Buffer = buffer$Buffer;
+
 declare module "buffer" {
-    declare class Buffer {
-        length: number;
-
-        readUInt32BE(offset: number, noCheck: boolean): number;
-        readUInt16BE(offset: number, noCheck: boolean): number;
-        readUInt8(offset: number, noCheck: boolean): number;
-
-        writeUInt32BE(value: number, offset: number, noCheck: boolean): void;
-        utf8Slice(offset: number, end: number): string;
-        slice(offset: number, end: number): Buffer;
-    }
+    declare var Buffer : typeof buffer$Buffer
 
     declare class SlowBuffer {
         used: number;

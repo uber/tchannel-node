@@ -89,17 +89,17 @@ function _sendArgs(code, arg2, arg3) {
         self._sendCache(
             code,
             typeof arg2 === 'string' ? arg2 : null,
-            Buffer.isBuffer(arg2) ? arg2 : null,
+            typeof arg2 !== 'string' ? arg2 : null,
             typeof arg3 === 'string' ? arg3 : null,
-            Buffer.isBuffer(arg3) ? arg3 : null
+            typeof arg3 !== 'string' ? arg3 : null
         );
     } else {
         self._sendFrame(
             code,
             typeof arg2 === 'string' ? arg2 : null,
-            Buffer.isBuffer(arg2) ? arg2 : null,
+            typeof arg2 !== 'string' ? arg2 : null,
             typeof arg3 === 'string' ? arg3 : null,
-            Buffer.isBuffer(arg3) ? arg3 : null
+            typeof arg3 !== 'string' ? arg3 : null
         );
     }
 };

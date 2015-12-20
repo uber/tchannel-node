@@ -101,7 +101,7 @@ function write(networkBuffer, start, end) {
         }
 
         maximumBytesAvailable = endOfNetworkBuffer - startOfBuffer;
-        self.frameLength = networkBuffer.readUInt16BE(startOfBuffer);
+        self.frameLength = networkBuffer.readUInt16BE(startOfBuffer, false);
     }
 
     if (startOfBuffer < endOfNetworkBuffer) {
@@ -126,11 +126,15 @@ function _addRemainder(networkBuffer, start, end) {
         return self.remainderBuffer;
     }
 
-    if (self.remainderBuffer === null || self.hasTempRemainderBuffer) {
-        var oldRemainder = self.remainderBuffer;
+    var remainderBuffer = self.remainderBuffer;
+    if (remainderBuffer === null) {
+        var oldRemainder;
+        if (self.hasTempRemainderBuffer) {
+            oldRemainder = self.remainderBuffer;
+        }
 
         // Allocate a SlowBuffer (expensive)
-        self.remainderBuffer = new Buffer(self.frameLength);
+        remainderBuffer = self.remainderBuffer = new Buffer(self.frameLength);
         self.hasTempRemainderBuffer = false;
 
         if (oldRemainder) {
@@ -138,10 +142,10 @@ function _addRemainder(networkBuffer, start, end) {
         }
     }
 
-    networkBuffer.copy(self.remainderBuffer, self.remainderOffset, start, end);
+    networkBuffer.copy(remainderBuffer, self.remainderOffset, start, end);
     self.remainderOffset += (end - start);
 
-    return self.remainderBuffer;
+    return remainderBuffer;
 };
 
 FrameParser.prototype._pushFrameBuffer =
@@ -170,11 +174,11 @@ function _readInitialFrameLength(networkBuffer, start) {
     var self/*:FrameParser*/ = this;
 
     if (self.remainderOffset === 0) {
-        self.frameLength = networkBuffer.readUInt16BE(start);
+        self.frameLength = networkBuffer.readUInt16BE(start, false);
     } else if (self.remainderBuffer && self.remainderOffset === 1) {
         self.frameLength = self.remainderBuffer[0] << 8 | networkBuffer[start];
     } else if (self.remainderBuffer && self.remainderOffset >= 2) {
-        self.frameLength = self.remainderBuffer.readUInt16BE(0);
+        self.frameLength = self.remainderBuffer.readUInt16BE(0, false);
     }
 };
 
