@@ -1,30 +1,61 @@
 'use strict';
 
+/* @flow */
+
 var Buffer = require('buffer').Buffer;
 var assert = require('assert');
 
 var SIZE_BYTE_LENGTH = 2;
 
+/*::
+type IOnFrameBuffer = (
+    context: any, buffer: Buffer, offset: number, length: number
+) => void;
+
+declare class FrameParser {
+    remainderBuffer: null | Buffer;
+    hasTempRemainderBuffer: boolean;
+    remainderOffset: number;
+    frameLength: number;
+
+    _context: any;
+    _onFrameBuffer: IOnFrameBuffer;
+
+    constructor(context: any, onFrameBuffer: IOnFrameBuffer): void;
+
+    write: (networkBuffer: Buffer, start: number, end: number) => void;
+    _addRemainder: (
+        networkBuffer: Buffer,
+        startOfBuffer: number,
+        endOfNetworkBuffer: number
+    ) => Buffer;
+    _readInitialFrameLength: (
+        networkBuffer: Buffer, startOfBuffer: number
+    ) => void;
+    _pushFrameBuffer: (
+        networkBuffer: Buffer, startOfBuffer: number, endOfBuffer: number
+    ) => void;
+}
+*/
+
 module.exports = FrameParser;
 
 function FrameParser(context, onFrameBuffer) {
-    if (!(this instanceof FrameParser)) {
-        return new FrameParser(context, onFrameBuffer);
-    }
+    var self/*:FrameParser*/ = this;
 
-    this.remainderBuffer = null;
-    this.hasTempRemainderBuffer = false;
-    this.remainderOffset = 0;
+    self.remainderBuffer = null;
+    self.hasTempRemainderBuffer = false;
+    self.remainderOffset = 0;
 
-    this.frameLength = 0;
+    self.frameLength = 0;
 
-    this._context = context;
-    this._onFrameBuffer = onFrameBuffer;
+    self._context = context;
+    self._onFrameBuffer = onFrameBuffer;
 }
 
 FrameParser.prototype.write =
 function write(networkBuffer, start, end) {
-    var self = this;
+    var self/*:FrameParser*/ = this;
     // console.log('FrameParser.write()');
 
     var networkBufferLength = end - start;
@@ -80,7 +111,7 @@ function write(networkBuffer, start, end) {
 
 FrameParser.prototype._addRemainder =
 function _addRemainder(networkBuffer, start, end) {
-    var self = this;
+    var self/*:FrameParser*/ = this;
     // console.log('FrameParser()._addRemainder');
 
     if (self.frameLength === 0) {
@@ -92,7 +123,7 @@ function _addRemainder(networkBuffer, start, end) {
         self.remainderBuffer = rawFrameBuffer;
         self.remainderOffset = rawFrameBuffer.length;
         self.hasTempRemainderBuffer = true;
-        return;
+        return self.remainderBuffer;
     }
 
     if (self.remainderBuffer === null || self.hasTempRemainderBuffer) {
@@ -109,17 +140,18 @@ function _addRemainder(networkBuffer, start, end) {
 
     networkBuffer.copy(self.remainderBuffer, self.remainderOffset, start, end);
     self.remainderOffset += (end - start);
+
+    return self.remainderBuffer;
 };
 
 FrameParser.prototype._pushFrameBuffer =
 function _pushFrameBuffer(networkBuffer, start, end) {
-    var self = this;
+    var self/*:FrameParser*/ = this;
 
     var frameBuffer = networkBuffer;
     if (self.remainderOffset !== 0) {
-        self._addRemainder(networkBuffer, start, end);
+        frameBuffer = self._addRemainder(networkBuffer, start, end);
 
-        frameBuffer = self.remainderBuffer;
         start = 0;
         end = frameBuffer.length;
 
@@ -135,13 +167,13 @@ function _pushFrameBuffer(networkBuffer, start, end) {
 
 FrameParser.prototype._readInitialFrameLength =
 function _readInitialFrameLength(networkBuffer, start) {
-    var self = this;
+    var self/*:FrameParser*/ = this;
 
     if (self.remainderOffset === 0) {
         self.frameLength = networkBuffer.readUInt16BE(start);
-    } else if (self.remainderOffset === 1) {
+    } else if (self.remainderBuffer && self.remainderOffset === 1) {
         self.frameLength = self.remainderBuffer[0] << 8 | networkBuffer[start];
-    } else if (self.remainderOffset >= 2) {
+    } else if (self.remainderBuffer && self.remainderOffset >= 2) {
         self.frameLength = self.remainderBuffer.readUInt16BE(0);
     }
 };

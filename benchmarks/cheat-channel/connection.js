@@ -25,13 +25,12 @@ function allocPool() {
 var Channel = require('./channel.js');
 var TCP_WRAP = require('net').TCP_WRAP;
 
-type IFrameParser = {};
 type IOnInitResponseWrite = () => void;
 
 declare class TChannelConnection {
     socket: TCP_WRAP;
     channel: Channel;
-    parser: IFrameParser;
+    parser: FrameParser;
     idCounter: number;
     guid: string;
     outRequestMapping: OutPending;
