@@ -59,48 +59,11 @@ var TChannelSender = require('./sender.js');
     channel.close();
 */
 
+// declare class Channel extends type.Channel {};
+
 /*::
-var TCP_WRAP = require("net").TCP_WRAP
-var LazyFrame = require('./lazy-frame.js');
-
-type IOnListenFn = () => void;
-type StrOrBuf = string | Buffer | null;
-type IOnCloseFn = (err: Error | null) => void;
-
-type IFastClient = any;
-
-type SendOptions = {
-    arg1: StrOrBuf;
-    arg2: StrOrBuf;
-    arg3: StrOrBuf;
-    headers: null | Array<string> | { [key: string]: string };
-    serviceName: string,
-    host: string,
-    ttl: number | null
-};
-type IOnResponse = (err?: Error, resp: LazyFrame) => void
-
-declare class Channel {
-    server: TCP_WRAP;
-    handler: FrameHandler;
-    peers: PeersCollection;
-    sender: TChannelSender;
-
-    hostPort: ?string;
-
-    constructor(): void;
-    listen: (port: number, host: string, onListen?: IOnListenFn) => void;
-    delayEmitListen: (onListen: IOnListenFn) => void;
-    allocateConnection: (remoteName: string) => TChannelConnection;
-    onSocket: (
-        socket: TCP_WRAP, direction: string, hostPort: string | null
-    ) => TChannelConnection;
-    createClient: (serviceName: string, opts: {
-
-    }) => IFastClient;
-    send: (options: SendOptions, onResponse: IOnResponse) => void;
-    close: (cb?: IOnCloseFn) => void;
-}
+import * as type from './channel.h.js';
+declare var Channel : Class<type.Channel>
 */
 
 module.exports = Channel;
