@@ -3,24 +3,8 @@
 /* @flow */
 
 /*::
-var Channel = require('./channel.js');
-var Connection = require('./connection.js');
-
-declare class PeersCollection {
-    channel: Channel;
-    connections: { [key: string]: Array<Connection> };
-    flatConnections: Array<Connection>;
-    remoteNames: Array<string>;
-    roundRobinIndex: number;
-
-    constructor(channel: Channel): void;
-    ensureConnection: (remoteName: string) => Connection;
-    roundRobinConn: () => Connection;
-    createConnection: (remoteName: string) => Connection;
-    ensureRemoteName: (remoteName: string) => void;
-    addConnection: (conn: Connection) => void;
-    close: () => void;
-}
+import * as type from './peers-collection.h.js';
+declare var PeersCollection : Class<type.PeersCollection>
 */
 module.exports = PeersCollection;
 

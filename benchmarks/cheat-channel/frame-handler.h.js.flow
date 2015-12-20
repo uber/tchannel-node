@@ -1,0 +1,36 @@
+/* @flow */
+
+var LazyFrame = require('./lazy-frame.js');
+var OutResponse = require('./out-response.js');
+
+type IHandlerFn = (req: LazyFrame, res: OutResponse) => void;
+
+declare export class FrameHandler {
+    services: { [key: string]: {
+        [key: string]: EndpointDefinition
+    } };
+
+    constructor(): void;
+    register: (
+        serviceName: string, endpoint: string, fn: IHandlerFn
+    ) => void;
+    registerRaw: (
+        serviceName: string, endpoint: string, fn: IHandlerFn
+    ) => void;
+    handleFrame: (frame: LazyFrame) => void;
+    handleInitRequest: (frame: LazyFrame) => void;
+    handleInitResponse: (frame: LazyFrame) => void;
+    handleCallRequest: (frame: LazyFrame) => void;
+    handleCallResponse: (frame: LazyFrame) => void;
+    handleUnknownFrame: (frame: LazyFrame) => void;
+}
+
+declare export class EndpointDefinition {
+    cacheBuf: Buffer | null;
+    csumstart: number | null;
+    fn: IHandlerFn;
+
+    constructor(
+        fn: IHandlerFn, cacheBuf: Buffer | null, csumstart: number | null
+    ): void;
+}

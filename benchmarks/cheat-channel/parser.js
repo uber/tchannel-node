@@ -8,34 +8,8 @@ var assert = require('assert');
 var SIZE_BYTE_LENGTH = 2;
 
 /*::
-type IOnFrameBuffer = (
-    context: any, buffer: Buffer, offset: number, length: number
-) => void;
-
-declare class FrameParser {
-    remainderBuffer: null | Buffer;
-    hasTempRemainderBuffer: boolean;
-    remainderOffset: number;
-    frameLength: number;
-
-    _context: any;
-    _onFrameBuffer: IOnFrameBuffer;
-
-    constructor(context: any, onFrameBuffer: IOnFrameBuffer): void;
-
-    write: (networkBuffer: Buffer, start: number, end: number) => void;
-    _addRemainder: (
-        networkBuffer: Buffer,
-        startOfBuffer: number,
-        endOfNetworkBuffer: number
-    ) => Buffer;
-    _readInitialFrameLength: (
-        networkBuffer: Buffer, startOfBuffer: number
-    ) => void;
-    _pushFrameBuffer: (
-        networkBuffer: Buffer, startOfBuffer: number, endOfBuffer: number
-    ) => void;
-}
+import * as type from './parser.h.js';
+declare var FrameParser : Class<type.FrameParser>
 */
 
 module.exports = FrameParser;

@@ -1,0 +1,31 @@
+/* @flow */
+
+var Connection = require('./connection.js');
+
+type BufOrStr = Buffer | string | null;
+
+declare export class OutResponse {
+    id: number;
+    conn: Connection;
+
+    respHeaders: null | Array<string>;
+    cacheBuf: Buffer | null;
+    csumstart: number | null;
+
+    constructor(
+        reqFrameId: number, conn: Connection,
+        cacheBuf: Buffer | null, csumstart: number | null
+    ): void;
+    setHeader: (keyName: string, keyValue: string) => void;
+    sendOk: (arg2: BufOrStr, arg3: BufOrStr) => void;
+    sendNotOk: (arg2: BufOrStr, arg3: BufOrStr) => void;
+    _sendArgs: (code: number, arg2: BufOrStr, arg3: BufOrStr) => void;
+    _sendCache: (
+        code: number, arg2str: string | null, arg2buf: Buffer | null,
+        arg3str: string | null, arg3buf: Buffer | null
+    ) => void;
+    _sendFrame: (
+        code: number, arg2str: string | null, arg2buf: Buffer | null,
+        arg3str: string | null, arg3buf: Buffer | null
+    ) => void;
+}

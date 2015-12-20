@@ -11,35 +11,9 @@ var V2Frames = require('./v2-frames.js');
 var OutResponse = require('./out-response.js');
 
 /*::
-var LazyFrame = require('./lazy-frame.js');
-
-type IHandlerFn = (req: LazyFrame, res: OutResponse) => void;
-
-declare class FrameHandler {
-    services: { [key: string]: {
-        [key: string]: EndpointDefinition
-    } };
-
-    constructor(): void;
-    register: (
-        serviceName: string, endpoint: string, fn: IHandlerFn
-    ) => void;
-    registerRaw: (
-        serviceName: string, endpoint: string, fn: IHandlerFn
-    ) => void;
-    handleFrame: (frame: LazyFrame) => void;
-    handleInitRequest: (frame: LazyFrame) => void;
-    handleInitResponse: (frame: LazyFrame) => void;
-    handleCallRequest: (frame: LazyFrame) => void;
-    handleCallResponse: (frame: LazyFrame) => void;
-    handleUnknownFrame: (frame: LazyFrame) => void;
-}
-
-declare class EndpointDefinition {
-    cacheBuf: Buffer;
-    csumstart: number;
-    fn: IHandlerFn;
-}
+import * as type from './frame-handler.h.js';
+declare var FrameHandler : Class<type.FrameHandler>
+declare var EndpointDefinition : Class<type.EndpointDefinition>
 */
 
 module.exports = FrameHandler;

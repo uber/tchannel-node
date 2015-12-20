@@ -18,67 +18,13 @@ var CREQ_SERVICE_OFFSET = 46;
 var IREQ_HEADERS_OFFSET = 18;
 
 /*::
-var Buffer = require("buffer").Buffer;
-var Connection = require("./connection.js");
-
-declare class LazyFrame {
-    sourceConnection: Connection;
-    frameBuffer: Buffer;
-    offset: number;
-    length: number;
-    oldId: number | null;
-    newId: number | null;
-    frameType: number | null;
-
-    initReqHeaders: Array<string> | null;
-
-    reqServiceName: string | null;
-    tHeadersCount: number | null;
-    checksumType: number | null;
-    arg1Length: number | null;
-    arg2Length: number | null;
-    arg3Length: number | null;
-    arg1: Buffer | null;
-    arg1str: string | null;
-    arg2: Buffer | null;
-    arg2str: string | null;
-    arg3: Buffer | null;
-    arg3str: string | null;
-
-    tHeadersStart: number | null;
-    checksumStart: number | null;
-    arg1Start: number | null;
-    arg2Start: number | null;
-    arg3Start: number | null;
-
-    constructor(
-        sourceConnection: Connection, frameBuffer: Buffer,
-        offset: number, length: number
-    ): void;
-
-    readId: () => number;
-    readFrameType: () => number;
-    writeId: (newId: number) => number;
-    markAsCallResponse: () => void;
-    readReqServiceName: () => string;
-    readArg1str: () => string;
-    readArg1: () => Buffer;
-    skipArg1: () => number;
-    readArg2str: () => string;
-    readArg2: () => Buffer;
-    skipArg2: () => number;
-    readArg3str: () => string;
-    readArg3: () => Buffer;
-    readOnlyArg3str: () => string;
-    skipTransportHeaders: () => number;
-    skipChecksum: () => number;
-    readInitReqHeaders: () => Array<string>;
-}
+import * as type from './lazy-frame.h.js';
+declare var LazyFrame : Class<type.LazyFrame>
 */
 
+/*eslint max-statements: [2, 30]*/
 module.exports = LazyFrame;
 
-/*eslint max-statements: [2, 30]*/
 function LazyFrame(sourceConnection, frameBuffer, offset, length) {
     var self/*:LazyFrame*/ = this;
 

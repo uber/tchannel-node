@@ -9,31 +9,8 @@ var V2Frames = require('./v2-frames.js');
 var EMPTY_BUFFER = new Buffer(0);
 
 /*::
-var Connection = require('./connection.js');
-type BufOrStr = Buffer | string | null;
-
-declare class OutResponse {
-    id: number;
-    conn: Connection;
-
-    respHeaders: null | Array<string>;
-    cacheBuf: Buffer;
-    csumstart: number;
-
-    constructor(): void;
-    setHeader: (keyName: string, keyValue: string) => void;
-    sendOk: (arg2: BufOrStr, arg3: BufOrStr) => void;
-    sendNotOk: (arg2: BufOrStr, arg3: BufOrStr) => void;
-    _sendArgs: (code: number, arg2: BufOrStr, arg3: BufOrStr) => void;
-    _sendCache: (
-        code: number, arg2str: string | null, arg2buf: Buffer | null,
-        arg3str: string | null, arg3buf: Buffer | null
-    ) => void;
-    _sendFrame: (
-        code: number, arg2str: string | null, arg2buf: Buffer | null,
-        arg3str: string | null, arg3buf: Buffer | null
-    ) => void;
-}
+import * as type from './out-response.h.js';
+declare var OutResponse : Class<type.OutResponse>
 */
 
 module.exports = OutResponse;

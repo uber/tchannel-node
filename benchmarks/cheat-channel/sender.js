@@ -12,67 +12,9 @@ var EMPTY_BUFFER = new Buffer(0);
 TChannelSender.RequestOptions = RequestOptions;
 
 /*::
-var Channel = require('./channel.js');
-var Connection = require('./connection.js');
-var LazyFrame = require('./lazy-frame.js');
-
-type StrOrBuf = string | Buffer | null;
-type IOnResponse = (err?: Error, resp: LazyFrame) => void
-
-type SendOptions = {
-    arg1: StrOrBuf;
-    arg2: StrOrBuf;
-    arg3: StrOrBuf;
-    headers: null | Array<string> | { [key: string]: string };
-    serviceName: string,
-    host: string,
-    ttl: number | null
-};
-
-declare class RequestOptions {
-    serviceName: string;
-    host: string;
-    ttl: number;
-    headers: Array<string>;
-    headersbuf: Buffer | null;
-    arg1str: string | null;
-    arg2str: string | null;
-    arg3str: string | null;
-    arg1buf: Buffer | null;
-    arg2buf: Buffer | null;
-    arg3buf: Buffer | null;
-
-    constructor(
-        serviceName: string, host: string, ttl: number,
-        headers: Array<string>, headersbuf: Buffer | null,
-        arg1str: string | null, arg1buf: Buffer | null,
-        arg2str: string | null, arg2buf:  Buffer | null,
-        arg3str: string | null, arg3buf: Buffer | null
-    ): void;
-}
-
-declare class TChannelSender {
-    channel: Channel;
-
-    send: (options: SendOptions, onResponse: IOnResponse) => void;
-    _send: (reqOpts: RequestOptions, onResponse: IOnResponse) => void;
-    _sendCache: (
-        cacheBuf: Buffer, csumstart: number, host: string, ttl: number,
-        arg2str: string | null, arg2buf: Buffer | null,
-        arg3str: string | null, arg3buf: Buffer | null,
-        onResponse: IOnResponse
-    ) => void;
-    sendCallRequestTail: (
-        conn: Connection, cacheBuf: Buffer, csumstart: number,
-        reqId: number, arg2str: string | null, arg2buf: Buffer | null,
-        arg3str: string | null, arg3buf: Buffer | null
-    ) => void;
-    sendCallRequest: (
-        conn: Connection, reqOpts: RequestOptions, reqId: number
-    ) => void;
-
-    static RequestOptions: typeof RequestOptions
-}
+import * as type from './sender.h.js';
+declare var TChannelSender : Class<type.TChannelSender>
+declare var RequestOptions : Class<type.RequestOptions>
 */
 module.exports = TChannelSender;
 
