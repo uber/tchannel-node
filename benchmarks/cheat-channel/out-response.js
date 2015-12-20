@@ -1,38 +1,71 @@
 'use strict';
 
+/* @flow */
+
 var Buffer = require('buffer').Buffer;
 
 var V2Frames = require('./v2-frames.js');
 
 var EMPTY_BUFFER = new Buffer(0);
 
+/*::
+var Connection = require('./connection.js');
+type BufOrStr = Buffer | string | null;
+
+declare class OutResponse {
+    id: number;
+    conn: Connection;
+
+    respHeaders: null | Array<string>;
+    cacheBuf: Buffer;
+    csumstart: number;
+
+    constructor(): void;
+    setHeader: (keyName: string, keyValue: string) => void;
+    sendOk: (arg2: BufOrStr, arg3: BufOrStr) => void;
+    sendNotOk: (arg2: BufOrStr, arg3: BufOrStr) => void;
+    _sendArgs: (code: number, arg2: BufOrStr, arg3: BufOrStr) => void;
+    _sendCache: (
+        code: number, arg2str: string | null, arg2buf: Buffer | null,
+        arg3str: string | null, arg3buf: Buffer | null
+    ) => void;
+    _sendFrame: (
+        code: number, arg2str: string | null, arg2buf: Buffer | null,
+        arg3str: string | null, arg3buf: Buffer | null
+    ) => void;
+}
+*/
+
 module.exports = OutResponse;
 
 function OutResponse(reqFrameId, conn, cacheBuf, csumstart) {
-    this.id = reqFrameId;
-    this.conn = conn;
+    var self/*:OutResponse*/ = this;
 
-    this.respHeaders = null;
-    this.cacheBuf = cacheBuf;
-    this.csumstart = csumstart;
+    self.id = reqFrameId;
+    self.conn = conn;
+
+    self.respHeaders = null;
+    self.cacheBuf = cacheBuf;
+    self.csumstart = csumstart;
 }
 
 // TODO: safety with an indexOf scan for duplicate headers
 OutResponse.prototype.setHeader =
 function setHeader(keyName, keyValue) {
-    var self = this;
+    var self/*:OutResponse*/ = this;
 
-    if (!self.respHeaders) {
-        self.respHeaders = [];
+    var respHeaders = self.respHeaders;
+    if (!respHeaders) {
+        self.respHeaders = respHeaders = [];
     }
 
-    self.respHeaders.push(keyName);
-    self.respHeaders.push(keyValue);
+    respHeaders.push(keyName);
+    respHeaders.push(keyValue);
 };
 
 OutResponse.prototype.sendOk =
 function sendOk(arg2, arg3) {
-    var self = this;
+    var self/*:OutResponse*/ = this;
 
     self._sendArgs(0x00, arg2, arg3);
 };
@@ -47,7 +80,7 @@ function sendNotOk(arg2, arg3) {
 /*eslint complexity: 0*/
 OutResponse.prototype._sendArgs =
 function _sendArgs(code, arg2, arg3) {
-    var self = this;
+    var self/*:OutResponse*/ = this;
 
     arg2 = arg2 || EMPTY_BUFFER;
     arg3 = arg3 || EMPTY_BUFFER;
@@ -73,7 +106,7 @@ function _sendArgs(code, arg2, arg3) {
 
 OutResponse.prototype._sendFrame =
 function _sendFrame(code, arg2str, arg2buf, arg3str, arg3buf) {
-    var self = this;
+    var self/*:OutResponse*/ = this;
 
     var buffer = self.conn.globalWriteBuffer;
     var offset = 0;
@@ -92,7 +125,7 @@ function _sendFrame(code, arg2str, arg2buf, arg3str, arg3buf) {
 
 OutResponse.prototype._sendCache =
 function _sendCache(code, arg2str, arg2buf, arg3str, arg3buf) {
-    var self = this;
+    var self/*:OutResponse*/ = this;
 
     var buffer = self.conn.globalWriteBuffer;
     var offset = 0;

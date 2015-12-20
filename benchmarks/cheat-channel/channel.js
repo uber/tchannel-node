@@ -64,7 +64,6 @@ var TCP_WRAP = require("net").TCP_WRAP
 
 type IOnListenFn = () => void;
 type IOnCloseFn = (err: Error | null) => void;
-type IFrameHandler = {};
 type IPeersCollection = {};
 type ITChannelSender = {};
 type IConnection = {};
@@ -73,7 +72,7 @@ type IFastClient = any;
 
 declare class Channel {
     server: TCP_WRAP;
-    handler: IFrameHandler;
+    handler: FrameHandler;
     peers: IPeersCollection;
     sender: ITChannelSender;
 

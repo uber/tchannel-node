@@ -13,7 +13,7 @@ var OutResponse = require('./out-response.js');
 /*::
 var LazyFrame = require('./lazy-frame.js');
 
-type IHandlerFn = () => void;
+type IHandlerFn = (req: LazyFrame, res: OutResponse) => void;
 
 declare class FrameHandler {
     services: { [key: string]: {
@@ -34,21 +34,25 @@ declare class FrameHandler {
     handleCallResponse: (frame: LazyFrame) => void;
     handleUnknownFrame: (frame: LazyFrame) => void;
 }
+
+declare class EndpointDefinition {
+    cacheBuf: Buffer;
+    csumstart: number;
+    fn: IHandlerFn;
+}
 */
 
 module.exports = FrameHandler;
 
 function FrameHandler() {
-    if (!(this instanceof FrameHandler)) {
-        return new FrameHandler();
-    }
+    var self/*:FrameHandler*/ = this;
 
-    this.services = Object.create(null);
+    self.services = Object.create(null);
 }
 
 FrameHandler.prototype.register =
 function register(serviceName, endpoint, fn) {
-    var self = this;
+    var self/*:FrameHandler*/ = this;
 
     if (!self.services[serviceName]) {
         self.services[serviceName] = Object.create(null);
@@ -60,7 +64,7 @@ function register(serviceName, endpoint, fn) {
 
 FrameHandler.prototype.registerRaw =
 function registerRaw(serviceName, endpoint, fn) {
-    var self = this;
+    var self/*:FrameHandler*/ = this;
 
     if (!self.services[serviceName]) {
         self.services[serviceName] = Object.create(null);
@@ -78,14 +82,16 @@ function registerRaw(serviceName, endpoint, fn) {
 };
 
 function EndpointDefinition(fn, cacheBuf, csumstart) {
-    this.fn = fn;
-    this.cacheBuf = cacheBuf;
-    this.csumstart = csumstart;
+    var self/*:EndpointDefinition*/ = this;
+
+    self.fn = fn;
+    self.cacheBuf = cacheBuf;
+    self.csumstart = csumstart;
 }
 
 FrameHandler.prototype.handleFrame =
 function handleFrame(frame) {
-    var self = this;
+    var self/*:FrameHandler*/ = this;
 
     var frameType = frame.readFrameType();
 
@@ -121,7 +127,7 @@ function handleInitResponse(frame) {
 
 FrameHandler.prototype.handleCallRequest =
 function handleCallRequest(frame) {
-    var self = this;
+    var self/*:FrameHandler*/ = this;
 
     var reqFrameId = frame.readId();
     var reqServiceName = frame.readReqServiceName();
