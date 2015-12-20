@@ -60,8 +60,8 @@ var TChannelSender = require('./sender.js');
 */
 
 /*::
-type OnListenFn = () => void;
-type OnCloseFn = (err: Error | null) => void;
+type IOnListenFn = () => void;
+type IOnCloseFn = (err: Error | null) => void;
 type ITCP_WRAP = {};
 type IFrameHandler = {};
 type IPeersCollection = {};
@@ -79,8 +79,8 @@ declare class Channel {
     hostPort: ?string;
 
     constructor(): void;
-    listen: (port: number, host: string, onListen?: OnListenFn) => void;
-    delayEmitListen: (onListen: OnListenFn) => void;
+    listen: (port: number, host: string, onListen?: IOnListenFn) => void;
+    delayEmitListen: (onListen: IOnListenFn) => void;
     allocateConnection: (remoteName: string) => IConnection;
     onSocket: (
         socket: ITCP_WRAP, direction: string, hostPort: string
@@ -91,7 +91,7 @@ declare class Channel {
     send: (options: {
 
     }, onResponse: () => void) => void;
-    close: (cb: OnCloseFn) => void;
+    close: (cb: IOnCloseFn) => void;
 }
 */
 
