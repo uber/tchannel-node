@@ -62,22 +62,35 @@ var TChannelSender = require('./sender.js');
 /*::
 type OnListenFn = () => void;
 type OnCloseFn = (err: Error | null) => void;
+type ITCP_WRAP = {};
+type IFrameHandler = {};
+type IPeersCollection = {};
+type ITChannelSender = {};
+type IConnection = {};
+
+type IFastClient = any;
 
 declare class Channel {
-    server: any;
-    handler: any;
-    peers: any;
-    sender: any;
+    server: ?ITCP_WRAP;
+    handler: IFrameHandler;
+    peers: IPeersCollection;
+    sender: ITChannelSender;
 
     hostPort: ?string;
 
     constructor(): void;
     listen: (port: number, host: string, onListen?: OnListenFn) => void;
     delayEmitListen: (onListen: OnListenFn) => void;
-    allocateConnection: (remoteName: string) => any;
-    onSocket: (socket: any, direction: string, hostPort: string) => any;
-    createClient: (serviceName: string, opts: any) => any;
-    send: (options: any, onResponse: () => void) => void;
+    allocateConnection: (remoteName: string) => IConnection;
+    onSocket: (
+        socket: ITCP_WRAP, direction: string, hostPort: string
+    ) => IConnection;
+    createClient: (serviceName: string, opts: {
+
+    }) => IFastClient;
+    send: (options: {
+
+    }, onResponse: () => void) => void;
     close: (cb: OnCloseFn) => void;
 }
 */
@@ -85,17 +98,19 @@ declare class Channel {
 module.exports = Channel;
 
 function Channel() {
-    this.server = new TCP_WRAP();
-    this.handler = new FrameHandler();
-    this.peers = new PeersCollection(this);
-    this.sender = new TChannelSender(this);
+    var self/*:Channel*/ = this;
 
-    this.hostPort = null;
+    self.server = new TCP_WRAP();
+    self.handler = new FrameHandler();
+    self.peers = new PeersCollection(self);
+    self.sender = new TChannelSender(self);
+
+    self.hostPort = null;
 }
 
 Channel.prototype.listen =
 function listen(port, host, onListen) {
-    var self = this;
+    var self/*:Channel*/ = this;
 
     self.server.owner = self;
     self.server.onconnection = onConnection;
@@ -139,7 +154,7 @@ function onConnection(socket) {
 
 Channel.prototype.allocateConnection =
 function allocateConnection(remoteName) {
-    var self = this;
+    var self/*:Channel*/ = this;
 
     var socket = new TCP_WRAP();
     return self.onSocket(socket, 'out', remoteName);
@@ -147,7 +162,7 @@ function allocateConnection(remoteName) {
 
 Channel.prototype.onSocket =
 function onSocket(socket, direction, hostPort) {
-    var self = this;
+    var self/*:Channel*/ = this;
 
     var conn = new TChannelConnection(socket, self, direction);
     if (direction === 'in') {
@@ -163,21 +178,21 @@ function onSocket(socket, direction, hostPort) {
 
 Channel.prototype.createClient =
 function createClient(serviceName, opts) {
-    var self = this;
+    var self/*:Channel*/ = this;
 
     return buildFastClient(self, serviceName, opts);
 };
 
 Channel.prototype.send =
 function send(options, onResponse) {
-    var self = this;
+    var self/*:Channel*/ = this;
 
     self.sender.send(options, onResponse);
 };
 
 Channel.prototype.close =
 function close(cb) {
-    var self = this;
+    var self/*:Channel*/ = this;
 
     self.server.close();
     self.server = null;
