@@ -1,5 +1,7 @@
 'use strict';
 
+/* @flow */
+
 var ID_OFFSET = 4;
 var TYPE_OFFSET = 2;
 
@@ -15,43 +17,106 @@ var CREQ_SERVICE_OFFSET = 46;
 
 var IREQ_HEADERS_OFFSET = 18;
 
+/*::
+var Buffer = require("buffer").Buffer;
+
+type IConnection = {};
+
+declare class LazyFrame {
+    sourceConnection: IConnection;
+    frameBuffer: Buffer;
+    offset: number;
+    length: number;
+    oldId: number | null;
+    newId: number | null;
+    frameType: number | null;
+
+    initReqHeaders: Array<string> | null;
+
+    reqServiceName: string | null;
+    tHeadersCount: number | null;
+    checksumType: number | null;
+    arg1Length: number | null;
+    arg2Length: number | null;
+    arg3Length: number | null;
+    arg1: Buffer | null;
+    arg1str: string | null;
+    arg2: Buffer | null;
+    arg2str: string | null;
+    arg3: Buffer | null;
+    arg3str: string | null;
+
+    tHeadersStart: number | null;
+    checksumStart: number | null;
+    arg1Start: number | null;
+    arg2Start: number | null;
+    arg3Start: number | null;
+
+    constructor(
+        sourceConnection: IConnection, frameBuffer: Buffer,
+        offset: number, length: number
+    ): void;
+
+    readId: () => number;
+    readFrameType: () => number;
+    writeId: (newId: number) => number;
+    markAsCallResponse: () => void;
+    readReqServiceName: () => string;
+    readArg1str: () => string;
+    readArg1: () => Buffer;
+    skipArg1: () => number;
+    readArg2str: () => string;
+    readArg2: () => Buffer;
+    skipArg2: () => number;
+    readArg3str: () => string;
+    readArg3: () => Buffer;
+    readOnlyArg3str: () => string;
+    skipTransportHeaders: () => number;
+    skipChecksum: () => number;
+    readInitReqHeaders: () => Array<string>;
+}
+*/
+
 module.exports = LazyFrame;
 
+/*eslint max-statements: [2, 30]*/
 function LazyFrame(sourceConnection, frameBuffer, offset, length) {
-    this.sourceConnection = sourceConnection;
-    this.frameBuffer = frameBuffer;
-    this.offset = offset;
-    this.length = length;
+    var self/*:LazyFrame*/ = this;
 
-    this.oldId = null;
-    this.newId = null;
-    this.frameType = null;
+    self.sourceConnection = sourceConnection;
+    self.frameBuffer = frameBuffer;
+    self.offset = offset;
+    self.length = length;
 
-    this.initReqHeaders = null;
+    self.oldId = null;
+    self.newId = null;
+    self.frameType = null;
 
-    this.reqServiceName = null;
-    this.tHeadersCount = null;
-    this.checksumType = null;
-    this.arg1Length = null;
-    this.arg2Length = null;
-    this.arg3Length = null;
-    this.arg1 = null;
-    this.arg1str = null;
-    this.arg2 = null;
-    this.arg2str = null;
-    this.arg3 = null;
-    this.arg3str = null;
+    self.initReqHeaders = null;
 
-    this.tHeadersStart = null;
-    this.checksumStart = null;
-    this.arg1Start = null;
-    this.arg2Start = null;
-    this.arg3Start = null;
+    self.reqServiceName = null;
+    self.tHeadersCount = null;
+    self.checksumType = null;
+    self.arg1Length = null;
+    self.arg2Length = null;
+    self.arg3Length = null;
+    self.arg1 = null;
+    self.arg1str = null;
+    self.arg2 = null;
+    self.arg2str = null;
+    self.arg3 = null;
+    self.arg3str = null;
+
+    self.tHeadersStart = null;
+    self.checksumStart = null;
+    self.arg1Start = null;
+    self.arg2Start = null;
+    self.arg3Start = null;
 }
 
 LazyFrame.prototype.readId =
 function readId() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.oldId !== null) {
         return self.oldId;
@@ -65,7 +130,7 @@ function readId() {
 
 LazyFrame.prototype.readFrameType =
 function readFrameType() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.frameType !== null) {
         return self.frameType;
@@ -79,7 +144,7 @@ function readFrameType() {
 
 LazyFrame.prototype.writeId =
 function writeId(newId) {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     self.frameBuffer.writeUInt32BE(newId, self.offset + ID_OFFSET, true);
 
@@ -89,7 +154,7 @@ function writeId(newId) {
 
 LazyFrame.prototype.markAsCallResponse =
 function markAsCallResponse() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     self.tHeadersStart = self.offset + CRES_HEADER_OFFSET;
 };
@@ -100,7 +165,7 @@ function readString(buffer, offset, end) {
 
 LazyFrame.prototype.readReqServiceName =
 function readReqServiceName() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.reqServiceName !== null) {
         return self.reqServiceName;
@@ -121,17 +186,19 @@ function readReqServiceName() {
 
 LazyFrame.prototype.readArg1str =
 function readArg1str() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg1str !== null) {
         return self.arg1str;
     }
 
+    var offset;
     if (self.arg1Start === null) {
-        self.skipChecksum();
+        offset = self.skipChecksum();
+    } else {
+        offset = self.arg1Start;
     }
 
-    var offset = self.arg1Start;
     self.arg1Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
@@ -145,17 +212,19 @@ function readArg1str() {
 
 LazyFrame.prototype.readArg1 =
 function readArg1() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg1 !== null) {
         return self.arg1;
     }
 
+    var offset;
     if (self.arg1Start === null) {
-        self.skipChecksum();
+        offset = self.skipChecksum();
+    } else {
+        offset = self.arg1Start;
     }
 
-    var offset = self.arg1Start;
     self.arg1Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
@@ -167,36 +236,40 @@ function readArg1() {
 
 LazyFrame.prototype.skipArg1 =
 function skipArg1() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg2Start !== null) {
-        return;
+        return self.arg2Start;
     }
 
+    var offset;
     if (self.arg1Start === null) {
-        self.skipChecksum();
+        offset = self.skipChecksum();
+    } else {
+        offset = self.arg1Start;
     }
 
-    var offset = self.arg1Start;
     self.arg1Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
-    return;
+    return offset;
 };
 
 LazyFrame.prototype.readArg2 =
 function readArg2() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg2 !== null) {
         return self.arg2;
     }
 
+    var offset;
     if (self.arg2Start === null) {
-        self.readArg1();
+        offset = self.skipArg1();
+    } else {
+        offset = self.arg2Start;
     }
 
-    var offset = self.arg2Start;
     self.arg2Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
@@ -208,38 +281,42 @@ function readArg2() {
 
 LazyFrame.prototype.skipArg2 =
 function skipArg2() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg3Start !== null) {
-        return;
+        return self.arg3Start;
     }
 
+    var offset;
     if (self.arg2Start === null) {
-        self.skipArg1();
+        offset = self.skipArg1();
+    } else {
+        offset = self.arg2Start;
     }
 
-    var offset = self.arg2Start;
     self.arg2Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
     self.arg3Start = offset + self.arg2Length;
 
-    return;
+    return self.arg3Start;
 };
 
 LazyFrame.prototype.readArg2str =
 function readArg2str() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg2str !== null) {
         return self.arg2str;
     }
 
+    var offset;
     if (self.arg2Start === null) {
-        self.readArg1str();
+        offset = self.skipArg1();
+    } else {
+        offset = self.arg2Start;
     }
 
-    var offset = self.arg2Start;
     self.arg2Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
@@ -253,17 +330,19 @@ function readArg2str() {
 
 LazyFrame.prototype.readArg3 =
 function readArg3() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg3 !== null) {
         return self.arg3;
     }
 
+    var offset;
     if (self.arg3Start === null) {
-        self.readArg2();
+        offset = self.skipArg2();
+    } else {
+        offset = self.arg3Start;
     }
 
-    var offset = self.arg3Start;
     self.arg3Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
@@ -275,17 +354,19 @@ function readArg3() {
 
 LazyFrame.prototype.readArg3str =
 function readArg3str() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg3str !== null) {
         return self.arg3str;
     }
 
+    var offset;
     if (self.arg3Start === null) {
-        self.readArg2str();
+        offset = self.skipArg2();
+    } else {
+        offset = self.arg3Start;
     }
 
-    var offset = self.arg3Start;
     self.arg3Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
@@ -297,17 +378,19 @@ function readArg3str() {
 
 LazyFrame.prototype.readOnlyArg3str =
 function readOnlyArg3str() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.arg3str !== null) {
         return self.arg3str;
     }
 
+    var offset;
     if (self.arg3Start === null) {
-        self.skipArg2();
+        offset = self.skipArg2();
+    } else {
+        offset = self.arg3Start;
     }
 
-    var offset = self.arg3Start;
     self.arg3Length = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
 
@@ -319,11 +402,11 @@ function readOnlyArg3str() {
 
 LazyFrame.prototype.skipTransportHeaders =
 function skipTransportHeaders() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
     if (self.tHeadersStart === null) {
         console.error('could not skipTransportHeaders()');
-        return;
+        return -1;
     }
 
     self.tHeadersCount = self.frameBuffer
@@ -338,36 +421,41 @@ function skipTransportHeaders() {
     }
 
     self.checksumStart = offset;
+    return self.checksumStart;
 };
 
 LazyFrame.prototype.skipChecksum =
 function skipChecksum() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
+    var offset;
     if (self.checksumStart === null) {
-        self.skipTransportHeaders();
+        offset = self.skipTransportHeaders();
+    } else {
+        offset = self.checksumStart;
     }
 
-    self.checksumType = self.frameBuffer
-        .readUInt8(self.checksumStart, true);
+    self.checksumType = self.frameBuffer.readUInt8(offset, true);
 
-    var offset = self.checksumStart + 1;
+    offset += 1;
     if (self.checksumType !== 0x00) {
         offset += 4;
     }
 
     self.arg1Start = offset;
+    return offset;
 };
 
 LazyFrame.prototype.readInitReqHeaders =
 function readInitReqHeaders() {
-    var self = this;
+    var self/*:LazyFrame*/ = this;
 
+    var initReqHeaders;
     if (self.initReqHeaders !== null) {
         return self.initReqHeaders;
     }
 
-    self.initReqHeaders = [];
+    initReqHeaders = self.initReqHeaders = [];
     var offset = self.offset + IREQ_HEADERS_OFFSET;
     var nh = self.frameBuffer.readUInt16BE(offset, true);
     offset += 2;
@@ -389,9 +477,9 @@ function readInitReqHeaders() {
         );
         offset += valueLen;
 
-        self.initReqHeaders.push(headerKey);
-        self.initReqHeaders.push(headerValue);
+        initReqHeaders.push(headerKey);
+        initReqHeaders.push(headerValue);
     }
 
-    return self.initReqHeaders;
+    return initReqHeaders;
 };
