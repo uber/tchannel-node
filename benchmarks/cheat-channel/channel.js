@@ -59,8 +59,6 @@ var TChannelSender = require('./sender.js');
     channel.close();
 */
 
-// declare class Channel extends type.Channel {};
-
 /*::
 import * as type from './channel.h.js';
 declare var Channel : Class<type.Channel>

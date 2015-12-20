@@ -1,0 +1,13 @@
+/* @flow */
+
+var Channel = require('./channel.js');
+
+declare export class BenchServer {
+    port: number;
+    channel: Channel;
+    keys: { [key: string]: Buffer };
+
+    constructor(port: number): void;
+    registerEndpoints: () => void;
+    listen: () => void;
+}

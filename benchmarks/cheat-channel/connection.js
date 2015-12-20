@@ -22,72 +22,11 @@ function allocPool() {
 }
 
 /*::
-var Channel = require('./channel.js');
-var TCP_WRAP = require('net').TCP_WRAP;
-
-type IOnInitResponseWrite = () => void;
-
-declare class TChannelConnection {
-    socket: TCP_WRAP;
-    channel: Channel;
-    parser: FrameParser;
-    idCounter: number;
-    guid: string;
-    outRequestMapping: OutPending;
-    remoteName: string | null;
-    initialized: boolean;
-    frameQueue: Array<any>;
-    direction: string;
-    pendingWrite: boolean;
-    connected: boolean;
-    globalWriteBuffer: Buffer;
-    afterWriteCallback: null | IOnInitResponseWrite;
-
-    constructor(
-        socket: TCP_WRAP, channel: Channel, direction: string
-    ): void;
-
-    addPendingOutReq: (frameId: number, data: any, ttl: number) => void;
-    popPendingOutReq: (frameId: number) => PendingOutOperation | null;
-    accept: () => void;
-    readStart: () => void;
-    connect: (hostPort: string) => void;
-    onSocketRead: (buffer: Buffer, offset: number, length: number) => void;
-    onSocketBuffer: (buffer: Buffer, offset: number, length: number) => void;
-    onFrameBuffer: (frameBuffer: Buffer, offset: number, length: number) => void;
-    allocateId: () => number;
-    writeFrameCopy: (frameBuffer: Buffer, len: number) => void;
-    writeFrame: (frameBuffer: Buffer) => void;
-    writeToSocket: (frameBuffer: Buffer) => void;
-    handleInitRequest: (reqFrame: LazyFrame) => void;
-    sendInitResponse: (reqFrame: LazyFrame) => void;
-    sendInitRequest: () => void;
-    handleInitResponse: (resFrame: LazyFrame) => void;
-    flushPending: () => void;
-    destroy: () => void;
-}
-
-declare class OutPending {
-    buckets: { [key: number]: OutPendingBucket };
-    bucketSize: number;
-    emptyBucket: Array<null | PendingOutOperation>;
-
-    constructor(): void;
-    push: (id: number, op: PendingOutOperation) => void;
-    getOrCreateBucket: (bucketStart: number) => OutPendingBucket;
-    pop: (id: number) => PendingOutOperation | null;
-}
-
-declare class OutPendingBucket {
-    elements: Array<null | PendingOutOperation>;
-    count: number;
-}
-
-declare class PendingOutOperation {
-    timedOut: boolean;
-    data: any;
-    timeout: number;
-}
+import * as type from './connection.h.js';
+declare var TChannelConnection : Class<type.TChannelConnection>
+declare var OutPending : Class<type.OutPending>
+declare var OutPendingBucket : Class<type.OutPendingBucket>
+declare var PendingOutOperation : Class<type.PendingOutOperation>
 */
 
 /*eslint no-console: 0*/

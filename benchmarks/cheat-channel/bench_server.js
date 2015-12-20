@@ -13,15 +13,8 @@ var Channel = require('./channel.js');
 var SERVER_HOST = '127.0.0.1';
 
 /*::
-declare class BenchServer {
-    port: number;
-    channel: Channel;
-    keys: { [key: string]: Buffer };
-
-    constructor(port: number): void;
-    registerEndpoints: () => void;
-    listen: () => void;
-}
+import * as type from './bench_server.h.js';
+declare var BenchServer : Class<type.BenchServer>
 */
 
 function BenchServer(port) {
