@@ -60,9 +60,10 @@ var TChannelSender = require('./sender.js');
 */
 
 /*::
+var TCP_WRAP = require("net").TCP_WRAP
+
 type IOnListenFn = () => void;
 type IOnCloseFn = (err: Error | null) => void;
-type ITCP_WRAP = {};
 type IFrameHandler = {};
 type IPeersCollection = {};
 type ITChannelSender = {};
@@ -71,7 +72,7 @@ type IConnection = {};
 type IFastClient = any;
 
 declare class Channel {
-    server: ?ITCP_WRAP;
+    server: TCP_WRAP;
     handler: IFrameHandler;
     peers: IPeersCollection;
     sender: ITChannelSender;
@@ -83,7 +84,7 @@ declare class Channel {
     delayEmitListen: (onListen: IOnListenFn) => void;
     allocateConnection: (remoteName: string) => IConnection;
     onSocket: (
-        socket: ITCP_WRAP, direction: string, hostPort: string
+        socket: TCP_WRAP, direction: string, hostPort: string | null
     ) => IConnection;
     createClient: (serviceName: string, opts: {
 
@@ -148,8 +149,8 @@ function onConnection(socket) {
         return;
     }
 
-    var naiveRelay = this.owner;
-    naiveRelay.onSocket(socket, 'in');
+    var naiveRelay/*:Channel*/ = this.owner;
+    naiveRelay.onSocket(socket, 'in', null);
 }
 
 Channel.prototype.allocateConnection =
@@ -167,7 +168,7 @@ function onSocket(socket, direction, hostPort) {
     var conn = new TChannelConnection(socket, self, direction);
     if (direction === 'in') {
         conn.accept();
-    } else if (direction === 'out') {
+    } else if (direction === 'out' && hostPort) {
         conn.connect(hostPort);
     } else {
         console.error('invalid direction', direction);
@@ -195,8 +196,6 @@ function close(cb) {
     var self/*:Channel*/ = this;
 
     self.server.close();
-    self.server = null;
-
     self.peers.close();
 
     cb(null);
