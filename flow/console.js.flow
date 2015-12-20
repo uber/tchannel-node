@@ -1,3 +1,4 @@
 declare module "console" {
     declare function error(msg: string, opts?: any): void;
+    declare function log(msg: string, opts?: any): void;
 }

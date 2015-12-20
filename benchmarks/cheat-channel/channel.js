@@ -99,7 +99,7 @@ declare class Channel {
 
     }) => IFastClient;
     send: (options: SendOptions, onResponse: IOnResponse) => void;
-    close: (cb: IOnCloseFn) => void;
+    close: (cb?: IOnCloseFn) => void;
 }
 */
 

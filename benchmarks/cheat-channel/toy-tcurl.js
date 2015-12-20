@@ -1,5 +1,7 @@
 'use strict';
 
+/* @flow */
+
 var parseArgs = require('minimist');
 var process = require('process');
 var assert = require('assert');
