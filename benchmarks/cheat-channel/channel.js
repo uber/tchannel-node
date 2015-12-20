@@ -61,19 +61,30 @@ var TChannelSender = require('./sender.js');
 
 /*::
 var TCP_WRAP = require("net").TCP_WRAP
+var LazyFrame = require('./lazy-frame.js');
 
 type IOnListenFn = () => void;
+type StrOrBuf = string | Buffer | null;
 type IOnCloseFn = (err: Error | null) => void;
 
-type ITChannelSender = {};
-
 type IFastClient = any;
+
+type SendOptions = {
+    arg1: StrOrBuf;
+    arg2: StrOrBuf;
+    arg3: StrOrBuf;
+    headers: null | Array<string> | { [key: string]: string };
+    serviceName: string,
+    host: string,
+    ttl: number | null
+};
+type IOnResponse = (err?: Error, resp: LazyFrame) => void
 
 declare class Channel {
     server: TCP_WRAP;
     handler: FrameHandler;
     peers: PeersCollection;
-    sender: ITChannelSender;
+    sender: TChannelSender;
 
     hostPort: ?string;
 
@@ -87,9 +98,7 @@ declare class Channel {
     createClient: (serviceName: string, opts: {
 
     }) => IFastClient;
-    send: (options: {
-
-    }, onResponse: () => void) => void;
+    send: (options: SendOptions, onResponse: IOnResponse) => void;
     close: (cb: IOnCloseFn) => void;
 }
 */

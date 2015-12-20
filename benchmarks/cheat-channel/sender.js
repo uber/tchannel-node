@@ -1,5 +1,7 @@
 'use strict';
 
+/* @flow */
+
 /*eslint no-console: 0*/
 var Buffer = require('buffer').Buffer;
 
@@ -9,19 +11,80 @@ var EMPTY_BUFFER = new Buffer(0);
 
 TChannelSender.RequestOptions = RequestOptions;
 
+/*::
+var Channel = require('./channel.js');
+var Connection = require('./connection.js');
+var LazyFrame = require('./lazy-frame.js');
+
+type StrOrBuf = string | Buffer | null;
+type IOnResponse = (err?: Error, resp: LazyFrame) => void
+
+type SendOptions = {
+    arg1: StrOrBuf;
+    arg2: StrOrBuf;
+    arg3: StrOrBuf;
+    headers: null | Array<string> | { [key: string]: string };
+    serviceName: string,
+    host: string,
+    ttl: number | null
+};
+
+declare class RequestOptions {
+    serviceName: string;
+    host: string;
+    ttl: number;
+    headers: Array<string>;
+    headersbuf: Buffer | null;
+    arg1str: string | null;
+    arg2str: string | null;
+    arg3str: string | null;
+    arg1buf: Buffer | null;
+    arg2buf: Buffer | null;
+    arg3buf: Buffer | null;
+
+    constructor(
+        serviceName: string, host: string, ttl: number,
+        headers: Array<string>, headersbuf: Buffer | null,
+        arg1str: string | null, arg1buf: Buffer | null,
+        arg2str: string | null, arg2buf:  Buffer | null,
+        arg3str: string | null, arg3buf: Buffer | null
+    ): void;
+}
+
+declare class TChannelSender {
+    channel: Channel;
+
+    send: (options: SendOptions, onResponse: IOnResponse) => void;
+    _send: (reqOpts: RequestOptions, onResponse: IOnResponse) => void;
+    _sendCache: (
+        cacheBuf: Buffer, csumstart: number, host: string, ttl: number,
+        arg2str: string | null, arg2buf: Buffer | null,
+        arg3str: string | null, arg3buf: Buffer | null,
+        onResponse: IOnResponse
+    ) => void;
+    sendCallRequestTail: (
+        conn: Connection, cacheBuf: Buffer, csumstart: number,
+        reqId: number, arg2str: string | null, arg2buf: Buffer | null,
+        arg3str: string | null, arg3buf: Buffer | null
+    ) => void;
+    sendCallRequest: (
+        conn: Connection, reqOpts: RequestOptions, reqId: number
+    ) => void;
+
+    static RequestOptions: typeof RequestOptions
+}
+*/
 module.exports = TChannelSender;
 
 function TChannelSender(channel) {
-    if (!(this instanceof TChannelSender)) {
-        return new TChannelSender(channel);
-    }
+    var self/*:TChannelSender*/ = this;
 
-    this.channel = channel;
+    self.channel = channel;
 }
 
 TChannelSender.prototype.send =
 function send(options, onResponse) {
-    var self = this;
+    var self/*:TChannelSender*/ = this;
 
     var arg1 = options.arg1;
     var arg2 = options.arg2 || EMPTY_BUFFER;
@@ -41,18 +104,18 @@ function send(options, onResponse) {
         headers,
         null,
         typeof arg1 === 'string' ? arg1 : null,
-        Buffer.isBuffer(arg1) ? arg1 : null,
+        (typeof arg1 !== 'string' && arg1) ? arg1 : null,
         typeof arg2 === 'string' ? arg2 : null,
-        Buffer.isBuffer(arg2) ? arg2 : null,
+        typeof arg2 !== 'string' ? arg2 : null,
         typeof arg3 === 'string' ? arg3 : null,
-        Buffer.isBuffer(arg3) ? arg3 : null
+        typeof arg3 !== 'string' ? arg3 : null
     );
     self._send(reqOpts, onResponse);
 };
 
 TChannelSender.prototype._send =
 function _send(reqOpts, onResponse) {
-    var self = this;
+    var self/*:TChannelSender*/ = this;
 
     var conn = self.channel.peers.ensureConnection(reqOpts.host);
     var reqId = conn.allocateId();
@@ -66,7 +129,7 @@ function _sendCache(
     cacheBuf, csumstart, host, ttl,
     arg2str, arg2buf, arg3str, arg3buf, onResponse
 ) {
-    var self = this;
+    var self/*:TChannelSender*/ = this;
 
     var conn = self.channel.peers.ensureConnection(host);
     var reqId = conn.allocateId();
@@ -131,15 +194,17 @@ function RequestOptions(
     serviceName, host, ttl, headers, headersbuf,
     arg1str, arg1buf, arg2str, arg2buf, arg3str, arg3buf
 ) {
-    this.serviceName = serviceName;
-    this.host = host;
-    this.ttl = ttl;
-    this.headers = headers;
-    this.headersbuf = headersbuf;
-    this.arg1str = arg1str;
-    this.arg1buf = arg1buf;
-    this.arg2str = arg2str;
-    this.arg2buf = arg2buf;
-    this.arg3str = arg3str;
-    this.arg3buf = arg3buf;
+    var self/*:RequestOptions*/ = this;
+
+    self.serviceName = serviceName;
+    self.host = host;
+    self.ttl = ttl;
+    self.headers = headers;
+    self.headersbuf = headersbuf;
+    self.arg1str = arg1str;
+    self.arg1buf = arg1buf;
+    self.arg2str = arg2str;
+    self.arg2buf = arg2buf;
+    self.arg3str = arg3str;
+    self.arg3buf = arg3buf;
 }
