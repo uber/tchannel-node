@@ -1,5 +1,7 @@
 'use strict';
 
+/* @flow */
+
 var Buffer = require('buffer').Buffer;
 var SlowBuffer = require('buffer').SlowBuffer;
 var process = require('process');
@@ -19,43 +21,118 @@ function allocPool() {
     _pool.used = 0;
 }
 
+/*::
+var Channel = require('./channel.js');
+var TCP_WRAP = require('net').TCP_WRAP;
+
+type IFrameParser = {};
+type IOnInitResponseWrite = () => void;
+
+declare class TChannelConnection {
+    socket: TCP_WRAP;
+    channel: Channel;
+    parser: IFrameParser;
+    idCounter: number;
+    guid: string;
+    outRequestMapping: OutPending;
+    remoteName: string | null;
+    initialized: boolean;
+    frameQueue: Array<any>;
+    direction: string;
+    pendingWrite: boolean;
+    connected: boolean;
+    globalWriteBuffer: Buffer;
+    afterWriteCallback: null | IOnInitResponseWrite;
+
+    constructor(
+        socket: TCP_WRAP, channel: Channel, direction: string
+    ): void;
+
+    addPendingOutReq: (frameId: number, data: any, ttl: number) => void;
+    popPendingOutReq: (frameId: number) => PendingOutOperation | null;
+    accept: () => void;
+    readStart: () => void;
+    connect: (hostPort: string) => void;
+    onSocketRead: (buffer: Buffer, offset: number, length: number) => void;
+    onSocketBuffer: (buffer: Buffer, offset: number, length: number) => void;
+    onFrameBuffer: (frameBuffer: Buffer, offset: number, length: number) => void;
+    allocateId: () => number;
+    writeFrameCopy: (frameBuffer: Buffer, len: number) => void;
+    writeFrame: (frameBuffer: Buffer) => void;
+    writeToSocket: (frameBuffer: Buffer) => void;
+    handleInitRequest: (reqFrame: LazyFrame) => void;
+    sendInitResponse: (reqFrame: LazyFrame) => void;
+    sendInitRequest: () => void;
+    handleInitResponse: (resFrame: LazyFrame) => void;
+    flushPending: () => void;
+    destroy: () => void;
+}
+
+declare class OutPending {
+    buckets: { [key: number]: OutPendingBucket };
+    bucketSize: number;
+    emptyBucket: Array<null | PendingOutOperation>;
+
+    constructor(): void;
+    push: (id: number, op: PendingOutOperation) => void;
+    getOrCreateBucket: (bucketStart: number) => OutPendingBucket;
+    pop: (id: number) => PendingOutOperation | null;
+}
+
+declare class OutPendingBucket {
+    elements: Array<null | PendingOutOperation>;
+    count: number;
+}
+
+declare class PendingOutOperation {
+    timedOut: boolean;
+    data: any;
+    timeout: number;
+}
+*/
+
 /*eslint no-console: 0*/
 module.exports = TChannelConnection;
 
 function TChannelConnection(socket, channel, direction) {
-    this.socket = socket;
-    this.channel = channel;
-    this.socket.owner = this;
+    var self/*:TChannelConnection*/ = this;
 
-    this.parser = new FrameParser(this, onParserFrameBuffer);
-    this.idCounter = 1;
-    this.guid = String(GUID++) + '~';
-    this.outRequestMapping = new OutPending();
+    self.socket = socket;
+    self.channel = channel;
+    self.socket.owner = self;
 
-    this.remoteName = null;
-    this.initialized = false;
-    this.frameQueue = [];
-    // this.writeQueue = [];
-    this.direction = direction;
+    self.parser = new FrameParser(self, onParserFrameBuffer);
+    self.idCounter = 1;
+    self.guid = String(GUID++) + '~';
+    self.outRequestMapping = new OutPending();
 
-    // this.pendingWrite = false;
-    this.connected = false;
-    this.globalWriteBuffer = GLOBAL_WRITE_BUFFER;
+    self.remoteName = null;
+    self.initialized = false;
+    self.frameQueue = [];
+    // self.writeQueue = [];
+    self.direction = direction;
+
+    self.pendingWrite = false;
+    self.connected = false;
+    self.globalWriteBuffer = GLOBAL_WRITE_BUFFER;
+    self.afterWriteCallback = null;
 }
 
 function OutPending() {
-    this.buckets = Object.create(null);
-    this.bucketSize = 1024;
+    var self/*:OutPending*/ = this;
 
-    this.emptyBucket = [];
-    for (var i = 0; i < this.bucketSize; i++) {
-        this.emptyBucket.push(null);
+    self.buckets = Object.create(null);
+    self.bucketSize = 1024;
+
+    self.emptyBucket = [];
+    for (var i = 0; i < self.bucketSize; i++) {
+        self.emptyBucket.push(null);
     }
 }
 
 OutPending.prototype.push =
 function push(id, op) {
-    var self = this;
+    var self/*:OutPending*/ = this;
 
     var remainder = id % 1024;
     var bucketStart = id - remainder;
@@ -67,7 +144,7 @@ function push(id, op) {
 
 OutPending.prototype.getOrCreateBucket =
 function getOrCreateBucket(bucketStart) {
-    var self = this;
+    var self/*:OutPending*/ = this;
 
     var bucket = self.buckets[bucketStart];
     if (!bucket) {
@@ -79,13 +156,15 @@ function getOrCreateBucket(bucketStart) {
 };
 
 function OutPendingBucket(elems) {
-    this.elements = elems;
-    this.count = 0;
+    var self/*:OutPendingBucket*/ = this;
+
+    self.elements = elems;
+    self.count = 0;
 }
 
 OutPending.prototype.pop =
 function pop(id) {
-    var self = this;
+    var self/*:OutPending*/ = this;
 
     var op = null;
     var remainder = id % 1024;
@@ -104,14 +183,16 @@ function pop(id) {
 };
 
 function PendingOutOperation(data, ttl) {
-    this.timedOut = false;
-    this.data = data;
-    this.timeout = ttl;
+    var self/*:PendingOutOperation*/ = this;
+
+    self.timedOut = false;
+    self.data = data;
+    self.timeout = ttl;
 }
 
 TChannelConnection.prototype.addPendingOutReq =
 function addPendingOutReq(frameId, data, ttl) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     var op = new PendingOutOperation(data, ttl);
     self.outRequestMapping.push(frameId, op);
@@ -119,14 +200,14 @@ function addPendingOutReq(frameId, data, ttl) {
 
 TChannelConnection.prototype.popPendingOutReq =
 function popPendingOutReq(frameId) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     return self.outRequestMapping.pop(frameId);
 };
 
 TChannelConnection.prototype.accept =
 function accept() {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     self.connected = true;
     self.readStart();
@@ -134,7 +215,7 @@ function accept() {
 
 TChannelConnection.prototype.readStart =
 function readStart() {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     self.socket.setNoDelay(true);
     self.socket.onread = onRead;
@@ -147,12 +228,12 @@ function readStart() {
 
 TChannelConnection.prototype.connect =
 function connect(hostPort) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     self.remoteName = hostPort;
 
     var parts = hostPort.split(':');
-    var connectReq = self.socket.connect(parts[0], parts[1]);
+    var connectReq = self.socket.connect(parts[0], parseInt(parts[1], 10));
     if (connectReq === null) {
         console.error('could not connect', process._errno);
         return;
@@ -162,7 +243,7 @@ function connect(hostPort) {
 };
 
 function afterConnect(err, socket, req, readable, writable) {
-    var conn = socket.owner;
+    var conn/*:TChannelConnection*/ = socket.owner;
 
     if (err) {
         console.error('lol connect', err);
@@ -184,7 +265,7 @@ function afterConnect(err, socket, req, readable, writable) {
 }
 
 function onRead(buffer, offset, length) {
-    var conn = this.owner;
+    var conn/*:TChannelConnection*/ = this.owner;
 
     if (buffer) {
         // console.log('gotn socket buffer', {
@@ -205,7 +286,7 @@ function onRead(buffer, offset, length) {
 
 TChannelConnection.prototype.onSocketRead =
 function onSocketRead(buffer, offset, length) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     if (length === 0) {
         // could have no bytes
@@ -217,14 +298,14 @@ function onSocketRead(buffer, offset, length) {
 
 TChannelConnection.prototype.onSocketBuffer =
 function onSocketBuffer(socketBuffer, start, length) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     self.parser.write(socketBuffer, start, length);
 };
 
 TChannelConnection.prototype.onFrameBuffer =
 function onFrameBuffer(frameBuffer, offset, length) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     var frame = new LazyFrame(self, frameBuffer, offset, length);
     self.channel.handler.handleFrame(frame);
@@ -232,14 +313,14 @@ function onFrameBuffer(frameBuffer, offset, length) {
 
 TChannelConnection.prototype.allocateId =
 function allocateId() {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     return self.idCounter++;
 };
 
 TChannelConnection.prototype.writeFrameCopy =
 function writeFrameCopy(frameBuffer, len) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     if (!_pool || _pool.length - _pool.used < len) {
         allocPool();
@@ -255,7 +336,7 @@ function writeFrameCopy(frameBuffer, len) {
 
 TChannelConnection.prototype.writeFrame =
 function writeFrame(frameBuffer) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     if (self.initialized) {
         self.writeToSocket(frameBuffer);
@@ -266,7 +347,7 @@ function writeFrame(frameBuffer) {
 
 TChannelConnection.prototype.writeToSocket =
 function writeToSocket(buffer) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     // if (self.pendingWrite) {
     //     self.writeQueue.push(buffer);
@@ -309,7 +390,7 @@ function afterWrite(status, socket, writeReq) {
 
 TChannelConnection.prototype.handleInitRequest =
 function handleInitRequest(reqFrame) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     // magicCounters.in++;
     // console.log('handleInitRequest', magicCounters.in);
@@ -326,7 +407,7 @@ function handleInitRequest(reqFrame) {
 
 TChannelConnection.prototype.sendInitResponse =
 function sendInitResponse(reqFrame) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     // magicCounters.in--;
     // console.log('handleInitResponse', magicCounters.in);
@@ -347,7 +428,7 @@ function sendInitResponse(reqFrame) {
 };
 
 function onInitResponseWrite() {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     self.afterWriteCallback = null;
     self.flushPending();
@@ -355,7 +436,7 @@ function onInitResponseWrite() {
 
 TChannelConnection.prototype.sendInitRequest =
 function sendInitRequest() {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     // magicCounters.out++;
     // console.log('sendInitRequest', magicCounters.out);
@@ -376,7 +457,7 @@ function sendInitRequest() {
 
 TChannelConnection.prototype.handleInitResponse =
 function handleInitResponse(resFrame) {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     // magicCounters.out--;
     // console.log('handleInitResponse', magicCounters.out);
@@ -386,7 +467,7 @@ function handleInitResponse(resFrame) {
 
 TChannelConnection.prototype.flushPending =
 function flushPending() {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     self.initialized = true;
     // console.log('flushing frames', self.frameQueue.length);
@@ -404,11 +485,10 @@ function onParserFrameBuffer(connection, buffer, offset, length) {
 
 TChannelConnection.prototype.destroy =
 function destroy() {
-    var self = this;
+    var self/*:TChannelConnection*/ = this;
 
     self.socket.close(onClose);
     self.socket.onread = null;
-    self.socket = null;
 };
 
 function onClose() {

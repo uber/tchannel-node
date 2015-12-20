@@ -1,5 +1,7 @@
 'use strict';
 
+/* @flow */
+
 /*eslint no-console: 0*/
 var console = require('console');
 var Buffer = require('buffer').Buffer;
@@ -7,6 +9,32 @@ var Buffer = require('buffer').Buffer;
 // var LazyFrame = require('./lazy-frame.js');
 var V2Frames = require('./v2-frames.js');
 var OutResponse = require('./out-response.js');
+
+/*::
+var LazyFrame = require('./lazy-frame.js');
+
+type IHandlerFn = () => void;
+
+declare class FrameHandler {
+    services: { [key: string]: {
+        [key: string]: EndpointDefinition
+    } };
+
+    constructor(): void;
+    register: (
+        serviceName: string, endpoint: string, fn: IHandlerFn
+    ) => void;
+    registerRaw: (
+        serviceName: string, endpoint: string, fn: IHandlerFn
+    ) => void;
+    handleFrame: (frame: LazyFrame) => void;
+    handleInitRequest: (frame: LazyFrame) => void;
+    handleInitResponse: (frame: LazyFrame) => void;
+    handleCallRequest: (frame: LazyFrame) => void;
+    handleCallResponse: (frame: LazyFrame) => void;
+    handleUnknownFrame: (frame: LazyFrame) => void;
+}
+*/
 
 module.exports = FrameHandler;
 
