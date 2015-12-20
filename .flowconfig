@@ -5,6 +5,7 @@
 [libs]
 flow/console.js.flow
 flow/buffer.js.flow
+flow/net.js.flow
 
 [options]
 module.system=node

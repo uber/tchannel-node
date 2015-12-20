@@ -1,0 +1,44 @@
+var Buffer = require('buffer').Buffer;
+
+type net$IONRead = (
+    buffer: Buffer, offset: number, length: number
+) => void;
+
+type net$IConnectOnComplete = (
+    err: number, socket: net$TCP_WRAP, req: net$ConnectReq,
+    readable: boolean, writable: boolean
+) => void;
+
+type net$ConnectReq = {
+    oncomplete: net$IConnectOnComplete
+};
+
+type net$IWriteOnComplete = (
+    status: number, socket: net$TCP_WRAP, writeReq: net$WriteReq
+) => void;
+
+type net$WriteReq = {
+    oncomplete: net$IWriteOnComplete
+};
+
+type net$IOnClose = () => void;
+
+type net$IOnConnection = (socket: net$TCP_WRAP) => void;
+
+declare class net$TCP_WRAP {
+    onread: net$IONRead | null;
+    onconnection: net$IOnConnection | null;
+    owner: any;
+
+    setNoDelay(toggle: boolean): void;
+    readStart(): void;
+    connect(host: string, port: number): net$ConnectReq;
+    writeBuffer(buffer: Buffer): net$WriteReq;
+    close(onClose?: net$IOnClose): void;
+    bind(host: string, port: number): number;
+    listen(backlog: number): number;
+}
+
+declare module "net" {
+    declare var TCP_WRAP : typeof net$TCP_WRAP
+}
