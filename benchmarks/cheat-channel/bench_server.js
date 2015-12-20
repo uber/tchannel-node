@@ -1,5 +1,7 @@
 'use strict';
 
+/* @flow */
+
 var process = require('process');
 process.title = 'nodejs-benchmarks-cheat_bench_server';
 
@@ -10,27 +12,36 @@ var Channel = require('./channel.js');
 
 var SERVER_HOST = '127.0.0.1';
 
-function BenchServer(port) {
-    if (!(this instanceof BenchServer)) {
-        return new BenchServer(port);
-    }
+/*::
+declare class BenchServer {
+    port: number;
+    channel: {};
+    keys: { [key: string]: Buffer };
 
-    this.port = port;
+    constructor(port: number): void;
+    registerEndpoints: () => void;
+    listen: () => void;
+}
+*/
+
+function BenchServer(port) {
+    var self/*:BenchServer*/ = this;
+    self.port = port;
 
     // TODO: stats
     // TODO: trace propagation
     // TODO: timeouts
-    this.channel = new Channel();
+    self.channel = new Channel();
 
     // TODO: optional trace reporter
 
-    this.keys = {};
-    this.registerEndpoints();
+    self.keys = {};
+    self.registerEndpoints();
 }
 
 BenchServer.prototype.registerEndpoints =
 function registerEndpoints() {
-    var self = this;
+    var self/*:BenchServer*/ = this;
 
     self.channel.handler.registerRaw('benchmark', 'ping', onPing);
     self.channel.handler.registerRaw('benchmark', 'set', onSet);
@@ -63,7 +74,7 @@ function registerEndpoints() {
 
 BenchServer.prototype.listen =
 function listen() {
-    var self = this;
+    var self/*:BenchServer*/ = this;
 
     self.channel.listen(self.port, SERVER_HOST);
 };
@@ -77,7 +88,7 @@ function main(opts) {
     for (var i = 0; i < INSTANCES; i++) {
         var port = basePort + i;
 
-        var benchServer = BenchServer(port);
+        var benchServer = new BenchServer(port);
         benchServer.listen();
     }
 }
