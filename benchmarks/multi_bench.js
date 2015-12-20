@@ -144,7 +144,7 @@ Test.prototype.newClient = function newClient(id, callback) {
 
     var channelConstr = CHEAT_CLIENT ? CheatChannel : TChannel;
 
-    var clientChan = channelConstr({
+    var clientChan = new channelConstr({
         statTags: {
             app: 'my-client'
         },

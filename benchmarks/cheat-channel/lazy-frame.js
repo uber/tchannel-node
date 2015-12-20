@@ -19,11 +19,10 @@ var IREQ_HEADERS_OFFSET = 18;
 
 /*::
 var Buffer = require("buffer").Buffer;
-
-type IConnection = {};
+var Connection = require("./connection.js");
 
 declare class LazyFrame {
-    sourceConnection: IConnection;
+    sourceConnection: Connection;
     frameBuffer: Buffer;
     offset: number;
     length: number;
@@ -53,7 +52,7 @@ declare class LazyFrame {
     arg3Start: number | null;
 
     constructor(
-        sourceConnection: IConnection, frameBuffer: Buffer,
+        sourceConnection: Connection, frameBuffer: Buffer,
         offset: number, length: number
     ): void;
 
