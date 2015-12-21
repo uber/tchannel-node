@@ -389,10 +389,18 @@ allocCluster.test('send to self', {
         res.sendOk('', 'bar');
     });
 
-    subOne.request({
-        host: one.hostPort,
-        serviceName: 'one'
-    }).send('foo', '', '', onResponse);
+    subOne.waitForIdentified({
+        host: one.hostPort
+    }, onIdentified);
+
+    function onIdentified(err) {
+        assert.ifError(err);
+
+        subOne.request({
+            host: one.hostPort,
+            serviceName: 'one'
+        }).send('foo', '', '', onResponse);
+    }
 
     function onResponse(err, resp, arg2, arg3) {
         assert.ifError(err);
@@ -485,8 +493,8 @@ allocCluster.test('self send() with error frame', 1, function t(cluster, assert)
                 isErrorFrame: true,
                 codeName: 'Cancelled',
                 errorCode: 2,
-                originalId: 1,
-                remoteAddr: null,
+                originalId: 2,
+                remoteAddr: one.hostPort,
                 name: 'TchannelCancelledError',
                 message: 'bye lol'
             });
@@ -513,8 +521,8 @@ allocCluster.test('self send() with error frame', 1, function t(cluster, assert)
                 isErrorFrame: true,
                 codeName: 'Unhealthy',
                 errorCode: 8,
-                originalId: 2,
-                remoteAddr: null,
+                originalId: 3,
+                remoteAddr: one.hostPort,
                 name: 'TchannelUnhealthyError',
                 message: 'smallest violin'
             });
@@ -522,8 +530,15 @@ allocCluster.test('self send() with error frame', 1, function t(cluster, assert)
         }
     }
 
-    parallel([cancelCase, unhealthyCase], assert.end);
+    subOne.waitForIdentified({
+        host: one.hostPort
+    }, onIdentified);
 
+    function onIdentified(err) {
+        assert.ifError(err);
+
+        parallel([cancelCase, unhealthyCase], assert.end);
+    }
 });
 
 allocCluster.test('send() with requestDefaults', 2, function t(cluster, assert) {
