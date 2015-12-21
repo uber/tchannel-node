@@ -52,10 +52,6 @@ TChannelSubPeers.prototype.add = function add(hostPort, options) {
 
     var topChannel = self.channel.topChannel;
 
-    if (hostPort === topChannel.hostPort) {
-        return topChannel.peers.getSelfPeer();
-    }
-
     peer = topChannel.peers.add(hostPort, options);
     peer.setPreferConnectionDirection(self.preferConnectionDirection);
 
