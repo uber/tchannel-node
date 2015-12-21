@@ -21,6 +21,8 @@
 'use strict';
 
 var assert = require('assert');
+var Buffer = require('buffer').Buffer;
+var process = require('process');
 var bufrw = require('bufrw');
 var extend = require('xtend');
 var ReadMachine = require('bufrw/stream/read_machine');
