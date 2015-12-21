@@ -36,10 +36,6 @@ var TChannelConnectionBase = require('./connection_base');
 var MAX_PENDING_SOCKET_WRITE_REQ = 100;
 
 function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
-    assert(socketRemoteAddr !== channel.hostPort,
-        'refusing to create self connection'
-    );
-
     TChannelConnectionBase.call(this, channel, direction, socketRemoteAddr);
     this.identifiedEvent = this.defineEvent('identified');
 

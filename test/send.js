@@ -313,39 +313,53 @@ allocCluster.test('request().send() to self', 1, function t(cluster, assert) {
     });
 
     subOne.handler.register('foo', function foo(req, res, arg2, arg3) {
-        assert.ok(typeof arg2 === 'string', 'handler got an arg2 string');
-        assert.ok(typeof arg3 === 'string', 'handler got an arg3 string');
+        assert.ok(Buffer.isBuffer(arg2), 'handler got an arg2 string');
+        assert.ok(Buffer.isBuffer(arg3), 'handler got an arg3 string');
+        assert.equal(arg2.toString().indexOf('head'), 0, 'expected to get head');
+        assert.equal(arg3.toString().indexOf('msg'), 0, 'expected to get msg');
+
         res.headers.as = 'raw';
         res.sendOk(arg2, arg3);
     });
     subOne.handler.register('bar', function bar(req, res, arg2, arg3) {
-        assert.ok(typeof arg2 === 'string', 'handler got an arg2 string');
-        assert.ok(typeof arg3 === 'string', 'handler got an arg3 string');
+        assert.ok(Buffer.isBuffer(arg2), 'handler got an arg2 string');
+        assert.ok(Buffer.isBuffer(arg3), 'handler got an arg3 string');
+        assert.equal(arg2.toString().indexOf('head'), 0, 'expected to get head');
+        assert.equal(arg3.toString().indexOf('msg'), 0, 'expected to get msg');
+
         res.headers.as = 'raw';
         res.sendNotOk(arg2, arg3);
     });
 
-    parallelSendTest(subOne, [
-        {
-            name: 'msg1', op: 'foo',
-            reqHead: 'head1', reqBody: 'msg1',
-            resHead: 'head1', resBody: 'msg1',
-            opts: {
-                host: one.hostPort,
-                serviceName: 'one'
+    subOne.waitForIdentified({
+        host: one.hostPort
+    }, onIdentified);
+
+    function onIdentified(err) {
+        assert.ifError(err, 'should not fail identification to self');
+
+        parallelSendTest(subOne, [
+            {
+                name: 'msg1', op: 'foo',
+                reqHead: 'head1', reqBody: 'msg1',
+                resHead: 'head1', resBody: 'msg1',
+                opts: {
+                    host: one.hostPort,
+                    serviceName: 'one'
+                }
+            },
+            {
+                name: 'msg2', op: 'bar',
+                reqHead: 'head2', reqBody: 'msg2',
+                resHead: 'head2', resBody: 'msg2',
+                resOk: false,
+                opts: {
+                    host: one.hostPort,
+                    serviceName: 'one'
+                }
             }
-        },
-        {
-            name: 'msg2', op: 'bar',
-            reqHead: 'head2', reqBody: 'msg2',
-            resHead: 'head2', resBody: 'msg2',
-            resOk: false,
-            opts: {
-                host: one.hostPort,
-                serviceName: 'one'
-            }
-        }
-    ], assert, onResults);
+        ], assert, onResults);
+    }
 
     function onResults(err) {
         assert.ifError(err, 'no errors from sending');
