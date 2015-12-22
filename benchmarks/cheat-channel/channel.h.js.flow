@@ -1,4 +1,5 @@
 /* @flow */
+// vim: set ft=Typescript:
 
 var TCP_WRAP = require("net").TCP_WRAP
 var LazyFrame = require('./lazy-frame.js');

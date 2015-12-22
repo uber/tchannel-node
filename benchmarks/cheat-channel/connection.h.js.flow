@@ -1,4 +1,5 @@
 /* @flow */
+// vim: set ft=Typescript:
 
 var Channel = require('./channel.js');
 var FrameParser = require('./parser.js');

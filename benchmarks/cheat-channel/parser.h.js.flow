@@ -1,4 +1,5 @@
 /* @flow */
+// vim: set ft=Typescript:
 
 var Buffer = require('buffer').Buffer;
 

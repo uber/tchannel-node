@@ -1,4 +1,5 @@
 /* @flow */
+// vim: set ft=Typescript:
 
 var LazyFrame = require('./lazy-frame.js');
 var OutResponse = require('./out-response.js');
