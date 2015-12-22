@@ -180,10 +180,10 @@ function UnexpectedErrorError(opts) {
 }
 
 function BadRequestError(opts) {
-    this.name = 'TchannelBad-requestError';
+    this.name = 'TchannelBadRequestError';
     this.fullType = 'tchannel.bad-request';
     this.type = 'tchannel.bad-request';
-    this.message = 'TChannel bad request';
+    this.message = 'TChannel BadRequest';
     this.isErrorFrame = true;
     this.codeName = 'BadRequest';
     this.errorCode = Codes.BadRequest;

@@ -42,7 +42,7 @@ allocCluster.test('ping with a self connection', 1, function t(cluster, assert) 
     var peer = server.peers.add(server.hostPort);
     var conn = peer.connect();
     conn.pingResponseEvent.on(function onResponse(res) {
-        assert.equals(res.id, conn.idCount - 1,
+        assert.equals(res.id, conn.handler.lastSentFrameId,
             'validate ping response id');
         server.close();
         assert.end();

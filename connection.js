@@ -21,26 +21,60 @@
 'use strict';
 
 var assert = require('assert');
+var Buffer = require('buffer').Buffer;
+var process = require('process');
 var bufrw = require('bufrw');
 var extend = require('xtend');
 var ReadMachine = require('bufrw/stream/read_machine');
 var inherits = require('util').inherits;
-var stat = require('./stat-tags.js');
 
+var stat = require('./stat-tags.js');
+var EventEmitter = require('./lib/event_emitter');
 var v2 = require('./v2');
 var errors = require('./errors');
 var States = require('./reqres_states');
+var Operations = require('./operations');
 
-var TChannelConnectionBase = require('./connection_base');
-
+var CONNECTION_BASE_IDENTIFIER = 0;
 var MAX_PENDING_SOCKET_WRITE_REQ = 100;
 
 function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
-    assert(socketRemoteAddr !== channel.hostPort,
-        'refusing to create self connection'
-    );
+    assert(!channel.destroyed, 'refuse to create connection for destroyed channel');
 
-    TChannelConnectionBase.call(this, channel, direction, socketRemoteAddr);
+    EventEmitter.call(this);
+    this.errorEvent = this.defineEvent('error');
+    this.timedOutEvent = this.defineEvent('timedOut');
+    this.pingResponseEvent = this.defineEvent('pingResonse');
+
+    this.draining = false;
+    this.drainReason = '';
+
+    this.closing = false;
+    this.closeError = null;
+    this.closeEvent = this.defineEvent('close');
+
+    this.channel = channel;
+    this.options = this.channel.options;
+    this.logger = channel.logger;
+    this.random = channel.random;
+    this.timers = channel.timers;
+    this.direction = direction;
+    this.socketRemoteAddr = socketRemoteAddr;
+    this.remoteName = null; // filled in by identify message
+
+    this.ops = new Operations({
+        timers: this.timers,
+        logger: this.logger,
+        random: this.random,
+        initTimeout: this.channel.initTimeout,
+        connectionStalePeriod: this.options.connectionStalePeriod,
+        maxTombstoneTTL: this.options.maxTombstoneTTL,
+        connection: this
+    });
+
+    this.guid = ++CONNECTION_BASE_IDENTIFIER + '~';
+
+    this.tracer = this.channel.tracer;
     this.identifiedEvent = this.defineEvent('identified');
 
     if (direction === 'out') {
@@ -96,7 +130,294 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
         return self.handleCallLazily(frame);
     }
 }
-inherits(TChannelConnection, TChannelConnectionBase);
+inherits(TChannelConnection, EventEmitter);
+
+TChannelConnection.prototype.extendLogInfo = function extendLogInfo(info) {
+    var self = this;
+
+    info = self.channel.extendLogInfo(info);
+
+    info.connGUID = self.guid;
+    info.connDirection = self.direction;
+    info.socketRemoteAddr = self.socketRemoteAddr;
+    info.remoteName = self.remoteName;
+    info.connClosing = self.closing;
+
+    return info;
+};
+
+TChannelConnection.prototype.drain =
+function drain(reason, callback) {
+    var self = this;
+
+    self._drain(reason);
+
+    if (callback) {
+        if (self.ops.hasDrained()) {
+            process.nextTick(callback);
+        } else {
+            self.ops.drainEvent.on(callback);
+        }
+    }
+};
+
+TChannelConnection.prototype._drain =
+function _drain(reason, exempt) {
+    var self = this;
+
+    self.draining = true;
+    self.drainReason = reason;
+    self.ops.draining = true;
+
+    if (self.remoteName) {
+        sendDrainingFrame();
+    } else {
+        self.identifiedEvent.on(sendDrainingFrame);
+    }
+
+    function sendDrainingFrame() {
+        self.handler.sendErrorFrame(
+            v2.Frame.NullId, null,
+            'Declined',
+            'draining: ' + self.drainReason);
+    }
+};
+
+// create a request
+TChannelConnection.prototype.request =
+function connBaseRequest(options) {
+    var self = this;
+
+    assert(self.remoteName, 'cannot make request unless identified');
+    options.remoteAddr = self.remoteName;
+
+    // TODO: use this to protect against >4Mi outstanding messages edge case
+    // (e.g. zombie operation bug, incredible throughput, or simply very long
+    // timeout
+    // assert(!self.requests.out[id], 'duplicate frame id in flight');
+
+    // options.checksumType = options.checksum;
+
+    var req = self.buildOutRequest(options);
+    if (self.draining && (
+        !self.channel.drainExempt ||
+        !self.channel.drainExempt(req)
+    )) {
+        req.drained = true;
+        req.drainReason = self.drainReason;
+    }
+    self.ops.addOutReq(req);
+    req.peer.invalidateScore('conn.request');
+    return req;
+};
+
+TChannelConnection.prototype.handleCallRequest = function handleCallRequest(req) {
+    var self = this;
+
+    req.remoteAddr = self.remoteName;
+    self.ops.addInReq(req);
+
+    if (self.draining && (
+        !self.channel.drainExempt ||
+        !self.channel.drainExempt(req)
+    )) {
+        var res = self.buildResponse(req, {});
+        res.sendError('Declined', 'connection draining: ' + self.drainReason);
+        return;
+    }
+
+    process.nextTick(runHandler);
+
+    function runHandler() {
+        self.runHandler(req);
+    }
+};
+
+TChannelConnection.prototype.handleCallLazily = function handleCallLazily(frame) {
+    var self = this;
+    var op = null;
+
+    switch (frame.type) {
+        case v2.Types.CallRequest:
+            return self.channel.handler.handleLazily &&
+                   self.channel.handler.handleLazily(self, frame);
+        case v2.Types.CallResponse:
+        case v2.Types.CallResponseCont:
+        case v2.Types.ErrorResponse:
+            op = self.ops.getOutReq(frame.id);
+            break;
+        case v2.Types.CallRequestCont:
+            op = self.ops.getInReq(frame.id);
+            break;
+        default:
+            return false;
+    }
+
+    if (!op || !op.handleFrameLazily) {
+        return false;
+    }
+    op.handleFrameLazily(frame);
+    return true;
+};
+
+TChannelConnection.prototype.runHandler = function runHandler(req) {
+    var self = this;
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.recvd',
+        'counter',
+        1,
+        new stat.InboundCallsRecvdTags(
+            req.callerName,
+            req.serviceName,
+            req.endpoint
+        )
+    );
+
+    self.channel.handler.handleRequest(req, buildResponse);
+    function buildResponse(options) {
+        return self.buildResponse(req, options || {});
+    }
+};
+
+TChannelConnection.prototype.buildResponse =
+function buildResponse(req, options) {
+    var self = this;
+
+    if (req.res && req.res.state !== States.Initial) {
+        req.errorEvent.emit(req, errors.ResponseAlreadyStarted({
+            state: req.res.state,
+            reason: 'buildResponse called twice',
+            codeString: req.res.codeString,
+            responseMessage: req.res.message
+        }));
+        return req.res;
+    }
+
+    return self._buildResponse(req, options);
+};
+
+TChannelConnection.prototype._buildResponse =
+function _buildResponse(req, options) {
+    var self = this;
+
+    options.channel = self.channel;
+    options.inreq = req;
+
+    // TODO give this options a well defined type
+    req.res = self.buildOutResponse(req, options);
+
+    req.res.errorEvent.on(onError);
+    req.res.finishEvent.on(opDone);
+
+    if (!req.forwardTrace) {
+        self.captureResponseSpans(req.res);
+    }
+
+    return req.res;
+
+    function opDone() {
+        self.onReqDone(req);
+    }
+
+    function onError(err) {
+        self.onResponseError(err, req);
+    }
+};
+
+TChannelConnection.prototype.captureResponseSpans =
+function captureResponseSpans(res) {
+    var self = this;
+
+    res.spanEvent.on(handleSpanFromRes);
+
+    function handleSpanFromRes(span) {
+        self.handleSpanFromRes(span);
+    }
+};
+
+function isStringOrBuffer(x) {
+    return typeof x === 'string' || Buffer.isBuffer(x);
+}
+
+TChannelConnection.prototype.handleSpanFromRes =
+function handleSpanFromRes(span) {
+    var self = this;
+
+    self.channel.tracer.report(span);
+};
+
+TChannelConnection.prototype.onResponseError =
+function onResponseError(err, req) {
+    var self = this;
+
+    var reqTimedOut = req.err &&
+                      errors.classify(req.err) === 'Timeout';
+
+    // don't log if we get further timeout errors for already timed out response
+    if (reqTimedOut && errors.classify(err) === 'Timeout') {
+        return;
+    }
+
+    var loggingOptions = req.extendLogInfo(req.res.extendLogInfo({
+        error: err
+    }));
+
+    if (req.res.state === States.Done) {
+        var arg2 = isStringOrBuffer(req.res.arg2) ?
+            req.res.arg2 : 'streaming';
+        var arg3 = isStringOrBuffer(req.res.arg3) ?
+            req.res.arg3 : 'streaming';
+
+        loggingOptions.bufArg2 = arg2.slice(0, 50);
+        loggingOptions.arg2 = String(arg2).slice(0, 50);
+        loggingOptions.bufArg3 = arg3.slice(0, 50);
+        loggingOptions.arg3 = String(arg3).slice(0, 50);
+    }
+
+    if ((err.type === 'tchannel.response-already-started' ||
+        err.type === 'tchannel.response-already-done') &&
+        reqTimedOut
+    ) {
+        self.logger.info(
+            'error for timed out outgoing response', loggingOptions
+        );
+    } else {
+        self.logger.error(
+            'outgoing response has an error', loggingOptions
+        );
+    }
+};
+
+TChannelConnection.prototype.onReqDone = function onReqDone(req) {
+    var self = this;
+
+    var inreq = self.ops.popInReq(req.id);
+
+    if (inreq === req) {
+        return;
+    }
+
+    // incoming req that timed out are already cleaned up
+    if (req.err && errors.classify(req.err) === 'Timeout') {
+        return;
+    }
+
+    if (inreq) {
+        // we popped something else
+        self.logger.warn('mismatched conn.onReqDone', self.extendLogInfo(req.extendLogInfo({})));
+        return;
+    }
+
+    // there was nothing to pop
+    if (self.closing) {
+        // this happens because TChannelConnection#resetAll calls popInReq on
+        // all conn.requests.in, and is okay
+        return;
+    }
+
+    self.logger.warn('orphaned conn.onReqDone', self.extendLogInfo(req.extendLogInfo({})));
+};
 
 TChannelConnection.prototype.setLazyHandling = function setLazyHandling(enabled) {
     var self = this;
@@ -795,26 +1116,6 @@ function sendLazyErrorFrame(id, tracing, codeString, message) {
     var self = this;
 
     self.handler.sendErrorFrame(id, tracing, codeString, message);
-};
-
-TChannelConnection.prototype._drain =
-function _drain(reason, exempt) {
-    var self = this;
-
-    TChannelConnectionBase.prototype._drain.call(self, reason, exempt);
-
-    if (self.remoteName) {
-        sendDrainingFrame();
-    } else {
-        self.identifiedEvent.on(sendDrainingFrame);
-    }
-
-    function sendDrainingFrame() {
-        self.handler.sendErrorFrame(
-            v2.Frame.NullId, null,
-            'Declined',
-            'draining: ' + self.drainReason);
-    }
 };
 
 module.exports = TChannelConnection;
