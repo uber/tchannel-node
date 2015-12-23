@@ -250,8 +250,6 @@ function register(channel, name, opts, handle, spec) {
 
         function handleThriftResponse(err, thriftRes) {
             if (err) {
-                assert(isError(err), 'Error argument must be an error');
-
                 self.logger.error('Got unexpected error in handler', {
                     endpoint: name,
                     error: err
@@ -560,8 +558,4 @@ function onlyKey(object) {
             return name;
         }
     }
-}
-
-function isError(err) {
-    return Object.prototype.toString.call(err) === '[object Error]';
 }
