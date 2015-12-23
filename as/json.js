@@ -191,8 +191,6 @@ TChannelJSON.prototype.register = function register(
 
         function onResponse(err, respObject) {
             if (err) {
-                assert(isError(err), 'Error argument must be an error');
-
                 self.logger.error('Got unexpected error in handler', {
                     endpoint: arg1,
                     error: err
@@ -205,14 +203,8 @@ TChannelJSON.prototype.register = function register(
                     'expected respObject to have an `ok` boolean');
                 assert(respObject.body !== undefined,
                     'expected respObject to have a body');
-                // Assert that body is an error
-                if (!respObject.ok) {
-                    assert(isTypedError(respObject.body),
-                        'not-ok body should be a typed error');
-                }
             } else if (typeof respObject.ok !== 'boolean' ||
-                       respObject.body === undefined ||
-                       !(respObject.ok || isTypedError(respObject.body))) {
+                       respObject.body === undefined) {
                 respObject.body = errors.InvalidJSONBody({
                     head: respObject.head,
                     body: respObject.body
@@ -330,11 +322,6 @@ TChannelJSON.prototype._parse = function parse(opts) {
     });
 };
 
-function isTypedError(obj) {
-    return isError(obj) &&
-           typeof obj.type === 'string';
-}
-
 function safeJSONStringify(obj) {
     var str;
 
@@ -365,8 +352,4 @@ function safeJSONParse(str) {
     // jscs:enable
 
     return new Result(null, json);
-}
-
-function isError(err) {
-    return Object.prototype.toString.call(err) === '[object Error]';
 }
