@@ -1,6 +1,5 @@
 'use strict';
 
-/* @flow */
 var console = require('console');
 /*eslint no-console: 0*/
 
