@@ -46,6 +46,7 @@ var globalRandom = Math.random;
 var net = require('net');
 var format = require('util').format;
 var inherits = require('util').inherits;
+var inspect = require('util').inspect;
 
 var HostPort = require('./host-port.js');
 var nullLogger = require('./null-logger.js');
@@ -281,6 +282,12 @@ function setMaximumRelayTTL(value) {
 
         subChan.maximumRelayTTL = value;
     }
+};
+
+TChannel.prototype.inspect =
+function tchannelInspect() {
+    var self = this;
+    return 'TChannel(' + inspect(self.extendLogInfo({})) + ')';
 };
 
 TChannel.prototype.setPreferConnectionDirection =
