@@ -22,7 +22,7 @@
 /* eslint no-console:0 no-process-exit:0 */
 
 var Statsd = require('uber-statsd-client');
-var metrics = require('metrics');
+var FastStats = require('fast-stats').Stats;
 var process = require('process');
 var setTimeout = require('timers').setTimeout;
 var Buffer = require('buffer').Buffer;
@@ -32,6 +32,7 @@ process.title = 'nodejs-benchmarks-multi_bench';
 
 var readBenchConfig = require('./read-bench-config.js');
 var TChannel = require('../channel');
+var CheatChannel = require('./cheat-channel/channel.js');
 var Reporter = require('../tcollector/reporter.js');
 var base2 = require('../test/lib/base2');
 var LCGStream = require('../test/lib/rng_stream');
@@ -59,8 +60,11 @@ var argv = readBenchConfig({
 var multiplicity = parseInt(argv.multiplicity, 10);
 var numClients = parseInt(argv.numClients, 10);
 var numRequests = parseInt(argv.numRequests, 10);
+var maxPerLoop = parseInt(argv.maxPerLoop, 10);
 argv.pipeline = parseIntList(argv.pipeline);
 argv.sizes = parseIntList(argv.sizes);
+
+var CHEAT_CLIENT = argv.cheatClient;
 
 var DESTINATION_SERVER;
 var TRACE_SERVER;
@@ -82,22 +86,25 @@ function Test(args) {
     this.args = args;
 
     this.arg1 = new Buffer(args.command);
+    this.command = args.command;
     this.arg2 = args.arg2 || null;
     this.arg3 = args.arg3 || null;
 
     this.callback = null;
     this.clients = [];
+    this.channels = [];
     this.clientsReady = 0;
     this.commandsSent = 0;
     this.commandsCompleted = 0;
     this.maxPipeline = this.args.pipeline || numRequests;
+    this.maxPerLoop = maxPerLoop || 20000;
     this.clientOptions = args.clientOptions || {
         returnBuffers: false
     };
 
-    this.connectLatency = new metrics.Histogram();
-    this.readyLatency = new metrics.Histogram();
-    this.commandLatency = new metrics.Histogram();
+    this.connectLatency = new FastStats();
+    this.readyLatency = new FastStats();
+    this.commandLatency = new FastStats();
 
     this.expectedError = args.expectedError;
 }
@@ -134,7 +141,10 @@ Test.prototype.run = function run(callback) {
 Test.prototype.newClient = function newClient(id, callback) {
     var self = this;
     var port = CLIENT_PORT + id;
-    var clientChan = TChannel({
+
+    var channelConstr = CHEAT_CLIENT ? CheatChannel : TChannel;
+
+    var clientChan = channelConstr({
         statTags: {
             app: 'my-client'
         },
@@ -154,7 +164,7 @@ Test.prototype.newClient = function newClient(id, callback) {
     //     interval: 5000,
     // })).run();
 
-    if (argv.trace) {
+    if (argv.trace && !CHEAT_CLIENT) {
         var reporter = Reporter({
             channel: clientChan.makeSubChannel({
                 serviceName: 'tcollector',
@@ -171,36 +181,92 @@ Test.prototype.newClient = function newClient(id, callback) {
         };
     }
 
-    var client = clientChan.makeSubChannel({
-        serviceName: 'benchmark',
-        peers: [DESTINATION_SERVER]
-    });
+    var client;
+    if (CHEAT_CLIENT) {
+        client = clientChan.createClient('benchmark', {
+            ping: {
+                headers: {
+                    as: 'raw',
+                    cn: 'multi_bench',
+                    benchHeader1: 'bench value one',
+                    benchHeader2: 'bench value two',
+                    benchHeader3: 'bench value three'
+                },
+                ttl: 30 * 1000
+            },
+            get: {
+                headers: {
+                    as: 'raw',
+                    cn: 'multi_bench',
+                    benchHeader1: 'bench value one',
+                    benchHeader2: 'bench value two',
+                    benchHeader3: 'bench value three'
+                },
+                ttl: 30 * 1000
+            },
+            set: {
+                headers: {
+                    as: 'raw',
+                    cn: 'multi_bench',
+                    benchHeader1: 'bench value one',
+                    benchHeader2: 'bench value two',
+                    benchHeader3: 'bench value three'
+                },
+                ttl: 30 * 1000
+            }
+        });
+    } else {
+        client = clientChan.makeSubChannel({
+            serviceName: 'benchmark',
+            peers: [DESTINATION_SERVER]
+        });
+    }
+
     client.createTime = Date.now();
-    clientChan.listen(port, '127.0.0.1', function listened(err) {
+    clientChan.listen(port, '127.0.0.1', onListen);
+
+    function onListen(err) {
         if (err) {
             return callback(err);
         }
         self.clients[id] = client;
+        self.channels[id] = clientChan;
         // sending a ping to pre-connect the socket
-        client
-            .request({
-                serviceName: 'benchmark',
-                hasNoParent: true,
-                timeout: 30 * 1000,
-                headers: {
-                    as: 'raw',
-                    cn: 'multi_bench'
-                }
-            })
-            .send('ping', null, null, function pinged(err2) {
-                if (err2) {
-                    return callback(err2);
-                }
-                self.connectLatency.update(Date.now() - client.createTime);
-                self.readyLatency.update(Date.now() - client.createTime);
-                callback();
-            });
-    });
+
+        if (CHEAT_CLIENT) {
+            client.sendPing({
+                host: DESTINATION_SERVER,
+                arg2: null,
+                arg3: null
+            }, pinged);
+        } else {
+            client
+                .request({
+                    serviceName: 'benchmark',
+                    hasNoParent: true,
+                    timeout: 30 * 1000,
+                    headers: {
+                        as: 'raw',
+                        cn: 'multi_bench'
+                    }
+                })
+                .send('ping', null, null, pinged);
+        }
+
+        function pinged(err2, frame) {
+            if (err2) {
+                return callback(err2);
+            }
+
+            if (CHEAT_CLIENT) {
+                frame.readArg3str();
+            }
+
+            self.connectLatency.push(Date.now() - client.createTime);
+            self.readyLatency.push(Date.now() - client.createTime);
+            callback();
+        }
+    }
 };
 
 Test.prototype.start = function start(callback) {
@@ -210,8 +276,14 @@ Test.prototype.start = function start(callback) {
 
 Test.prototype.fillPipeline = function fillPipeline(callback) {
     var pipeline = this.commandsSent - this.commandsCompleted;
+    var maxPerLoop = this.maxPerLoop;
+    var sendInLoop = 0;
 
-    while (this.commandsSent < numRequests && pipeline < this.maxPipeline) {
+    while (this.commandsSent < numRequests &&
+        pipeline < this.maxPipeline &&
+        sendInLoop < maxPerLoop
+    ) {
+        sendInLoop++;
         this.commandsSent++;
         pipeline++;
         this.sendNext();
@@ -227,9 +299,9 @@ Test.prototype.stopClients = function stopClients(callback) {
     var self = this;
 
     var count = 1;
-    this.clients.forEach(function each(client) {
+    this.clients.forEach(function each(client, index) {
         count++;
-        (client.topChannel || client).quit(closed);
+        self.channels[index].close(closed);
     });
     closed();
 
@@ -245,35 +317,75 @@ Test.prototype.sendNext = function sendNext() {
     var curClient = this.commandsSent % this.clients.length;
     var start = Date.now();
 
-    var req = this.clients[curClient].request({
-        serviceName: 'benchmark',
-        hasNoParent: true,
-        timeout: 30000,
-        headers: {
-            as: 'raw',
-            cn: 'multi_bench',
-            benchHeader1: 'bench value one',
-            benchHeader2: 'bench value two',
-            benchHeader3: 'bench value three'
-        }
-    });
-    req.send(this.arg1, this.arg2, this.arg3, done);
+    if (CHEAT_CLIENT) {
+        var client = this.clients[curClient];
+        var opts = {
+            host: DESTINATION_SERVER,
+            arg2: this.arg2,
+            arg3: this.arg3
+        };
 
-    function done(err, res) {
+        if (this.command === 'ping') {
+            client.sendPing(opts, done);
+        } else if (this.command === 'get') {
+            client.sendGet(opts, done);
+        } else if (this.command === 'set') {
+            client.sendSet(opts, done);
+        }
+    } else {
+        var req = this.clients[curClient].request({
+            serviceName: 'benchmark',
+            hasNoParent: true,
+            timeout: 30000,
+            headers: {
+                as: 'raw',
+                cn: 'multi_bench',
+                benchHeader1: 'bench value one',
+                benchHeader2: 'bench value two',
+                benchHeader3: 'bench value three'
+            }
+        });
+        req.send(this.arg1, this.arg2, this.arg3, done);
+    }
+
+    function done(err, frame) {
         if (err) {
             if (!self.expectedError ||
-                !self.expectedError(err, req, res)) {
+                !self.expectedError(err)) {
                 throw err;
             }
         }
+
+        if (CHEAT_CLIENT) {
+            frame.readArg3str();
+        }
+
         self.commandsCompleted++;
-        self.commandLatency.update(Date.now() - start);
+        var delta = Date.now() - start;
+        self.commandLatency.data.push(delta);
+        self.commandLatency._add_cache(delta);
         self.fillPipeline(onRageQuit);
     }
 };
 
 Test.prototype.getStats = function getStats() {
-    var obj = this.commandLatency.printObj();
+    var s = this.commandLatency;
+    var obj = {
+        mean: s.amean(),
+        median: s.median(),
+        p75: s.percentile(75),
+        p95: s.percentile(95),
+        p99: s.percentile(99),
+        p999: s.percentile(999),
+        type: 'histogram',
+        min: s.range()[0],
+        max: s.range()[1],
+        /*eslint camelcase: 0*/
+        std_dev: s.stddev(),
+        sum: s.sum,
+        count: s.length
+    };
+
     obj.descr = this.args.descr;
     obj.instanceNumber = argv.instanceNumber;
     obj.pipeline = this.args.pipeline;
@@ -322,6 +434,9 @@ argv.sizes.forEach(function each(size) {
     // chop off any "==" trailer
     var str = buf.toString('base64').slice(0, size);
 
+    var keyBuf = new Buffer(key + '0');
+    var strBuf = new Buffer(str);
+
     var expectedErrorTypes = {};
     if (argv.expectedError) {
         argv.expectedError
@@ -336,7 +451,7 @@ argv.sizes.forEach(function each(size) {
 
     argv.pipeline.forEach(function eachPipe(pipeline) {
         tests.push(new Test({
-            descr: 'SET ' + sizeDesc,
+            descr: 'SET str ' + sizeDesc,
             command: 'set' + (argv.bad ? '_bad' : ''),
             arg2: key,
             arg3: str,
@@ -344,9 +459,25 @@ argv.sizes.forEach(function each(size) {
             expectedError: expectedError
         }));
         tests.push(new Test({
-            descr: 'GET ' + sizeDesc,
+            descr: 'GET str ' + sizeDesc,
             command: 'get' + (argv.bad ? '_bad' : ''),
             arg2: key,
+            pipeline: pipeline,
+            expectedError: expectedError
+        }));
+
+        tests.push(new Test({
+            descr: 'SET buf ' + sizeDesc,
+            command: 'set' + (argv.bad ? '_bad' : ''),
+            arg2: keyBuf,
+            arg3: strBuf,
+            pipeline: pipeline,
+            expectedError: expectedError
+        }));
+        tests.push(new Test({
+            descr: 'GET buf ' + sizeDesc,
+            command: 'get' + (argv.bad ? '_bad' : ''),
+            arg2: keyBuf,
             pipeline: pipeline,
             expectedError: expectedError
         }));
@@ -374,7 +505,7 @@ function next(i, j, done) {
         }
         setTimeout(function delayNext() {
             next(i, j + 1, done);
-        }, 1000);
+        }, 20);
     });
 }
 
