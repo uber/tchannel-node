@@ -284,6 +284,15 @@ function setMaximumRelayTTL(value) {
     }
 };
 
+TChannel.prototype.toString =
+function channelToString() {
+    var self = this;
+    if (!self.topChannel) {
+        return 'TChannel(' + self.hostPort + ')';
+    }
+    return 'TSubChannel(' + self.serviceName + ',' + self.hostPort + ')';
+};
+
 TChannel.prototype.inspect =
 function tchannelInspect() {
     var self = this;
