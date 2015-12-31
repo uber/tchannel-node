@@ -1,0 +1,75 @@
+/* @flow */
+// vim: set ft=Typescript:
+
+var TCP_WRAP = require('net').TCP_WRAP
+
+type net$IPAddress = string;
+type net$Address = {
+    address: net$IPAddress;
+    family: 'IPv4';
+    port: string;
+};
+
+type Callback = (err: Error | null) => void;
+type IOnListenFn = (err: Error | null) => void;
+
+type ServerContext = {
+    onSocketError: (Error) => void;
+    onIncomingSocket: (WrapSocket) => void;
+};
+type SocketContext = {
+    onSocketError: (Error) => void;
+    onSocketWritable: () => void;
+    onSocketBuffer: (buffer: Buffer, start: number, end: number) => void;
+    onSocketEnd: () => void;
+    onSocketClose: (isError: boolean) => void;
+};
+
+declare export class WrapSocket {
+    _owner: SocketContext;
+    handle: TCP_WRAP;
+    connected: boolean;
+    readable: boolean;
+    writable: boolean;
+    pendingWrite: boolean;
+    shouldClose: boolean;
+    closed: boolean;
+
+    setOwner: (owner: SocketContext) => void;
+    accept: () => void;
+    connect: (host: string, port: number) => void;
+    getRemotePeerName: () => net$Address | null;
+    isClosed: () => boolean;
+    getPendingWrites: () => number;
+    writeBuffer: (buffer: Buffer) => void;
+    destroy: () => void;
+
+    _readStart: () => void;
+    _afterConnect: (
+        err: Error | null,
+        handle: TCP_WRAP,
+        req: any,
+        readable: boolean,
+        writable: boolean
+    ) => void;
+    _bailError: (reason: string, cb: Callback | null) => void;
+    _onRead: (buffer: Buffer, offset: number, length: number) => void;
+    _closeSoon: () => void;
+    _close: (isError: boolean) => void;
+    _afterWrite: (status: int, handle: TCP_WRAP, writeReq: any) => void;
+}
+
+declare export class WrapServer {
+    _owner: ServerContext;
+    serverHandle: TCP_WRAP;
+
+    createSocket: () => WrapSocket;
+    listen: (
+        port: number, host: string, onListen: IOnListenFn
+    ) => void;
+    address: () => net$Address;
+    close: () => void;
+
+    _onConnection: (handle: TCP_WRAP) => void;
+    _bailError: (reason: string, cb: Callback | null) => void;
+}
