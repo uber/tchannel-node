@@ -48,6 +48,7 @@ allocCluster.test('request().send() to a busy server', 2, function t(cluster, as
     one.listen(0, '127.0.0.1', listening);
 
     var twoSubChan;
+    var called = 0;
 
     function listening () {
         twoSubChan = two.makeSubChannel({
@@ -58,6 +59,8 @@ allocCluster.test('request().send() to a busy server', 2, function t(cluster, as
         one.makeSubChannel({
             serviceName: 'server'
         }).register('foo', function foo(req, res, arg2, arg3) {
+            called++;
+
             assert.ok(Buffer.isBuffer(arg2), 'handler got an arg2 buffer');
             assert.ok(Buffer.isBuffer(arg3), 'handler got an arg3 buffer');
             res.headers.as = 'raw';
@@ -93,6 +96,7 @@ allocCluster.test('request().send() to a busy server', 2, function t(cluster, as
         assert.equals(err.fullType, 'tchannel.busy');
 
         one.close();
+        assert.equal(called, 1);
 
         assert.end();
     }
