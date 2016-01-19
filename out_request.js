@@ -62,7 +62,6 @@ function TChannelOutRequest(id, options) {
     this.checksum = options.checksum || null;
     this.forwardTrace = options.forwardTrace || false;
 
-    // All self requests have id 0
     this.operations = null;
     this.timeHeapHandle = null;
     this.id = id;
@@ -80,10 +79,22 @@ function TChannelOutRequest(id, options) {
     this.drained = false;
     this.drainReason = '';
 
+    this.start = this.channel.timers.now();
+    this.timeout = options.timeout || this.channel.maximumRelayTTL;
+
+    // Truncate timeout if parent deadline is sooner.
+    if (this.parent) {
+         var parentDeadline = this.parent.start + this.parent.timeout;
+         var childDeadline = this.start + this.timeout;
+         var deadline = Math.min(parentDeadline, childDeadline);
+         this.timeout = Math.max(0, deadline - this.start);
+    }
+
     if (options.channel.tracer && !this.forwardTrace) {
         // new span with new ids
         this.setupTracing(options);
     }
+
 }
 
 inherits(TChannelOutRequest, EventEmitter);

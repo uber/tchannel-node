@@ -391,6 +391,15 @@ TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(res
 
     var req = this.connection.ops.getOutReq(res.id);
 
+    if (!req) {
+        // Drop call response frames for requests that expire.
+        return;
+    }
+
+    // Copy the timeout from request to response for propagation when the in
+    // response is used as the parent context for an out request.
+    res.timeout = req.timeout;
+
     var channel = this.connection.channel;
 
     channel.emitFastStat(

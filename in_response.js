@@ -57,6 +57,7 @@ function TChannelInResponse(id, options) {
     self.arg3 = emptyBuffer;
 
     self.start = self.timers.now();
+    self.timeout = 0;
 
     self.finishEvent.on(self.onFinish);
 }
