@@ -39,6 +39,7 @@ function LazyFrame(size, type, id, buffer) {
     this.body = null;
     this.bodyRW = null;
     this.cache = new CallRequestCache();
+    this.circuit = null;
 }
 
 function CallRequestCache() {
