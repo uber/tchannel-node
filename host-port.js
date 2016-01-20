@@ -61,29 +61,29 @@ function validatePort(portNum, allowEmphemeral) {
 function validateHostPort(hostPort, allowEmphemeral) {
     var reason;
     if (typeof hostPort !== 'string') {
-        return 'Expected hostPort to be a string';
+        return 'Expected hostPort to be a string, got ' + JSON.stringify(hostPort) + ' instead';
     }
 
     var parts = hostPort.split(':');
     if (parts.length !== 2) {
-        return 'Expected hostPort to be {ipv4}:{port}';
+        return 'Expected hostPort to be {ipv4}:{port}, got ' + JSON.stringify(hostPort) + 'instead';
     }
 
     var host = parts[0];
     reason = validateHost(host, allowEmphemeral);
     if (reason) {
-        return reason;
+        return reason + ' in ' + JSON.stringify(hostPort);
     }
 
     var portStr = parts[1];
     if (!stringIsValidNumber(portStr)) {
-        return 'Expected port to be a valid number';
+        return 'Expected port to be a valid number in ' + JSON.stringify(hostPort);
     }
 
     var portNum = parseInt(portStr, 10);
     reason = validatePort(portNum, allowEmphemeral);
     if (reason) {
-        return reason;
+        return reason + ' in ' + JSON.stringify(hostPort);
     }
 
     return null;
