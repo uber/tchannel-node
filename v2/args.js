@@ -39,7 +39,7 @@ function ArgRW(sizerw) {
     Base.call(this);
     this.sizerw = sizerw;
     this.strrw = bufrw.String(this.sizerw, 'utf8');
-    this.bufrw = bufrw.VariableBuffer(this.sizerw);
+    this.bufrw = bufrw.VariableBuffer(this.sizerw, true);
 }
 
 ArgRW.prototype.byteLength = function byteLength(arg) {
