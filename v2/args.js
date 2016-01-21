@@ -62,6 +62,10 @@ ArgRW.prototype.readFrom = function readFrom(buffer, offset) {
     return this.bufrw.readFrom(buffer, offset);
 };
 
+ArgRW.prototype.readFromstr = function readFromstr(buffer, offset) {
+    return this.strrw.readFrom(buffer, offset);
+};
+
 var arg2 = new ArgRW(bufrw.UInt16BE);
 
 function ArgsRW(argrw) {

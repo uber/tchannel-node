@@ -24,6 +24,7 @@ var Buffer = require('buffer').Buffer;
 var bufrw = require('bufrw');
 var test = require('tape');
 var testRW = require('bufrw/test_rw');
+var process = global.process;
 
 var TestBody = require('./lib/test_body.js');
 var v2 = require('../../v2/index.js');
@@ -38,15 +39,15 @@ var Bytes = [
 
     0x04, 0x64, 0x6f, 0x67, 0x65 // junk bytes
 ];
-var lazyFrame = new v2.LazyFrame(
+var _lazyFrame = new v2.LazyFrame(
     0x15, 0x03, 0x01,
     new Buffer(Bytes)
 );
-lazyFrame.bodyRW = v2.Frame.Types[0x03].RW;
+_lazyFrame.bodyRW = v2.Frame.Types[0x03].RW;
 
 test('LazyFrame.RW: read/write', testRW.cases(v2.LazyFrame.RW, [
     [
-        lazyFrame, Bytes
+        _lazyFrame, Bytes
     ]
 ]));
 
@@ -69,7 +70,6 @@ TestBody.testWith('LazyFrame.readFrom, invalid type', function t(assert) {
 
     assert.end();
 });
-
 
 TestBody.testWith('LazyFrame.readBody', function t(assert) {
     var frame = v2.LazyFrame.RW.readFrom(new Buffer([
@@ -132,6 +132,114 @@ TestBody.testWith('LazyFrame.setId', function t(assert) {
 
     assert.end();
 });
+
+test('CallRequest.lazy cache', function t(assert) {
+    var spanId = [0, 1];
+    var parentId = [2, 3];
+    var traceId = [4, 5];
+    var tracing = new v2.Tracing(
+        spanId, parentId, traceId
+    );
+
+    var frame = new v2.Frame(24,    // frame id
+        new v2.CallRequest(
+            42,                     // flags
+            99,                     // ttl
+            tracing,                // tracing
+            'castle',               // service
+            {                       // headers
+                'cn': 'mario',      // headers.cn
+                'as': 'plumber'     // headers.as
+            },                      //
+            v2.Checksum.Types.None, // csum
+            ['door', 'key', 'turn'] // args
+        )
+    );
+    var buf = bufrw.toBuffer(v2.Frame.RW, frame);
+
+    var counters = {
+        slice: 0,
+        toString: 0
+    };
+    introspectAndCountBuffer(buf, counters);
+
+    assert.equal(counters.slice, 0);
+    assert.equal(counters.toString, 0);
+    var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
+    assert.equal(counters.slice, 1);
+    assert.equal(counters.toString, 0);
+
+    var service1 = lazyFrame.bodyRW.lazy.readService(lazyFrame);
+
+    assert.equal(service1.value, 'castle',
+        'expected serviceName to be castle');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readService()');
+    assert.equal(counters.toString, 1,
+        'should call toString() in readService()');
+
+    var service2 = lazyFrame.bodyRW.lazy.readService(lazyFrame);
+
+    assert.equal(service2.value, 'castle',
+        'expected serviceName to be castle');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in second readService()');
+    assert.equal(counters.toString, 1,
+        'should not call toString() in second readService()');
+
+    var endpoint1 = lazyFrame.bodyRW.lazy.readArg1str(lazyFrame);
+
+    assert.equal(endpoint1.value, 'door',
+        'expected endpoint to be door');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readArg1str()');
+    assert.equal(counters.toString, 2,
+        'should call toString() in readArg1str()');
+
+    var endpoint2 = lazyFrame.bodyRW.lazy.readArg1str(lazyFrame);
+
+    assert.equal(endpoint2.value, 'door',
+        'expected endpoint to be door');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in second readArg1str()');
+    assert.equal(counters.toString, 2,
+        'should not call toString() in second readArg1str()');
+
+    var callerName1 = lazyFrame.bodyRW.lazy.readCallerName(lazyFrame);
+
+    assert.equal(callerName1.value, 'mario',
+        'expected endpoint to be mario');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readCallerName()');
+    assert.equal(counters.toString, 3,
+        'should call toString() in readCallerName()');
+
+    var callerName2 = lazyFrame.bodyRW.lazy.readCallerName(lazyFrame);
+
+    assert.equal(callerName2.value, 'mario',
+        'expected endpoint to be mario');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in second readCallerName()');
+    assert.equal(counters.toString, 3,
+        'should not call toString() in second readCallerName()');
+
+    assert.end();
+});
+
+function introspectAndCountBuffer(buf, counters) {
+    var bufSlice = buf.slice;
+    buf.slice = function proxySlice() {
+        counters.slice++;
+        var newBuf = bufSlice.apply(this, arguments);
+        introspectAndCountBuffer(newBuf, counters);
+        return newBuf;
+    };
+    var bufToString = buf.toString;
+    buf.toString = function proxyToString() {
+        counters.toString++;
+        return bufToString.apply(this, arguments);
+    };
+}
 
 test('CallRequest.RW.lazy', function t(assert) {
     var spanId = [0, 1];

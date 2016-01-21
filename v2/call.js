@@ -25,6 +25,7 @@
 /* eslint max-statements: [1, 27] */
 
 var bufrw = require('bufrw');
+var Buffer = require('buffer').Buffer;
 
 var errors = require('../errors');
 var ArgsRW = require('./args');
@@ -35,6 +36,7 @@ var Frame = require('./frame');
 var CallFlags = require('./call_flags');
 var argsrw = new ArgsRW();
 
+var CN_BUFFER = new Buffer('cn');
 var ResponseCodes = {
     OK: 0x00,
     Error: 0x01
@@ -96,8 +98,17 @@ CallRequest.RW.lazy.readTracing = function lazyReadTracing(frame) {
 
 CallRequest.RW.lazy.serviceOffset = CallRequest.RW.lazy.tracingOffset + 25;
 CallRequest.RW.lazy.readService = function lazyReadService(frame) {
+    if (frame.cache.serviceStr) {
+        return frame.cache.serviceStr;
+    }
+
     // service~1
-    return bufrw.str1.readFrom(frame.buffer, CallRequest.RW.lazy.serviceOffset);
+    var res = bufrw.str1.readFrom(
+        frame.buffer, CallRequest.RW.lazy.serviceOffset
+    );
+    frame.cache.serviceStr = res;
+
+    return res;
 };
 
 CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
@@ -118,12 +129,75 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     return header.header1.lazyRead(frame, offset);
 };
 
+CallRequest.RW.lazy.readCallerName = function readCallerName(frame) {
+    if (frame.cache.callerNameStr) {
+        return frame.cache.callerNameStr;
+    }
+
+    var res = CallRequest.RW.lazy.readHeaders(frame);
+    if (res.err) {
+        return res;
+    }
+
+    var callerName = res.value.getStringValue(CN_BUFFER);
+    res = bufrw.ReadResult.just(res.offset, callerName);
+
+    frame.cache.callerNameStr = res;
+
+    return res;
+};
+
 CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
     var res = null;
     var offset = 0;
 
     // TODO: memoize computed offsets on frame between readService, readArg1,
     // and any others
+
+    offset = getHeadersOffset(frame, headers);
+
+    // SKIP csumtype:1 (csum:4){0,1}
+    res = Checksum.RW.lazySkip(frame, offset);
+    if (res.err) {
+        return res;
+    }
+    offset = res.offset;
+
+    // READ arg~2
+    return argsrw.argrw.readFrom(frame.buffer, offset);
+};
+
+CallRequest.RW.lazy.readArg1str = function readArg1str(frame, headers) {
+    if (frame.cache.arg1Str) {
+        return frame.cache.arg1Str;
+    }
+
+    var res = null;
+    var offset = 0;
+
+    // TODO: memoize computed offsets on frame between readService, readArg1,
+    // and any others
+
+    offset = getHeadersOffset(frame, headers);
+
+    // SKIP csumtype:1 (csum:4){0,1}
+    res = Checksum.RW.lazySkip(frame, offset);
+    if (res.err) {
+        return res;
+    }
+    offset = res.offset;
+
+    // READ arg~2
+    res = argsrw.argrw.readFromstr(frame.buffer, offset);
+
+    frame.cache.arg1Str = res;
+
+    return res;
+};
+
+function getHeadersOffset(frame, headers) {
+    var res = null;
+    var offset = 0;
 
     if (headers) {
         offset = headers.offset;
@@ -146,16 +220,8 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
         offset = res.offset;
     }
 
-    // SKIP csumtype:1 (csum:4){0,1}
-    res = Checksum.RW.lazySkip(frame, offset);
-    if (res.err) {
-        return res;
-    }
-    offset = res.offset;
-
-    // READ arg~2
-    return argsrw.argrw.readFrom(frame.buffer, offset);
-};
+    return offset;
+}
 
 CallRequest.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
     var flags = CallRequest.RW.lazy.readFlags(frame);

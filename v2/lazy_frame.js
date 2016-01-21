@@ -38,6 +38,14 @@ function LazyFrame(size, type, id, buffer) {
 
     this.body = null;
     this.bodyRW = null;
+    this.circuit = null;
+    this.cache = new CallRequestCache();
+}
+
+function CallRequestCache() {
+    this.serviceStr = null;
+    this.callerNameStr = null;
+    this.arg1Str = null;
 }
 
 // size:2 type:1 reserved:1 id:4 reserved:8 ...
