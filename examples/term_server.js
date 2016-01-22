@@ -104,21 +104,13 @@ module.exports = TermServer;
 
 function main() {
     var tchan = require('../channel');
-    var Logger = require('logtron');
+    var Logger = require('debug-logtron');
     var endhand = require('../endpoint-handler');
 
     var chan = tchan({
         serviceName: 'term-server',
         handler: endhand(),
-        logger: Logger({
-            meta: {
-                team: 'wat',
-                project: 'why'
-            },
-            backends: Logger.defaultBackends({
-                console: true
-            })
-        })
+        logger: Logger('termserver')
     });
 
     var server = TermServer({

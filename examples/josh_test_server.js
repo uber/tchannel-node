@@ -21,19 +21,11 @@
 var util = require('util');
 var tchan = require('../channel');
 var endhand = require('../endpoint-handler');
-var Logger = require('logtron');
+var Logger = require('debug-logtron');
 
 var chan = tchan({
     handler: endhand(),
-    logger: Logger({
-        meta: {
-            team: 'wat',
-            project: 'why'
-        },
-        backends: Logger.defaultBackends({
-            console: true
-        })
-    })
+    logger: Logger('joshtestserver')
 });
 
 echo.canStream = true;
