@@ -181,24 +181,6 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     return res;
 };
 
-CallRequest.RW.lazy.readCallerName = function readCallerName(frame) {
-    if (frame.cache.callerNameStr) {
-        return frame.cache.callerNameStr;
-    }
-
-    var res = CallRequest.RW.lazy.readHeaders(frame);
-    if (res.err) {
-        return res;
-    }
-
-    var callerName = res.value.getStringValue(CN_BUFFER);
-    res = bufrw.ReadResult.just(res.offset, callerName);
-
-    frame.cache.callerNameStr = res;
-
-    return res;
-};
-
 CallRequest.RW.lazy.readCallerNameStr =
 function readCallerNameStr(frame) {
     /*eslint complexity: [2, 20]*/
