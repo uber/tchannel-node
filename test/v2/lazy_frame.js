@@ -169,77 +169,85 @@ test('CallRequest.lazy cache', function t(assert) {
     assert.equal(counters.slice, 1);
     assert.equal(counters.toString, 0);
 
-    var service1 = lazyFrame.bodyRW.lazy.readService(lazyFrame);
+    var service1 = lazyFrame.bodyRW.lazy.readServiceStr(lazyFrame);
 
-    assert.equal(service1.value, 'castle',
+    assert.equal(service1, 'castle',
         'expected serviceName to be castle');
     assert.equal(counters.slice, 1,
         'should not call slice() in readService()');
     assert.equal(counters.toString, 1,
         'should call toString() in readService()');
 
-    var service2 = lazyFrame.bodyRW.lazy.readService(lazyFrame);
+    var service2 = lazyFrame.bodyRW.lazy.readServiceStr(lazyFrame);
 
-    assert.equal(service2.value, 'castle',
+    assert.equal(service2, 'castle',
         'expected serviceName to be castle');
     assert.equal(counters.slice, 1,
         'should not call slice() in second readService()');
     assert.equal(counters.toString, 1,
         'should not call toString() in second readService()');
 
+    var callerName1 = lazyFrame.bodyRW.lazy.readCallerNameStr(lazyFrame);
+
+    assert.equal(callerName1, 'mario',
+        'expected endpoint to be mario');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readCallerName()');
+    assert.equal(counters.toString, 2,
+        'should call toString() in readCallerName()');
+
+    var callerName2 = lazyFrame.bodyRW.lazy.readCallerNameStr(lazyFrame);
+
+    assert.equal(callerName2, 'mario',
+        'expected endpoint to be mario');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in second readCallerName()');
+    assert.equal(counters.toString, 2,
+        'should not call toString() in second readCallerName()');
 
     var endpoint1 = lazyFrame.bodyRW.lazy.readArg1Str(lazyFrame);
 
-    assert.equal(endpoint1.value, 'door',
+    assert.equal(endpoint1, 'door',
         'expected endpoint to be door');
     assert.equal(counters.slice, 1,
         'should not call slice() in readArg1Str()');
-    assert.equal(counters.toString, 2,
+    assert.equal(counters.toString, 3,
         'should call toString() in readArg1Str()');
 
     var endpoint2 = lazyFrame.bodyRW.lazy.readArg1Str(lazyFrame);
 
-    assert.equal(endpoint2.value, 'door',
+    assert.equal(endpoint2, 'door',
         'expected endpoint to be door');
     assert.equal(counters.slice, 1,
         'should not call slice() in second readArg1Str()');
-    assert.equal(counters.toString, 2,
+    assert.equal(counters.toString, 3,
         'should not call toString() in second readArg1Str()');
-
-    var callerName1 = lazyFrame.bodyRW.lazy.readCallerName(lazyFrame);
-
-    assert.equal(callerName1.value, 'mario',
-        'expected endpoint to be mario');
-    assert.equal(counters.slice, 1,
-        'should not call slice() in readCallerName()');
-    assert.equal(counters.toString, 3,
-        'should call toString() in readCallerName()');
-
-    var callerName2 = lazyFrame.bodyRW.lazy.readCallerName(lazyFrame);
-
-    assert.equal(callerName2.value, 'mario',
-        'expected endpoint to be mario');
-    assert.equal(counters.slice, 1,
-        'should not call slice() in second readCallerName()');
-    assert.equal(counters.toString, 3,
-        'should not call toString() in second readCallerName()');
 
     assert.end();
 });
 
-function introspectAndCountBuffer(buf, counters) {
+function introspectAndCountBuffer(buf, counters, wrapSlice) {
     var bufSlice = buf.slice;
     buf.slice = function proxySlice() {
         counters.slice++;
         var newBuf = bufSlice.apply(this, arguments);
-        introspectAndCountBuffer(newBuf, counters);
+        introspectAndCountBuffer(newBuf, counters, false);
         return newBuf;
     };
+
     var bufToString = buf.toString;
     buf.toString = function proxyToString() {
         counters.toString++;
         return bufToString.apply(this, arguments);
     };
+
+    if (wrapSlice !== false) {
+        var utf8Slice = buf.parent.utf8Slice;
+        buf.parent.utf8Slice = function proxyUtf8Slice() {
+            counters.toString++;
+            return utf8Slice.apply(this, arguments);
+        };
+    }
 }
 
 test('CallRequest.RW.lazy', function t(assert) {

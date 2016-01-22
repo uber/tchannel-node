@@ -278,9 +278,7 @@ function readCallerNameStr(frame) {
     }
 
     var callerNameStr = fastBufferToString(
-        frame.buffer,
-        CallRequest.RW.lazy.serviceOffset + 1,
-        end
+        frame.buffer, offset, end
     );
 
     frame.cache.callerNameStr = callerNameStr;
