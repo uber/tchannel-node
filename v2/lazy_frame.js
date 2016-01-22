@@ -46,6 +46,9 @@ function CallRequestCache() {
     this.serviceStr = null;
     this.callerNameStr = null;
     this.arg1Str = null;
+
+    this.headerStartOffset = null;
+    this.csumStartOffset = null;
 }
 
 // size:2 type:1 reserved:1 id:4 reserved:8 ...
