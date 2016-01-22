@@ -98,18 +98,42 @@ CallRequest.RW.lazy.readTracing = function lazyReadTracing(frame) {
 
 CallRequest.RW.lazy.serviceOffset = CallRequest.RW.lazy.tracingOffset + 25;
 CallRequest.RW.lazy.readService = function lazyReadService(frame) {
-    if (frame.cache.serviceStr) {
-        return frame.cache.serviceStr;
+    if (frame.cache.serviceRes) {
+        return frame.cache.serviceRes;
     }
-
     // service~1
     var res = bufrw.str1.readFrom(
         frame.buffer, CallRequest.RW.lazy.serviceOffset
     );
-    frame.cache.serviceStr = res;
+    frame.cache.serviceRes = res;
     frame.cache.headerStartOffset = res.offset;
 
     return res;
+};
+
+CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
+    if (frame.cache.serviceStr) {
+        return frame.cache.serviceStr;
+    }
+
+    var strLength = frame.buffer.readUInt8(
+        CallRequest.RW.lazy.serviceOffset, false
+    );
+    var end = CallRequest.RW.lazy.serviceOffset + 1 + strLength;
+    if (frame.size < end) {
+        return null;
+    }
+
+    var serviceNameStr = frame.buffer.toString(
+        'utf8',
+        CallRequest.RW.lazy.serviceOffset + 1,
+        end
+    );
+
+    frame.cache.serviceStr = serviceNameStr;
+    frame.cache.headerStartOffset = end;
+
+    return serviceNameStr;
 };
 
 CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
