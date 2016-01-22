@@ -22,7 +22,7 @@
 
 var chalk = require('chalk');
 var EventEmitter = require('events').EventEmitter;
-var Logger = require('logtron');
+var Logger = require('debug-logtron');
 var replr = require('replr');
 var util = require('util');
 
@@ -34,15 +34,7 @@ function main() {
     var chan = tchan({
         serviceName: 'repl-server',
         handler: endhand(),
-        logger: Logger({
-            meta: {
-                team: 'wat',
-                project: 'why'
-            },
-            backends: Logger.defaultBackends({
-                console: true
-            })
-        })
+        logger: Logger('replserver')
     });
 
     var statefulThing = {

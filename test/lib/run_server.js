@@ -20,7 +20,7 @@
 
 'use strict';
 
-var Logger = require('logtron');
+var Logger = require('debug-logtron');
 var parseArgs = require('minimist');
 var util = require('util');
 
@@ -39,16 +39,7 @@ var argv = parseArgs(process.argv.slice(2), {
 });
 
 var chan = TChannel({
-    logger: Logger({
-        meta: {
-            team: 'testers',
-            project: 'tchannel'
-        },
-        backends: Logger.defaultBackends({
-            console: !argv.logFile,
-            logFile: argv.logFile
-        })
-    })
+    logger: Logger('testserver')
 });
 setupRawTestService(chan);
 
