@@ -167,7 +167,7 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
     return argsrw.argrw.readFrom(frame.buffer, offset);
 };
 
-CallRequest.RW.lazy.readArg1str = function readArg1str(frame, headers) {
+CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame, headers) {
     if (frame.cache.arg1Str) {
         return frame.cache.arg1Str;
     }
@@ -188,7 +188,7 @@ CallRequest.RW.lazy.readArg1str = function readArg1str(frame, headers) {
     offset = res.offset;
 
     // READ arg~2
-    res = argsrw.argrw.readFromstr(frame.buffer, offset);
+    res = argsrw.argrw.strrw.readFrom(frame.buffer, offset);
 
     frame.cache.arg1Str = res;
 

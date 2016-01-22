@@ -187,23 +187,24 @@ test('CallRequest.lazy cache', function t(assert) {
     assert.equal(counters.toString, 1,
         'should not call toString() in second readService()');
 
-    var endpoint1 = lazyFrame.bodyRW.lazy.readArg1str(lazyFrame);
+
+    var endpoint1 = lazyFrame.bodyRW.lazy.readArg1Str(lazyFrame);
 
     assert.equal(endpoint1.value, 'door',
         'expected endpoint to be door');
     assert.equal(counters.slice, 1,
-        'should not call slice() in readArg1str()');
+        'should not call slice() in readArg1Str()');
     assert.equal(counters.toString, 2,
-        'should call toString() in readArg1str()');
+        'should call toString() in readArg1Str()');
 
-    var endpoint2 = lazyFrame.bodyRW.lazy.readArg1str(lazyFrame);
+    var endpoint2 = lazyFrame.bodyRW.lazy.readArg1Str(lazyFrame);
 
     assert.equal(endpoint2.value, 'door',
         'expected endpoint to be door');
     assert.equal(counters.slice, 1,
-        'should not call slice() in second readArg1str()');
+        'should not call slice() in second readArg1Str()');
     assert.equal(counters.toString, 2,
-        'should not call toString() in second readArg1str()');
+        'should not call toString() in second readArg1Str()');
 
     var callerName1 = lazyFrame.bodyRW.lazy.readCallerName(lazyFrame);
 
