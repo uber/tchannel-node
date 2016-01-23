@@ -45,8 +45,13 @@ var ResponseCodes = {
     Error: 0x01
 };
 
-var fastBufferToString = process.version === 'v0.10.32' ?
-    node10ToString : allNodeToString;
+var NODE_VERSION = process.versions.node;
+var NODE_VERSION_PARTS = NODE_VERSION.split('.');
+
+var fastBufferToString = allNodeToString;
+if (NODE_VERSION_PARTS[1] === '10' && NODE_VERSION_PARTS[2] >= '32') {
+    fastBufferToString = node10ToString;
+}
 
 function node10ToString(fastBuf, start, end) {
     var slowBuf = fastBuf.parent;
