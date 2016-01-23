@@ -40,7 +40,7 @@
 
 'use strict';
 
-var Buffer = require('buffer').Buffer;
+var process = global.process;
 var bufrw = require('bufrw');
 var setTimeout = require('timers').setTimeout;
 var console = require('console');
