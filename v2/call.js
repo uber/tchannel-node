@@ -122,7 +122,7 @@ CallRequest.RW.lazy.readTracing = function lazyReadTracing(frame) {
 
 CallRequest.RW.lazy.serviceOffset = CallRequest.RW.lazy.tracingOffset + 25;
 CallRequest.RW.lazy.readService = function lazyReadService(frame) {
-    if (frame.cache.serviceRes) {
+    if (frame.cache.serviceRes !== null) {
         return frame.cache.serviceRes;
     }
     // service~1
@@ -136,7 +136,7 @@ CallRequest.RW.lazy.readService = function lazyReadService(frame) {
 };
 
 CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
-    if (frame.cache.serviceStr) {
+    if (frame.cache.serviceStr !== null) {
         return frame.cache.serviceStr;
     }
 
@@ -167,7 +167,7 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     // last fixed offset
     var offset = CallRequest.RW.lazy.serviceOffset;
 
-    if (frame.cache.headerStartOffset) {
+    if (frame.cache.headerStartOffset !== null) {
         offset = frame.cache.headerStartOffset;
     } else {
         // SKIP service~1
@@ -189,13 +189,13 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
 CallRequest.RW.lazy.readCallerNameStr =
 function readCallerNameStr(frame) {
     /*eslint complexity: [2, 20]*/
-    if (frame.cache.callerNameStr) {
+    if (frame.cache.callerNameStr !== null) {
         return frame.cache.callerNameStr;
     }
 
     var offset = null;
 
-    if (frame.cache.headerStartOffset) {
+    if (frame.cache.headerStartOffset !== null) {
         offset = frame.cache.headerStartOffset;
     } else {
         offset = CallRequest.RW.lazy.serviceOffset;
@@ -294,7 +294,7 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame) {
 };
 
 CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
-    if (frame.cache.arg1Str) {
+    if (frame.cache.arg1Str !== null) {
         return frame.cache.arg1Str;
     }
 
@@ -340,7 +340,7 @@ function getHeadersOffset(frame) {
     var res = null;
     var offset = 0;
 
-    if (frame.cache.csumStartOffset) {
+    if (frame.cache.csumStartOffset !== null) {
         offset = frame.cache.csumStartOffset;
     } else {
         // last fixed offset
