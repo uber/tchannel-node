@@ -24,6 +24,7 @@ var Buffer = require('buffer').Buffer;
 var bufrw = require('bufrw');
 var test = require('tape');
 var testRW = require('bufrw/test_rw');
+var process = global.process;
 
 var TestBody = require('./lib/test_body.js');
 var v2 = require('../../v2/index.js');
@@ -38,15 +39,15 @@ var Bytes = [
 
     0x04, 0x64, 0x6f, 0x67, 0x65 // junk bytes
 ];
-var lazyFrame = new v2.LazyFrame(
+var _lazyFrame = new v2.LazyFrame(
     0x15, 0x03, 0x01,
     new Buffer(Bytes)
 );
-lazyFrame.bodyRW = v2.Frame.Types[0x03].RW;
+_lazyFrame.bodyRW = v2.Frame.Types[0x03].RW;
 
 test('LazyFrame.RW: read/write', testRW.cases(v2.LazyFrame.RW, [
     [
-        lazyFrame, Bytes
+        _lazyFrame, Bytes
     ]
 ]));
 
@@ -69,7 +70,6 @@ TestBody.testWith('LazyFrame.readFrom, invalid type', function t(assert) {
 
     assert.end();
 });
-
 
 TestBody.testWith('LazyFrame.readBody', function t(assert) {
     var frame = v2.LazyFrame.RW.readFrom(new Buffer([
