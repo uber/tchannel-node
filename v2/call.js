@@ -22,9 +22,10 @@
 
 /* eslint-disable curly */
 /* eslint max-params: [2, 7] */
-/* eslint max-statements: [1, 27] */
+/* eslint max-statements: [1, 50] */
 
 var bufrw = require('bufrw');
+var process = global.process;
 
 var errors = require('../errors');
 var ArgsRW = require('./args');
@@ -39,6 +40,27 @@ var ResponseCodes = {
     OK: 0x00,
     Error: 0x01
 };
+
+var NODE_VERSION = process.versions.node;
+var NODE_VERSION_PARTS = NODE_VERSION.split('.');
+
+var fastBufferToString = allNodeToString;
+if (NODE_VERSION_PARTS[1] === '10' && NODE_VERSION_PARTS[2] >= '32') {
+    fastBufferToString = node10ToString;
+}
+
+function node10ToString(fastBuf, start, end) {
+    var slowBuf = fastBuf.parent;
+
+    return slowBuf.utf8Slice(
+        start + fastBuf.offset,
+        end + fastBuf.offset
+    );
+}
+
+function allNodeToString(buf, start, end) {
+    return buf.toString('utf8', start, end);
+}
 
 module.exports.Request = CallRequest;
 module.exports.Response = CallResponse;
@@ -100,19 +122,48 @@ CallRequest.RW.lazy.readService = function lazyReadService(frame) {
     return bufrw.str1.readFrom(frame.buffer, CallRequest.RW.lazy.serviceOffset);
 };
 
+CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
+    if (frame.cache.serviceStr !== null) {
+        return frame.cache.serviceStr;
+    }
+
+    if (frame.size < CallRequest.RW.lazy.serviceOffset + 1) {
+        return null;
+    }
+    var strLength = frame.buffer.readUInt8(
+        CallRequest.RW.lazy.serviceOffset, false
+    );
+    var end = CallRequest.RW.lazy.serviceOffset + 1 + strLength;
+
+    if (frame.size < end) {
+        return null;
+    }
+    var serviceNameStr = fastBufferToString(
+        frame.buffer,
+        CallRequest.RW.lazy.serviceOffset + 1,
+        end
+    );
+
+    frame.cache.serviceStr = serviceNameStr;
+    frame.cache.headerStartOffset = end;
+
+    return serviceNameStr;
+};
+
 CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     // last fixed offset
     var offset = CallRequest.RW.lazy.serviceOffset;
 
-    // TODO: memoize computed offsets on frame between readService, readArg1,
-    // and any others
-
-    // SKIP service~1
-    var res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
-    if (res.err) {
-        return res;
+    if (frame.cache.headerStartOffset !== null) {
+        offset = frame.cache.headerStartOffset;
+    } else {
+        // SKIP service~1
+        var res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
+        if (res.err) {
+            return res;
+        }
+        offset = res.offset + res.value;
     }
-    offset = res.offset + res.value;
 
     // READ nh:1 (hk~1 hv~1){nh}
     return header.header1.lazyRead(frame, offset);

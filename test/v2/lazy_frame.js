@@ -133,6 +133,93 @@ TestBody.testWith('LazyFrame.setId', function t(assert) {
     assert.end();
 });
 
+function setupLazyFrame() {
+    var spanId = [0, 1];
+    var parentId = [2, 3];
+    var traceId = [4, 5];
+    var tracing = new v2.Tracing(
+        spanId, parentId, traceId
+    );
+
+    var frame = new v2.Frame(24,    // frame id
+        new v2.CallRequest(
+            42,                     // flags
+            99,                     // ttl
+            tracing,                // tracing
+            'castle',               // service
+            {                       // headers
+                'cn': 'mario',      // headers.cn
+                'as': 'plumber'     // headers.as
+            },                      //
+            v2.Checksum.Types.None, // csum
+            ['door', 'key', 'turn'] // args
+        )
+    );
+    var buf = bufrw.toBuffer(v2.Frame.RW, frame);
+
+    return buf;
+}
+
+test('CallRequest.lazy cache readServiceStr()', function t(assert) {
+    var buf = setupLazyFrame();
+
+    var counters = {
+        slice: 0,
+        toString: 0
+    };
+    introspectAndCountBuffer(buf, counters);
+
+    assert.equal(counters.slice, 0);
+    assert.equal(counters.toString, 0);
+    var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
+    assert.equal(counters.slice, 1);
+    assert.equal(counters.toString, 0);
+
+    var service1 = lazyFrame.bodyRW.lazy.readServiceStr(lazyFrame);
+
+    assert.equal(service1, 'castle',
+        'expected serviceName to be castle');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readService()');
+    assert.equal(counters.toString, 1,
+        'should call toString() in readService()');
+
+    var service2 = lazyFrame.bodyRW.lazy.readServiceStr(lazyFrame);
+
+    assert.equal(service2, 'castle',
+        'expected serviceName to be castle');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in second readService()');
+    assert.equal(counters.toString, 1,
+        'should not call toString() in second readService()');
+
+    assert.end();
+});
+
+function introspectAndCountBuffer(buf, counters, wrapSlice) {
+    var bufSlice = buf.slice;
+    buf.slice = function proxySlice() {
+        counters.slice++;
+        var newBuf = bufSlice.apply(this, arguments);
+        introspectAndCountBuffer(newBuf, counters, false);
+        return newBuf;
+    };
+
+    var bufToString = buf.toString;
+    buf.toString = function proxyToString() {
+        counters.toString++;
+        return bufToString.apply(this, arguments);
+    };
+
+    if (wrapSlice !== false) {
+        var utf8Slice = buf.parent.utf8Slice;
+        buf.parent.utf8Slice = function proxyUtf8Slice() {
+            counters.toString++;
+            return utf8Slice.apply(this, arguments);
+        };
+    }
+}
+
 test('CallRequest.RW.lazy', function t(assert) {
     var spanId = [0, 1];
     var parentId = [2, 3];
