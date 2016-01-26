@@ -272,41 +272,61 @@ function add(keyOffset, keyLength, valOffset, valLength) {
     }
 };
 
-KeyVals.prototype.getValue =
-function getValue(key) {
-    // assert Buffer.isBuffer(key)
-
-    for (
-        var i = 0;
-        i < this.data.length;
-        i += 4
-    ) {
+KeyVals.prototype.findOffset =
+function findOffset(key) {
+    for (var i = 0; i < this.data.length; i += 4) {
         var keyLength = this.data[i + 1];
         if (key.length !== keyLength) {
             continue;
         }
 
-        var keyOffset = this.data[i];
+        var offset = this.data[i];
         var found = true;
-        for (
-            var j = 0, offset = keyOffset;
-            j < keyLength;
-            j++, offset++
-        ) {
+        for (var j = 0; j < keyLength; j++, offset++) {
             if (key[j] !== this.buffer[offset]) {
                 found = false;
                 break;
             }
         }
+
         if (found) {
-            var valOffset = this.data[i + 2];
-            var valLength = this.data[i + 3];
-            return this.buffer.slice(
-                valOffset,
-                valOffset + valLength
-            );
+            return new KeyValOffset(this.data[i + 2], this.data[i + 3]);
         }
     }
 
-    return undefined;
+    return null;
 };
+
+KeyVals.prototype.getValue =
+function getValue(key) {
+    // assert Buffer.isBuffer(key)
+
+    var offsets = this.findOffset(key);
+    if (!offsets) {
+        return undefined;
+    }
+
+    return this.buffer.slice(
+        offsets.offset,
+        offsets.offset + offsets.length
+    );
+};
+
+KeyVals.prototype.getStringValue =
+function getStringValue(key) {
+    var offsets = this.findOffset(key);
+    if (!offsets) {
+        return null;
+    }
+
+    return this.buffer.toString(
+        'utf8',
+        offsets.offset,
+        offsets.offset + offsets.length
+    );
+};
+
+function KeyValOffset(offset, length) {
+    this.offset = offset;
+    this.length = length;
+}
