@@ -165,7 +165,9 @@ function findHeaderStartOffset(frame) {
     return offset;
 }
 
-function scanAndSkipHeaders(frame, offset) {
+function scanAndSkipHeaders(frame) {
+    var offset = findHeaderStartOffset(frame);
+
     if (frame.size < offset + 1) {
         return false;
     }
@@ -228,13 +230,14 @@ function readCallerNameStr(frame) {
         return frame.cache.callerNameStr;
     }
 
-    var offset = findHeaderStartOffset(frame);
-    var success = scanAndSkipHeaders(frame, offset);
-    if (!success) {
-        return null;
+    if (frame.cache.cnValueOffset === null) {
+        var success = scanAndSkipHeaders(frame);
+        if (!success) {
+            return null;
+        }
     }
 
-    offset = frame.cache.cnValueOffset;
+    var offset = frame.cache.cnValueOffset;
 
     var callerNameStr = readUInt8String(frame, offset);
     if (!callerNameStr) {
@@ -243,6 +246,31 @@ function readCallerNameStr(frame) {
 
     frame.cache.callerNameStr = callerNameStr;
     return callerNameStr;
+};
+
+CallRequest.RW.lazy.readRoutingDelegateStr =
+function readRoutingDelegateStr(frame) {
+    /*eslint complexity: [2, 20]*/
+    if (frame.cache.routingDelegateStr !== null) {
+        return frame.cache.routingDelegateStr;
+    }
+
+    if (frame.cache.rdValueOffset === null) {
+        var success = scanAndSkipHeaders(frame);
+        if (!success) {
+            return null;
+        }
+    }
+
+    var offset = frame.cache.rdValueOffset;
+
+    var routingDelegateStr = readUInt8String(frame, offset);
+    if (!routingDelegateStr) {
+        return null;
+    }
+
+    frame.cache.routingDelegateStr = routingDelegateStr;
+    return routingDelegateStr;
 };
 
 function readUInt8String(frame, offset) {
@@ -277,11 +305,7 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     }
 
     // READ nh:1 (hk~1 hv~1){nh}
-    res = header.header1.lazyRead(frame, offset);
-
-    frame.cache.csumStartOffset = res.offset;
-
-    return res;
+    return header.header1.lazyRead(frame, offset);
 };
 
 CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
