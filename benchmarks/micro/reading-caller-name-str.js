@@ -24,6 +24,7 @@ var process = global.process;
 var bufrw = require('bufrw');
 var setTimeout = require('timers').setTimeout;
 var console = require('console');
+var Buffer = require('buffer').Buffer;
 
 /*eslint no-console: 0*/
 var v2 = require('../../v2/index.js');
