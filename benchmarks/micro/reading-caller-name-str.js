@@ -121,9 +121,9 @@ function FrameData(callerName) {
 if (require.main === module) {
     var arg = process.argv[2];
     var mode = process.argv[3] || 'optimized';
-    var ITERATIONS = 1000 * 1000 * 5;
+    var ITERATIONS = 1000 * 1000 * 2;
     if (arg) {
-        ITERATIONS = 1000 * 1000 * 5 * parseInt(arg, 10);
+        ITERATIONS = 1000 * 1000 * 2 * parseInt(arg, 10);
     }
 
     main(mode, ITERATIONS);
