@@ -25,6 +25,7 @@
 /* eslint max-statements: [1, 50] */
 
 var bufrw = require('bufrw');
+var Buffer = require('buffer').Buffer;
 var process = global.process;
 
 var errors = require('../errors');
@@ -35,6 +36,9 @@ var Tracing = require('./tracing');
 var Frame = require('./frame');
 var CallFlags = require('./call_flags');
 var argsrw = new ArgsRW();
+
+var CN_BUFFER = new Buffer('cn');
+var CN_VALUE = CN_BUFFER.readUInt16BE(0, false);
 
 var ResponseCodes = {
     OK: 0x00,
@@ -153,6 +157,93 @@ CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
     frame.cache.serviceStr = serviceNameStr;
 
     return serviceNameStr;
+};
+
+CallRequest.RW.lazy.readCallerNameStr =
+function readCallerNameStr(frame) {
+    /*eslint complexity: [2, 20]*/
+    if (frame.cache.callerNameStr !== null) {
+        return frame.cache.callerNameStr;
+    }
+
+    var offset = null;
+
+    if (frame.cache.headerStartOffset !== null) {
+        offset = frame.cache.headerStartOffset;
+    } else {
+        offset = CallRequest.RW.lazy.serviceOffset;
+
+        if (frame.size < offset + 1) {
+            return null;
+        }
+        var strLength = frame.buffer.readUInt8(offset, false);
+        offset += strLength + 1;
+    }
+
+    if (frame.size < offset + 1) {
+        return null;
+    }
+    var nh = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    var valueOffset = null;
+
+    for (var i = 0; i < nh; i++) {
+        if (frame.size < offset + 1) {
+            return null;
+        }
+        var keyLength = frame.buffer.readUInt8(offset, false);
+        offset += 1;
+        if (frame.size < keyLength + offset) {
+            return null;
+        }
+
+        if (!valueOffset &&
+            keyLength === 2 &&
+            frame.buffer.readUInt16BE(offset, false) === CN_VALUE
+        ) {
+            valueOffset = offset + keyLength;
+        }
+
+        offset += keyLength;
+
+        if (frame.size < offset + 1) {
+            return null;
+        }
+        var valueLength = frame.buffer.readUInt8(offset, false);
+        offset += 1;
+        if (frame.size < valueLength + offset) {
+            return null;
+        }
+
+        offset += valueLength;
+    }
+
+    if (!valueOffset) {
+        return null;
+    }
+
+    frame.cache.csumStartOffset = offset;
+
+    offset = valueOffset;
+    if (frame.size < offset + 1) {
+        return null;
+    }
+    valueLength = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    var end = offset + valueLength;
+    if (frame.size < end) {
+        return null;
+    }
+
+    var callerNameStr = fastBufferToString(
+        frame.buffer, offset, end
+    );
+
+    frame.cache.callerNameStr = callerNameStr;
+
+    return callerNameStr;
 };
 
 CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
