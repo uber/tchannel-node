@@ -37,10 +37,8 @@ var Frame = require('./frame');
 var CallFlags = require('./call_flags');
 var argsrw = new ArgsRW();
 
-var CN_BUFFER = new Buffer('cn');
-var CN_VALUE = CN_BUFFER.readUInt16BE(0, false);
-var RD_BUFFER = new Buffer('rd');
-var RD_VALUE = RD_BUFFER.readUInt16BE(0, false);
+var CN_VALUE = new Buffer('cn').readUInt16BE(0, false);
+var RD_VALUE = new Buffer('rd').readUInt16BE(0, false);
 
 var ResponseCodes = {
     OK: 0x00,
