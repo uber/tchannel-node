@@ -131,33 +131,37 @@ CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
         return frame.cache.serviceStr;
     }
 
-    var serviceStrEnd = null;
-    if (frame.cache.headerStartOffset) {
-        serviceStrEnd = frame.cache.headerStartOffset;
-    } else {
-        if (frame.size < CallRequest.RW.lazy.serviceOffset + 1) {
-            return null;
-        }
-        var strLength = frame.buffer.readUInt8(
-            CallRequest.RW.lazy.serviceOffset, false
-        );
-        serviceStrEnd = CallRequest.RW.lazy.serviceOffset + 1 + strLength;
-        frame.cache.headerStartOffset = serviceStrEnd;
-    }
+    var headerStartOffset = findHeaderStartOffset(frame);
 
-    if (frame.size < serviceStrEnd) {
+    if (frame.size < headerStartOffset) {
         return null;
     }
     var serviceNameStr = fastBufferToString(
         frame.buffer,
         CallRequest.RW.lazy.serviceOffset + 1,
-        serviceStrEnd
+        headerStartOffset
     );
 
     frame.cache.serviceStr = serviceNameStr;
 
     return serviceNameStr;
 };
+
+function findHeaderStartOffset(frame) {
+    if (frame.cache.headerStartOffset) {
+        return frame.cache.headerStartOffset;
+    }
+
+    var offset = CallRequest.RW.lazy.serviceOffset;
+    if (frame.size < offset + 1) {
+        return null;
+    }
+    var strLength = frame.buffer.readUInt8(offset, false);
+    offset += strLength + 1;
+
+    frame.cache.headerStartOffset = offset;
+    return offset;
+}
 
 CallRequest.RW.lazy.readCallerNameStr =
 function readCallerNameStr(frame) {
@@ -166,19 +170,7 @@ function readCallerNameStr(frame) {
         return frame.cache.callerNameStr;
     }
 
-    var offset = null;
-
-    if (frame.cache.headerStartOffset !== null) {
-        offset = frame.cache.headerStartOffset;
-    } else {
-        offset = CallRequest.RW.lazy.serviceOffset;
-
-        if (frame.size < offset + 1) {
-            return null;
-        }
-        var strLength = frame.buffer.readUInt8(offset, false);
-        offset += strLength + 1;
-    }
+    var offset = findHeaderStartOffset(frame);
 
     if (frame.size < offset + 1) {
         return null;
