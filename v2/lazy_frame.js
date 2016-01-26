@@ -43,8 +43,14 @@ function LazyFrame(size, type, id, buffer) {
 
 function CallRequestCache() {
     this.serviceStr = null;
+    this.callerNameStr = null;
+    this.routingDelegateStr = null;
 
     this.headerStartOffset = null;
+    this.csumStartOffset = null;
+
+    this.cnValueOffset = null;
+    this.rdValueOffset = null;
 }
 
 // size:2 type:1 reserved:1 id:4 reserved:8 ...

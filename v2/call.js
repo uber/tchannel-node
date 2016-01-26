@@ -25,6 +25,7 @@
 /* eslint max-statements: [1, 50] */
 
 var bufrw = require('bufrw');
+var Buffer = require('buffer').Buffer;
 var process = global.process;
 
 var errors = require('../errors');
@@ -35,6 +36,9 @@ var Tracing = require('./tracing');
 var Frame = require('./frame');
 var CallFlags = require('./call_flags');
 var argsrw = new ArgsRW();
+
+var CN_VALUE = new Buffer('cn').readUInt16BE(0, false);
+var RD_VALUE = new Buffer('rd').readUInt16BE(0, false);
 
 var ResponseCodes = {
     OK: 0x00,
@@ -127,33 +131,172 @@ CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
         return frame.cache.serviceStr;
     }
 
-    var serviceStrEnd = null;
-    if (frame.cache.headerStartOffset) {
-        serviceStrEnd = frame.cache.headerStartOffset;
-    } else {
-        if (frame.size < CallRequest.RW.lazy.serviceOffset + 1) {
-            return null;
-        }
-        var strLength = frame.buffer.readUInt8(
-            CallRequest.RW.lazy.serviceOffset, false
-        );
-        serviceStrEnd = CallRequest.RW.lazy.serviceOffset + 1 + strLength;
-        frame.cache.headerStartOffset = serviceStrEnd;
+    var headerStartOffset = findHeaderStartOffset(frame);
+    if (!headerStartOffset) {
+        return null;
     }
 
-    if (frame.size < serviceStrEnd) {
+    if (frame.size < headerStartOffset) {
         return null;
     }
     var serviceNameStr = fastBufferToString(
         frame.buffer,
         CallRequest.RW.lazy.serviceOffset + 1,
-        serviceStrEnd
+        headerStartOffset
     );
 
     frame.cache.serviceStr = serviceNameStr;
 
     return serviceNameStr;
 };
+
+function findHeaderStartOffset(frame) {
+    if (frame.cache.headerStartOffset) {
+        return frame.cache.headerStartOffset;
+    }
+
+    var offset = CallRequest.RW.lazy.serviceOffset;
+    if (frame.size < offset + 1) {
+        return 0;
+    }
+    var strLength = frame.buffer.readUInt8(offset, false);
+    offset += strLength + 1;
+
+    frame.cache.headerStartOffset = offset;
+    return offset;
+}
+
+function scanAndSkipHeaders(frame) {
+    var offset = findHeaderStartOffset(frame);
+    if (!offset) {
+        return false;
+    }
+
+    if (frame.size < offset + 1) {
+        return false;
+    }
+    var nh = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    var cnValueOffset = 0;
+    var rdValueOffset = 0;
+
+    for (var i = 0; i < nh; i++) {
+        if (frame.size < offset + 1) {
+            return false;
+        }
+        var keyLength = frame.buffer.readUInt8(offset, false);
+        offset += 1;
+        if (frame.size < keyLength + offset) {
+            return false;
+        }
+
+        var keyValue = null;
+
+        if (!cnValueOffset && keyLength === 2) {
+            keyValue = keyValue || frame.buffer.readUInt16BE(offset, false);
+            if (keyValue === CN_VALUE) {
+                cnValueOffset = offset + keyLength;
+            }
+        }
+
+        if (!rdValueOffset && keyLength === 2) {
+            keyValue = keyValue || frame.buffer.readUInt16BE(offset, false);
+            if (keyValue === RD_VALUE) {
+                rdValueOffset = offset + keyLength;
+            }
+        }
+
+        offset += keyLength;
+
+        if (frame.size < offset + 1) {
+            return false;
+        }
+        var valueLength = frame.buffer.readUInt8(offset, false);
+        offset += 1;
+        if (frame.size < valueLength + offset) {
+            return false;
+        }
+
+        offset += valueLength;
+    }
+
+    frame.cache.cnValueOffset = cnValueOffset;
+    frame.cache.rdValueOffset = rdValueOffset;
+    frame.cache.csumStartOffset = offset;
+    return true;
+}
+
+CallRequest.RW.lazy.readCallerNameStr =
+function readCallerNameStr(frame) {
+    /*eslint complexity: [2, 20]*/
+    if (frame.cache.callerNameStr !== null) {
+        return frame.cache.callerNameStr;
+    }
+
+    if (frame.cache.cnValueOffset === null) {
+        var success = scanAndSkipHeaders(frame);
+        if (!success) {
+            return null;
+        }
+    }
+
+    var offset = frame.cache.cnValueOffset;
+    if (!offset) {
+        return null;
+    }
+
+    var callerNameStr = readUInt8String(frame, offset);
+    if (!callerNameStr) {
+        return null;
+    }
+
+    frame.cache.callerNameStr = callerNameStr;
+    return callerNameStr;
+};
+
+CallRequest.RW.lazy.readRoutingDelegateStr =
+function readRoutingDelegateStr(frame) {
+    /*eslint complexity: [2, 20]*/
+    if (frame.cache.routingDelegateStr !== null) {
+        return frame.cache.routingDelegateStr;
+    }
+
+    if (frame.cache.rdValueOffset === null) {
+        var success = scanAndSkipHeaders(frame);
+        if (!success) {
+            return null;
+        }
+    }
+
+    var offset = frame.cache.rdValueOffset;
+    if (!offset) {
+        return null;
+    }
+
+    var routingDelegateStr = readUInt8String(frame, offset);
+    if (!routingDelegateStr) {
+        return null;
+    }
+
+    frame.cache.routingDelegateStr = routingDelegateStr;
+    return routingDelegateStr;
+};
+
+function readUInt8String(frame, offset) {
+    if (frame.size < offset + 1) {
+        return null;
+    }
+    var valueLength = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    var end = offset + valueLength;
+    if (frame.size < end) {
+        return null;
+    }
+
+    return fastBufferToString(frame.buffer, offset, end);
+}
 
 CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     // last fixed offset
