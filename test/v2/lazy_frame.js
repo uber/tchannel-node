@@ -232,7 +232,7 @@ test('CallRequest.lazy cache readCallerNameStr()', function t(assert) {
     assert.end();
 });
 
-test('CallRequest.lazy cache readRoutingDelegateStr()', function t(assert) {
+test('CallRequest.lazy cache readRoutingDelegateStr() miss', function t(assert) {
     var buf = setupLazyFrame();
 
     var counters = {
@@ -255,6 +255,55 @@ test('CallRequest.lazy cache readRoutingDelegateStr()', function t(assert) {
         'should not call slice() in readRoutingDelegateStr()');
     assert.equal(counters.toString, 0,
         'should not call toString() in readRoutingDelegateStr()');
+
+    assert.end();
+});
+
+test('CallRequest.lazy cache readRoutingDelegateStr()', function t(assert) {
+    var spanId = [0, 1];
+    var parentId = [2, 3];
+    var traceId = [4, 5];
+    var tracing = new v2.Tracing(
+        spanId, parentId, traceId
+    );
+
+    var frame = new v2.Frame(24,    // frame id
+        new v2.CallRequest(
+            42,                     // flags
+            99,                     // ttl
+            tracing,                // tracing
+            'castle',               // service
+            {                       // headers
+                'cn': 'mario',      // headers.cn
+                'rd': 'foobar',     // headers.rd
+                'as': 'plumber'     // headers.as
+            },                      //
+            v2.Checksum.Types.None, // csum
+            ['door', 'key', 'turn'] // args
+        )
+    );
+    var buf = bufrw.toBuffer(v2.Frame.RW, frame);
+
+    var counters = {
+        slice: 0,
+        toString: 0
+    };
+    introspectAndCountBuffer(buf, counters);
+
+    assert.equal(counters.slice, 0);
+    assert.equal(counters.toString, 0);
+    var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
+    assert.equal(counters.slice, 1);
+    assert.equal(counters.toString, 0);
+
+    var routingDelegate = lazyFrame.bodyRW.lazy.readRoutingDelegateStr(lazyFrame);
+
+    assert.equal(routingDelegate, 'foobar',
+        'expected routingDelegate to exist');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readRoutingDelegateStr()');
+    assert.equal(counters.toString, 1,
+        'should call toString() in readRoutingDelegateStr()');
 
     assert.end();
 });
