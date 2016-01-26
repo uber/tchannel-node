@@ -20,7 +20,7 @@
 
 'use strict';
 
-var Buffer = require('buffer').Buffer;
+var process = global.process;
 var bufrw = require('bufrw');
 var setTimeout = require('timers').setTimeout;
 var console = require('console');
@@ -78,23 +78,31 @@ function runLoop(buf, mode, ITER) {
 
 function runDefaultLoop(buf, ITER) {
     var resArr = new Array(10);
+    var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
 
     for (var i = 0; i < ITER; i++) {
-        var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
-        var res = lazyFrame.bodyRw.lazy.readService(lazyFrame);
+        var res = lazyFrame.bodyRW.lazy.readService(lazyFrame);
 
         resArr[i % 10] = new FrameData(res.value);
+
+        // Naughty; reset cache
+        lazyFrame.cache.serviceStr = null;
+        lazyFrame.cache.headerStartOffset = null;
     }
 }
 
 function runOptimizedLoop(buf, ITER) {
     var resArr = new Array(10);
+    var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
 
     for (var i = 0; i < ITER; i++) {
-        var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
         var serviceName = lazyFrame.bodyRW.lazy.readServiceStr(lazyFrame);
 
         resArr[i % 10] = new FrameData(serviceName);
+
+        // Naughty; reset cache
+        lazyFrame.cache.serviceStr = null;
+        lazyFrame.cache.headerStartOffset = null;
     }
 }
 
@@ -105,9 +113,9 @@ function FrameData(serviceName) {
 if (require.main === module) {
     var arg = process.argv[2];
     var mode = process.argv[3] || 'optimized';
-    var ITERATIONS = 1000 * 1000 * 10;
+    var ITERATIONS = 1000 * 1000 * 5;
     if (arg) {
-        ITERATIONS = 1000 * 1000 * parseInt(arg, 10);
+        ITERATIONS = 1000 * 1000 * 5 * parseInt(arg, 10);
     }
 
     main(mode, ITERATIONS);
