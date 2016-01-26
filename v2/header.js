@@ -257,7 +257,7 @@ module.exports.header2 = new HeaderRW(bufrw.UInt16BE, bufrw.str2, bufrw.str2, {
 function KeyVals(buffer, length) {
     this.length = length;
     this.buffer = buffer;
-    this.data = new Uint16Array(this.length * 4);
+    this.data = new Array(this.length * 4);
     this.index = 0;
     this.offset = 0;
 }
