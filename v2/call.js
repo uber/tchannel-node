@@ -168,6 +168,7 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
             return res;
         }
         offset = res.offset + res.value;
+        frame.cache.headerStartOffset = offset;
     }
 
     // READ nh:1 (hk~1 hv~1){nh}
