@@ -134,6 +134,9 @@ CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
     }
 
     var headerStartOffset = findHeaderStartOffset(frame);
+    if (!headerStartOffset) {
+        return null;
+    }
 
     if (frame.size < headerStartOffset) {
         return null;
@@ -167,6 +170,9 @@ function findHeaderStartOffset(frame) {
 
 function scanAndSkipHeaders(frame) {
     var offset = findHeaderStartOffset(frame);
+    if (!offset) {
+        return false;
+    }
 
     if (frame.size < offset + 1) {
         return false;
@@ -238,6 +244,9 @@ function readCallerNameStr(frame) {
     }
 
     var offset = frame.cache.cnValueOffset;
+    if (!offset) {
+        return null;
+    }
 
     var callerNameStr = readUInt8String(frame, offset);
     if (!callerNameStr) {
@@ -263,6 +272,9 @@ function readRoutingDelegateStr(frame) {
     }
 
     var offset = frame.cache.rdValueOffset;
+    if (!offset) {
+        return null;
+    }
 
     var routingDelegateStr = readUInt8String(frame, offset);
     if (!routingDelegateStr) {

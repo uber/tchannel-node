@@ -232,6 +232,33 @@ test('CallRequest.lazy cache readCallerNameStr()', function t(assert) {
     assert.end();
 });
 
+test('CallRequest.lazy cache readRoutingDelegateStr()', function t(assert) {
+    var buf = setupLazyFrame();
+
+    var counters = {
+        slice: 0,
+        toString: 0
+    };
+    introspectAndCountBuffer(buf, counters);
+
+    assert.equal(counters.slice, 0);
+    assert.equal(counters.toString, 0);
+    var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
+    assert.equal(counters.slice, 1);
+    assert.equal(counters.toString, 0);
+
+    var routingDelegate = lazyFrame.bodyRW.lazy.readRoutingDelegateStr(lazyFrame);
+
+    assert.equal(routingDelegate, null,
+        'expected routingDelegate to not exist');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readRoutingDelegateStr()');
+    assert.equal(counters.toString, 0,
+        'should not call toString() in readRoutingDelegateStr()');
+
+    assert.end();
+});
+
 function introspectAndCountBuffer(buf, counters, wrapSlice) {
     var bufSlice = buf.slice;
     buf.slice = function proxySlice() {
