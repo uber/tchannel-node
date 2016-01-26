@@ -127,25 +127,30 @@ CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
         return frame.cache.serviceStr;
     }
 
-    if (frame.size < CallRequest.RW.lazy.serviceOffset + 1) {
-        return null;
+    var serviceStrEnd = null;
+    if (frame.cache.headerStartOffset) {
+        serviceStrEnd = frame.cache.headerStartOffset;
+    } else {
+        if (frame.size < CallRequest.RW.lazy.serviceOffset + 1) {
+            return null;
+        }
+        var strLength = frame.buffer.readUInt8(
+            CallRequest.RW.lazy.serviceOffset, false
+        );
+        serviceStrEnd = CallRequest.RW.lazy.serviceOffset + 1 + strLength;
+        frame.cache.headerStartOffset = serviceStrEnd;
     }
-    var strLength = frame.buffer.readUInt8(
-        CallRequest.RW.lazy.serviceOffset, false
-    );
-    var end = CallRequest.RW.lazy.serviceOffset + 1 + strLength;
 
-    if (frame.size < end) {
+    if (frame.size < serviceStrEnd) {
         return null;
     }
     var serviceNameStr = fastBufferToString(
         frame.buffer,
         CallRequest.RW.lazy.serviceOffset + 1,
-        end
+        serviceStrEnd
     );
 
     frame.cache.serviceStr = serviceNameStr;
-    frame.cache.headerStartOffset = end;
 
     return serviceNameStr;
 };
