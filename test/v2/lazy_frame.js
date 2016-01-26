@@ -196,6 +196,42 @@ test('CallRequest.lazy cache readServiceStr()', function t(assert) {
     assert.end();
 });
 
+test('CallRequest.lazy cache readCallerNameStr()', function t(assert) {
+    var buf = setupLazyFrame();
+
+    var counters = {
+        slice: 0,
+        toString: 0
+    };
+    introspectAndCountBuffer(buf, counters);
+
+    assert.equal(counters.slice, 0);
+    assert.equal(counters.toString, 0);
+    var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
+    assert.equal(counters.slice, 1);
+    assert.equal(counters.toString, 0);
+
+    var callerName1 = lazyFrame.bodyRW.lazy.readCallerNameStr(lazyFrame);
+
+    assert.equal(callerName1, 'mario',
+        'expected endpoint to be mario');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in readCallerName()');
+    assert.equal(counters.toString, 1,
+        'should call toString() in readCallerName()');
+
+    var callerName2 = lazyFrame.bodyRW.lazy.readCallerNameStr(lazyFrame);
+
+    assert.equal(callerName2, 'mario',
+        'expected endpoint to be mario');
+    assert.equal(counters.slice, 1,
+        'should not call slice() in second readCallerName()');
+    assert.equal(counters.toString, 1,
+        'should not call toString() in second readCallerName()');
+
+    assert.end();
+});
+
 function introspectAndCountBuffer(buf, counters, wrapSlice) {
     var bufSlice = buf.slice;
     buf.slice = function proxySlice() {
