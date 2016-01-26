@@ -47,6 +47,9 @@ function CallRequestCache() {
 
     this.headerStartOffset = null;
     this.csumStartOffset = null;
+
+    this.cnValueOffset = null;
+    this.rdValueOffset = null;
 }
 
 // size:2 type:1 reserved:1 id:4 reserved:8 ...

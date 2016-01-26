@@ -39,6 +39,8 @@ var argsrw = new ArgsRW();
 
 var CN_BUFFER = new Buffer('cn');
 var CN_VALUE = CN_BUFFER.readUInt16BE(0, false);
+var RD_BUFFER = new Buffer('rd');
+var RD_VALUE = RD_BUFFER.readUInt16BE(0, false);
 
 var ResponseCodes = {
     OK: 0x00,
@@ -154,13 +156,69 @@ function findHeaderStartOffset(frame) {
 
     var offset = CallRequest.RW.lazy.serviceOffset;
     if (frame.size < offset + 1) {
-        return null;
+        return 0;
     }
     var strLength = frame.buffer.readUInt8(offset, false);
     offset += strLength + 1;
 
     frame.cache.headerStartOffset = offset;
     return offset;
+}
+
+function scanAndSkipHeaders(frame, offset) {
+    if (frame.size < offset + 1) {
+        return false;
+    }
+    var nh = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    var cnValueOffset = 0;
+    var rdValueOffset = 0;
+
+    for (var i = 0; i < nh; i++) {
+        if (frame.size < offset + 1) {
+            return false;
+        }
+        var keyLength = frame.buffer.readUInt8(offset, false);
+        offset += 1;
+        if (frame.size < keyLength + offset) {
+            return false;
+        }
+
+        var keyValue = null;
+
+        if (!cnValueOffset && keyLength === 2) {
+            keyValue = keyValue || frame.buffer.readUInt16BE(offset, false);
+            if (keyValue === CN_VALUE) {
+                cnValueOffset = offset + keyLength;
+            }
+        }
+
+        if (!rdValueOffset && keyLength === 2) {
+            keyValue = keyValue || frame.buffer.readUInt16BE(offset, false);
+            if (keyValue === RD_VALUE) {
+                rdValueOffset = offset + keyLength;
+            }
+        }
+
+        offset += keyLength;
+
+        if (frame.size < offset + 1) {
+            return false;
+        }
+        var valueLength = frame.buffer.readUInt8(offset, false);
+        offset += 1;
+        if (frame.size < valueLength + offset) {
+            return false;
+        }
+
+        offset += valueLength;
+    }
+
+    frame.cache.cnValueOffset = cnValueOffset;
+    frame.cache.rdValueOffset = rdValueOffset;
+    frame.cache.csumStartOffset = offset;
+    return true;
 }
 
 CallRequest.RW.lazy.readCallerNameStr =
@@ -171,57 +229,27 @@ function readCallerNameStr(frame) {
     }
 
     var offset = findHeaderStartOffset(frame);
+    var success = scanAndSkipHeaders(frame, offset);
+    if (!success) {
+        return null;
+    }
 
+    offset = frame.cache.cnValueOffset;
+
+    var callerNameStr = readUInt8String(frame, offset);
+    if (!callerNameStr) {
+        return null;
+    }
+
+    frame.cache.callerNameStr = callerNameStr;
+    return callerNameStr;
+};
+
+function readUInt8String(frame, offset) {
     if (frame.size < offset + 1) {
         return null;
     }
-    var nh = frame.buffer.readUInt8(offset, false);
-    offset += 1;
-
-    var valueOffset = null;
-
-    for (var i = 0; i < nh; i++) {
-        if (frame.size < offset + 1) {
-            return null;
-        }
-        var keyLength = frame.buffer.readUInt8(offset, false);
-        offset += 1;
-        if (frame.size < keyLength + offset) {
-            return null;
-        }
-
-        if (!valueOffset &&
-            keyLength === 2 &&
-            frame.buffer.readUInt16BE(offset, false) === CN_VALUE
-        ) {
-            valueOffset = offset + keyLength;
-        }
-
-        offset += keyLength;
-
-        if (frame.size < offset + 1) {
-            return null;
-        }
-        var valueLength = frame.buffer.readUInt8(offset, false);
-        offset += 1;
-        if (frame.size < valueLength + offset) {
-            return null;
-        }
-
-        offset += valueLength;
-    }
-
-    if (!valueOffset) {
-        return null;
-    }
-
-    frame.cache.csumStartOffset = offset;
-
-    offset = valueOffset;
-    if (frame.size < offset + 1) {
-        return null;
-    }
-    valueLength = frame.buffer.readUInt8(offset, false);
+    var valueLength = frame.buffer.readUInt8(offset, false);
     offset += 1;
 
     var end = offset + valueLength;
@@ -229,14 +257,8 @@ function readCallerNameStr(frame) {
         return null;
     }
 
-    var callerNameStr = fastBufferToString(
-        frame.buffer, offset, end
-    );
-
-    frame.cache.callerNameStr = callerNameStr;
-
-    return callerNameStr;
-};
+    return fastBufferToString(frame.buffer, offset, end);
+}
 
 CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     // last fixed offset
