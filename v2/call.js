@@ -162,7 +162,7 @@ CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
     var flags = frame.buffer.readUInt8(offset, false);
     offset += 1;
 
-    var tracing = new Tracing(
+    var tracing = new TracingInfo(
         [spanid1, spanid2],
         [parentid1, parentid2],
         [traceid1, traceid2],
@@ -173,6 +173,13 @@ CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
 
     return tracing;
 };
+
+function TracingInfo(spanid, parentid, traceid, flags) {
+    this.spanid = spanid;
+    this.parentid = parentid;
+    this.traceid = traceid;
+    this.flags = flags;
+}
 
 CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
     if (frame.cache.serviceStr !== null) {
