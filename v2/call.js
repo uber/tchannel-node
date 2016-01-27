@@ -298,6 +298,48 @@ function readUInt8String(frame, offset) {
     return fastBufferToString(frame.buffer, offset, end);
 }
 
+CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
+    if (frame.cache.arg1Str !== null) {
+        return frame.cache.arg1Str;
+    }
+
+    if (!frame.cache.csumStartOffset) {
+        var success = scanAndSkipHeaders(frame);
+        if (!success) {
+            return null;
+        }
+    }
+
+    var offset = frame.cache.csumStartOffset;
+
+    if (frame.size < offset + 1) {
+        return null;
+    }
+    var csumType = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    if (csumType !== Checksum.Types.None) {
+        offset += Checksum.offsetWidth(csumType);
+    }
+
+    if (frame.size < offset + 2) {
+        return null;
+    }
+    var arg1Length = frame.buffer.readUInt16BE(offset, false);
+    offset += 2;
+
+    var end = offset + arg1Length;
+
+    if (frame.size < end) {
+        return null;
+    }
+    var arg1Str = fastBufferToString(frame.buffer, offset, end);
+
+    frame.cache.arg1Str = arg1Str;
+
+    return arg1Str;
+};
+
 CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     // last fixed offset
     var offset = CallRequest.RW.lazy.serviceOffset;

@@ -74,6 +74,19 @@ Checksum.objOrType = function objOrType(arg) {
     }
 };
 
+Checksum.offsetWidth = function offsetWidth(type) {
+    switch (type) {
+        case 0x00:
+            return 0;
+        case 0x01:
+        case 0x02:
+        case 0x03:
+            return 4;
+        default:
+            assert(false, 'expected valid checksum type');
+    }
+};
+
 Checksum.Types = Object.create(null);
 Checksum.Types.None = 0x00;
 Checksum.Types.CRC32 = 0x01;
