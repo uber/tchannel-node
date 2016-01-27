@@ -74,6 +74,12 @@ Errors.ArgStreamUnknownFrameHandlingStateError = TypedError({
     message: 'unknown frame handling state'
 });
 
+Errors.BadCallRequestFrameError = TypedError({
+    type: 'tchannel.bad-call-request',
+    message: 'Bad call request: {reason}',
+    reason: null
+});
+
 Errors.CallReqBeforeInitReqError = TypedError({
     type: 'tchannel.init.call-request-before-init-request',
     message: 'call request before init request'
@@ -679,6 +685,7 @@ Errors.classify = function classify(err) {
         case 'tchannel.arg1-fragmented':
         case 'tchannel.arg1-over-length-limit':
         case 'tchannel.argstream.exceeded-frame-parts':
+        case 'tchannel.bad-call-request':
         case 'tchannel.call.checksum-type-changed':
         case 'tchannel.checksum':
         case 'tchannel.duplicate-header-key':

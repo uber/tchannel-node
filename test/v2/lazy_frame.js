@@ -498,7 +498,7 @@ test('CallRequest.RW.lazy', function t(assert) {
         v2.CallRequest.RW.lazy.readFlags(lazyFrame),
         frame.body.flags,
         'CallRequest.RW.lazy.readFlags');
-    assertReadRes(
+    assert.equal(
         v2.CallRequest.RW.lazy.readTTL(lazyFrame),
         frame.body.ttl,
         'CallRequest.RW.lazy.readTTL');

@@ -20,14 +20,9 @@
 
 'use strict';
 
-var Buffer = require('buffer').Buffer;
-
 var errors = require('./errors');
 var v2 = require('./v2');
 var stat = require('./stat-tags.js');
-
-// "constant" byte buffer used for lookup in LazyRelayInReq#initRead
-var cnBytes = Buffer('cn');
 
 module.exports = {
     LazyRelayInReq: LazyRelayInReq,
@@ -85,37 +80,45 @@ function initRead() {
 
     // TODO: wrap errors in protocol read errors?
 
-    var res = self.reqFrame.bodyRW.lazy.readTTL(self.reqFrame);
-    if (res.err) {
-        return res.err;
+    var timeout = self.reqFrame.bodyRW.lazy.readTTL(self.reqFrame);
+    if (timeout <= 0) {
+        return errors.InvalidTTL({
+            ttl: timeout,
+            isParseError: true
+        });
     }
-    self.timeout = res.value;
+    self.timeout = timeout;
 
-    res = self.reqFrame.bodyRW.lazy.readService(self.reqFrame);
-    if (res.err) {
-        return res.err;
+    var serviceName = self.reqFrame.bodyRW.lazy
+        .readServiceStr(self.reqFrame);
+    if (!serviceName) {
+        return errors.BadCallRequestFrameError({
+            reason: 'Could not read service name'
+        });
     }
-    self.serviceName = res.value;
+    self.serviceName = serviceName;
 
-    res = self.reqFrame.bodyRW.lazy.readHeaders(self.reqFrame);
-    if (res.err) {
-        return res.err;
+    var callerName = self.reqFrame.bodyRW.lazy
+        .readCallerNameStr(self.reqFrame);
+    if (!callerName) {
+        return errors.BadCallRequestFrameError({
+            reason: 'Could not read caller name'
+        });
     }
-    var headers = res.value;
-    var cnHeader = headers.getValue(cnBytes);
-    if (cnHeader !== undefined) {
-        self.callerName = String(cnHeader);
-    }
+    self.callerName = callerName;
 
-    res = self.reqFrame.bodyRW.lazy.readArg1(self.reqFrame, headers);
-    if (res.err) {
-        return res.err;
+    var endpoint = self.reqFrame.bodyRW.lazy
+        .readArg1Str(self.reqFrame);
+    if (!endpoint) {
+        return errors.BadCallRequestFrameError({
+            reason: 'Could not read arg1'
+        });
     }
-    self.endpoint = String(res.value);
+    self.endpoint = endpoint;
 
-    res = self.reqFrame.bodyRW.lazy.readTracing(self.reqFrame);
-    var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
-    self.tracing = tracing;
+    var tracing = self.reqFrame.bodyRW.lazy
+        .readTracingValue(self.reqFrame);
+    self.tracing = tracing || v2.Tracing.emptyTracing;
 
     return null;
 };

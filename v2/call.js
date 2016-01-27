@@ -99,15 +99,19 @@ CallRequest.RW.lazy.readFlags = function readFlags(frame) {
 
 CallRequest.RW.lazy.ttlOffset = CallRequest.RW.lazy.flagsOffset + 1;
 CallRequest.RW.lazy.readTTL = function readTTL(frame) {
-    // ttl:4
-    var res = bufrw.UInt32BE.readFrom(frame.buffer, CallRequest.RW.lazy.ttlOffset);
-    if (!res.err && res.value <= 0) {
-        res.err = errors.InvalidTTL({
-            ttl: res.value,
-            isParseError: true
-        });
+    if (frame.cache.ttlValue !== null) {
+        return frame.cache.ttlValue;
     }
-    return res;
+
+    var offset = CallRequest.RW.lazy.ttlOffset;
+    if (frame.size < offset + 4) {
+        return 0;
+    }
+    var ttl = frame.buffer.readUInt32BE(offset, false);
+
+    frame.cache.ttlValue = ttl;
+
+    return ttl;
 };
 CallRequest.RW.lazy.writeTTL = function writeTTL(ttl, frame) {
     // ttl:4
@@ -125,6 +129,57 @@ CallRequest.RW.lazy.readService = function lazyReadService(frame) {
     // service~1
     return bufrw.str1.readFrom(frame.buffer, CallRequest.RW.lazy.serviceOffset);
 };
+
+CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
+    if (frame.cache.tracingValue !== null) {
+        return frame.cache.tracingValue;
+    }
+
+    var offset = CallRequest.RW.lazy.tracingOffset;
+
+    if (frame.size < offset + 25) {
+        return null;
+    }
+
+    var spanid1 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var spanid2 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var parentid1 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var parentid2 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var traceid1 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var traceid2 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var flags = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    var tracing = new TracingInfo(
+        [spanid1, spanid2],
+        [parentid1, parentid2],
+        [traceid1, traceid2],
+        flags
+    );
+
+    frame.cache.tracingValue = tracing;
+
+    return tracing;
+};
+
+function TracingInfo(spanid, parentid, traceid, flags) {
+    this.spanid = spanid;
+    this.parentid = parentid;
+    this.traceid = traceid;
+    this.flags = flags;
+}
 
 CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
     if (frame.cache.serviceStr !== null) {
