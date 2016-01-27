@@ -24,11 +24,14 @@ var process = global.process;
 var bufrw = require('bufrw');
 var setTimeout = require('timers').setTimeout;
 var console = require('console');
+var Buffer = require('buffer').Buffer;
 
 /*eslint no-console: 0*/
 var v2 = require('../../v2/index.js');
 
 var spanId = [0, 1];
+var CN_BUFFER = new Buffer('cn');
+var RD_BUFFER = new Buffer('rd');
 var parentId = [2, 3];
 var traceId = [4, 5];
 var tracing = new v2.Tracing(
@@ -81,14 +84,32 @@ function runDefaultLoop(buf, ITER) {
     var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
 
     for (var i = 0; i < ITER; i++) {
-        var res = lazyFrame.bodyRW.lazy.readArg1(lazyFrame);
-        var endpoint = res.value;
+        var res = lazyFrame.bodyRW.lazy.readService(lazyFrame);
+        var serviceName = res.value;
 
-        resArr[i % 10] = new FrameData(String(endpoint));
+        res = lazyFrame.bodyRW.lazy.readHeaders(lazyFrame);
+        var headers = res.value;
+        var callerName = String(headers.getValue(CN_BUFFER));
+        var routingDelegate = headers.getValue(RD_BUFFER);
+
+        res = lazyFrame.bodyRW.lazy.readArg1(lazyFrame, headers);
+        var endpoint = String(res.value);
+
+        resArr[i % 10] = new FrameData(
+            serviceName, callerName, routingDelegate, endpoint
+        );
 
         // Naughty; reset cache
+        lazyFrame.cache.serviceStr = null;
+        lazyFrame.cache.callerNameStr = null;
+        lazyFrame.cache.routingDelegateStr = null;
         lazyFrame.cache.arg1Str = null;
+
+        lazyFrame.cache.headerStartOffset = null;
         lazyFrame.cache.csumStartOffset = null;
+
+        lazyFrame.cache.cnValueOffset = null;
+        lazyFrame.cache.rdValueOffset = null;
     }
 }
 
@@ -97,26 +118,43 @@ function runOptimizedLoop(buf, ITER) {
     var lazyFrame = bufrw.fromBuffer(v2.LazyFrame.RW, buf);
 
     for (var i = 0; i < ITER; i++) {
+        var serviceName = lazyFrame.bodyRW.lazy.readServiceStr(lazyFrame);
+        var callerName = lazyFrame.bodyRW.lazy.readCallerNameStr(lazyFrame);
+        var routingDelegate = lazyFrame.bodyRW.lazy
+            .readRoutingDelegateStr(lazyFrame);
         var endpoint = lazyFrame.bodyRW.lazy.readArg1Str(lazyFrame);
 
-        resArr[i % 10] = new FrameData(endpoint);
+        resArr[i % 10] = new FrameData(
+            serviceName, callerName, routingDelegate, endpoint
+        );
 
         // Naughty; reset cache
+        lazyFrame.cache.serviceStr = null;
+        lazyFrame.cache.callerNameStr = null;
+        lazyFrame.cache.routingDelegateStr = null;
         lazyFrame.cache.arg1Str = null;
+
+        lazyFrame.cache.headerStartOffset = null;
         lazyFrame.cache.csumStartOffset = null;
+
+        lazyFrame.cache.cnValueOffset = null;
+        lazyFrame.cache.rdValueOffset = null;
     }
 }
 
-function FrameData(endpoint) {
+function FrameData(serviceName, callerName, routingDelegate, endpoint) {
+    this.serviceName = serviceName;
+    this.callerName = callerName;
+    this.routingDelegate = routingDelegate;
     this.endpoint = endpoint;
 }
 
 if (require.main === module) {
     var arg = process.argv[2];
     var mode = process.argv[3] || 'optimized';
-    var ITERATIONS = 1000 * 1000 * 2;
+    var ITERATIONS = 1000 * 1000 * 1;
     if (arg) {
-        ITERATIONS = 1000 * 1000 * 2 * parseInt(arg, 10);
+        ITERATIONS = 1000 * 1000 * 1 * parseInt(arg, 10);
     }
 
     main(mode, ITERATIONS);
