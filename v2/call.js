@@ -318,8 +318,8 @@ CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
     var csumType = frame.buffer.readUInt8(offset, false);
     offset += 1;
 
-    if (csumType !== 0x00) {
-        offset += 4;
+    if (csumType !== Checksum.Types.None) {
+        offset += Checksum.offsetWidth(csumType);
     }
 
     if (frame.size < offset + 2) {
