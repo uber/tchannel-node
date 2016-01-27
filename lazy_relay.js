@@ -20,8 +20,6 @@
 
 'use strict';
 
-var Buffer = require('buffer').Buffer;
-
 var errors = require('./errors');
 var v2 = require('./v2');
 var stat = require('./stat-tags.js');
