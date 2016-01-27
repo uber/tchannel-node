@@ -99,15 +99,19 @@ CallRequest.RW.lazy.readFlags = function readFlags(frame) {
 
 CallRequest.RW.lazy.ttlOffset = CallRequest.RW.lazy.flagsOffset + 1;
 CallRequest.RW.lazy.readTTL = function readTTL(frame) {
-    // ttl:4
-    var res = bufrw.UInt32BE.readFrom(frame.buffer, CallRequest.RW.lazy.ttlOffset);
-    if (!res.err && res.value <= 0) {
-        res.err = errors.InvalidTTL({
-            ttl: res.value,
-            isParseError: true
-        });
+    if (frame.cache.ttlValue !== null) {
+        return frame.cache.ttlValue;
     }
-    return res;
+
+    var offset = CallRequest.RW.lazy.ttlOffset;
+    if (frame.size < offset + 4) {
+        return 0;
+    }
+    var ttl = frame.buffer.readUInt32BE(offset, false);
+
+    frame.cache.ttlValue = ttl;
+
+    return ttl;
 };
 CallRequest.RW.lazy.writeTTL = function writeTTL(ttl, frame) {
     // ttl:4

@@ -82,11 +82,14 @@ function initRead() {
 
     // TODO: wrap errors in protocol read errors?
 
-    var res = self.reqFrame.bodyRW.lazy.readTTL(self.reqFrame);
-    if (res.err) {
-        return res.err;
+    var timeout = self.reqFrame.bodyRW.lazy.readTTL(self.reqFrame);
+    if (timeout <= 0) {
+        return errors.InvalidTTL({
+            ttl: timeout,
+            isParseError: true
+        });
     }
-    self.timeout = res.value;
+    self.timeout = timeout;
 
     var serviceName = self.reqFrame.bodyRW.lazy
         .readServiceStr(self.reqFrame);
@@ -115,7 +118,7 @@ function initRead() {
     }
     self.endpoint = endpoint;
 
-    res = self.reqFrame.bodyRW.lazy.readTracing(self.reqFrame);
+    var res = self.reqFrame.bodyRW.lazy.readTracing(self.reqFrame);
     var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
     self.tracing = tracing;
 
