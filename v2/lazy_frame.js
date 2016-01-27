@@ -47,6 +47,7 @@ function CallRequestCache() {
     this.routingDelegateStr = null;
     this.arg1Str = null;
     this.ttlValue = null;
+    this.tracingValue = null;
 
     this.headerStartOffset = null;
     this.csumStartOffset = null;

@@ -118,9 +118,9 @@ function initRead() {
     }
     self.endpoint = endpoint;
 
-    var res = self.reqFrame.bodyRW.lazy.readTracing(self.reqFrame);
-    var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
-    self.tracing = tracing;
+    var tracing = self.reqFrame.bodyRW.lazy
+        .readTracingValue(self.reqFrame);
+    self.tracing = tracing || v2.Tracing.emptyTracing;
 
     return null;
 };

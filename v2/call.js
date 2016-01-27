@@ -130,6 +130,50 @@ CallRequest.RW.lazy.readService = function lazyReadService(frame) {
     return bufrw.str1.readFrom(frame.buffer, CallRequest.RW.lazy.serviceOffset);
 };
 
+CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
+    if (frame.cache.tracingValue !== null) {
+        return frame.cache.tracingValue;
+    }
+
+    var offset = CallRequest.RW.lazy.tracingOffset;
+
+    if (frame.size < offset + 25) {
+        return null;
+    }
+
+    var spanid1 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var spanid2 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var parentid1 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var parentid2 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var traceid1 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var traceid2 = frame.buffer.readUInt32BE(offset, false);
+    offset += 4;
+
+    var flags = frame.buffer.readUInt8(offset, false);
+    offset += 1;
+
+    var tracing = new Tracing(
+        [spanid1, spanid2],
+        [parentid1, parentid2],
+        [traceid1, traceid2],
+        flags
+    );
+
+    frame.cache.tracingValue = tracing;
+
+    return tracing;
+};
+
 CallRequest.RW.lazy.readServiceStr = function lazyReadServiceStr(frame) {
     if (frame.cache.serviceStr !== null) {
         return frame.cache.serviceStr;
