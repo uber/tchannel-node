@@ -244,6 +244,7 @@ TChannelOutRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     info.outRequestState = States.describe(self.state);
     info.outRequestRemoteAddr = self.remoteAddr;
     info.serviceName = self.serviceName;
+    info.callerName = self.callerName;
     info.outRequestErr = self.err;
 
     if (self.endpoint !== null) {
