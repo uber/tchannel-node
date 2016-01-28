@@ -42,6 +42,8 @@ function ArgRW(sizerw) {
     this.bufrw = bufrw.VariableBuffer(this.sizerw, true);
 }
 
+inherits(ArgRW, bufrw.Base);
+
 ArgRW.prototype.byteLength = function byteLength(arg) {
     if (typeof arg === 'string') {
         return this.strrw.byteLength(arg);
