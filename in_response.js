@@ -72,6 +72,7 @@ TChannelInResponse.prototype.extendLogInfo = function extendLogInfo(info) {
     info.responseType = self.type;
     info.responseState = States.describe(self.state);
     info.responseOk = self.ok;
+    info.responseCode = self.code;
 
     return info;
 };
