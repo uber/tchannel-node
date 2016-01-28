@@ -220,15 +220,10 @@ TChannelOutResponse.prototype.responseAlreadyDone = function responseAlreadyDone
             listeners = errorEvent.listeners.length;
         }
 
-        self.logger.error('responseAlreadyDone detected!!', {
-            currentState: self.state,
-            codeString: self.codeString,
-            errMessage: self.message,
-            callerName: self.inreq ? self.inreq.callerName : 'NA',
-            serviceName: self.inreq ? self.inreq.serviceName : 'NA',
-            listener: listener,
-            listeners: listeners
-        });
+        self.logger.error('responseAlreadyDone detected!!', self.extendLogInfo({
+            haveErrorListener: listener,
+            numberOfErrorListenerrs: listeners
+        }));
         return true;
     } else {
         return false;
