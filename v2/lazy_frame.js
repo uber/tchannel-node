@@ -54,6 +54,8 @@ function CallRequestCache() {
 
     this.cnValueOffset = null;
     this.rdValueOffset = null;
+
+    this.lastError = null;
 }
 
 // size:2 type:1 reserved:1 id:4 reserved:8 ...

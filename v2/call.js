@@ -361,6 +361,7 @@ CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
     if (!frame.cache.csumStartOffset) {
         var success = scanAndSkipHeaders(frame);
         if (!success) {
+            frame.cache.lastError = 'Could not scan & skip headers';
             return null;
         }
     }
@@ -368,6 +369,7 @@ CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
     var offset = frame.cache.csumStartOffset;
 
     if (frame.size < offset + 1) {
+        frame.cache.lastError = 'Could not read csum type';
         return null;
     }
     var csumType = frame.buffer.readUInt8(offset, false);
@@ -378,6 +380,7 @@ CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
     }
 
     if (frame.size < offset + 2) {
+        frame.cache.lastError = 'Could not read arg1 size';
         return null;
     }
     var arg1Length = frame.buffer.readUInt16BE(offset, false);
@@ -386,6 +389,7 @@ CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
     var end = offset + arg1Length;
 
     if (frame.size < end) {
+        frame.cache.lastError = 'Could not read arg1 itself';
         return null;
     }
     var arg1Str = fastBufferToString(frame.buffer, offset, end);

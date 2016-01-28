@@ -93,7 +93,8 @@ function initRead() {
         .readServiceStr(self.reqFrame);
     if (!serviceName) {
         return errors.BadCallRequestFrameError({
-            reason: 'Could not read service name'
+            reason: 'Could not read service name',
+            lastError: self.reqFrame.cache.lastError
         });
     }
     self.serviceName = serviceName;
@@ -102,16 +103,18 @@ function initRead() {
         .readCallerNameStr(self.reqFrame);
     if (!callerName) {
         return errors.BadCallRequestFrameError({
-            reason: 'Could not read caller name'
+            reason: 'Could not read caller name',
+            lastError: self.reqFrame.cache.lastError
         });
     }
     self.callerName = callerName;
 
     var endpoint = self.reqFrame.bodyRW.lazy
         .readArg1Str(self.reqFrame);
-    if (!endpoint) {
+    if (endpoint === null) {
         return errors.BadCallRequestFrameError({
-            reason: 'Could not read arg1'
+            reason: 'Could not read arg1',
+            lastError: self.reqFrame.cache.lastError
         });
     }
     self.endpoint = endpoint;
