@@ -236,6 +236,7 @@ TChannelOutRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     var self = this;
 
     info.outRequestId = self.id;
+    // TODO: .start / .end
     info.outRequestType = self.type;
     info.outRequestState = States.describe(self.state);
     info.outRequestRemoteAddr = self.remoteAddr;
@@ -248,6 +249,9 @@ TChannelOutRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     } else {
         info.outRequestArg1 = String(self.arg1);
     }
+
+    // TODO: delegate to self.res.extendLogInfo ?
+    // TODO: add hasOldResponse: !!self.res ?
 
     return info;
 };
