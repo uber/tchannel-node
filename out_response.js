@@ -235,10 +235,10 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
 
     if (self.inreq.connection && // because selfpeer/connection
         self.inreq.connection.closing) {
-        self.logger.info('ignoring outresponse.sendError on a closed connection', {
+        self.logger.info('ignoring outresponse.sendError on a closed connection', self.extendLogInfo({
             codeString: codeString,
             errorMessage: message
-        });
+        }));
         return;
     }
 
