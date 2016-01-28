@@ -214,15 +214,11 @@ TChannelOutRequest.prototype.emitError = function emitError(err) {
     var self = this;
 
     if (self.end) {
-        self.channel.logger.warn('Unexpected error after end for OutRequest', {
-            serviceName: self.serviceName,
-            endpoint: self.endpoint,
-            socketRemoteAddr: self.remoteAddr,
-            callerName: self.callerName,
+        self.channel.logger.warn('Unexpected error after end for OutRequest', self.extendLogInfo({
+            hasOldResponse: !!self.res,
             oldError: self.err,
-            oldResponse: !!self.res,
             error: err
-        });
+        }));
     } else {
         self.end = self.channel.timers.now();
     }
@@ -281,14 +277,9 @@ TChannelOutRequest.prototype.markEnd = function markEnd() {
     self.peer.invalidateScore('outreq.emitResponse');
 
     if (self.end) {
-        self.channel.logger.warn('Unexpected response after end for OutRequest', {
-            serviceName: self.serviceName,
-            endpoint: self.endpoint,
-            socketRemoteAddr: self.remoteAddr,
-            callerName: self.callerName,
-            oldError: self.err,
-            oldResponse: !!self.res
-        });
+        self.channel.logger.warn('Unexpected response after end for OutRequest', self.extendLogInfo({
+            hasOldResponse: !!self.res
+        }));
     } else {
         self.end = self.channel.timers.now();
     }
@@ -527,17 +518,10 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
     var timeoutError;
 
     if (self.err) {
-        self.channel.logger.warn('unexpected onTimeout for errored out request', {
-            serviceName: self.serviceName,
-            endpoint: self.endpoint,
-            socketRemoteAddr: self.remoteAddr,
-            callerName: self.callerName,
-
-            oldError: self.err,
-            oldResponse: !!self.res,
-
-            time: now
-        });
+        self.channel.logger.warn('unexpected onTimeout for errored out request', self.extendLogInfo({
+            hasOldResponse: !!self.res,
+            timeoutTime: now
+        }));
     }
 
     if (!self.res || self.res.state === States.Initial) {
