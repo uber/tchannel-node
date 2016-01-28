@@ -103,18 +103,21 @@ function TChannelV2Handler(options) {
 
 util.inherits(TChannelV2Handler, EventEmitter);
 
-TChannelV2Handler.prototype.write = function write() {
+TChannelV2Handler.prototype.write = function write(cb) {
     this.errorEvent.emit(this, new Error('write not implemented'));
+    if (cb) {
+        cb(new Error('write not implemented'));
+    }
 };
 
-TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end) {
+TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end, cb) {
     // TODO: Optimize, allocating SlowBuffer here is slow
     var copy = new Buffer(end - start);
     buffer.copy(copy, 0, start, end);
-    this.write(copy);
+    this.write(copy, cb);
 };
 
-TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
+TChannelV2Handler.prototype.pushFrame = function pushFrame(frame, cb) {
     var writeBuffer = GLOBAL_WRITE_BUFFER;
     var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
     var err = res.err;
@@ -126,8 +129,11 @@ TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
         }
         if (typeof err.offset !== 'number') err.offset = res.offset;
         this.writeErrorEvent.emit(this, err);
+        if (cb) {
+            cb(err);
+        }
     } else {
-        this.writeCopy(writeBuffer, 0, res.offset);
+        this.writeCopy(writeBuffer, 0, res.offset, cb);
     }
 };
 

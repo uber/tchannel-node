@@ -484,8 +484,8 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 
     self.setLazyHandling(self.channel.options.useLazyHandling);
 
-    self.handler.write = function write(buf) {
-        self.writeToSocket(buf);
+    self.handler.write = function write(buf, cb) {
+        self.writeToSocket(buf, cb);
     };
 
     self.mach.emit = handleReadFrame;
@@ -552,7 +552,7 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 };
 
 TChannelConnection.prototype.writeToSocket =
-function writeToSocket(buf) {
+function writeToSocket(buf, callback) {
     var self = this;
 
     if (self.socket._writableState.buffer.length >
@@ -572,10 +572,14 @@ function writeToSocket(buf) {
 
         // NUKE THE SOCKET
         self.resetAll(error);
+
+        if (callback) {
+            callback(error);
+        }
         return;
     }
 
-    self.socket.write(buf);
+    self.socket.write(buf, callback);
 };
 
 TChannelConnection.prototype.sendProtocolError =
