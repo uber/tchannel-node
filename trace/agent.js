@@ -112,7 +112,7 @@ Agent.prototype.setupNewSpan = function setupNewSpan(options) {
 };
 
 Agent.prototype.report = function report(span) {
-    if (span.flags === 1) {
+    if (span.flags & 0x01) {
         this.reporter(span);
     }
 };
