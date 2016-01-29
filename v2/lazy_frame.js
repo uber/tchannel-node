@@ -106,8 +106,19 @@ function readLazyFrameFrom(buffer, offset) {
     var start = offset;
 
     // size:2:
+    if (buffer.length < offset + 2) {
+        return bufrw.ReadResult.shortError(
+            offset + 2, buffer.length, offset
+        );
+    }
     var size = buffer.readUInt16BE(offset);
     offset += size;
+
+    if (buffer.length < offset) {
+        return bufrw.ReadResult.shortError(
+            offset, buffer.length, start
+        );
+    }
     var frameBuffer = buffer.slice(start, offset);
 
     // type:1
