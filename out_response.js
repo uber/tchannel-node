@@ -220,15 +220,10 @@ TChannelOutResponse.prototype.responseAlreadyDone = function responseAlreadyDone
             listeners = errorEvent.listeners.length;
         }
 
-        self.logger.error('responseAlreadyDone detected!!', {
-            currentState: self.state,
-            codeString: self.codeString,
-            errMessage: self.message,
-            callerName: self.inreq ? self.inreq.callerName : 'NA',
-            serviceName: self.inreq ? self.inreq.serviceName : 'NA',
-            listener: listener,
-            listeners: listeners
-        });
+        self.logger.error('responseAlreadyDone detected!!', self.extendLogInfo({
+            haveErrorListener: listener,
+            numberOfErrorListenerrs: listeners
+        }));
         return true;
     } else {
         return false;
@@ -240,10 +235,10 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
 
     if (self.inreq.connection && // because selfpeer/connection
         self.inreq.connection.closing) {
-        self.logger.info('ignoring outresponse.sendError on a closed connection', {
+        self.logger.info('ignoring outresponse.sendError on a closed connection', self.extendLogInfo({
             codeString: codeString,
             errorMessage: message
-        });
+        }));
         return;
     }
 

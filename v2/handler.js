@@ -103,6 +103,24 @@ function TChannelV2Handler(options) {
 
 util.inherits(TChannelV2Handler, EventEmitter);
 
+TChannelV2Handler.prototype.justExtendLogInfo = function extendLogInfo(info) {
+    info.handlerLastSentFrameId = this.lastSentFrameId;
+    info.handlerIsLazy = this.handleFrame === this.handleLazyFrame;
+    info.canHandleLazyCalls = !!this.handleCallLazily;
+    info.handlerRequireAs = this.requireAs;
+    info.handlerRequireCn = this.requireCn;
+    return info;
+};
+
+TChannelV2Handler.prototype.extendLogInfo = function extendLogInfo(info) {
+    info = this.justExtendLogInfo(info);
+
+    // adds remoteName, hostPort, remoteAddr, etc
+    info = this.connection.extendLogInfo(info);
+
+    return info;
+};
+
 TChannelV2Handler.prototype.write = function write() {
     this.errorEvent.emit(this, new Error('write not implemented'));
 };
@@ -310,12 +328,10 @@ TChannelV2Handler.prototype.checkCallResFrame = function checkCallResFrame(resFr
                 frame: 'response'
             });
         } else {
-            this.logger.warn('Expected "as" for incoming response', {
+            this.logger.warn('Expected "as" for incoming response', this.extendLogInfo({
                 code: resFrame.body.code,
-                remoteName: this.remoteName,
-                endpoint: String(resFrame.body.args[0]),
-                socketRemoteAddr: this.connection.socketRemoteAddr
-            });
+                endpoint: String(resFrame.body.args[0])
+            }));
         }
     }
 
@@ -332,13 +348,11 @@ TChannelV2Handler.prototype.checkCallReqFrame = function checkCallReqFrame(reqFr
                 frame: 'request'
             });
         } else {
-            this.logger.warn('Expected "as" header for incoming req', {
+            this.logger.warn('Expected "as" header for incoming req', this.extendLogInfo({
                 arg1: String(reqFrame.body.args[0]),
                 serviceName: reqFrame.body.service,
-                callerName: reqFrame.body.headers.cn,
-                remoteName: this.remoteName,
-                socketRemoteAddr: this.connection.socketRemoteAddr
-            });
+                callerName: reqFrame.body.headers.cn
+            }));
         }
     }
 
@@ -349,12 +363,10 @@ TChannelV2Handler.prototype.checkCallReqFrame = function checkCallReqFrame(reqFr
         if (this.requireCn) {
             return errors.InCnHeaderRequired();
         } else {
-            this.logger.warn('Expected "cn" header for incoming req', {
+            this.logger.warn('Expected "cn" header for incoming req', this.extendLogInfo({
                 arg1: String(reqFrame.body.args[0]),
-                serviceName: reqFrame.body.service,
-                remoteName: this.remoteName,
-                socketRemoteAddr: this.connection.socketRemoteAddr
-            });
+                serviceName: reqFrame.body.service
+            }));
         }
     }
 
@@ -647,13 +659,8 @@ function verifyCallRequestFrame(req, args) {
         if (this.requireAs) {
             return errors.OutAsHeaderRequired();
         } else {
-            this.logger.error('Expected "as" header to be set for request', {
-                arg1: req.endpoint,
-                callerName: req.callerName,
-                remoteName: this.remoteName,
-                serviceName: req.serviceName,
-                socketRemoteAddr: this.connection.socketRemoteAddr
-            });
+            this.logger.error('Expected "as" header to be set for request', this.justExtendLogInfo(req.extendLogInfo({
+            })));
         }
     }
 
@@ -661,12 +668,8 @@ function verifyCallRequestFrame(req, args) {
         if (this.requireCn) {
             return errors.OutCnHeaderRequired();
         } else {
-            this.logger.error('Expected "cn" header to be set for request', {
-                arg1: req.endpoint,
-                remoteName: this.remoteName,
-                serviceName: req.serviceName,
-                socketRemoteAddr: this.connection.socketRemoteAddr
-            });
+            this.logger.error('Expected "cn" header to be set for request', this.justExtendLogInfo(req.extendLogInfo({
+            })));
         }
     }
 
@@ -705,12 +708,8 @@ function validateCallResponseFrame(res) {
         assert(res.headers && res.headers.as,
             'Expected the "as" transport header to be set for response');
     } else if (!res.headers || !res.headers.as) {
-        this.logger.error('Expected "as" header to be set for response', {
-            code: res.code,
-            remoteName: this.remoteName,
-            arg1: this.inreq.endpoint,
-            socketRemoteAddr: this.connection.socketRemoteAddr
-        });
+        this.logger.error('Expected "as" header to be set for response', this.justExtendLogInfo(res.extendLogInfo({
+        })));
     }
 
     return null;
@@ -793,9 +792,9 @@ TChannelV2Handler.prototype.sendPingReponse = function sendPingReponse(res) {
 TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing, codeString, message) {
     var code = v2.ErrorResponse.Codes[codeString];
     if (code === undefined) {
-        this.logger.error('invalid error frame code string', {
+        this.logger.error('invalid error frame code string', this.extendLogInfo({
             codeString: codeString
-        });
+        }));
         code = v2.ErrorResponse.Codes.UnexpectedError;
         message = 'UNKNOWN CODE(' + codeString + '): ' + message;
     }
