@@ -53,19 +53,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return true;
     }
 
-    if (self.circuits) {
-        var circuit = self.circuits.getCircuit(
-            rereq.callerName || 'no-cn', rereq.serviceName, rereq.endpoint
-        );
-        if (!circuit.state.shouldRequest()) {
-            rereq.sendErrorFrame('Declined', 'Service is not healthy');
-            return true;
-        }
-
-        rereq.circuit = circuit;
-        circuit.state.onRequest(rereq);
-    }
-
     rereq.peer = self.channel.peers.choosePeer(null);
     if (!rereq.peer) {
         rereq.sendErrorFrame('Declined', 'no peer available for request');
@@ -81,19 +68,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
 
 RelayHandler.prototype.handleRequest = function handleRequest(req, buildRes) {
     var self = this;
-
-    if (self.circuits) {
-        var circuit = self.circuits.getCircuit(
-            req.headers.cn || 'no-cn', req.serviceName, req.endpoint
-        );
-        if (!circuit.state.shouldRequest()) {
-            buildRes().sendError('Declined', 'Service is not healthy');
-            return;
-        }
-
-        req.circuit = circuit;
-        circuit.state.onRequest(req);
-    }
 
     req.forwardTrace = true;
 

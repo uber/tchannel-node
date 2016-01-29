@@ -56,6 +56,7 @@ function LazyRelayInReq(conn, reqFrame) {
 
     this.boundExtendLogInfo = extendLogInfo;
     this.boundOnIdentified = onIdentified;
+    this.circuit = reqFrame.circuit;
 
     var self = this;
 
