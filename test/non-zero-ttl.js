@@ -406,5 +406,7 @@ function sendCallRequestFrame(conn, ttl, onWrite) {
     callFrameBytes[1] = callFrameBytes.length;
 
     var buffer = new Buffer(callFrameBytes);
-    conn.socket.write(buffer, onWrite);
+    conn._socket.writeBuffer(buffer);
+
+    setTimeout(onWrite, 5);
 }

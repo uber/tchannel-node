@@ -43,11 +43,11 @@ var globalTimers = extend(require('timers'), {
 });
 var setImmediate = require('timers').setImmediate;
 var globalRandom = Math.random;
-var net = require('net');
 var format = require('util').format;
 var inherits = require('util').inherits;
 var inspect = require('util').inspect;
 
+var WrapServer = require('./lib/light-net/wrap-server.js');
 var HostPort = require('./host-port.js');
 var nullLogger = require('./null-logger.js');
 var EndpointHandler = require('./endpoint-handler.js');
@@ -220,7 +220,7 @@ function TChannel(options) {
     }
 
     // lazily created by .getServer (usually from .listen)
-    this.serverSocket = null;
+    this._serverSocket = null;
     this.serverConnections = null;
 
     this.TChannelAsThrift = TChannelAsThrift;
@@ -438,44 +438,34 @@ TChannel.prototype.drain = function drain(reason, callback) {
 
 TChannel.prototype.getServer = function getServer() {
     var self = this;
-    if (self.serverSocket) {
-        return self.serverSocket;
+    if (self._serverSocket) {
+        return self._serverSocket;
     }
 
     self.serverConnections = Object.create(null);
-    self.serverSocket = net.createServer(onServerSocketConnection);
-    self.serverSocket.on('listening', onServerSocketListening);
-    self.serverSocket.on('error', onServerSocketError);
 
-    return self.serverSocket;
+    self._serverSocket = new WrapServer(self);
 
-    function onServerSocketConnection(sock) {
-        self.onServerSocketConnection(sock);
-    }
-
-    function onServerSocketListening() {
-        self.onServerSocketListening();
-    }
-
-    function onServerSocketError(err) {
-        self.onServerSocketError(err);
-    }
+    return self._serverSocket;
 };
 
-TChannel.prototype.onServerSocketConnection = function onServerSocketConnection(sock) {
+TChannel.prototype.onIncomingSocket = function onIncomingSocket(sock) {
     var self = this;
+
+    var info = sock.getRemotePeerName() || {};
 
     if (self.destroyed) {
         self.logger.error('got incoming socket whilst destroyed', self.extendLogInfo({
-            remoteAddress: sock.remoteAddress,
-            remotePort: sock.remotePort
+            remoteAddress: info.address,
+            remotePort: info.port
         }));
         return;
     }
 
-    var socketRemoteAddr = sock.remoteAddress + ':' + sock.remotePort;
+    var socketRemoteAddr = info.address + ':' + info.port;
     var chan = self.topChannel || self;
     var conn = new TChannelConnection(chan, sock, 'in', socketRemoteAddr);
+    conn.accept();
 
     if (self.draining) {
         conn.drain(self.drainReason, null);
@@ -491,7 +481,7 @@ TChannel.prototype.onServerSocketConnection = function onServerSocketConnection(
         delete self.serverConnections[socketRemoteAddr];
     }
 
-    sock.on('close', onSocketClose);
+    conn.closeEvent.on(onSocketClose);
 
     self.serverConnections[socketRemoteAddr] = conn;
     self.connectionEvent.emit(self, conn);
@@ -521,15 +511,15 @@ TChannel.prototype.onServerSocketConnection = function onServerSocketConnection(
 TChannel.prototype.onServerSocketListening = function onServerSocketListening() {
     var self = this;
 
-    var address = self.serverSocket.address();
-    var hostPort = self.host + ':' + address.port;
-
     if (self.destroyed) {
         self.logger.error('got serverSocket listen whilst destroyed', self.extendLogInfo({
             requestedPort: self.requestedPort
         }));
         return;
     }
+
+    var address = self._serverSocket.address();
+    var hostPort = self.host + ':' + address.port;
 
     self.hostPort = hostPort;
     self.listening = true;
@@ -547,7 +537,7 @@ TChannel.prototype.onServerSocketListening = function onServerSocketListening() 
     self.listeningEvent.emit(self);
 };
 
-TChannel.prototype.onServerSocketError = function onServerSocketError(err) {
+TChannel.prototype.onSocketError = function onSocketError(err) {
     var self = this;
 
     if (err.code === 'EADDRINUSE') {
@@ -631,8 +621,21 @@ TChannel.prototype.listen = function listen(port, host, callback) {
     self.listened = true;
     self.requestedPort = port;
     self.host = host;
-    self.getServer().listen(port, host, callback);
+    self.getServer().listen(port, host, onServerSocketListening);
+
+    function onServerSocketListening(err) {
+        if (err) {
+            return self.onSocketError(err);
+        }
+
+        self.onServerSocketListening();
+        if (callback) {
+            callback(null);
+        }
+    }
 };
+
+function noop() {}
 
 TChannel.prototype.register = function register(name, options, handler) {
     var self = this;
@@ -661,8 +664,8 @@ TChannel.prototype.register = function register(name, options, handler) {
 
 TChannel.prototype.address = function address() {
     var self = this;
-    if (self.serverSocket) {
-        return self.serverSocket.address() || null;
+    if (self._serverSocket) {
+        return self._serverSocket.address() || null;
     } else if (self.topChannel) {
         return self.topChannel.address();
     } else {
@@ -916,12 +919,11 @@ TChannel.prototype.close = function close(callback) {
         self.sanityTimer = null;
     }
 
-    if (self.serverSocket) {
-        ++counter;
-        if (self.serverSocket.address()) {
-            closeServerSocket();
-        } else {
-            self.serverSocket.once('listening', closeServerSocket);
+    if (self._serverSocket) {
+        if (self._serverSocket.address()) {
+            ++counter;
+            process.nextTick(onClose);
+            self._serverSocket.close();
         }
     }
 
@@ -956,11 +958,6 @@ TChannel.prototype.close = function close(callback) {
     self.peers.close(onClose);
 
     onClose();
-
-    function closeServerSocket() {
-        self.serverSocket.once('close', onClose);
-        self.serverSocket.close();
-    }
 
     function onClose() {
         if (--counter <= 0) {

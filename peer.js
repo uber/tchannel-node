@@ -25,8 +25,8 @@ var inherits = require('util').inherits;
 var inspect = require('util').inspect;
 var EventEmitter = require('./lib/event_emitter');
 var stat = require('./stat-tags.js');
-var net = require('net');
 
+var createSocket = require('./lib/light-net/create-socket.js');
 var TChannelConnection = require('./connection');
 var HostPort = require('./host-port.js');
 var errors = require('./errors');
@@ -392,8 +392,7 @@ function connect(outOnly) {
     }
 
     if (!conn || (outOnly && conn.direction !== 'out')) {
-        var socket = self.makeOutSocket();
-        conn = self.makeOutConnection(socket);
+        conn = self.makeOutConnection();
         self.addConnection(conn);
     }
     return conn;
@@ -563,9 +562,10 @@ TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
     return ret;
 };
 
-TChannelPeer.prototype.makeOutSocket = function makeOutSocket() {
+TChannelPeer.prototype.makeOutConnection = function makeOutConnection() {
     var self = this;
 
+    var chan = self.channel.topChannel || self.channel;
     var reason = HostPort.validateHostPort(self.hostPort, false);
     if (reason) {
         assert(false, reason);
@@ -575,17 +575,11 @@ TChannelPeer.prototype.makeOutSocket = function makeOutSocket() {
     var host = parts[0];
     var port = parseInt(parts[1], 10);
 
-    var socket = net.createConnection({
-        host: host,
-        port: port
-    });
-    return socket;
-};
-
-TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
-    var self = this;
-    var chan = self.channel.topChannel || self.channel;
+    var socket = createSocket();
     var conn = new TChannelConnection(chan, socket, 'out', self.hostPort);
+
+    socket.connect(host, port);
+
     self.allocConnectionEvent.emit(self, conn);
     return conn;
 };

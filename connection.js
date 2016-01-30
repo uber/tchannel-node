@@ -99,7 +99,7 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
             ));
     }
 
-    this.socket = socket;
+    this._socket = socket;
     this.ephemeral = false;
     this.initHeaders = null;
 
@@ -122,9 +122,8 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
 
     this.mach = ReadMachine(bufrw.UInt16BE, v2.Frame.RW);
 
-    this.setupSocket();
+    self._socket.setOwner(self);
     this.setupHandler();
-    this.start();
 
     function handleCallLazily(frame) {
         return self.handleCallLazily(frame);
@@ -434,46 +433,56 @@ TChannelConnection.prototype.setLazyHandling = function setLazyHandling(enabled)
     self.handler.useLazyFrames(enabled);
 };
 
-TChannelConnection.prototype.setupSocket = function setupSocket() {
+TChannelConnection.prototype.accept = function accept() {
     var self = this;
 
-    self.socket.setNoDelay(true);
-    // TODO: stream the data with backpressure
-    // when you add data event listener you go into
-    // a deoptimized mode and you have lost all
-    // backpressure on the stream
-    self.socket.on('data', onSocketChunk);
-    self.socket.on('close', onSocketClose);
-    self.socket.on('error', onSocketError);
+    self._socket.accept();
+    self.start();
+};
 
-    // TODO: move to method for function optimization
-    function onSocketChunk(chunk) {
-        var err = self.mach.handleChunk(chunk);
-        if (err) {
-            self.sendProtocolError('read', err);
-        }
+TChannelConnection.prototype.onSocketWritable =
+function onSocketWritable() {
+    var self = this;
+
+    self.start();
+};
+
+TChannelConnection.prototype.onSocketBuffer =
+function onSocketBuffer(buffer, offset, end) {
+    var self = this;
+
+    var chunk = buffer.slice(offset, end);
+    var err = self.mach.handleChunk(chunk);
+    if (err) {
+        self.sendProtocolError('read', err);
+    }
+};
+
+TChannelConnection.prototype.onSocketEnd =
+function onSocketEnd() {
+};
+
+TChannelConnection.prototype.onSocketClose =
+function onSocketClose(isError) {
+    var self = this;
+
+    if (isError) {
+        return;
     }
 
-    // TODO: move to method for function optimization
-    function onSocketClose() {
-        self.resetAll(errors.SocketClosedError({
-            reason: 'remote closed',
-            socketRemoteAddr: self.socketRemoteAddr,
-            direction: self.direction,
-            remoteName: self.remoteName
-        }));
+    self.resetAll(errors.SocketClosedError({
+        reason: 'remote closed',
+        socketRemoteAddr: self.socketRemoteAddr,
+        direction: self.direction,
+        remoteName: self.remoteName
+    }));
 
-        if (self.ephemeral) {
-            var peer = self.channel.peers.get(self.socketRemoteAddr);
-            if (peer) {
-                peer.close(noop);
-            }
-            self.channel.peers.delete(self.socketRemoteAddr);
+    if (self.ephemeral) {
+        var peer = self.channel.peers.get(self.socketRemoteAddr);
+        if (peer) {
+            peer.close(noop);
         }
-    }
-
-    function onSocketError(err) {
-        self.onSocketError(err);
+        self.channel.peers.delete(self.socketRemoteAddr);
     }
 };
 
@@ -555,16 +564,14 @@ TChannelConnection.prototype.writeToSocket =
 function writeToSocket(buf) {
     var self = this;
 
-    if (self.socket._writableState.buffer.length >
-        MAX_PENDING_SOCKET_WRITE_REQ
-    ) {
+    var pendingWrites = self._socket.getPendingWrites();
+    if (pendingWrites > MAX_PENDING_SOCKET_WRITE_REQ) {
         var error = errors.SocketWriteFullError({
-            pendingWrites: self.socket._writableState.buffer.length
+            pendingWrites: pendingWrites
         });
         self.logger.warn('resetting connection due to write backup',
             self.extendLogInfo({
-                pendingWrites: self.socket._writableState.buffer.length,
-                totalFastBufferBytes: self.socket._writableState.length,
+                pendingWrites: pendingWrites,
                 lastBufferLength: buf.length,
                 error: error
             })
@@ -575,7 +582,7 @@ function writeToSocket(buf) {
         return;
     }
 
-    self.socket.write(buf);
+    self._socket.writeBuffer(buf);
 };
 
 TChannelConnection.prototype.sendProtocolError =
@@ -872,7 +879,9 @@ TChannelConnection.prototype.onInIdentified = function onInIdentified(init) {
     var self = this;
     if (init.hostPort === '0.0.0.0:0') {
         self.ephemeral = true;
-        self.remoteName = '' + self.socket.remoteAddress + ':' + self.socket.remotePort;
+        var info = self._socket.getRemotePeerName();
+
+        self.remoteName = '' + info.address + ':' + info.port;
         assert(self.remoteName !== self.channel.hostPort,
               'should not be able to receive ephemeral connection from self');
     } else {
@@ -889,11 +898,12 @@ TChannelConnection.prototype.onInIdentified = function onInIdentified(init) {
 
 TChannelConnection.prototype.close = function close(callback) {
     var self = this;
-    if (self.socket.destroyed) {
+
+    if (self.closing) {
         callback();
     } else {
-        self.socket.once('close', callback);
         self.resetAll(errors.LocalSocketCloseError());
+        callback(null);
     }
 };
 
@@ -962,7 +972,7 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
 
     self.closing = true;
     self.closeError = err;
-    self.socket.destroy();
+    self._socket.destroy();
 
     var requests = self.ops.getRequests();
     var pending = self.ops.getPending();
