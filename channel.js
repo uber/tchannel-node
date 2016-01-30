@@ -635,8 +635,6 @@ TChannel.prototype.listen = function listen(port, host, callback) {
     }
 };
 
-function noop() {}
-
 TChannel.prototype.register = function register(name, options, handler) {
     var self = this;
 
