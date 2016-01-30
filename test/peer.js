@@ -49,8 +49,7 @@ allocCluster.test('peer should use the identified connection', {
 
         var peer = subClient.peers.get(serverHost);
 
-        var socket = peer.makeOutSocket();
-        var conn = peer.makeOutConnection(socket);
+        var conn = peer.makeOutConnection();
         peer.addConnection(conn);
         assert.doesNotThrow(
             function noThrow() {
@@ -94,8 +93,7 @@ allocCluster.test('peer should return the latest connection when none is identif
     });
 
     var peer = subClient.peers.get(serverHost);
-    var socket = peer.makeOutSocket();
-    var conn = peer.makeOutConnection(socket);
+    var conn = peer.makeOutConnection();
     peer.addConnection(conn);
 
     assert.equals(conn, peer.getIdentifiedOutConnection(), 'should return the latest connection');
@@ -123,8 +121,7 @@ allocCluster.test('peer can setMaxTombstoneTTL', {
     });
 
     var peer = subClient.peers.get(serverHost);
-    var socket = peer.makeOutSocket();
-    var conn = peer.makeOutConnection(socket);
+    var conn = peer.makeOutConnection();
     peer.addConnection(conn);
 
     assert.doesNotThrow(function noThrow() {
@@ -157,8 +154,7 @@ allocCluster.test('peer close should not leak connections', {
     connection.identifiedEvent.on(onIdentified);
     function onIdentified() {
         peer = server.peers.values()[0];
-        var socket = peer.makeOutSocket();
-        var conn = peer.makeOutConnection(socket);
+        var conn = peer.makeOutConnection();
         peer.addConnection(conn);
         var count = 2;
         peer.removeConnectionEvent.on(function onClose() {
