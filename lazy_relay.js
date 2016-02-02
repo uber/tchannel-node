@@ -33,6 +33,7 @@ module.exports = {
 // TODO: lazy reqs
 // - audit #extendLogInfo vs regular reqs
 
+/*eslint max-statements: [2, 40]*/
 function LazyRelayInReq(conn, reqFrame) {
     this.channel = conn.channel;
     this.conn = conn;
@@ -53,6 +54,7 @@ function LazyRelayInReq(conn, reqFrame) {
     this.error = null;
     this.tracing = null;
     this.reqContFrames = [];
+    this.hasRead = false;
 
     this.boundExtendLogInfo = extendLogInfo;
     this.boundOnIdentified = onIdentified;
@@ -78,6 +80,11 @@ LazyRelayInReq.prototype.type = 'tchannel.lazy.incoming-request';
 LazyRelayInReq.prototype.initRead =
 function initRead() {
     var self = this;
+
+    if (self.hasRead) {
+        return null;
+    }
+    self.hasRead = true;
 
     // TODO: wrap errors in protocol read errors?
 
@@ -123,6 +130,18 @@ function initRead() {
     var tracing = self.reqFrame.bodyRW.lazy
         .readTracingValue(self.reqFrame);
     self.tracing = tracing || v2.Tracing.emptyTracing;
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.recvd',
+        'counter',
+        1,
+        new stat.InboundCallsRecvdTags(
+            self.callerName,
+            self.serviceName,
+            self.endpoint
+        )
+    );
+    self._observeCallReqFrame(self.reqFrame);
 
     return null;
 };
@@ -197,17 +216,6 @@ function createOutRequest() {
     } else {
         self.peer.waitForIdentified(self.boundOnIdentified);
     }
-
-    self.channel.emitFastStat(
-        'tchannel.inbound.calls.recvd',
-        'counter',
-        1,
-        new stat.InboundCallsRecvdTags(
-            self.callerName,
-            self.serviceName,
-            self.endpoint
-        )
-    );
 };
 
 LazyRelayInReq.prototype.onIdentified =
@@ -367,6 +375,10 @@ function onError(err) {
 LazyRelayInReq.prototype.sendErrorFrame =
 function sendErrorFrame(codeName, message) {
     var self = this;
+
+    var now = self.channel.timers.now();
+    self._observeInboundErrorFrame(now, codeName);
+
     self.conn.sendLazyErrorFrame(self.id, self.tracing, codeName, message);
 };
 
@@ -400,27 +412,16 @@ function handleFrameLazily(frame) {
     }
 
     if (frame.type === v2.Types.CallRequest) {
-        self._observeCallReqFrame(frame);
+        self._observeCallReqOutFrame(frame);
     } else if (frame.type === v2.Types.CallRequestCont) {
         self._observeCallReqContFrame(frame);
     // } else { TODO: log
     }
 };
 
-LazyRelayInReq.prototype._observeCallReqFrame =
-function _observeCallReqFrame(frame) {
+LazyRelayInReq.prototype._observeCallReqOutFrame =
+function _observeCallReqOutFrame(frame) {
     var self = this;
-
-    self.channel.emitFastStat(
-        'tchannel.inbound.request.size',
-        'counter',
-        frame.size,
-        new stat.InboundRequestSizeTags(
-            self.callerName,
-            self.serviceName,
-            self.endpoint
-        )
-    );
 
     self.channel.emitFastStat(
         'tchannel.outbound.request.size',
@@ -440,6 +441,50 @@ function _observeCallReqFrame(frame) {
         new stat.OutboundCallsSentTags(
             self.serviceName,
             self.callerName,
+            self.endpoint
+        )
+    );
+};
+
+LazyRelayInReq.prototype._observeInboundErrorFrame =
+function _observeInboundErrorFrame(now, codeName) {
+    var self = this;
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.latency',
+        'timing',
+        now - self.start,
+        new stat.InboundCallsLatencyTags(
+            self.callerName,
+            self.serviceName,
+            self.endpoint
+        )
+    );
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.system-errors',
+        'counter',
+        1,
+        new stat.InboundCallsSystemErrorsTags(
+            self.callerName,
+            self.serviceName,
+            self.endpoint,
+            codeName
+        )
+    );
+};
+
+LazyRelayInReq.prototype._observeCallReqFrame =
+function _observeCallReqFrame(frame) {
+    var self = this;
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.request.size',
+        'counter',
+        frame.size,
+        new stat.InboundRequestSizeTags(
+            self.callerName,
+            self.serviceName,
             self.endpoint
         )
     );
@@ -616,17 +661,6 @@ LazyRelayOutReq.prototype._observeErrorFrame =
 function _observeErrorFrame(errFrame, now) {
     var self = this;
 
-    self.channel.emitFastStat(
-        'tchannel.inbound.calls.latency',
-        'timing',
-        now - self.inreq.start,
-        new stat.InboundCallsLatencyTags(
-            self.inreq.callerName,
-            self.inreq.serviceName,
-            self.inreq.endpoint
-        )
-    );
-
     var res = errFrame.bodyRW.lazy.readCode(errFrame);
     if (res.err) {
         self.logger.error('failed to read error frame code', self.extendLogInfo({
@@ -645,6 +679,8 @@ function _observeErrorFrame(errFrame, now) {
         }
     }
 
+    self.inreq._observeInboundErrorFrame(now, codeName);
+
     self.channel.emitFastStat(
         'tchannel.outbound.calls.system-errors',
         'counter',
@@ -655,18 +691,6 @@ function _observeErrorFrame(errFrame, now) {
             self.inreq.endpoint,
             codeName,
             0
-        )
-    );
-
-    self.channel.emitFastStat(
-        'tchannel.inbound.calls.system-errors',
-        'counter',
-        1,
-        new stat.InboundCallsSystemErrorsTags(
-            self.inreq.callerName,
-            self.inreq.serviceName,
-            self.inreq.endpoint,
-            codeName
         )
     );
 

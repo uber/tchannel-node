@@ -24,6 +24,7 @@ var allocCluster = require('./lib/alloc-cluster');
 var TChannel = require('../channel');
 var RelayHandler = require('../relay_handler');
 var validators = require('./lib/simple_validators');
+var process = global.process;
 
 function isNumber(assert, value) {
     assert.ok(typeof value === 'number', 'expected number');
@@ -202,6 +203,66 @@ var fixture = {
     }
 };
 
+var errorFixture = {
+    'tchannel.inbound.calls.recvd': {
+        name: 'tchannel.inbound.calls.recvd',
+        type: 'counter',
+        value: 1,
+        tags: {
+            app: '',
+            host: '',
+            cluster: '',
+            version: '',
+            callingService: 'wat',
+            service: 'two',
+            endpoint: 'echo'
+        }
+    },
+    'tchannel.inbound.request.size': {
+        name: 'tchannel.inbound.request.size',
+        type: 'counter',
+        value: 91,
+        tags: {
+            app: '',
+            host: '',
+            cluster: '',
+            version: '',
+            callingService: 'wat',
+            service: 'two',
+            endpoint: 'echo'
+        }
+    },
+    'tchannel.inbound.calls.latency': {
+        name: 'tchannel.inbound.calls.latency',
+        type: 'timing',
+        value: isNumber,
+        tags: {
+            app: '',
+            host: '',
+            cluster: '',
+            version: '',
+            callingService: 'wat',
+            service: 'two',
+            endpoint: 'echo'
+        }
+    },
+    'tchannel.inbound.calls.system-errors': {
+        name: 'tchannel.inbound.calls.system-errors',
+        type: 'counter',
+        value: 1,
+        tags: {
+            app: '',
+            host: '',
+            cluster: '',
+            version: '',
+            callingService: 'wat',
+            service: 'two',
+            endpoint: 'echo',
+            type: 'Declined'
+        }
+    }
+};
+
 allocCluster.test('relay emits expected stats', {
     numPeers: 2
 }, function t(cluster, assert) {
@@ -319,6 +380,104 @@ allocCluster.test('lazy relay emits expected stats', {
         assert.end();
     });
 });
+
+allocCluster.test('eager relay emits no peer stat', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var one = cluster.channels[0];
+    var stats = [];
+
+    one.setLazyHandling(false);
+    one.on('stat', function onStat(stat) {
+        stats.push(stat);
+    });
+
+    var oneToTwo = one.makeSubChannel({
+        serviceName: 'two',
+        peers: []
+    });
+    oneToTwo.handler = new RelayHandler(oneToTwo);
+
+    var twoClient = createClient(cluster);
+
+    twoClient.request({
+        hasNoParent: true
+    }).send('echo', 'foo', 'bar', function done(err, res, arg2, arg3) {
+        assert.ok(err, 'expected err');
+        assert.equal(err.type, 'tchannel.declined');
+
+        twoClient.topChannel.close();
+
+        process.nextTick(checkStat);
+
+        function checkStat() {
+            // console.log('FFFFFFFFFF---', stats);
+            var statsByName = collectStatsByName(assert, stats);
+            validators.validate(assert, statsByName, errorFixture);
+
+            assert.end();
+        }
+    });
+});
+
+allocCluster.test('lazy relay emits no peer stat', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var one = cluster.channels[0];
+    var stats = [];
+
+    one.setLazyHandling(true);
+    one.on('stat', function onStat(stat) {
+        stats.push(stat);
+    });
+
+    var oneToTwo = one.makeSubChannel({
+        serviceName: 'two',
+        peers: []
+    });
+    oneToTwo.handler = new RelayHandler(oneToTwo);
+
+    var twoClient = createClient(cluster);
+
+    twoClient.request({
+        hasNoParent: true
+    }).send('echo', 'foo', 'bar', function done(err, res, arg2, arg3) {
+        assert.ok(err, 'expected err');
+        assert.equal(err.type, 'tchannel.declined');
+
+        twoClient.topChannel.close();
+
+        process.nextTick(checkStat);
+
+        function checkStat() {
+            // console.log('FFFFFFFFFF---', stats);
+            var statsByName = collectStatsByName(assert, stats);
+            validators.validate(assert, statsByName, errorFixture);
+
+            assert.end();
+        }
+    });
+});
+
+function createClient(cluster) {
+    var client = TChannel({
+        logger: cluster.channels[0].logger,
+        timeoutFuzz: 0
+    });
+    var twoClient = client.makeSubChannel({
+        serviceName: 'two',
+        peers: [cluster.channels[0].hostPort],
+        requestDefaults: {
+            serviceName: 'two',
+            headers: {
+                as: 'raw',
+                cn: 'wat'
+            }
+        }
+    });
+
+    return twoClient;
+}
 
 function echo(req, res, arg2, arg3) {
     res.headers.as = 'raw';
