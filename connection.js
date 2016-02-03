@@ -1109,6 +1109,48 @@ function sendLazyErrorFrameForReq(reqFrame, codeString, message) {
     var tracing = res.err ? v2.Tracing.emptyTracing : res.value;
 
     self.sendLazyErrorFrame(reqFrame.id, tracing, codeString, message);
+
+    var now = self.channel.timers.now();
+    self._observeInboundErrorFrame(reqFrame, now, codeString);
+};
+
+TChannelConnection.prototype._observeInboundErrorFrame =
+function _observeInboundErrorFrame(reqFrame, now, codeName) {
+    var self = this;
+
+    var serviceName = reqFrame.bodyRW.lazy
+        .readServiceStr(reqFrame);
+    var callerName = reqFrame.bodyRW.lazy
+        .readCallerNameStr(reqFrame);
+    var endpoint = reqFrame.bodyRW.lazy
+        .readArg1Str(reqFrame);
+
+    if (!callerName || !serviceName || endpoint === null) {
+        return;
+    }
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.latency',
+        'timing',
+        now - reqFrame.start,
+        new stat.InboundCallsLatencyTags(
+            callerName,
+            serviceName,
+            endpoint
+        )
+    );
+
+    self.channel.emitFastStat(
+        'tchannel.inbound.calls.system-errors',
+        'counter',
+        1,
+        new stat.InboundCallsSystemErrorsTags(
+            callerName,
+            serviceName,
+            endpoint,
+            codeName
+        )
+    );
 };
 
 TChannelConnection.prototype.sendLazyErrorFrame =
