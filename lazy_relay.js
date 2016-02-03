@@ -376,10 +376,10 @@ LazyRelayInReq.prototype.sendErrorFrame =
 function sendErrorFrame(codeName, message) {
     var self = this;
 
+    self.conn.sendLazyErrorFrame(self.id, self.tracing, codeName, message);
+
     var now = self.channel.timers.now();
     self._observeInboundErrorFrame(now, codeName);
-
-    self.conn.sendLazyErrorFrame(self.id, self.tracing, codeName, message);
 };
 
 LazyRelayInReq.prototype.handleFrameLazily =
