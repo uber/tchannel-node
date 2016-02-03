@@ -163,6 +163,8 @@ TChannelV2Handler.prototype.useLazyFrames = function useLazyFrames(enabled) {
 };
 
 TChannelV2Handler.prototype.handleLazyFrame = function handleLazyFrame(frame) {
+    frame.start = Date.now();
+
     switch (frame.type) {
         // TODO: make some lazy type handlers?
         // case v2.Types.InitRequest:

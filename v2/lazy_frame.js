@@ -35,6 +35,7 @@ function LazyFrame(size, type, id, buffer) {
     this.type = type;
     this.id = id;
     this.buffer = buffer;
+    this.start = null;
 
     this.body = null;
     this.bodyRW = null;
