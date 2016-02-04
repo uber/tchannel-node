@@ -464,6 +464,8 @@ HyperbahnClient.prototype.discover =
 function discover(opts, cb) {
     var self = this;
 
+    opts = opts || {};
+
     assert(self.tchannel.hostPort,
         'must call tchannel.listen() before discover()');
 
@@ -475,26 +477,47 @@ function discover(opts, cb) {
     }
 
     var req = self.newRequest(opts);
+    var serviceName = opts.serviceName || self.serviceName;
 
     self.tchannelThrift.send(req, 'Hyperbahn::discover', null, {
         query: {
-            serviceName: self.serviceName
+            serviceName: serviceName
         }
     }, discoverInternalCb);
 
     function discoverInternalCb(err, res) {
-        self.logger.info('in discoverInternalCb');
-        if (err || !res.ok) {
+        if (err) {
             self.logger.error('call to discovery API failed', {
                 error: err,
-                serviceName: self.serviceName,
+                serviceName: serviceName,
                 response: res
             });
             cb(err, null);
             return;
         }
 
-        var hosts = [];
+        var hosts;
+
+        if (res.ok === false) {
+            err = res.body;
+            var errInfo2 = {
+                error: err,
+                serviceName: serviceName,
+            };
+
+            // If the response from Hyperbahn is that there are no peers
+            // available, we callback with the error but also an empty host
+            // list. Callers can then use the value of "hosts" to determine the
+            // result without having to parse the error.
+            if (res.typeName === 'noPeersAvailable') {
+                hosts = [];
+            }
+
+            cb(err, hosts);
+            return;
+        }
+
+        hosts = [];
         for (var i = 0; i < res.body.peers.length; i++) {
             hosts.push(convertHost(res.body.peers[i]));
         }
