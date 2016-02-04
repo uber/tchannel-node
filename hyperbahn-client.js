@@ -154,7 +154,9 @@ function HyperbahnClient(options) {
             preferConnectionDirection: 'in'
         });
     self.tchannelJSON = TChannelJSON();
-    self.tchannelThrift = TChannelThrift({source: thriftSource});
+    self.tchannelThrift = TChannelThrift({
+        source: thriftSource
+    });
 
     self.lastError = null;
     self.latestAdvertisementResult = null;
