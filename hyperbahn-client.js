@@ -503,10 +503,6 @@ function discover(opts, cb) {
 
         if (res.ok === false) {
             err = res.body;
-            var errInfo2 = {
-                error: err,
-                serviceName: serviceName,
-            };
 
             // If the response from Hyperbahn is that there are no peers
             // available, we callback with the error but also an empty host

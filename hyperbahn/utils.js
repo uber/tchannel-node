@@ -26,8 +26,8 @@ function convertHost(host) {
     var res = '';
     res += ((host.ip.ipv4 >>> 24) & 0xff) + '.';
     res += ((host.ip.ipv4 >>> 16) & 0xff) + '.';
-    res += ((host.ip.ipv4 >>>  8) & 0xff) + '.';
-    res += (host.ip.ipv4          & 0xff);
+    res += ((host.ip.ipv4 >>> 8) & 0xff) + '.';
+    res += (host.ip.ipv4 & 0xff);
     return res + ':' + host.port;
 }
 
