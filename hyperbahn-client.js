@@ -29,6 +29,7 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var safeJsonParse = require('safe-json-parse/tuple');
 var path = require('path');
+var hyperbahnUtils = require('./hyperbahn/utils');
 
 var Reporter = require('./tcollector/reporter.js');
 var TChannelJSON = require('./as/json.js');
@@ -521,7 +522,7 @@ function discover(opts, cb) {
 
         hosts = [];
         for (var i = 0; i < res.body.peers.length; i++) {
-            hosts.push(convertHost(res.body.peers[i]));
+            hosts.push(hyperbahnUtils.convertHost(res.body.peers[i]));
         }
 
         cb(null, hosts);
@@ -552,13 +553,4 @@ function safeSyncRead(filePath) {
     }
 
     return [error, fileContents];
-}
-
-function convertHost(host) {
-    var res = '';
-    res += ((((host.ip.ipv4 & 0xff000000) >> 24) + 0xff) % 0xff)  + '.';
-    res += ((host.ip.ipv4 & 0xff0000) >> 16) + '.';
-    res += ((host.ip.ipv4 & 0xff00) >> 8) + '.';
-    res += host.ip.ipv4 & 0xff;
-    return res + ':' + host.port;
 }
