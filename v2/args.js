@@ -30,8 +30,6 @@ var errors = require('../errors');
 
 var Base = bufrw.Base;
 var LengthResult = bufrw.LengthResult;
-var WriteResult = bufrw.WriteResult;
-var ReadResult = bufrw.ReadResult;
 
 /* eslint-disable curly */
 
@@ -44,24 +42,24 @@ function ArgRW(sizerw) {
 
 inherits(ArgRW, bufrw.Base);
 
-ArgRW.prototype.byteLength = function byteLength(arg) {
+ArgRW.prototype.poolByteLength = function poolByteLength(destResult, arg) {
     if (typeof arg === 'string') {
-        return this.strrw.byteLength(arg);
+        return this.strrw.poolByteLength(destResult, arg);
     } else {
-        return this.bufrw.byteLength(arg);
+        return this.bufrw.poolByteLength(destResult, arg);
     }
 };
 
-ArgRW.prototype.writeInto = function writeInto(arg, buffer, offset) {
+ArgRW.prototype.poolWriteInto = function poolWriteInto(destResult, arg, buffer, offset) {
     if (typeof arg === 'string') {
-        return this.strrw.writeInto(arg, buffer, offset);
+        return this.strrw.poolWriteInto(destResult, arg, buffer, offset);
     } else {
-        return this.bufrw.writeInto(arg, buffer, offset);
+        return this.bufrw.poolWriteInto(destResult, arg, buffer, offset);
     }
 };
 
-ArgRW.prototype.readFrom = function readFrom(buffer, offset) {
-    return this.bufrw.readFrom(buffer, offset);
+ArgRW.prototype.poolReadFrom = function poolReadFrom(destResult, buffer, offset) {
+    return this.bufrw.poolReadFrom(destResult, buffer, offset);
 };
 
 var arg2 = new ArgRW(bufrw.UInt16BE);
@@ -75,50 +73,51 @@ function ArgsRW(argrw) {
 }
 inherits(ArgsRW, bufrw.Base);
 
-ArgsRW.prototype.byteLength = function byteLength(body) {
+ArgsRW.prototype.poolByteLength = function poolByteLength(destResult, body) {
     var length = 0;
     var res;
 
-    res = Checksum.RW.byteLength(body.csum);
+    res = Checksum.RW.poolByteLength(destResult, body.csum);
     if (res.err) return res;
     length += res.length;
 
     if (body.args === null) {
-        return LengthResult.just(length);
+        return destResult.reset(null, length);
     }
 
     if (!Array.isArray(body.args)) {
-        return LengthResult.error(errors.InvalidArgumentError({
+        return destResult.reset(null, errors.InvalidArgumentError({
             argType: typeof body.args,
             argConstructor: body.args.constructor.name
         }));
     }
 
     for (var i = 0; i < body.args.length; i++) {
-        res = this.argrw.byteLength(body.args[i]);
+        res = this.argrw.poolByteLength(destResult, body.args[i]);
         if (res.err) return res;
         length += res.length;
     }
 
-    return LengthResult.just(length);
+    return destResult.reset(null, length);
 };
 
-ArgsRW.prototype.writeInto = function writeInto(body, buffer, offset) {
+var lenres = new LengthResult();
+ArgsRW.prototype.poolWriteInto = function poolWriteInto(destResult, body, buffer, offset) {
     var start = offset;
     var res;
 
-    var lenres = Checksum.RW.byteLength(body.csum);
-    if (lenres.err) return WriteResult.error(lenres.err);
+    lenres = Checksum.RW.poolByteLength(lenres, body.csum);
+    if (lenres.err) return destResult.replace(lenres.err);
     offset += lenres.length;
 
     if (body.cont === null) {
-        res = this.writeFragmentInto(body, buffer, offset);
+        res = this.writeFragmentInto(destResult, body, buffer, offset);
         if (res.err) return res;
         offset = res.offset;
     } else {
         // assume that something else already did the fragmentation correctly
         for (var i = 0; i < body.args.length; i++) {
-            res = this.argrw.writeInto(body.args[i], buffer, offset);
+            res = this.argrw.poolWriteInto(destResult, body.args[i], buffer, offset);
             if (res.err) return res;
             var buf = buffer.slice(offset + this.overhead, res.offset);
             body.csum.update1(buf, body.csum.val);
@@ -126,34 +125,34 @@ ArgsRW.prototype.writeInto = function writeInto(body, buffer, offset) {
         }
     }
 
-    res = Checksum.RW.writeInto(body.csum, buffer, start);
+    res = Checksum.RW.poolWriteInto(destResult, body.csum, buffer, start);
     if (!res.err) res.offset = offset;
 
     return res;
 };
 
-ArgsRW.prototype.readFrom = function readFrom(body, buffer, offset) {
+ArgsRW.prototype.poolReadFrom = function poolReadFrom(destResult, body, buffer, offset) {
     var res;
 
     // TODO: missing symmetry: verify csum (requires prior somehow)
 
-    res = Checksum.RW.readFrom(buffer, offset);
+    res = Checksum.RW.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.csum = res.value;
 
     body.args = [];
     while (offset < buffer.length) {
-        res = this.argrw.readFrom(buffer, offset);
+        res = this.argrw.poolReadFrom(destResult, buffer, offset);
         if (res.err) return res;
         offset = res.offset;
         body.args.push(res.value);
     }
 
-    return ReadResult.just(offset, body);
+    return destResult.reset(null, offset, body);
 };
 
-ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(body, buffer, offset) {
+ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(destResult, body, buffer, offset) {
     var res;
     var i = 0;
     var remain = buffer.length - offset;
@@ -178,7 +177,7 @@ ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(body, buffer, of
             body.flags |= Flags.Fragment;
             arg = body.args[i];
         }
-        res = this.argrw.writeInto(arg, buffer, offset);
+        res = this.argrw.poolWriteInto(destResult, arg, buffer, offset);
         if (res.err) return res;
         var buf = buffer.slice(offset + this.overhead, res.offset);
         body.csum.update1(buf, body.csum.val);
@@ -186,7 +185,7 @@ ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(body, buffer, of
         remain = buffer.length - offset;
     } while (remain >= this.overhead && ++i < body.args.length);
 
-    return res || WriteResult.just(offset);
+    return res || destResult.reset(null, offset);
 };
 
 module.exports = ArgsRW;

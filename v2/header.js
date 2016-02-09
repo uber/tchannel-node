@@ -41,13 +41,13 @@ function HeaderRW(countrw, keyrw, valrw, options) {
 }
 inherits(HeaderRW, bufrw.Base);
 
-HeaderRW.prototype.byteLength = function byteLength(headers) {
+HeaderRW.prototype.poolByteLength = function poolByteLength(destResult, headers) {
     var length = 0;
     var keys = Object.keys(headers);
     var res;
 
     if (keys.length > this.maxHeaderCount) {
-        return bufrw.LengthResult.error(errors.TooManyHeaders({
+        return destResult.reset(errors.TooManyHeaders({
             count: keys.length,
             maxHeaderCount: this.maxHeaderCount
         }));
@@ -64,7 +64,7 @@ HeaderRW.prototype.byteLength = function byteLength(headers) {
         res = this.valrw.byteLength(headers[key]);
         if (res.err) return res;
         if (res.length > this.maxKeyLength) {
-            return bufrw.LengthResult.error(errors.TransportHeaderTooLong({
+            return destResult.reset(errors.TransportHeaderTooLong({
                 maxLength: this.maxKeyLength,
                 headerName: key
             }));
@@ -72,17 +72,17 @@ HeaderRW.prototype.byteLength = function byteLength(headers) {
         length += res.length;
     }
 
-    return bufrw.LengthResult.just(length);
+    return destResult.reset(null, length);
 };
 
-HeaderRW.prototype.writeInto = function writeInto(headers, buffer, offset) {
+HeaderRW.prototype.poolWriteInto = function poolWriteInto(destResult, headers, buffer, offset) {
     var keys = Object.keys(headers);
     var res;
 
-    res = this.countrw.writeInto(keys.length, buffer, offset);
+    res = this.countrw.poolWriteInto(destResult, keys.length, buffer, offset);
 
     if (keys.length > this.maxHeaderCount) {
-        return bufrw.WriteResult.error(errors.TooManyHeaders({
+        return destResult.reset(errors.TooManyHeaders({
             count: keys.length,
             maxHeaderCount: this.maxHeaderCount,
             offset: offset,
@@ -100,7 +100,7 @@ HeaderRW.prototype.writeInto = function writeInto(headers, buffer, offset) {
 
         var keyByteLength = res.offset - offset;
         if (keyByteLength > this.maxKeyLength) {
-            return bufrw.WriteResult.error(errors.TransportHeaderTooLong({
+            return destResult.reset(errors.TransportHeaderTooLong({
                 maxLength: this.maxKeyLength,
                 headerName: key,
                 offset: offset,
@@ -111,19 +111,19 @@ HeaderRW.prototype.writeInto = function writeInto(headers, buffer, offset) {
 
         // TODO consider supporting buffers
         if (typeof headers[key] !== 'string') {
-            return bufrw.WriteResult.error(errors.InvalidHeaderTypeError({
+            return destResult.reset(errors.InvalidHeaderTypeError({
                 name: key,
                 headerType: typeof headers[key]
             }), offset);
         }
 
-        res = this.valrw.writeInto(headers[key], buffer, offset);
+        res = this.valrw.poolWriteInto(destResult, headers[key], buffer, offset);
     }
 
     return res;
 };
 
-HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
+HeaderRW.prototype.poolReadFrom = function poolReadFrom(destResult, buffer, offset) {
     var headers = {};
     var start = 0;
     var n = 0;
@@ -131,13 +131,13 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
     var val = '';
     var res;
 
-    res = this.countrw.readFrom(buffer, offset);
+    res = this.countrw.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     n = res.value;
 
     if (n > this.maxHeaderCount) {
-        return bufrw.ReadResult.error(errors.TooManyHeaders({
+        return destResult.reset(errors.TooManyHeaders({
             count: n,
             maxHeaderCount: this.maxHeaderCount,
             offset: offset,
@@ -148,17 +148,17 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
     for (var i = 0; i < n; i++) {
         start = offset;
 
-        res = this.keyrw.readFrom(buffer, offset);
+        res = this.keyrw.poolReadFrom(destResult, buffer, offset);
         if (res.err) return res;
         key = res.value;
 
         if (!key.length) {
-            return bufrw.ReadResult.error(errors.NullKeyError({
+            return destResult.reset(errors.NullKeyError({
                 offset: offset,
                 endOffset: res.offset
             }), offset, headers);
         } else if (res.offset - offset > this.maxKeyLength) {
-            return bufrw.ReadResult.error(errors.TransportHeaderTooLong({
+            return destResult.reset(errors.TransportHeaderTooLong({
                 maxLength: this.maxKeyLength,
                 headerName: key,
                 offset: offset,
@@ -167,12 +167,12 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
         }
         offset = res.offset;
 
-        res = this.valrw.readFrom(buffer, offset);
+        res = this.valrw.poolReadFrom(destResult, buffer, offset);
         if (res.err) return res;
         val = res.value;
 
         if (headers[key] !== undefined) {
-            return bufrw.ReadResult.error(errors.DuplicateHeaderKeyError({
+            return destResult.reset(errors.DuplicateHeaderKeyError({
                 offset: start,
                 endOffset: res.offset,
                 key: key,
@@ -185,7 +185,7 @@ HeaderRW.prototype.readFrom = function readFrom(buffer, offset) {
         headers[key] = val;
     }
 
-    return bufrw.ReadResult.just(offset, headers);
+    return destResult.reset(null, offset, headers);
 };
 
 HeaderRW.prototype.lazyRead = function lazyRead(frame, offset) {
