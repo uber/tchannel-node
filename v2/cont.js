@@ -40,7 +40,7 @@ function CallRequestCont(flags, csum, args) {
 
 CallRequestCont.TypeCode = 0x13;
 CallRequestCont.Cont = CallRequestCont;
-CallRequestCont.RW = bufrw.Base(callReqContLength, readCallReqContFrom, writeCallReqContInto);
+CallRequestCont.RW = bufrw.Base(callReqContLength, readCallReqContFrom, writeCallReqContInto, true);
 
 CallRequestCont.RW.lazy = {};
 
@@ -56,7 +56,7 @@ CallRequestCont.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
     return !frag;
 };
 
-function callReqContLength(body) {
+function callReqContLength(destResult, body) {
     var res;
     var length = 0;
 
@@ -64,30 +64,31 @@ function callReqContLength(body) {
     length += bufrw.UInt8.width;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.byteLength(body);
+    res = argsrw.poolByteLength(destResult, body);
     if (!res.err) res.length += length;
 
     return res;
 }
 
-function readCallReqContFrom(buffer, offset) {
+function readCallReqContFrom(destResult, buffer, offset) {
     var res;
+    // TODO: allow these to be pooled
     var body = new CallRequestCont();
 
     // flags:1
-    res = bufrw.UInt8.readFrom(buffer, offset);
+    res = bufrw.UInt8.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.flags = res.value;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.readFrom(body, buffer, offset);
+    res = argsrw.poolReadFrom(destResult, body, buffer, offset);
     if (!res.err) res.value = body;
 
     return res;
 }
 
-function writeCallReqContInto(body, buffer, offset) {
+function writeCallReqContInto(destResult, body, buffer, offset) {
     var start = offset;
     var res;
 
@@ -95,12 +96,12 @@ function writeCallReqContInto(body, buffer, offset) {
     offset += bufrw.UInt8.width;
 
     // csumtype:1 (csum:4){0,1} (arg~2)* -- (may mutate body.flags)
-    res = argsrw.writeInto(body, buffer, offset);
+    res = argsrw.poolWriteInto(destResult, body, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // now we know the final flags, write them
-    res = bufrw.UInt8.writeInto(body.flags, buffer, start);
+    res = bufrw.UInt8.poolWriteInto(destResult, body.flags, buffer, start);
     if (!res.err) res.offset = offset;
 
     return res;
@@ -121,7 +122,7 @@ function CallResponseCont(flags, csum, args) {
 
 CallResponseCont.TypeCode = 0x14;
 CallResponseCont.Cont = CallResponseCont;
-CallResponseCont.RW = bufrw.Base(callResContLength, readCallResContFrom, writeCallResContInto);
+CallResponseCont.RW = bufrw.Base(callResContLength, readCallResContFrom, writeCallResContInto, true);
 
 CallResponseCont.RW.lazy = {};
 
@@ -137,7 +138,7 @@ CallResponseCont.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
     return !frag;
 };
 
-function callResContLength(body) {
+function callResContLength(destResult, body) {
     var res;
     var length = 0;
 
@@ -145,30 +146,30 @@ function callResContLength(body) {
     length += bufrw.UInt8.width;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.byteLength(body);
+    res = argsrw.poolByteLength(destResult, body);
     if (!res.err) res.length += length;
 
     return res;
 }
 
-function readCallResContFrom(buffer, offset) {
+function readCallResContFrom(destResult, buffer, offset) {
     var res;
     var body = new CallResponseCont();
 
     // flags:1
-    res = bufrw.UInt8.readFrom(buffer, offset);
+    res = bufrw.UInt8.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.flags = res.value;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.readFrom(body, buffer, offset);
+    res = argsrw.poolReadFrom(destResult, body, buffer, offset);
     if (!res.err) res.value = body;
 
     return res;
 }
 
-function writeCallResContInto(body, buffer, offset) {
+function writeCallResContInto(destResult, body, buffer, offset) {
     var start = offset;
     var res;
 
@@ -176,12 +177,12 @@ function writeCallResContInto(body, buffer, offset) {
     offset += bufrw.UInt8.width;
 
     // csumtype:1 (csum:4){0,1} (arg~2)* -- (may mutate body.flags)
-    res = argsrw.writeInto(body, buffer, offset);
+    res = argsrw.poolWriteInto(destResult, body, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // now we know the final flags, write them
-    res = bufrw.UInt8.writeInto(body.flags, buffer, start);
+    res = bufrw.UInt8.poolWriteInto(destResult, body.flags, buffer, start);
     if (!res.err) res.offset = offset;
 
     return res;

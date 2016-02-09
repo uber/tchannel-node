@@ -614,9 +614,9 @@ CallResponse.RW = bufrw.Base(callResLength, readCallResFrom, writeCallResInto, t
 CallResponse.RW.lazy = {};
 
 CallResponse.RW.lazy.flagsOffset = Frame.Overhead;
-CallResponse.RW.lazy.readFlags = function readFlags(destResult, frame) {
+CallResponse.RW.lazy.readFlags = function readFlags(frame) {
     // flags:1
-    return bufrw.UInt8.poolReadFrom(destResult, frame.buffer, CallResponse.RW.lazy.flagsOffset);
+    return bufrw.UInt8.readFrom(frame.buffer, CallResponse.RW.lazy.flagsOffset);
 };
 
 CallResponse.RW.lazy.codeOffset = CallResponse.RW.lazy.flagsOffset + 1;

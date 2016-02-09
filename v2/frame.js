@@ -50,9 +50,9 @@ function Frame(id, body) {
 }
 
 // size:2: type:1 reserved:1 id:4 reserved:8 ...
-Frame.RW = bufrw.Base(frameLength, readFrameFrom, writeFrameInto);
+Frame.RW = bufrw.Base(frameLength, readFrameFrom, writeFrameInto, true);
 
-function frameLength(frame) {
+function frameLength(destResult, frame) {
     var body = frame.body;
     var bodyRW = body.constructor.RW;
 
@@ -63,45 +63,46 @@ function frameLength(frame) {
     length += bufrw.UInt32BE.width; // id:4
     length += 8;                    // reserved:8 ...
 
-    var res = bodyRW.byteLength(body);
+    var res = bodyRW.poolByteLength(destResult, body);
     if (!res.err) {
         res.length += length;
     }
     return res;
 }
 
-function readFrameFrom(buffer, offset) {
+function readFrameFrom(destResult, buffer, offset) {
+    // TODO: pool Frame object
     var frame = new Frame();
 
     var res;
 
-    res = bufrw.UInt16BE.readFrom(buffer, offset);
+    res = bufrw.UInt16BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     frame.size = res.value;
 
-    res = bufrw.UInt8.readFrom(buffer, offset);
+    res = bufrw.UInt8.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     frame.type = res.value;
 
     var BodyType = Frame.Types[frame.type];
     if (!BodyType) {
-        return bufrw.ReadResult.error(errors.InvalidFrameTypeError({
+        return destResult.reset(errors.InvalidFrameTypeError({
             typeNumber: frame.type
         }), offset - 1);
     }
 
     offset += 1;
 
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     frame.id = res.value;
 
     offset += 8;
 
-    res = BodyType.RW.readFrom(buffer, offset);
+    res = BodyType.RW.poolReadFrom(destResult, buffer, offset);
     if (res.err) {
         if (frame.type === Types.CallRequest ||
             frame.type === Types.CallRequestCont
@@ -118,7 +119,7 @@ function readFrameFrom(buffer, offset) {
     return res;
 }
 
-function writeFrameInto(frame, buffer, offset) {
+function writeFrameInto(destResult, frame, buffer, offset) {
     var body = frame.body;
     var bodyRW = body.constructor.RW;
 
@@ -129,7 +130,7 @@ function writeFrameInto(frame, buffer, offset) {
     // skip size, write later
     offset += bufrw.UInt16BE.width;
 
-    res = bufrw.UInt8.writeInto(frame.type, buffer, offset);
+    res = bufrw.UInt8.poolWriteInto(destResult, frame.type, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
@@ -137,7 +138,7 @@ function writeFrameInto(frame, buffer, offset) {
     buffer.fill(0, offset, end);
     offset = end;
 
-    res = bufrw.UInt32BE.writeInto(frame.id, buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, frame.id, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
@@ -145,18 +146,19 @@ function writeFrameInto(frame, buffer, offset) {
     buffer.fill(0, offset, end);
     offset = end;
 
-    res = bodyRW.writeInto(body, buffer, offset);
+    res = bodyRW.poolWriteInto(destResult, body, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     frame.size = res.offset - start;
-    res = bufrw.UInt16BE.writeInto(frame.size, buffer, start);
+    res = bufrw.UInt16BE.poolWriteInto(destResult, frame.size, buffer, start);
     if (res.err) return res;
     res.offset = offset;
 
     return res;
 }
 
+// TODO: pool below
 Frame.fromBuffer = function fromBuffer(buffer) {
     return bufrw.fromBuffer(Frame.RW, buffer, 0);
 };
