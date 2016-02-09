@@ -37,6 +37,9 @@ var Frame = require('./frame');
 var CallFlags = require('./call_flags');
 var argsrw = new ArgsRW();
 
+var ReadResult = bufrw.ReadResult;
+var readRes = new ReadResult(); // shared read result
+
 var CN_VALUE = new Buffer('cn').readUInt16BE(0, false);
 var RD_VALUE = new Buffer('rd').readUInt16BE(0, false);
 
@@ -92,9 +95,9 @@ CallRequest.RW = bufrw.Base(callReqLength, readCallReqFrom, writeCallReqInto, tr
 CallRequest.RW.lazy = {};
 
 CallRequest.RW.lazy.flagsOffset = Frame.Overhead;
-CallRequest.RW.lazy.readFlags = function readFlags(frame) {
+CallRequest.RW.lazy.poolReadFlags = function poolReadFlags(destResult, frame) {
     // flags:1
-    return bufrw.UInt8.readFrom(frame.buffer, CallRequest.RW.lazy.flagsOffset);
+    return bufrw.UInt8.poolReadFrom(destResult, frame.buffer, CallRequest.RW.lazy.flagsOffset);
 };
 
 CallRequest.RW.lazy.ttlOffset = CallRequest.RW.lazy.flagsOffset + 1;
@@ -113,24 +116,24 @@ CallRequest.RW.lazy.readTTL = function readTTL(frame) {
 
     return ttl;
 };
-CallRequest.RW.lazy.writeTTL = function writeTTL(ttl, frame) {
+CallRequest.RW.lazy.poolWriteTTL = function poolWriteTTL(destResult, ttl, frame) {
     // ttl:4
-    return bufrw.UInt32BE.writeInto(ttl, frame.buffer, CallRequest.RW.lazy.ttlOffset);
+    return bufrw.UInt32BE.poolWriteInto(destResult, ttl, frame.buffer, CallRequest.RW.lazy.ttlOffset);
 };
 
 CallRequest.RW.lazy.tracingOffset = CallRequest.RW.lazy.ttlOffset + 4;
-CallRequest.RW.lazy.readTracing = function lazyReadTracing(frame) {
+CallRequest.RW.lazy.poolReadTracing = function poolLazyReadTracing(destResult, frame) {
     // tracing:24 traceflags:1
-    return Tracing.RW.readFrom(frame.buffer, CallRequest.RW.lazy.tracingOffset);
+    return Tracing.RW.poolReadFrom(destResult, frame.buffer, CallRequest.RW.lazy.tracingOffset);
 };
 
 CallRequest.RW.lazy.serviceOffset = CallRequest.RW.lazy.tracingOffset + 25;
-CallRequest.RW.lazy.readService = function lazyReadService(frame) {
+CallRequest.RW.lazy.poolReadService = function poolLazyReadService(destResult, frame) {
     // service~1
-    return bufrw.str1.readFrom(frame.buffer, CallRequest.RW.lazy.serviceOffset);
+    return bufrw.str1.poolReadFrom(destResult, frame.buffer, CallRequest.RW.lazy.serviceOffset);
 };
 
-CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
+CallRequest.RW.lazy.poolReadTracingValue = function poolReadTracingValue(destResult, frame) {
     if (frame.cache.tracingValue !== null) {
         return frame.cache.tracingValue;
     }
@@ -162,6 +165,7 @@ CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
     var flags = frame.buffer.readUInt8(offset, false);
     offset += 1;
 
+    // TODO: pool these objects
     var tracing = new TracingInfo(
         [spanid1, spanid2],
         [parentid1, parentid2],
@@ -399,7 +403,7 @@ CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
     return arg1Str;
 };
 
-CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
+CallRequest.RW.lazy.poolReadHeaders = function poolReadHeaders(destResult, frame) {
     // last fixed offset
     var offset = CallRequest.RW.lazy.serviceOffset;
 
@@ -407,7 +411,7 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
         offset = frame.cache.headerStartOffset;
     } else {
         // SKIP service~1
-        var res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
+        var res = bufrw.str1.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) {
             return res;
         }
@@ -416,10 +420,10 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     }
 
     // READ nh:1 (hk~1 hv~1){nh}
-    return header.header1.lazyRead(frame, offset);
+    return header.header1.poolLazyRead(destResult, frame, offset);
 };
 
-CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
+CallRequest.RW.lazy.poolReadArg1 = function poolReadArg1(destResult, frame, headers) {
     var res = null;
     var offset = 0;
 
@@ -433,14 +437,14 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
         offset = CallRequest.RW.lazy.serviceOffset;
 
         // SKIP service~1
-        res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
+        res = bufrw.str1.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) {
             return res;
         }
         offset = res.offset + res.value;
 
         // SKIP nh:1 (hk~1 hv~1){nh}
-        res = header.header1.lazySkip(frame, offset);
+        res = header.header1.poolLazySkip(destResult, frame, offset);
         if (res.err) {
             return res;
         }
@@ -448,18 +452,18 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
     }
 
     // SKIP csumtype:1 (csum:4){0,1}
-    res = Checksum.RW.lazySkip(frame, offset);
+    res = Checksum.RW.poolLazySkip(destResult, frame, offset);
     if (res.err) {
         return res;
     }
     offset = res.offset;
 
     // READ arg~2
-    return argsrw.argrw.readFrom(frame.buffer, offset);
+    return argsrw.argrw.poolReadFrom(destResult, frame.buffer, offset);
 };
 
 CallRequest.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
-    var flags = CallRequest.RW.lazy.readFlags(frame);
+    var flags = CallRequest.RW.lazy.poolReadFlags(readRes, frame);
     var frag = flags.value & CallFlags.Fragment;
     return !frag;
 };
@@ -614,23 +618,23 @@ CallResponse.RW = bufrw.Base(callResLength, readCallResFrom, writeCallResInto, t
 CallResponse.RW.lazy = {};
 
 CallResponse.RW.lazy.flagsOffset = Frame.Overhead;
-CallResponse.RW.lazy.readFlags = function readFlags(frame) {
+CallResponse.RW.lazy.poolReadFlags = function poolReadFlags(destResult, frame) {
     // flags:1
-    return bufrw.UInt8.readFrom(frame.buffer, CallResponse.RW.lazy.flagsOffset);
+    return bufrw.UInt8.poolReadFrom(destResult, frame.buffer, CallResponse.RW.lazy.flagsOffset);
 };
 
 CallResponse.RW.lazy.codeOffset = CallResponse.RW.lazy.flagsOffset + 1;
 // TODO: readCode?
 
 CallResponse.RW.lazy.tracingOffset = CallResponse.RW.lazy.codeOffset + 1;
-CallResponse.RW.lazy.readTracing = function lazyReadTracing(frame) {
+CallResponse.RW.lazy.poolReadTracing = function poolLazyReadTracing(destResult, frame) {
     // tracing:24 traceflags:1
-    return Tracing.RW.readFrom(frame.buffer, CallResponse.RW.lazy.tracingOffset);
+    return Tracing.RW.poolReadFrom(destResult, frame.buffer, CallResponse.RW.lazy.tracingOffset);
 };
 
 CallResponse.RW.lazy.headersOffset = CallResponse.RW.lazy.tracingOffset + 25;
 
-CallResponse.RW.lazy.readHeaders = function readHeaders(frame) {
+CallResponse.RW.lazy.poolReadHeaders = function poolReadHeaders(destResult, frame) {
     // last fixed offset
     var offset = CallResponse.RW.lazy.headersOffset;
 
@@ -638,10 +642,10 @@ CallResponse.RW.lazy.readHeaders = function readHeaders(frame) {
     // and any others
 
     // READ nh:1 (hk~1 hv~1){nh}
-    return header.header1.lazyRead(frame, offset);
+    return header.header1.poolLazyRead(destResult, frame, offset);
 };
 
-CallResponse.RW.lazy.readArg1 = function readArg1(frame, headers) {
+CallResponse.RW.lazy.poolReadArg1 = function poolReadArg1(destResult, frame, headers) {
     var res = null;
     var offset = 0;
 
@@ -655,7 +659,7 @@ CallResponse.RW.lazy.readArg1 = function readArg1(frame, headers) {
         // and any others
 
         // SKIP nh:1 (hk~1 hv~1){nh}
-        res = header.header1.lazySkip(frame, offset);
+        res = header.header1.poolLazySkip(destResult, frame, offset);
         if (res.err) {
             return res;
         }
@@ -663,18 +667,18 @@ CallResponse.RW.lazy.readArg1 = function readArg1(frame, headers) {
     }
 
     // SKIP csumtype:1 (csum:4){0,1}
-    res = Checksum.RW.lazySkip(frame, offset);
+    res = Checksum.RW.poolLazySkip(destResult, frame, offset);
     if (res.err) {
         return res;
     }
     offset = res.offset;
 
     // READ arg~2
-    return argsrw.argrw.readFrom(frame.buffer, offset);
+    return argsrw.argrw.poolReadFrom(destResult, frame.buffer, offset);
 };
 
 CallResponse.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
-    var flags = CallResponse.RW.lazy.readFlags(frame);
+    var flags = CallResponse.RW.lazy.poolReadFlags(readRes, frame);
     var frag = flags.value & CallFlags.Fragment;
     return !frag;
 };

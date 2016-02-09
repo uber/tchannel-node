@@ -23,6 +23,11 @@
 var errors = require('./errors');
 var v2 = require('./v2');
 var stat = require('./stat-tags.js');
+var ReadResult = require('bufrw').ReadResult;
+var WriteResult = require('bufrw').WriteResult;
+
+var readRes = new ReadResult();
+var writeRes = new WriteResult();
 
 module.exports = {
     LazyRelayInReq: LazyRelayInReq,
@@ -128,7 +133,7 @@ function initRead() {
     self.endpoint = endpoint;
 
     var tracing = self.reqFrame.bodyRW.lazy
-        .readTracingValue(self.reqFrame);
+        .poolReadTracingValue(readRes, self.reqFrame);
     self.tracing = tracing || v2.Tracing.emptyTracing;
 
     self.channel.emitFastStat(
@@ -315,7 +320,7 @@ function updateTTL(now) {
         timeout = self.channel.maximumRelayTTL;
     }
 
-    var res = self.reqFrame.bodyRW.lazy.writeTTL(timeout, self.reqFrame);
+    var res = self.reqFrame.bodyRW.lazy.poolWriteTTL(writeRes, timeout, self.reqFrame);
     if (res.err) {
         // TODO: wrap? protocol write error?
         self.onError(res.err);
@@ -767,7 +772,7 @@ function _observeCallResFrame(frame, now) {
         self.inreq.circuit.state.onRequestHealthy();
     }
 
-    var res = frame.bodyRW.lazy.readFlags(frame);
+    var res = frame.bodyRW.lazy.poolReadFlags(readRes, frame);
     if (res.err) {
         self.logger.error('failed to read error frame code', self.extendLogInfo({
             error: res.err

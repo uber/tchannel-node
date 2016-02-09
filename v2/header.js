@@ -188,23 +188,24 @@ HeaderRW.prototype.poolReadFrom = function poolReadFrom(destResult, buffer, offs
     return destResult.reset(null, offset, headers);
 };
 
-HeaderRW.prototype.lazyRead = function lazyRead(frame, offset) {
+HeaderRW.prototype.poolLazyRead = function poolLazyRead(destResult, frame, offset) {
     // TODO: conspire with Call(Request,Response) to memoize headers start/end
     // offsets, maybe even start of each key?
 
-    var res = this.countrw.readFrom(frame.buffer, offset);
+    var res = this.countrw.poolReadFrom(destResult, frame.buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
+    // TODO: Pool these KeyVals objects
     var keyvals = new KeyVals(frame.buffer, res.value);
     for (var i = 0; i < keyvals.length; i++) {
-        res = this.keyrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.keyrw.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) return res;
         var keyOffset = res.offset;
         var keyLength = res.value;
         offset = res.offset + res.value;
 
-        res = this.valrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.valrw.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) return res;
         var valOffset = res.offset;
         var valLength = res.value;
@@ -215,29 +216,29 @@ HeaderRW.prototype.lazyRead = function lazyRead(frame, offset) {
 
     keyvals.offset = offset;
 
-    return bufrw.ReadResult.just(offset, keyvals);
+    return destResult.reset(null, offset, keyvals);
 };
 
-HeaderRW.prototype.lazySkip = function lazySkip(frame, offset) {
+HeaderRW.prototype.poolLazySkip = function poolLazySkip(destResult, frame, offset) {
     // TODO: conspire with Call(Request,Response) to memoize headers start/end
     // offsets, maybe even start of each key?
 
-    var res = this.countrw.readFrom(frame.buffer, offset);
+    var res = this.countrw.poolReadFrom(destResult, frame.buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     var n = res.value;
 
     for (var i = 0; i < n; i++) {
-        res = this.keyrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.keyrw.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) return res;
         offset = res.offset + res.value;
 
-        res = this.valrw.sizerw.readFrom(frame.buffer, offset);
+        res = this.valrw.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) return res;
         offset = res.offset + res.value;
     }
 
-    return bufrw.ReadResult.just(offset, null);
+    return destResult.reset(null, offset, null);
 };
 
 module.exports = HeaderRW;

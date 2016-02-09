@@ -22,6 +22,9 @@
 
 var errors = require('./errors');
 var assert = require('assert');
+var ReadResult = require('bufrw').ReadResult;
+
+var readRes = new ReadResult();
 
 function TChannelServiceNameHandler(options) {
     if (!(this instanceof TChannelServiceNameHandler)) {
@@ -45,7 +48,7 @@ TChannelServiceNameHandler.prototype.type = 'tchannel.service-name-handler';
 TChannelServiceNameHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     var self = this;
 
-    var res = reqFrame.bodyRW.lazy.readService(reqFrame);
+    var res = reqFrame.bodyRW.lazy.poolReadService(readRes, reqFrame);
     if (res.err) {
         // TODO: stat?
         self.channel.logger.warn('failed to lazy read frame serviceName', conn.extendLogInfo({
