@@ -655,7 +655,7 @@ Errors.classify = function classify(err) {
         return err.codeName;
     }
 
-    if (err.type.indexOf('bufrw.') > -1) {
+    if (err.type && err.type.indexOf('bufrw.') > -1) {
         return classifyBurwError(err);
     }
 

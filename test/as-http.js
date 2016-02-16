@@ -234,7 +234,6 @@ allocHTTPTest('as/http can bridge a service using lbpool (non-streaming)', {
                         'max-forwards': '5',
                         host:  egressHost,
                         connection: 'keep-alive',
-                        'transfer-encoding': 'chunked',
                         'content-length': '11'
                     }
                 }
