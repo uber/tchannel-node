@@ -316,6 +316,11 @@ TChannelHTTP.prototype._forwardToLBPool = function _forwardToLBPool(options, inr
     if (!options) { options = {}; }
     options.encoding = null;
     var data = inreq.bodyStream || inreq.bodyArg; // lb_pool likes polymorphism
+
+    if (inreq.bodyArg) {
+        delete options.headers['transfer-encoding'];
+    }
+
     self.lbpool.request(options, data, onResponse);
 
     function onResponse(err, res, body) {
