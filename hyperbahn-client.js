@@ -28,9 +28,11 @@ var timers = require('timers');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var safeJsonParse = require('safe-json-parse/tuple');
+var path = require('path');
 
 var Reporter = require('./tcollector/reporter.js');
 var TChannelJSON = require('./as/json.js');
+var TChannelThrift = require('./as/thrift.js');
 
 var AdvertisementTimeoutError = WrappedError({
     type: 'hyperbahn-client.advertisement-timeout',
@@ -63,6 +65,10 @@ var DEFAULT_ERROR_RETRY_TIMES = [
     10000 // Max out at 10 seconds
 ];
 var DEFAULT_TIMEOUT = 500;
+
+var thriftSource = fs.readFileSync(
+    path.join(__dirname, 'hyperbahn.thrift'),
+    'utf8');
 
 module.exports = HyperbahnClient;
 
@@ -148,6 +154,9 @@ function HyperbahnClient(options) {
             preferConnectionDirection: 'in'
         });
     self.tchannelJSON = TChannelJSON();
+    self.tchannelThrift = TChannelThrift({
+        source: thriftSource
+    });
 
     self.lastError = null;
     self.latestAdvertisementResult = null;
@@ -275,11 +284,10 @@ function advertisementFailure(err) {
     }
 };
 
-HyperbahnClient.prototype.sendRequest =
-function sendRequest(opts, endpoint, cb) {
+HyperbahnClient.prototype.newRequest =
+function newRequest(opts) {
     var self = this;
-
-    var req = self.hyperbahnChannel.request({
+    return self.hyperbahnChannel.request({
         serviceName: 'hyperbahn',
         timeout: (opts && opts.timeout) || self.defaultTimeout,
         hasNoParent: true,
@@ -289,6 +297,13 @@ function sendRequest(opts, endpoint, cb) {
             cn: self.callerName
         }
     });
+};
+
+HyperbahnClient.prototype.sendRequest =
+function sendRequest(opts, endpoint, cb) {
+    var self = this;
+
+    var req = self.newRequest();
     self.tchannelJSON.send(req, endpoint, null, {
         services: [{
             cost: 0,
@@ -445,6 +460,71 @@ function advertiseAgain(delay) {
     );
 };
 
+// ## discover
+// Make a discover query to Hyperbahn to find peers of this instance's service.
+HyperbahnClient.prototype.discover =
+function discover(opts, cb) {
+    var self = this;
+
+    opts = opts || {};
+
+    assert(self.tchannel.hostPort,
+        'must call tchannel.listen() before discover()');
+
+    if (self._destroyed) {
+        self.emit('error', AlreadyDestroyed({
+            method: 'discover'
+        }));
+        return;
+    }
+
+    var req = self.newRequest(opts);
+    var serviceName = opts.serviceName || self.serviceName;
+
+    self.tchannelThrift.send(req, 'Hyperbahn::discover', null, {
+        query: {
+            serviceName: serviceName
+        }
+    }, discoverInternalCb);
+
+    function discoverInternalCb(err, res) {
+        if (err) {
+            self.logger.error('call to discovery API failed', {
+                error: err,
+                serviceName: serviceName,
+                response: res
+            });
+            cb(err, null);
+            return;
+        }
+
+        var hosts;
+
+        if (res.ok === false) {
+            err = res.body;
+
+            // If the response from Hyperbahn is that there are no peers
+            // available, we callback with the error but also an empty host
+            // list. Callers can then use the value of "hosts" to determine the
+            // result without having to parse the error.
+            if (res.typeName === 'noPeersAvailable') {
+                hosts = [];
+            }
+
+            cb(err, hosts);
+            return;
+        }
+
+        hosts = [];
+        for (var i = 0; i < res.body.peers.length; i++) {
+            hosts.push(convertHost(res.body.peers[i]));
+        }
+
+        cb(null, hosts);
+        return;
+    }
+};
+
 // ## destroy
 HyperbahnClient.prototype.destroy = function destroy() {
     var self = this;
@@ -468,4 +548,13 @@ function safeSyncRead(filePath) {
     }
 
     return [error, fileContents];
+}
+
+function convertHost(host) {
+    var res = '';
+    res += ((host.ip.ipv4 >>> 24) & 0xff) + '.';
+    res += ((host.ip.ipv4 >>> 16) & 0xff) + '.';
+    res += ((host.ip.ipv4 >>> 8) & 0xff) + '.';
+    res += (host.ip.ipv4 & 0xff);
+    return res + ':' + host.port;
 }
