@@ -55,6 +55,7 @@ var TChannelRequest = require('./request');
 var TChannelServiceNameHandler = require('./service-name-handler');
 var errors = require('./errors');
 var EventEmitter = require('./lib/event_emitter.js');
+var ObjectPool = require('./lib/object_pool');
 
 var TChannelAsThrift = require('./as/thrift');
 var TChannelAsJSON = require('./as/json');
@@ -228,6 +229,14 @@ function TChannel(options) {
 
     this.statsd = this.options.statsd;
     this.batchStats = null;
+
+    if (this.statsd) {
+        ObjectPool.bootstrap({
+            statsd: this.statsd,
+            reportInterval: 1000,
+            timers: this.timers
+        });
+    }
 
     this.requestDefaults = this.options.requestDefaults ?
         new RequestDefaults(this.options.requestDefaults) : null;
