@@ -27,5 +27,6 @@ module.exports = {
     error: noop,
     fatal: noop,
     info: noop,
-    warn: noop
+    warn: noop,
+    writeEntry: noop
 };

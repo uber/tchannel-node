@@ -69,6 +69,8 @@ var BatchStatsd = require('./lib/statsd.js');
 
 var TracingAgent = require('./trace/agent');
 
+var coerceToLarch = require('larch/interface-converter'); 
+
 var CONN_STALE_PERIOD = 1500;
 var SANITY_PERIOD = 10 * 1000;
 
@@ -113,6 +115,7 @@ function TChannel(options) {
     }, options);
 
     this.logger = this.options.logger || nullLogger;
+    this.logger = coerceToLarch({logger: this.logger});
     this.random = this.options.random || globalRandom;
     this.timers = this.options.timers || globalTimers;
     this.initTimeout = this.options.initTimeout || 2000;
