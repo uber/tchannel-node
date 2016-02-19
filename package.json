@@ -55,7 +55,7 @@
     "chalk": "^1.0.0",
     "child_pty": "3.0.1",
     "collect-parallel": "^1.0.1",
-    "debug-logtron": "5.1.1",
+    "debug-logtron": "^5.2.0",
     "duplexer": "^0.1.1",
     "eslint": "0.24.0",
     "eslint-config-perf-standard": "1.0.0",
