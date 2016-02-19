@@ -53,7 +53,7 @@ else
 fi
 
 # run the replacer script to make all logsites check for sampling
-git ls-files | grep '.js$' | grep -v 'bin/' | grep -v test | grep -v replacer.js | xargs node replacer.js
+bash ./replacer.sh
 
 # need a temp commit because git archive uses HEAD
 git commit -a -m 'temp commit'
