@@ -29,6 +29,7 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var safeJsonParse = require('safe-json-parse/tuple');
 var path = require('path');
+var coerceToLarch = require('larch/interface-converter'); 
 
 var Reporter = require('./tcollector/reporter.js');
 var TChannelJSON = require('./as/json.js');
@@ -124,6 +125,7 @@ function HyperbahnClient(options) {
     self.errorRetryTimes = options.errorRetryTimes || DEFAULT_ERROR_RETRY_TIMES;
 
     self.logger = options.logger || self.tchannel.logger;
+    self.logger = coerceToLarch({logger: self.logger});
     self.statsd = options.statsd;
 
     self.reporter = Reporter({

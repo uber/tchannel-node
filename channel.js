@@ -47,6 +47,7 @@ var net = require('net');
 var format = require('util').format;
 var inherits = require('util').inherits;
 var inspect = require('util').inspect;
+var coerceToLarch = require('larch/interface-converter'); 
 
 var HostPort = require('./host-port.js');
 var nullLogger = require('./null-logger.js');
@@ -68,8 +69,6 @@ var CountedReadySignal = require('ready-signal/counted');
 var BatchStatsd = require('./lib/statsd.js');
 
 var TracingAgent = require('./trace/agent');
-
-var coerceToLarch = require('larch/interface-converter'); 
 
 var CONN_STALE_PERIOD = 1500;
 var SANITY_PERIOD = 10 * 1000;
