@@ -58,6 +58,9 @@ git ls-files | grep '.js$' | grep -v 'bin/' | grep -v test | grep -v replacer.js
 # need a temp commit because git archive uses HEAD
 git commit -a -m 'temp commit'
 
+# run test with preprocessing done
+node test
+
 git archive --prefix=package/ --format tgz HEAD >package.tgz
 ${NPM:-npm} publish --registry=https://registry.npmjs.org/ package.tgz --tag "${NPM_TAG:-alpha}"
 rm package.tgz
