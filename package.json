@@ -33,7 +33,7 @@
     "error": "^7.0.1",
     "farmhash": "1.1.0",
     "json-stringify-safe": "^5.0.0",
-    "larch": "^1.2.0",
+    "larch": "^1.2.1",
     "metrics": "^0.1.8",
     "minimist": "^1.1.0",
     "process": "0.11.1",
