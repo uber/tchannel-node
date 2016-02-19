@@ -47,7 +47,7 @@ var net = require('net');
 var format = require('util').format;
 var inherits = require('util').inherits;
 var inspect = require('util').inspect;
-var coerceToLarch = require('larch/interface-converter'); 
+var coerceToLarch = require('larch/interface-converter');
 
 var HostPort = require('./host-port.js');
 var nullLogger = require('./null-logger.js');

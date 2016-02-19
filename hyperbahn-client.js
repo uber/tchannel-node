@@ -29,7 +29,7 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var safeJsonParse = require('safe-json-parse/tuple');
 var path = require('path');
-var coerceToLarch = require('larch/interface-converter'); 
+var coerceToLarch = require('larch/interface-converter');
 
 var Reporter = require('./tcollector/reporter.js');
 var TChannelJSON = require('./as/json.js');

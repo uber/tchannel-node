@@ -21,7 +21,6 @@
 'use strict';
 
 var fs = require('fs');
-var path = require('path');
 var console = require('console');
 var process = require('process');
 
@@ -80,7 +79,6 @@ function replace(filename, lineno, level, line, nextLine) {
 
 function fixFile(filepath, done) {
     fs.readFile(filepath, 'utf8', readDone);
-    var fullDestPath;
     var lines;
 
     function readDone(err, data) {
