@@ -20,4 +20,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-git ls-files | grep '.js$' | grep -v 'bin/' | grep -v test | grep -v replacer.js | xargs node replacer.js
+git ls-files | grep '.js$' | grep -v 'bin/' | grep -v test | grep -v replacer.js | grep -v examples | xargs node replacer.js
