@@ -454,7 +454,7 @@ function advertiseAgain(delay) {
 
     self._advertisementTimer = timers.setTimeout(
         function advertiseTimeout() {
-            if (self._destroyed) {
+            if (!self._destroyed) {
                 self.advertise();
             }
         },
