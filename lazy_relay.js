@@ -23,6 +23,7 @@
 var errors = require('./errors');
 var v2 = require('./v2');
 var stat = require('./stat-tags.js');
+var ObjectPool = require('./lib/object_pool');
 
 module.exports = {
     LazyRelayInReq: LazyRelayInReq,
@@ -35,6 +36,46 @@ module.exports = {
 
 /*eslint max-statements: [2, 40]*/
 function LazyRelayInReq(conn, reqFrame) {
+    this.channel = null;
+    this.conn = null;
+    this.start = null;
+    this.remoteAddr = null;
+    this.logger = null;
+    this.peer = null;
+    this.outreq = null;
+    this.reqFrame = null;
+    this.id = null;
+    this.serviceName = null;
+    this.callerName = null;
+    this.timeout = null;
+    this.alive = null;
+    this.operations = null;
+    this.timeHeapHandle = null;
+    this.endpoint = null;
+    this.error = null;
+    this.tracing = null;
+    this.reqContFrames = [];
+    this.hasRead = null;
+
+    this.boundExtendLogInfo = extendLogInfo;
+    this.boundOnIdentified = onIdentified;
+
+    var self = this;
+
+    function extendLogInfo(info) {
+        return self.extendLogInfo(info);
+    }
+
+    function onIdentified(err) {
+        if (err) {
+            self.onError(err);
+        } else {
+            self.onIdentified();
+        }
+    }
+}
+
+LazyRelayInReq.prototype.reset = function reset(conn, reqFrame) {
     this.channel = conn.channel;
     this.conn = conn;
     this.start = conn.timers.now();
@@ -53,27 +94,40 @@ function LazyRelayInReq(conn, reqFrame) {
     this.endpoint = '';
     this.error = null;
     this.tracing = null;
-    this.reqContFrames = [];
+    this.reqContFrames.length = 0;
     this.hasRead = false;
-
-    this.boundExtendLogInfo = extendLogInfo;
-    this.boundOnIdentified = onIdentified;
     this.circuit = reqFrame.circuit;
+};
 
-    var self = this;
-
-    function extendLogInfo(info) {
-        return self.extendLogInfo(info);
+LazyRelayInReq.prototype.clear = function clear() {
+    if (this.outreq && !this.outreq._objectPoolIsFreed) {
+        this.outreq.free();
     }
 
-    function onIdentified(err) {
-        if (err) {
-            self.onError(err);
-        } else {
-            self.onIdentified();
-        }
-    }
-}
+    this.channel = null;
+    this.conn = null;
+    this.start = null;
+    this.remoteAddr = null;
+    this.logger = null;
+    this.peer = null;
+    this.outreq = null;
+    this.reqFrame = null;
+    this.id = null;
+    this.serviceName = null;
+    this.callerName = null;
+    this.timeout = null;
+    this.alive = null;
+    this.operations = null;
+    this.timeHeapHandle = null;
+    this.endpoint = null;
+    this.error = null;
+    this.tracing = null;
+    this.reqContFrames.length = 0;
+    this.hasRead = null;
+    this.circuit = null;
+};
+
+ObjectPool.setup({Type: LazyRelayInReq, maxSize: 200});
 
 LazyRelayInReq.prototype.type = 'tchannel.lazy.incoming-request';
 
@@ -259,7 +313,8 @@ LazyRelayInReq.prototype.forwardTo =
 function forwardTo(conn) {
     var self = this;
 
-    self.outreq = new LazyRelayOutReq(conn, self);
+    self.outreq = LazyRelayOutReq.alloc();
+    self.outreq.reset(conn, self);
 
     var ttl = self.updateTTL(self.outreq.start);
     if (!ttl || ttl < 0) {
@@ -339,8 +394,9 @@ function onReadError(err) {
         );
     }
 
+    var conn = self.conn;
     self.onError(err);
-    self.conn.resetAll(err);
+    conn.resetAll(err);
 };
 
 LazyRelayInReq.prototype.onError =
@@ -370,6 +426,7 @@ function onError(err) {
     }));
 
     self.reqContFrames.length = 0;
+    self.free();
 };
 
 LazyRelayInReq.prototype.sendErrorFrame =
@@ -391,6 +448,7 @@ function handleFrameLazily(frame) {
 
     if (!self.alive) {
         self.logger.warn('dropping frame from dead relay request', self.extendLogInfo({}));
+        self.free();
         return;
     }
 
@@ -518,6 +576,21 @@ function _observeCallReqContFrame(frame) {
 };
 
 function LazyRelayOutReq(conn, inreq) {
+    this.channel = null;
+    this.conn = null;
+    this.start = null;
+    this.remoteAddr = null;
+    this.logger = null;
+    this.inreq = null;
+    this.id = null;
+    this.serviceName = null;
+    this.callerName = null;
+    this.timeout = null;
+    this.operations = null;
+    this.timeHeapHandle = null;
+}
+
+LazyRelayOutReq.prototype.reset = function reset(conn, inreq) {
     this.channel = conn.channel;
     this.conn = conn;
     this.start = conn.timers.now();
@@ -530,7 +603,24 @@ function LazyRelayOutReq(conn, inreq) {
     this.timeout = 0;
     this.operations = null;
     this.timeHeapHandle = null;
-}
+};
+
+LazyRelayOutReq.prototype.clear = function clear() {
+    this.channel = null;
+    this.conn = null;
+    this.start = null;
+    this.remoteAddr = null;
+    this.logger = null;
+    this.inreq = null;
+    this.id = null;
+    this.serviceName = null;
+    this.callerName = null;
+    this.timeout = null;
+    this.operations = null;
+    this.timeHeapHandle = null;
+};
+
+ObjectPool.setup({Type: LazyRelayOutReq, maxSize: 200});
 
 LazyRelayOutReq.prototype.type = 'tchannel.lazy.outgoing-request';
 
@@ -639,6 +729,7 @@ function handleFrameLazily(frame) {
     frame.setId(self.inreq.id);
     self.inreq.conn.writeToSocket(frame.buffer);
     if (frame.bodyRW.lazy.isFrameTerminal(frame)) {
+        self.alive = false;
         self.conn.ops.popOutReq(self.id, self.extendLogInfo({
             info: 'lazy relay request done',
             relayDirection: 'out'
@@ -654,6 +745,11 @@ function handleFrameLazily(frame) {
     } else if (frame.type === v2.Types.ErrorResponse) {
         self._observeErrorFrame(frame, now);
     // } else { TODO: log
+    }
+
+    if (!self.alive && !self.inreq.alive) {
+        // Implicitly frees this because inreq.clear will free outreq
+        self.inreq.free();
     }
 };
 
