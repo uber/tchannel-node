@@ -522,12 +522,3 @@ function allocHTTPServer(onRequest, callback) {
         callback();
     }
 }
-
-function collectStatsByName(assert, stats) {
-    var byName = {};
-    for (var i = 0; i < stats.length; i++) {
-        var stat = stats[i];
-        byName[stat.name] = stat;
-    }
-    return byName;
-}
