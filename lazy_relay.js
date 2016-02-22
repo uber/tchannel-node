@@ -426,7 +426,6 @@ function onError(err) {
     }));
 
     self.reqContFrames.length = 0;
-    self.free();
 };
 
 LazyRelayInReq.prototype.sendErrorFrame =
