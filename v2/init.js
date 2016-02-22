@@ -23,8 +23,6 @@
 /* eslint-disable curly */
 
 var bufrw = require('bufrw');
-var WriteResult = bufrw.WriteResult;
-var ReadResult = bufrw.ReadResult;
 var header = require('./header');
 var errors = require('../errors');
 
@@ -42,10 +40,10 @@ function InitRequest(version, headers) {
 InitRequest.TypeCode = 0x01;
 
 InitRequest.RW = bufrw.Struct(InitRequest, [
-    {call: {writeInto: writeFieldGuard}},
+    {call: {poolWriteInto: writeFieldGuard}},
     {name: 'version', rw: bufrw.UInt16BE}, // version:2
     {name: 'headers', rw: header.header2}, // nh:2 (hk~2 hv~2){nh}
-    {call: {readFrom: readFieldGuard}}
+    {call: {poolReadFrom: readFieldGuard}}
 ]);
 
 // TODO: MissingInitHeaderError check / guard
@@ -59,22 +57,22 @@ function InitResponse(version, headers) {
 InitResponse.TypeCode = 0x02;
 
 InitResponse.RW = bufrw.Struct(InitResponse, [
-    {call: {writeInto: writeFieldGuard}},
+    {call: {poolWriteInto: writeFieldGuard}},
     {name: 'version', rw: bufrw.UInt16BE}, // version:2
     {name: 'headers', rw: header.header2}, // nh:2 (hk~2 hv~2){nh}
-    {call: {readFrom: readFieldGuard}}
+    {call: {poolReadFrom: readFieldGuard}}
 ]);
 
-function writeFieldGuard(initBody, buffer, offset) {
+function writeFieldGuard(destResult, initBody, buffer, offset) {
     var err = requiredFieldGuard(initBody.headers);
-    if (err) return WriteResult.error(err, offset);
-    else return WriteResult.just(offset);
+    if (err) return destResult.reset(err, offset);
+    else return destResult.reset(null, offset);
 }
 
-function readFieldGuard(initBody, buffer, offset) {
+function readFieldGuard(destResult, initBody, buffer, offset) {
     var err = requiredFieldGuard(initBody.headers);
-    if (err) return ReadResult.error(err, offset);
-    else return ReadResult.just(offset);
+    if (err) return destResult.reset(err, offset);
+    else return destResult.reset(null, offset);
 }
 
 function requiredFieldGuard(headers) {

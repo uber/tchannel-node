@@ -42,10 +42,11 @@ function Tracing(spanid, parentid, traceid, flags) {
     this.flags = flags || 0;
 }
 
-Tracing.RW = bufrw.Base(tracingByteLength, readTracingFrom, writeTracingInto);
+Tracing.RW = bufrw.Base(tracingByteLength, readTracingFrom, writeTracingInto, true);
 
-function tracingByteLength() {
-    return bufrw.LengthResult.just(
+function tracingByteLength(destResult) {
+    return destResult.reset(
+        null,
         8 + // spanid:8
         8 + // parentid:8
         8 + // traceid:8
@@ -53,78 +54,78 @@ function tracingByteLength() {
     );
 }
 
-function writeTracingInto(tracing, buffer, offset) {
+function writeTracingInto(destResult, tracing, buffer, offset) {
     var res;
 
-    res = bufrw.UInt32BE.writeInto(tracing.spanid[0], buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, tracing.spanid[0], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = bufrw.UInt32BE.writeInto(tracing.spanid[1], buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, tracing.spanid[1], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = bufrw.UInt32BE.writeInto(tracing.parentid[0], buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, tracing.parentid[0], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = bufrw.UInt32BE.writeInto(tracing.parentid[1], buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, tracing.parentid[1], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = bufrw.UInt32BE.writeInto(tracing.traceid[0], buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, tracing.traceid[0], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = bufrw.UInt32BE.writeInto(tracing.traceid[1], buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, tracing.traceid[1], buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
-    res = bufrw.UInt8.writeInto(tracing.flags, buffer, offset);
+    res = bufrw.UInt8.poolWriteInto(destResult, tracing.flags, buffer, offset);
 
     return res;
 }
 
-function readTracingFrom(buffer, offset) {
+function readTracingFrom(destResult, buffer, offset) {
     var tracing = new Tracing();
     var res;
 
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     tracing.spanid[0] = res.value;
 
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     tracing.spanid[1] = res.value;
 
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     tracing.parentid[0] = res.value;
 
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     tracing.parentid[1] = res.value;
 
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     tracing.traceid[0] = res.value;
 
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     tracing.traceid[1] = res.value;
 
-    res = bufrw.UInt8.readFrom(buffer, offset);
+    res = bufrw.UInt8.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     tracing.flags = res.value;
 
-    return bufrw.ReadResult.just(offset, tracing);
+    return destResult.reset(null, offset, tracing);
 }
 
 Tracing.emptyTracing = new Tracing();

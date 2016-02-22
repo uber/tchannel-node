@@ -107,8 +107,8 @@ Checksum.RW = bufrw.Switch(bufrw.UInt8, rwCases, {
     dataKey: 'val'
 });
 
-Checksum.RW.lazySkip = function lazySkip(frame, offset) {
-    var res = bufrw.UInt8.readFrom(frame.buffer, offset);
+Checksum.RW.poolLazySkip = function poolLazySkip(destResult, frame, offset) {
+    var res = bufrw.UInt8.poolReadFrom(destResult, frame.buffer, offset);
     if (res.err) {
         return res;
     }

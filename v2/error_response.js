@@ -21,8 +21,6 @@
 'use strict';
 
 var bufrw = require('bufrw');
-var WriteResult = bufrw.WriteResult;
-var ReadResult = bufrw.ReadResult;
 var Frame = require('./frame');
 var Tracing = require('./tracing');
 
@@ -287,26 +285,26 @@ ErrorResponse.CodeNames = CodeNames;
 ErrorResponse.CodeErrors = CodeErrors;
 
 ErrorResponse.RW = bufrw.Struct(ErrorResponse, [
-    {call: {writeInto: function writeGuard(body, buffer, offset) {
+    {call: {poolWriteInto: function writeGuard(destResult, body, buffer, offset) {
         if (CodeNames[body.code] === undefined) {
-            return WriteResult.error(errors.InvalidErrorCodeError({
+            return destResult.reset(errors.InvalidErrorCodeError({
                 errorCode: body.code,
                 tracing: body.tracing
             }), offset);
         }
-        return WriteResult.just(offset);
+        return destResult.reset(null, offset);
     }}},
     {name: 'code', rw: bufrw.UInt8},    // code:1
     {name: 'tracing', rw: Tracing.RW},  // tracing:25
     {name: 'message', rw: bufrw.str2},  // message~2
-    {call: {writeInto: function writeGuard(body, buffer, offset) {
+    {call: {poolWriteInto: function writeGuard(destResult, body, buffer, offset) {
         if (CodeNames[body.code] === undefined) {
-            return ReadResult.error(errors.InvalidErrorCodeError({
+            destResult.reset(errors.InvalidErrorCodeError({
                 errorCode: body.code,
                 tracing: body.tracing
             }), offset);
         }
-        return ReadResult.just(offset);
+        return destResult.reset(null, offset);
     }}}
 ]);
 

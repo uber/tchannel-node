@@ -23,6 +23,10 @@
 var v2 = require('../v2/index.js');
 var allocCluster = require('./lib/alloc-cluster.js');
 
+var ReadResult = require('bufrw').ReadResult;
+
+var readRes = new ReadResult();
+
 allocCluster.test('channel.handler: lazy call handling', 2, function t(cluster, assert) {
     var one = cluster.channels[0];
     var two = cluster.channels[1];
@@ -42,13 +46,13 @@ allocCluster.test('channel.handler: lazy call handling', 2, function t(cluster, 
     server.handler.handleLazily = handleCallLazily;
 
     function handleCallLazily(conn, frame) {
-        var res = frame.bodyRW.lazy.readService(frame);
+        var res = frame.bodyRW.lazy.poolReadService(readRes, frame);
         if (res.err) {
             throw res.err;
         }
         assert.equal(res.value, 'bob', 'expected called service name');
 
-        res = frame.bodyRW.lazy.readArg1(frame);
+        res = frame.bodyRW.lazy.poolReadArg1(readRes, frame);
         if (res.err) {
             throw res.err;
         }

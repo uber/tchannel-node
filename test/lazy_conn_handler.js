@@ -20,6 +20,8 @@
 
 'use strict';
 
+var ReadResult = require('bufrw').ReadResult;
+
 var v2 = require('../v2/index.js');
 var allocCluster = require('./lib/alloc-cluster.js');
 
@@ -45,16 +47,18 @@ allocCluster.test('connection.handler: lazy call handling', 2, function t(cluste
         conn.handler.handleCallLazily = handleCallLazily;
     }
 
+    var readRes = new ReadResult();
+
     function handleCallLazily(frame) {
         // this is conn.handler
 
-        var res = frame.bodyRW.lazy.readService(frame);
+        var res = frame.bodyRW.lazy.poolReadService(readRes, frame);
         if (res.err) {
             throw res.err;
         }
         assert.equal(res.value, 'bob', 'expected called service name');
 
-        res = frame.bodyRW.lazy.readArg1(frame);
+        res = frame.bodyRW.lazy.poolReadArg1(readRes, frame);
         if (res.err) {
             throw res.err;
         }

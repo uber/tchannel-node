@@ -37,6 +37,10 @@ var Frame = require('./frame');
 var CallFlags = require('./call_flags');
 var argsrw = new ArgsRW();
 
+var ReadResult = bufrw.ReadResult;
+var WriteResult = bufrw.WriteResult;
+var readRes = new ReadResult(); // shared read result
+
 var CN_VALUE = new Buffer('cn').readUInt16BE(0, false);
 var RD_VALUE = new Buffer('rd').readUInt16BE(0, false);
 
@@ -66,6 +70,15 @@ function allNodeToString(buf, start, end) {
     return buf.toString('utf8', start, end);
 }
 
+// Calls a pooled function and conveniently allocates a response object for it
+function allocifyPoolFn(fn, ResultCons) {
+    return allocFn;
+
+    function allocFn(arg1, arg2, arg3) {
+        return fn(new ResultCons(), arg1, arg2, arg3);
+    }
+}
+
 module.exports.Request = CallRequest;
 module.exports.Response = CallResponse;
 
@@ -87,15 +100,17 @@ function CallRequest(flags, ttl, tracing, service, headers, csum, args) {
 
 CallRequest.Cont = require('./cont').RequestCont;
 CallRequest.TypeCode = 0x03;
-CallRequest.RW = bufrw.Base(callReqLength, readCallReqFrom, writeCallReqInto);
+CallRequest.RW = bufrw.Base(callReqLength, readCallReqFrom, writeCallReqInto, true);
 
 CallRequest.RW.lazy = {};
 
 CallRequest.RW.lazy.flagsOffset = Frame.Overhead;
-CallRequest.RW.lazy.readFlags = function readFlags(frame) {
+CallRequest.RW.lazy.poolReadFlags = function poolReadFlags(destResult, frame) {
     // flags:1
-    return bufrw.UInt8.readFrom(frame.buffer, CallRequest.RW.lazy.flagsOffset);
+    return bufrw.UInt8.poolReadFrom(destResult, frame.buffer, CallRequest.RW.lazy.flagsOffset);
 };
+
+CallRequest.RW.lazy.readFlags = allocifyPoolFn(CallRequest.RW.lazy.poolReadFlags, ReadResult);
 
 CallRequest.RW.lazy.ttlOffset = CallRequest.RW.lazy.flagsOffset + 1;
 CallRequest.RW.lazy.readTTL = function readTTL(frame) {
@@ -113,24 +128,30 @@ CallRequest.RW.lazy.readTTL = function readTTL(frame) {
 
     return ttl;
 };
-CallRequest.RW.lazy.writeTTL = function writeTTL(ttl, frame) {
+CallRequest.RW.lazy.poolWriteTTL = function poolWriteTTL(destResult, ttl, frame) {
     // ttl:4
-    return bufrw.UInt32BE.writeInto(ttl, frame.buffer, CallRequest.RW.lazy.ttlOffset);
+    return bufrw.UInt32BE.poolWriteInto(destResult, ttl, frame.buffer, CallRequest.RW.lazy.ttlOffset);
 };
+
+CallRequest.RW.lazy.writeTTL = allocifyPoolFn(CallRequest.RW.lazy.poolWriteTTL, WriteResult);
 
 CallRequest.RW.lazy.tracingOffset = CallRequest.RW.lazy.ttlOffset + 4;
-CallRequest.RW.lazy.readTracing = function lazyReadTracing(frame) {
+CallRequest.RW.lazy.poolReadTracing = function poolLazyReadTracing(destResult, frame) {
     // tracing:24 traceflags:1
-    return Tracing.RW.readFrom(frame.buffer, CallRequest.RW.lazy.tracingOffset);
+    return Tracing.RW.poolReadFrom(destResult, frame.buffer, CallRequest.RW.lazy.tracingOffset);
 };
+
+CallRequest.RW.lazy.readTracing = allocifyPoolFn(CallRequest.RW.lazy.poolReadTracing, ReadResult);
 
 CallRequest.RW.lazy.serviceOffset = CallRequest.RW.lazy.tracingOffset + 25;
-CallRequest.RW.lazy.readService = function lazyReadService(frame) {
+CallRequest.RW.lazy.poolReadService = function poolLazyReadService(destResult, frame) {
     // service~1
-    return bufrw.str1.readFrom(frame.buffer, CallRequest.RW.lazy.serviceOffset);
+    return bufrw.str1.poolReadFrom(destResult, frame.buffer, CallRequest.RW.lazy.serviceOffset);
 };
 
-CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
+CallRequest.RW.lazy.readService = allocifyPoolFn(CallRequest.RW.lazy.poolReadService, ReadResult);
+
+CallRequest.RW.lazy.poolReadTracingValue = function poolReadTracingValue(destResult, frame) {
     if (frame.cache.tracingValue !== null) {
         return frame.cache.tracingValue;
     }
@@ -162,6 +183,7 @@ CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
     var flags = frame.buffer.readUInt8(offset, false);
     offset += 1;
 
+    // TODO: pool these objects
     var tracing = new TracingInfo(
         [spanid1, spanid2],
         [parentid1, parentid2],
@@ -173,6 +195,8 @@ CallRequest.RW.lazy.readTracingValue = function readTracingValue(frame) {
 
     return tracing;
 };
+
+CallRequest.RW.lazy.readTracingValue = allocifyPoolFn(CallRequest.RW.lazy.poolReadTracingValue, ReadResult);
 
 function TracingInfo(spanid, parentid, traceid, flags) {
     this.spanid = spanid;
@@ -399,7 +423,7 @@ CallRequest.RW.lazy.readArg1Str = function readArg1Str(frame) {
     return arg1Str;
 };
 
-CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
+CallRequest.RW.lazy.poolReadHeaders = function poolReadHeaders(destResult, frame) {
     // last fixed offset
     var offset = CallRequest.RW.lazy.serviceOffset;
 
@@ -407,7 +431,7 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
         offset = frame.cache.headerStartOffset;
     } else {
         // SKIP service~1
-        var res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
+        var res = bufrw.str1.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) {
             return res;
         }
@@ -416,10 +440,12 @@ CallRequest.RW.lazy.readHeaders = function readHeaders(frame) {
     }
 
     // READ nh:1 (hk~1 hv~1){nh}
-    return header.header1.lazyRead(frame, offset);
+    return header.header1.poolLazyRead(destResult, frame, offset);
 };
 
-CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
+CallRequest.RW.lazy.readHeaders = allocifyPoolFn(CallRequest.RW.lazy.poolReadHeaders, ReadResult);
+
+CallRequest.RW.lazy.poolReadArg1 = function poolReadArg1(destResult, frame, headers) {
     var res = null;
     var offset = 0;
 
@@ -433,14 +459,14 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
         offset = CallRequest.RW.lazy.serviceOffset;
 
         // SKIP service~1
-        res = bufrw.str1.sizerw.readFrom(frame.buffer, offset);
+        res = bufrw.str1.sizerw.poolReadFrom(destResult, frame.buffer, offset);
         if (res.err) {
             return res;
         }
         offset = res.offset + res.value;
 
         // SKIP nh:1 (hk~1 hv~1){nh}
-        res = header.header1.lazySkip(frame, offset);
+        res = header.header1.poolLazySkip(destResult, frame, offset);
         if (res.err) {
             return res;
         }
@@ -448,23 +474,25 @@ CallRequest.RW.lazy.readArg1 = function readArg1(frame, headers) {
     }
 
     // SKIP csumtype:1 (csum:4){0,1}
-    res = Checksum.RW.lazySkip(frame, offset);
+    res = Checksum.RW.poolLazySkip(destResult, frame, offset);
     if (res.err) {
         return res;
     }
     offset = res.offset;
 
     // READ arg~2
-    return argsrw.argrw.readFrom(frame.buffer, offset);
+    return argsrw.argrw.poolReadFrom(destResult, frame.buffer, offset);
 };
 
+CallRequest.RW.lazy.readArg1 = allocifyPoolFn(CallRequest.RW.lazy.poolReadArg1, ReadResult);
+
 CallRequest.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
-    var flags = CallRequest.RW.lazy.readFlags(frame);
+    var flags = CallRequest.RW.lazy.poolReadFlags(readRes, frame);
     var frag = flags.value & CallFlags.Fragment;
     return !frag;
 };
 
-function callReqLength(body) {
+function callReqLength(destResult, body) {
     var res;
     var length = 0;
 
@@ -475,43 +503,43 @@ function callReqLength(body) {
     length += bufrw.UInt32BE.width;
 
     // tracing:24 traceflags:1
-    res = Tracing.RW.byteLength(body.tracing);
+    res = Tracing.RW.poolByteLength(destResult, body.tracing);
     if (res.err) return res;
     length += res.length;
 
     // service~1
-    res = bufrw.str1.byteLength(body.service);
+    res = bufrw.str1.poolByteLength(destResult, body.service);
     if (res.err) return res;
     length += res.length;
 
     // nh:1 (hk~1 hv~1){nh}
-    res = header.header1.byteLength(body.headers);
+    res = header.header1.poolByteLength(destResult, body.headers);
     if (res.err) return res;
     length += res.length;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.byteLength(body);
+    res = argsrw.poolByteLength(destResult, body);
     if (!res.err) res.length += length;
 
     return res;
 }
 
-function readCallReqFrom(buffer, offset) {
+function readCallReqFrom(destResult, buffer, offset) {
     var res;
     var body = new CallRequest();
 
     // flags:1
-    res = bufrw.UInt8.readFrom(buffer, offset);
+    res = bufrw.UInt8.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.flags = res.value;
 
     // ttl:4
-    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    res = bufrw.UInt32BE.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
 
     if (res.value <= 0) {
-        return bufrw.ReadResult.error(errors.InvalidTTL({
+        return destResult.reset(errors.InvalidTTL({
             ttl: res.value,
             isParseError: true
         }), offset, body);
@@ -521,31 +549,31 @@ function readCallReqFrom(buffer, offset) {
     body.ttl = res.value;
 
     // tracing:24 traceflags:1
-    res = Tracing.RW.readFrom(buffer, offset);
+    res = Tracing.RW.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.tracing = res.value;
 
     // service~1
-    res = bufrw.str1.readFrom(buffer, offset);
+    res = bufrw.str1.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.service = res.value;
 
     // nh:1 (hk~1 hv~1){nh}
-    res = header.header1.readFrom(buffer, offset);
+    res = header.header1.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.headers = res.value;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.readFrom(body, buffer, offset);
+    res = argsrw.poolReadFrom(destResult, body, buffer, offset);
     if (!res.err) res.value = body;
 
     return res;
 }
 
-function writeCallReqInto(body, buffer, offset) {
+function writeCallReqInto(destResult, body, buffer, offset) {
     var start = offset;
     var res;
 
@@ -553,38 +581,38 @@ function writeCallReqInto(body, buffer, offset) {
     offset += bufrw.UInt8.width;
 
     if (body.ttl <= 0) {
-        return bufrw.WriteResult.error(errors.InvalidTTL({
+        return destResult.reset(errors.InvalidTTL({
             ttl: body.ttl
         }), offset);
     }
 
     // ttl:4
-    res = bufrw.UInt32BE.writeInto(body.ttl, buffer, offset);
+    res = bufrw.UInt32BE.poolWriteInto(destResult, body.ttl, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // tracing:24 traceflags:1
-    res = Tracing.RW.writeInto(body.tracing, buffer, offset);
+    res = Tracing.RW.poolWriteInto(destResult, body.tracing, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // service~1
-    res = bufrw.str1.writeInto(body.service, buffer, offset);
+    res = bufrw.str1.poolWriteInto(destResult, body.service, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // nh:1 (hk~1 hv~1){nh}
-    res = header.header1.writeInto(body.headers, buffer, offset);
+    res = header.header1.poolWriteInto(destResult, body.headers, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // csumtype:1 (csum:4){0,1} (arg~2)* -- (may mutate body.flags)
-    res = argsrw.writeInto(body, buffer, offset);
+    res = argsrw.poolWriteInto(destResult, body, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // now we know the final flags, write them
-    res = bufrw.UInt8.writeInto(body.flags, buffer, start);
+    res = bufrw.UInt8.poolWriteInto(destResult, body.flags, buffer, start);
     if (!res.err) res.offset = offset;
 
     return res;
@@ -609,28 +637,32 @@ function CallResponse(flags, code, tracing, headers, csum, args) {
 CallResponse.Cont = require('./cont').ResponseCont;
 CallResponse.TypeCode = 0x04;
 CallResponse.Codes = ResponseCodes;
-CallResponse.RW = bufrw.Base(callResLength, readCallResFrom, writeCallResInto);
+CallResponse.RW = bufrw.Base(callResLength, readCallResFrom, writeCallResInto, true);
 
 CallResponse.RW.lazy = {};
 
 CallResponse.RW.lazy.flagsOffset = Frame.Overhead;
-CallResponse.RW.lazy.readFlags = function readFlags(frame) {
+CallResponse.RW.lazy.poolReadFlags = function poolReadFlags(destResult, frame) {
     // flags:1
-    return bufrw.UInt8.readFrom(frame.buffer, CallResponse.RW.lazy.flagsOffset);
+    return bufrw.UInt8.poolReadFrom(destResult, frame.buffer, CallResponse.RW.lazy.flagsOffset);
 };
+
+CallResponse.RW.lazy.readFlags = allocifyPoolFn(CallResponse.RW.lazy.poolReadFlags, ReadResult);
 
 CallResponse.RW.lazy.codeOffset = CallResponse.RW.lazy.flagsOffset + 1;
 // TODO: readCode?
 
 CallResponse.RW.lazy.tracingOffset = CallResponse.RW.lazy.codeOffset + 1;
-CallResponse.RW.lazy.readTracing = function lazyReadTracing(frame) {
+CallResponse.RW.lazy.poolReadTracing = function poolLazyReadTracing(destResult, frame) {
     // tracing:24 traceflags:1
-    return Tracing.RW.readFrom(frame.buffer, CallResponse.RW.lazy.tracingOffset);
+    return Tracing.RW.poolReadFrom(destResult, frame.buffer, CallResponse.RW.lazy.tracingOffset);
 };
+
+CallResponse.RW.lazy.readTracing = allocifyPoolFn(CallResponse.RW.lazy.poolReadTracing, ReadResult);
 
 CallResponse.RW.lazy.headersOffset = CallResponse.RW.lazy.tracingOffset + 25;
 
-CallResponse.RW.lazy.readHeaders = function readHeaders(frame) {
+CallResponse.RW.lazy.poolReadHeaders = function poolReadHeaders(destResult, frame) {
     // last fixed offset
     var offset = CallResponse.RW.lazy.headersOffset;
 
@@ -638,10 +670,12 @@ CallResponse.RW.lazy.readHeaders = function readHeaders(frame) {
     // and any others
 
     // READ nh:1 (hk~1 hv~1){nh}
-    return header.header1.lazyRead(frame, offset);
+    return header.header1.poolLazyRead(destResult, frame, offset);
 };
 
-CallResponse.RW.lazy.readArg1 = function readArg1(frame, headers) {
+CallResponse.RW.lazy.readHeaders = allocifyPoolFn(CallResponse.RW.lazy.readHeaders, ReadResult);
+
+CallResponse.RW.lazy.poolReadArg1 = function poolReadArg1(destResult, frame, headers) {
     var res = null;
     var offset = 0;
 
@@ -655,7 +689,7 @@ CallResponse.RW.lazy.readArg1 = function readArg1(frame, headers) {
         // and any others
 
         // SKIP nh:1 (hk~1 hv~1){nh}
-        res = header.header1.lazySkip(frame, offset);
+        res = header.header1.poolLazySkip(destResult, frame, offset);
         if (res.err) {
             return res;
         }
@@ -663,23 +697,25 @@ CallResponse.RW.lazy.readArg1 = function readArg1(frame, headers) {
     }
 
     // SKIP csumtype:1 (csum:4){0,1}
-    res = Checksum.RW.lazySkip(frame, offset);
+    res = Checksum.RW.poolLazySkip(destResult, frame, offset);
     if (res.err) {
         return res;
     }
     offset = res.offset;
 
     // READ arg~2
-    return argsrw.argrw.readFrom(frame.buffer, offset);
+    return argsrw.argrw.poolReadFrom(destResult, frame.buffer, offset);
 };
 
+CallResponse.RW.lazy.readArg1 = allocifyPoolFn(CallResponse.RW.lazy.readarg1, ReadResult);
+
 CallResponse.RW.lazy.isFrameTerminal = function isFrameTerminal(frame) {
-    var flags = CallResponse.RW.lazy.readFlags(frame);
+    var flags = CallResponse.RW.lazy.poolReadFlags(readRes, frame);
     var frag = flags.value & CallFlags.Fragment;
     return !frag;
 };
 
-function callResLength(body) {
+function callResLength(destResult, body) {
     var res;
     var length = 0;
 
@@ -689,58 +725,58 @@ function callResLength(body) {
     length += bufrw.UInt8.width;
 
     // tracing:24 traceflags:1
-    res = Tracing.RW.byteLength(body.tracing);
+    res = Tracing.RW.poolByteLength(destResult, body.tracing);
     if (res.err) return res;
     length += res.length;
 
     // nh:1 (hk~1 hv~1){nh}
-    res = header.header1.byteLength(body.headers);
+    res = header.header1.poolByteLength(destResult, body.headers);
     if (res.err) return res;
     length += res.length;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.byteLength(body);
+    res = argsrw.poolByteLength(destResult, body);
     if (!res.err) res.length += length;
 
     return res;
 }
 
-function readCallResFrom(buffer, offset) {
+function readCallResFrom(destResult, buffer, offset) {
     var res;
     var body = new CallResponse();
 
     // flags:1
-    res = bufrw.UInt8.readFrom(buffer, offset);
+    res = bufrw.UInt8.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.flags = res.value;
 
     // code:1
-    res = bufrw.UInt8.readFrom(buffer, offset);
+    res = bufrw.UInt8.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.code = res.value;
 
     // tracing:24 traceflags:1
-    res = Tracing.RW.readFrom(buffer, offset);
+    res = Tracing.RW.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.tracing = res.value;
 
     // nh:1 (hk~1 hv~1){nh}
-    res = header.header1.readFrom(buffer, offset);
+    res = header.header1.poolReadFrom(destResult, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
     body.headers = res.value;
 
     // csumtype:1 (csum:4){0,1} (arg~2)*
-    res = argsrw.readFrom(body, buffer, offset);
+    res = argsrw.poolReadFrom(destResult, body, buffer, offset);
     if (!res.err) res.value = body;
 
     return res;
 }
 
-function writeCallResInto(body, buffer, offset) {
+function writeCallResInto(destResult, body, buffer, offset) {
     var start = offset;
     var res;
 
@@ -748,27 +784,27 @@ function writeCallResInto(body, buffer, offset) {
     offset += bufrw.UInt8.width;
 
     // code:1
-    res = bufrw.UInt8.writeInto(body.code, buffer, offset);
+    res = bufrw.UInt8.poolWriteInto(destResult, body.code, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // tracing:24 traceflags:1
-    res = Tracing.RW.writeInto(body.tracing, buffer, offset);
+    res = Tracing.RW.poolWriteInto(destResult, body.tracing, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // nh:1 (hk~1 hv~1){nh}
-    res = header.header1.writeInto(body.headers, buffer, offset);
+    res = header.header1.poolWriteInto(destResult, body.headers, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // csumtype:1 (csum:4){0,1} (arg~2)* -- (may mutate body.flags)
-    res = argsrw.writeInto(body, buffer, offset);
+    res = argsrw.poolWriteInto(destResult, body, buffer, offset);
     if (res.err) return res;
     offset = res.offset;
 
     // now we know the final flags, write them
-    res = bufrw.UInt8.writeInto(body.flags, buffer, start);
+    res = bufrw.UInt8.poolWriteInto(destResult, body.flags, buffer, start);
     if (!res.err) res.offset = offset;
 
     return res;

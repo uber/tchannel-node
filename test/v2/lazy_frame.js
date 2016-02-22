@@ -26,6 +26,11 @@ var test = require('tape');
 var testRW = require('bufrw/test_rw');
 var process = global.process;
 
+var ReadResult = require('bufrw').ReadResult;
+var WriteResult = require('bufrw').WriteResult;
+var readRes = new ReadResult();
+var writeRes = new WriteResult();
+
 var TestBody = require('./lib/test_body.js');
 var v2 = require('../../v2/index.js');
 
@@ -495,7 +500,7 @@ test('CallRequest.RW.lazy', function t(assert) {
 
     // validate call req lazy reading
     assertReadRes(
-        v2.CallRequest.RW.lazy.readFlags(lazyFrame),
+        v2.CallRequest.RW.lazy.poolReadFlags(readRes, lazyFrame),
         frame.body.flags,
         'CallRequest.RW.lazy.readFlags');
     assert.equal(
@@ -503,15 +508,15 @@ test('CallRequest.RW.lazy', function t(assert) {
         frame.body.ttl,
         'CallRequest.RW.lazy.readTTL');
     assertReadRes(
-        v2.CallRequest.RW.lazy.readTracing(lazyFrame),
+        v2.CallRequest.RW.lazy.poolReadTracing(readRes, lazyFrame),
         tracing,
         'CallRequest.RW.lazy.readTracing');
     assertReadRes(
-        v2.CallRequest.RW.lazy.readService(lazyFrame),
+        v2.CallRequest.RW.lazy.poolReadService(readRes, lazyFrame),
         frame.body.service,
         'CallRequest.RW.lazy.readService');
     assertReadRes(
-        v2.CallRequest.RW.lazy.readArg1(lazyFrame),
+        v2.CallRequest.RW.lazy.poolReadArg1(readRes, lazyFrame),
         Buffer(frame.body.args[0]),
         'CallRequest.RW.lazy.readArg1');
     assert.equal(
@@ -520,7 +525,7 @@ test('CallRequest.RW.lazy', function t(assert) {
         'CallRequest.RW.lazy.isFrameTerminal');
 
     // validate lazy header reading
-    var res = v2.CallRequest.RW.lazy.readHeaders(lazyFrame);
+    var res = v2.CallRequest.RW.lazy.poolReadHeaders(readRes, lazyFrame);
     assert.ifError(res.err, 'no error from v2.CallRequest.RW.lazy.readHeaders');
     var headers = res.value;
     if (headers) {
@@ -545,7 +550,7 @@ test('CallRequest.RW.lazy', function t(assert) {
             'expected header "as" => "plumber"');
         // readArg1 can re-use readHeaders work
         assertReadRes(
-            v2.CallRequest.RW.lazy.readArg1(lazyFrame, headers),
+            v2.CallRequest.RW.lazy.poolReadArg1(readRes, lazyFrame, headers),
             Buffer(frame.body.args[0]),
             'CallRequest.RW.lazy.readArg1, with headers');
     }
@@ -553,7 +558,7 @@ test('CallRequest.RW.lazy', function t(assert) {
     // validate call req lazy writing
     var newTTL = frame.body.ttl - 15;
     assert.ifError(
-        v2.CallRequest.RW.lazy.writeTTL(newTTL, lazyFrame).err,
+        v2.CallRequest.RW.lazy.poolWriteTTL(writeRes, newTTL, lazyFrame).err,
         'no error from v2.CallRequest.RW.lazy.writeTTL');
     var newFrame = bufrw.fromBuffer(v2.Frame.RW, lazyFrame.buffer);
     assert.equal(
@@ -600,11 +605,11 @@ test('CallResponse.RW.lazy', function t(assert) {
 
     // validate call res lazy reading
     assertReadRes(
-        v2.CallResponse.RW.lazy.readFlags(lazyFrame),
+        v2.CallResponse.RW.lazy.poolReadFlags(readRes, lazyFrame),
         frame.body.flags,
         'CallResponse.RW.lazy.readFlags');
     assertReadRes(
-        v2.CallResponse.RW.lazy.readTracing(lazyFrame),
+        v2.CallResponse.RW.lazy.poolReadTracing(readRes, lazyFrame),
         tracing,
         'CallResponse.RW.lazy.readTracing');
     assert.equal(
@@ -612,12 +617,12 @@ test('CallResponse.RW.lazy', function t(assert) {
         !(frame.body.flags & v2.CallFlags.Fragment),
         'CallResponse.RW.lazy.isFrameTerminal');
     assertReadRes(
-        v2.CallResponse.RW.lazy.readArg1(lazyFrame),
+        v2.CallResponse.RW.lazy.poolReadArg1(readRes, lazyFrame),
         Buffer(frame.body.args[0]),
         'CallResponse.RW.lazy.readArg1');
 
     // validate lazy header reading
-    var res = v2.CallResponse.RW.lazy.readHeaders(lazyFrame);
+    var res = v2.CallResponse.RW.lazy.poolReadHeaders(readRes, lazyFrame);
     assert.ifError(res.err, 'no error from v2.CallResponse.RW.lazy.readHeaders');
     var headers = res.value;
     if (headers) {
@@ -638,7 +643,7 @@ test('CallResponse.RW.lazy', function t(assert) {
             'expected header "as" => "plumber"');
         // readArg1 can re-use readHeaders work
         assertReadRes(
-            v2.CallResponse.RW.lazy.readArg1(lazyFrame, headers),
+            v2.CallResponse.RW.lazy.poolReadArg1(readRes, lazyFrame, headers),
             Buffer(frame.body.args[0]),
             'CallResponse.RW.lazy.readArg1, with headers');
     }

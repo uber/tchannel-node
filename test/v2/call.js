@@ -22,6 +22,7 @@
 
 var test = require('tape');
 var testRW = require('bufrw/test_rw');
+var Frame = require('../../v2/frame.js');
 var Call = require('../../v2/call.js');
 var Checksum = require('../../v2/checksum.js');
 var Tracing = require('../../v2/tracing.js');

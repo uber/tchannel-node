@@ -41,6 +41,8 @@ var States = require('../reqres_states');
 var StreamingInRequest = require('../streaming_in_request');
 var StreamingInResponse = require('../streaming_in_response');
 
+var WriteResult = require('bufrw').WriteResult;
+
 var v2 = require('./index');
 var errors = require('../errors');
 
@@ -132,9 +134,10 @@ TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end) {
     this.write(copy);
 };
 
+var writeRes = new WriteResult();
 TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var writeBuffer = GLOBAL_WRITE_BUFFER;
-    var res = v2.Frame.RW.writeInto(frame, writeBuffer, 0);
+    var res = v2.Frame.RW.poolWriteInto(writeRes, frame, writeBuffer, 0);
     var err = res.err;
     if (err) {
         if (!Buffer.isBuffer(err.buffer)) {
