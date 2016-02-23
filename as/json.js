@@ -151,6 +151,7 @@ function TChannelJSONResponse(response, parseResult) {
         self.body = errors.ReconstructedError(parseResult.body);
     }
 
+    self.remoteAddr = response.remoteAddr;
     self.headers = response.headers;
 }
 

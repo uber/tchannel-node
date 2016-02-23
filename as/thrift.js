@@ -508,6 +508,7 @@ function TChannelThriftResponse(response, parseResult) {
     self.ok = response.ok;
     self.head = parseResult.head;
     self.body = null;
+    self.remoteAddr = response.remoteAddr;
     self.headers = response.headers;
     self.body = parseResult.body;
     self.typeName = parseResult.typeName;
