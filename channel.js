@@ -918,7 +918,9 @@ TChannel.prototype.close = function close(callback) {
 
     var counter = 1;
 
-    ObjectPool.unref();
+    if (self.statsd) {
+        ObjectPool.unref();
+    }
 
     if (self.sanityTimer) {
         self.timers.clearTimeout(self.sanityTimer);
