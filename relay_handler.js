@@ -46,7 +46,6 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
         return false;
     }
 
-    //var rereq = new LazyRelayInReq(conn, reqFrame);
     var rereq = LazyRelayInReq.alloc();
     rereq.reset(conn, reqFrame);
 

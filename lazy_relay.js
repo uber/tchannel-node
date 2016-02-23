@@ -396,7 +396,6 @@ function onReadError(err) {
 
     var conn = self.conn;
     self.onError(err);
-
     conn.resetAll(err);
 };
 

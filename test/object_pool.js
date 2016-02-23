@@ -55,40 +55,42 @@ test('object pool happy', function t1(assert) {
         reportInterval: 500
     });
 
+    var pool = ObjectPool.pools.filter(function (p) {
+        return p.name === 'Widget';
+    })[0];
+
     var w = Widget.alloc();
     w.reset({type: 'foo', count: 10});
 
-    assert.equal(ObjectPool.pools[0].freeList.length, 0, 'no free instances yet');
-    assert.equal(ObjectPool.pools[0].outstanding, 1, '1 outstanding instace');
+    assert.equal(pool.freeList.length, 0, 'no free instances yet');
+    assert.equal(pool.outstanding, 1, '1 outstanding instace');
 
     var w2 = Widget.alloc();
     w2.reset({type: 'foo', count: 10});
 
-    assert.equal(ObjectPool.pools[0].freeList.length, 0, 'no free instances yet');
-    assert.equal(ObjectPool.pools[0].outstanding, 2, '2 outstanding instace');
+    assert.equal(pool.freeList.length, 0, 'no free instances yet');
+    assert.equal(pool.outstanding, 2, '2 outstanding instace');
 
     var w3 = Widget.alloc();
     w3.reset({type: 'foo', count: 10});
 
-    assert.equal(ObjectPool.pools[0].freeList.length, 0, 'no free instances yet');
-    assert.equal(ObjectPool.pools[0].outstanding, 3, '3 outstanding instace');
+    assert.equal(pool.freeList.length, 0, 'no free instances yet');
+    assert.equal(pool.outstanding, 3, '3 outstanding instace');
 
     w.free();
     // after w.free() the free list is still 0 because maxSize of the pool is 2
 
-    assert.equal(ObjectPool.pools[0].freeList.length, 0, 'no free instances');
-    assert.equal(ObjectPool.pools[0].outstanding, 2, '2 outstanding instace');
+    assert.equal(pool.freeList.length, 0, 'no free instances');
+    assert.equal(pool.outstanding, 2, '2 outstanding instace');
 
     w2.free();
 
-    assert.equal(ObjectPool.pools[0].freeList.length, 1, '1 free instance');
-    assert.equal(ObjectPool.pools[0].outstanding, 1, '1 outstanding instace');
+    assert.equal(pool.freeList.length, 1, '1 free instance');
+    assert.equal(pool.outstanding, 1, '1 outstanding instace');
 
     timers.advance(500);
-    assert.deepEqual(stats, {
-        'object-pools.Widget.free': 1,
-        'object-pools.Widget.outstanding': 1
-    });
+    assert.equal(stats['object-pools.Widget.free'], 1);
+    assert.equal(stats['object-pools.Widget.outstanding'], 1);
 
     w = Widget.alloc();
 
@@ -96,20 +98,18 @@ test('object pool happy', function t1(assert) {
     assert.equal(w2.type, null, 'object type field was cleared');
     assert.equal(w2.count, null, 'object count field was cleared');
 
-    assert.equal(ObjectPool.pools[0].freeList.length, 0, '0 free instances');
-    assert.equal(ObjectPool.pools[0].outstanding, 2, '2 outstanding instace');
+    assert.equal(pool.freeList.length, 0, '0 free instances');
+    assert.equal(pool.outstanding, 2, '2 outstanding instace');
 
     w.free();
     w3.free();
 
-    assert.equal(ObjectPool.pools[0].freeList.length, 2, '2 free instances');
-    assert.equal(ObjectPool.pools[0].outstanding, 0, '0 outstanding instace');
+    assert.equal(pool.freeList.length, 2, '2 free instances');
+    assert.equal(pool.outstanding, 0, '0 outstanding instace');
 
     timers.advance(500);
-    assert.deepEqual(stats, {
-        'object-pools.Widget.free': 2,
-        'object-pools.Widget.outstanding': 0
-    });
+    assert.equal(stats['object-pools.Widget.free'], 2);
+    assert.equal(stats['object-pools.Widget.outstanding'], 0);
 
     assert.end();
 });
