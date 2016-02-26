@@ -58,7 +58,8 @@ module.exports = {
     ConnectionsErrorsTags: ConnectionsErrorsTags,
     ConnectionsClosedTags: ConnectionsClosedTags,
     RelayLatencyTags: RelayLatencyTags,
-    HTTPHanlderBuildLatencyTags: HTTPHanlderBuildLatencyTags
+    HTTPHanlderBuildLatencyTags: HTTPHanlderBuildLatencyTags,
+    ObjectPoolTags: ObjectPoolTags
 };
 
 function InboundCallsRecvdTags(cn, serviceName, endpoint) {
@@ -662,4 +663,18 @@ HTTPHanlderBuildLatencyTags.prototype.toStatKey = function toStatKey(prefix) {
         clean(this.callerName, 'no-caller-name') + '.' +
         clean(this.targetService, 'no-target-service') + '.' +
         (this.streamed ? 'streamed' : 'unstreamed');
+};
+
+function ObjectPoolTags(poolName, statType) {
+    this.app = '';
+    this.host = '';
+    this.cluster = '';
+    this.version = '';
+
+    this.poolName = poolName;
+    this.statType = statType;
+}
+
+ObjectPoolTags.prototype.toStatKey = function toStatKey(prefix) {
+    return prefix + '.' + this.poolName + '.' + this.statType;
 };
