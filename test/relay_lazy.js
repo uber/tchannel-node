@@ -443,7 +443,7 @@ allocCluster.test('relay request handles channel close correctly', {
                      'tchannel.connection.reset',
                      'expected connection error');
         assert.notOk(res, 'expected no response');
-        finish();
+        process.nextTick(finish);
     }
 
     function finish() {
