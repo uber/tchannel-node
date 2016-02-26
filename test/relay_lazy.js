@@ -301,6 +301,7 @@ allocCluster.test('lazy relay request times out', {
 
     var relayOutPeer = relayChan.peers.get(dest.hostPort);
     relayOutPeer.waitForIdentified = function punchWaitForIdentified() {
+        return -1;
     };
 
     sourceChan.request({
