@@ -47,10 +47,14 @@ ObjectPool.setup({
 test('object pool happy', function t1(assert) {
     var timers = Timer(0);
     var stats = {};
-    var statsd = {gauge: function (k, v) { stats[k] = v; }};
+    var channel = {emitFastStat: fakeEmitFastStat};
+
+    function fakeEmitFastStat(name, type, val, tags) {
+        stats[name + tags.toStatKey('')] = val;
+    }
 
     ObjectPool.bootstrap({
-        statsd: statsd,
+        channel: channel,
         timers: timers,
         reportInterval: 500
     });
@@ -89,8 +93,8 @@ test('object pool happy', function t1(assert) {
     assert.equal(pool.outstanding, 1, '1 outstanding instace');
 
     timers.advance(500);
-    assert.equal(stats['object-pools.Widget.free'], 1);
-    assert.equal(stats['object-pools.Widget.outstanding'], 1);
+    assert.equal(stats['tchannel.object-pool.Widget.free'], 1);
+    assert.equal(stats['tchannel.object-pool.Widget.outstanding'], 1);
 
     w = Widget.alloc();
 
@@ -108,8 +112,8 @@ test('object pool happy', function t1(assert) {
     assert.equal(pool.outstanding, 0, '0 outstanding instace');
 
     timers.advance(500);
-    assert.equal(stats['object-pools.Widget.free'], 2);
-    assert.equal(stats['object-pools.Widget.outstanding'], 0);
+    assert.equal(stats['tchannel.object-pool.Widget.free'], 2);
+    assert.equal(stats['tchannel.object-pool.Widget.outstanding'], 0);
 
     assert.end();
 });
