@@ -74,6 +74,10 @@ function LazyRelayInReq(conn, reqFrame) {
     }
 
     function onIdentified(err) {
+        // The ident descriptor will be cleared out of the peer when the ident
+        // comes back, so this slot id will be invalid once ident happens.
+        self.waitForIdentSlot = -1;
+
         if (err) {
             self.onError(err);
         } else {

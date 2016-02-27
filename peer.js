@@ -433,12 +433,12 @@ function _waitForIdentified(conn, callback) {
 
     // Setup an ident descriptor so we can stop waiting for identified later
     var slot = self.getIdentDescriptorSlot();
-    self.waitForIdentifiedListeners[slot] = {
-        close: onConnectionClose,
-        error: onConnectionError,
-        ident: onIdentified,
-        conn: conn
-    };
+    self.waitForIdentifiedListeners[slot] = new WaitForIdentifiedDescriptor(
+        onConnectionClose,
+        onConnectionError,
+        onIdentified,
+        conn
+    );
 
     self.pendingIdentified++;
     conn.errorEvent.on(onConnectionError);
@@ -461,11 +461,7 @@ function _waitForIdentified(conn, callback) {
     }
 
     function finish(err) {
-        self.pendingIdentified = 0;
-        conn.errorEvent.removeListener(onConnectionError);
-        conn.closeEvent.removeListener(onConnectionClose);
-        conn.identifiedEvent.removeListener(onIdentified);
-        self.invalidateScore('waitForIdentified > finish');
+        self.stopWaitingForIdentified(slot);
         callback(err);
     }
 };
@@ -487,8 +483,8 @@ function stopWaitingForIdentified(slot) {
     conn.errorEvent.removeListener(descriptor.error);
     conn.closeEvent.removeListener(descriptor.close);
     conn.identifiedEvent.removeListener(descriptor.ident);
-    this.invalidateScore('waitForIdentified > finish');
     this.pendingIdentified = 0;
+    this.invalidateScore('waitForIdentified > finish');
 };
 
 TChannelPeer.prototype.getIdentDescriptorSlot =
@@ -724,3 +720,10 @@ TChannelPeer.prototype.getScore = function getScore() {
 };
 
 module.exports = TChannelPeer;
+
+function WaitForIdentifiedDescriptor(close, error, ident, conn) {
+    this.close = close;
+    this.error = error;
+    this.ident = ident;
+    this.conn = conn;
+}
