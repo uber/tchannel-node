@@ -20,6 +20,7 @@
 
 'use strict';
 
+var process = require('process');
 var errors = require('./errors');
 var v2 = require('./v2');
 var stat = require('./stat-tags.js');
@@ -61,6 +62,7 @@ function LazyRelayInReq(conn, reqFrame) {
     this.tracing = null;
     this.reqContFrames = [];
     this.hasRead = null;
+    this.waitForIdentSlot = null;
 
     this.boundExtendLogInfo = extendLogInfo;
     this.boundOnIdentified = onIdentified;
@@ -72,6 +74,10 @@ function LazyRelayInReq(conn, reqFrame) {
     }
 
     function onIdentified(err) {
+        // The ident descriptor will be cleared out of the peer when the ident
+        // comes back, so this slot id will be invalid once ident happens.
+        self.waitForIdentSlot = -1;
+
         if (err) {
             self.onError(err);
         } else {
@@ -102,11 +108,16 @@ LazyRelayInReq.prototype.reset = function reset(conn, reqFrame) {
     this.reqContFrames.length = 0;
     this.hasRead = false;
     this.circuit = reqFrame.circuit;
+    this.waitForIdentSlot = null;
 };
 
 LazyRelayInReq.prototype.clear = function clear() {
     if (this.outreq && !this.outreq._objectPoolIsFreed) {
         this.outreq.free();
+    }
+
+    if (this.peer && this.waitForIdentSlot !== null) {
+        this.peer.stopWaitingForIdentified(this.waitForIdentSlot);
     }
 
     this.channel = null;
@@ -130,6 +141,7 @@ LazyRelayInReq.prototype.clear = function clear() {
     this.reqContFrames.length = 0;
     this.hasRead = null;
     this.circuit = null;
+    this.waitForIdentSlot = null;
 };
 
 ObjectPool.setup({Type: LazyRelayInReq, maxSize: 200});
@@ -273,7 +285,7 @@ function createOutRequest() {
     if (conn && conn.remoteName && !conn.closing) {
         self.forwardTo(conn);
     } else {
-        self.peer.waitForIdentified(self.boundOnIdentified);
+        self.waitForIdentSlot = self.peer.waitForIdentified(self.boundOnIdentified);
     }
 };
 
@@ -433,6 +445,8 @@ function onError(err) {
     }));
 
     self.reqContFrames.length = 0;
+
+    self.free();
 };
 
 LazyRelayInReq.prototype.sendErrorFrame =
@@ -698,7 +712,14 @@ function emitError(err) {
         self.inreq.circuit.state.onRequestError(err);
     }
 
-    self.inreq.onError(err);
+    // We need to defer the inreq onError work, because we might be
+    // *syncronously* processing an error after an attempt to write to a
+    // socket. Otherwise, we might end up freeing the in/outreq pair before a
+    // handleFrameLazily has completed.
+    process.nextTick(deferInReqOnError);
+    function deferInReqOnError() {
+        self.inreq.onError(err);
+    }
 };
 
 LazyRelayOutReq.prototype.logError =

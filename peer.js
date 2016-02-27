@@ -36,6 +36,7 @@ var NoPreference = require('./peer_score_strategies.js').NoPreference;
 var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
 var Range = require('./range');
 var PeerDrain = require('./drain.js').PeerDrain;
+var ObjectPool = require('./lib/object_pool');
 
 var DEFAULT_REPORT_INTERVAL = 1000;
 
@@ -64,6 +65,8 @@ function TChannelPeer(channel, hostPort, options) {
     this.boundOnConnectionClose = onConnectionClose;
     this.boundOnPendingChange = onPendingChange;
     this.scoreRange = null;
+
+    this.waitForIdentifiedListeners = [];
 
     this.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
     if (this.reportInterval > 0 && this.channel.emitConnectionMetrics) {
@@ -419,19 +422,34 @@ function waitForIdentified(conn, callback) {
     } else if (conn.remoteName) {
         callback(null);
     } else {
-        self._waitForIdentified(conn, callback);
+        return self._waitForIdentified(conn, callback);
     }
+
+    return -1;
 };
 
 TChannelPeer.prototype._waitForIdentified =
 function _waitForIdentified(conn, callback) {
     var self = this;
 
+    // Setup an ident descriptor so we can stop waiting for identified later
+    var slot = self.getIdentDescriptorSlot();
+    var descriptor = WaitForIdentifiedDescriptor.alloc();
+    descriptor.reset(
+        onConnectionClose,
+        onConnectionError,
+        onIdentified,
+        conn
+    );
+    self.waitForIdentifiedListeners[slot] = descriptor;
+
     self.pendingIdentified++;
     conn.errorEvent.on(onConnectionError);
     conn.closeEvent.on(onConnectionClose);
     conn.identifiedEvent.on(onIdentified);
     self.invalidateScore('waitForIdentified');
+
+    return slot;
 
     function onConnectionError(err) {
         finish(err);
@@ -446,13 +464,43 @@ function _waitForIdentified(conn, callback) {
     }
 
     function finish(err) {
-        self.pendingIdentified = 0;
-        conn.errorEvent.removeListener(onConnectionError);
-        conn.closeEvent.removeListener(onConnectionClose);
-        conn.identifiedEvent.removeListener(onIdentified);
-        self.invalidateScore('waitForIdentified > finish');
+        self.stopWaitingForIdentified(slot);
         callback(err);
     }
+};
+
+TChannelPeer.prototype.stopWaitingForIdentified =
+function stopWaitingForIdentified(slot) {
+    assert(typeof slot === 'number', 'stopWaitingForIdentified arg1 should be number');
+
+    if (slot === -1) {
+        // when connection was already identified, `waitForIdentified` will
+        // return -1
+        return;
+    }
+
+    var descriptor = this.waitForIdentifiedListeners[slot];
+    this.waitForIdentifiedListeners[slot] = null;
+    var conn = descriptor.conn;
+
+    conn.errorEvent.removeListener(descriptor.error);
+    conn.closeEvent.removeListener(descriptor.close);
+    conn.identifiedEvent.removeListener(descriptor.ident);
+    this.pendingIdentified = 0;
+    this.invalidateScore('waitForIdentified > finish');
+
+    descriptor.free();
+};
+
+TChannelPeer.prototype.getIdentDescriptorSlot =
+function getIdentDescriptorSlot() {
+    var i;
+    for (i = 0; i < this.waitForIdentifiedListeners.length; i++) {
+        if (this.waitForIdentifiedListeners[i] === null) {
+            return i;
+        }
+    }
+    return this.waitForIdentifiedListeners.length;
 };
 
 TChannelPeer.prototype.request = function peerRequest(options) {
@@ -677,3 +725,28 @@ TChannelPeer.prototype.getScore = function getScore() {
 };
 
 module.exports = TChannelPeer;
+
+function WaitForIdentifiedDescriptor(close, error, ident, conn) {
+    this.close = null;
+    this.error = null;
+    this.ident = null;
+    this.conn = null;
+}
+
+WaitForIdentifiedDescriptor.prototype.reset =
+function reset(close, error, ident, conn) {
+    this.close = close;
+    this.error = error;
+    this.ident = ident;
+    this.conn = conn;
+};
+
+WaitForIdentifiedDescriptor.prototype.clear =
+function clear() {
+    this.close = null;
+    this.error = null;
+    this.ident = null;
+    this.conn = null;
+};
+
+ObjectPool.setup({Type: WaitForIdentifiedDescriptor, maxSize: 100});

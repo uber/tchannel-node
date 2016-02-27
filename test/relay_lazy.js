@@ -301,6 +301,7 @@ allocCluster.test('lazy relay request times out', {
 
     var relayOutPeer = relayChan.peers.get(dest.hostPort);
     relayOutPeer.waitForIdentified = function punchWaitForIdentified() {
+        return -1;
     };
 
     sourceChan.request({
@@ -442,7 +443,7 @@ allocCluster.test('relay request handles channel close correctly', {
                      'tchannel.connection.reset',
                      'expected connection error');
         assert.notOk(res, 'expected no response');
-        finish();
+        process.nextTick(finish);
     }
 
     function finish() {
