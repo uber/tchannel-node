@@ -29,6 +29,7 @@ var debugLogtron = require('debug-logtron');
 
 var TChannel = require('../../channel.js');
 var CollapsedAssert = require('./collapsed-assert.js');
+var ObjectPool = require('../../lib/object_pool');
 
 var loadConfig = require('./load_config.js');
 
@@ -77,7 +78,8 @@ function allocCluster(opts) {
     var channelOptions = extend({
         logger: logger,
         timeoutFuzz: 0,
-        traceSample: 1
+        traceSample: 1,
+        objectPoolDebug: true
     }, defaultChannelOptions, opts.channelOptions || opts);
 
     for (var i = 0; i < opts.numPeers; i++) {
@@ -217,11 +219,31 @@ function clusterTester(opts, t) {
 
                     cluster.assertEmptyState(collapsedAssert);
                     collapsedAssert.report(assert, 'cluster has an empty state');
+
+                    checkObjectPools(assert);
                 }
                 cluster.destroy();
             });
             t(cluster, assert);
         });
+    }
+}
+
+function checkObjectPools(assert) {
+    var i;
+    var pool;
+    var length;
+    for (i = 0; i < ObjectPool.pools.length; i++) {
+        pool = ObjectPool.pools[i];
+        length = pool.outstandingList.length;
+        assert.ok(
+            length === 0,
+            'expected object pool ' + pool.name + ' to have no outstanding ' +
+            'instances, found ' + length + ' instances'
+        );
+        if (length) {
+            assert.comment(util.inspect(pool.outstandingList));
+        }
     }
 }
 

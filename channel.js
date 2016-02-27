@@ -258,7 +258,8 @@ function TChannel(options) {
         ObjectPool.bootstrap({
             channel: this,
             reportInterval: 5000,
-            timers: this.timers
+            timers: this.timers,
+            debug: this.options.objectPoolDebug ? true : false
         });
     }
 
