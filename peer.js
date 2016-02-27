@@ -36,6 +36,7 @@ var NoPreference = require('./peer_score_strategies.js').NoPreference;
 var PreferIncoming = require('./peer_score_strategies.js').PreferIncoming;
 var Range = require('./range');
 var PeerDrain = require('./drain.js').PeerDrain;
+var ObjectPool = require('./lib/object_pool');
 
 var DEFAULT_REPORT_INTERVAL = 1000;
 
@@ -433,12 +434,14 @@ function _waitForIdentified(conn, callback) {
 
     // Setup an ident descriptor so we can stop waiting for identified later
     var slot = self.getIdentDescriptorSlot();
-    self.waitForIdentifiedListeners[slot] = new WaitForIdentifiedDescriptor(
+    var descriptor = WaitForIdentifiedDescriptor.alloc();
+    descriptor.reset(
         onConnectionClose,
         onConnectionError,
         onIdentified,
         conn
     );
+    self.waitForIdentifiedListeners[slot] = descriptor;
 
     self.pendingIdentified++;
     conn.errorEvent.on(onConnectionError);
@@ -485,6 +488,8 @@ function stopWaitingForIdentified(slot) {
     conn.identifiedEvent.removeListener(descriptor.ident);
     this.pendingIdentified = 0;
     this.invalidateScore('waitForIdentified > finish');
+
+    descriptor.free();
 };
 
 TChannelPeer.prototype.getIdentDescriptorSlot =
@@ -722,8 +727,26 @@ TChannelPeer.prototype.getScore = function getScore() {
 module.exports = TChannelPeer;
 
 function WaitForIdentifiedDescriptor(close, error, ident, conn) {
+    this.close = null;
+    this.error = null;
+    this.ident = null;
+    this.conn = null;
+}
+
+WaitForIdentifiedDescriptor.prototype.reset = 
+function reset(close, error, ident, conn) {
     this.close = close;
     this.error = error;
     this.ident = ident;
     this.conn = conn;
-}
+};
+
+WaitForIdentifiedDescriptor.prototype.clear =
+function clear() {
+    this.close = null;
+    this.error = null;
+    this.ident = null;
+    this.conn = null;
+};
+
+ObjectPool.setup({Type: WaitForIdentifiedDescriptor, maxSize: 100});
