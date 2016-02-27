@@ -733,7 +733,7 @@ function WaitForIdentifiedDescriptor(close, error, ident, conn) {
     this.conn = null;
 }
 
-WaitForIdentifiedDescriptor.prototype.reset = 
+WaitForIdentifiedDescriptor.prototype.reset =
 function reset(close, error, ident, conn) {
     this.close = close;
     this.error = error;
