@@ -49,6 +49,9 @@ function TChannelPeer(channel, hostPort, options) {
     this.stateChangedEvent = this.defineEvent('stateChanged');
     this.allocConnectionEvent = this.defineEvent('allocConnection');
     this.removeConnectionEvent = this.defineEvent('removeConnection');
+    this.incrementOutConnectionEvent = this.defineEvent('incrementOutConnection');
+    this.decrementOutConnectionEvent = this.defineEvent('decrementOutConnection');
+
     this.channel = channel;
     this.logger = this.channel.logger;
     this.timers = this.channel.timers;
@@ -467,9 +470,11 @@ TChannelPeer.prototype.addConnection = function addConnection(conn) {
     // TODO: second approx support pruning
     if (conn.direction === 'out') {
         self.connections.push(conn);
+        self.incrementOutConnectionEvent.emit(self);
     } else {
         self.connections.unshift(conn);
     }
+
     conn.errorEvent.on(self.boundOnConnectionError);
     conn.closeEvent.on(self.boundOnConnectionClose);
     conn.ops.pendingChangeEvent.on(self.boundOnPendingChange);
@@ -551,15 +556,20 @@ TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
     var self = this;
 
     var ret = null;
+    var isRemoved = false;
 
     var index = self.connections ? self.connections.indexOf(conn) : -1;
     if (index !== -1) {
         ret = self.connections.splice(index, 1)[0];
+        isRemoved = conn.direction === 'out';
     }
 
     self._maybeInvalidateScore('removeConnection');
 
     self.removeConnectionEvent.emit(self, conn);
+    if (isRemoved) {
+        self.decrementOutConnectionEvent.emit(self);
+    }
     return ret;
 };
 
