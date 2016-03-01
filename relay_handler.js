@@ -59,6 +59,7 @@ RelayHandler.prototype.handleLazily = function handleLazily(conn, reqFrame) {
     if (!rereq.peer) {
         rereq.sendErrorFrame('Declined', 'no peer available for request');
         self.logger.info('no relay peer available', rereq.extendLogInfo({}));
+        rereq.free();
         return true;
     }
 

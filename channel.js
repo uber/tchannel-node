@@ -230,14 +230,6 @@ function TChannel(options) {
     this.statsd = this.options.statsd;
     this.batchStats = null;
 
-    if (this.statsd) {
-        ObjectPool.bootstrap({
-            statsd: this.statsd,
-            reportInterval: 1000,
-            timers: this.timers
-        });
-    }
-
     this.requestDefaults = this.options.requestDefaults ?
         new RequestDefaults(this.options.requestDefaults) : null;
 
@@ -260,6 +252,15 @@ function TChannel(options) {
         this.sanityTimer = this.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
     } else {
         this.batchStats = this.topChannel.batchStats;
+    }
+
+    if (this.batchStats) {
+        ObjectPool.bootstrap({
+            channel: this,
+            reportInterval: 5000,
+            timers: this.timers,
+            debug: this.options.objectPoolDebug ? true : false
+        });
     }
 
     this.maximumRelayTTL = MAXIMUM_TTL_ALLOWED;
@@ -918,7 +919,7 @@ TChannel.prototype.close = function close(callback) {
 
     var counter = 1;
 
-    if (self.statsd) {
+    if (self.batchStats) {
         ObjectPool.unref();
     }
 
