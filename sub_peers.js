@@ -88,6 +88,13 @@ TChannelSubPeers.prototype.add = function add(hostPort, options) {
     peer = topChannel.peers.add(hostPort, options);
     peer.setPreferConnectionDirection(self.preferConnectionDirection);
 
+    if (peer.countConnections('out') > 0) {
+        this.currentConnectedPeers++;
+    }
+
+    peer.incrementOutConnectionEvent.on(self.boundOnOutConnectionIncrement);
+    peer.decrementOutConnectionEvent.on(self.boundOnOutConnectionDecrement);
+
     self._map[hostPort] = peer;
     self._keys.push(hostPort);
 
@@ -112,6 +119,15 @@ TChannelSubPeers.prototype._delete = function _del(peer) {
     if (index === -1) {
         return;
     }
+
+    if (peer.countConnections('out') > 0) {
+        this.currentConnectedPeers--;
+    }
+
+    peer.incrementOutConnectionEvent
+        .removeListener(self.boundOnOutConnectionIncrement);
+    peer.decrementOutConnectionEvent
+        .removeListener(self.boundOnOutConnectionDecrement);
 
     delete self._map[peer.hostPort];
     popout(self._keys, index);
