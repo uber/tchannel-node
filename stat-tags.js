@@ -673,8 +673,16 @@ function ObjectPoolTags(poolName, statType) {
 
     this.poolName = poolName;
     this.statType = statType;
+
+    this._cachedPrefix = '';
+    this._key = '';
 }
 
 ObjectPoolTags.prototype.toStatKey = function toStatKey(prefix) {
-    return prefix + '.' + this.poolName + '.' + this.statType;
+    // prefix should never change but we store it in _cachedPrefix just in case
+    if (!this._key || prefix !== this._cachedPrefix) {
+        this._key = prefix + '.' + this.poolName + '.' + this.statType;
+        this._cachedPrefix = prefix;
+    }
+    return this._key;
 };
