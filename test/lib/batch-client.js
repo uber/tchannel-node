@@ -59,7 +59,8 @@ function BatchClient(channel, hosts, options) {
 
     self.subChannel = self.channel.makeSubChannel({
         serviceName: self.serviceName,
-        peers: self.hosts
+        peers: self.hosts,
+        minConnections: options.minConnections || null
     });
 
     self.requestOptions = {
