@@ -104,13 +104,15 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
 
         var el = self.array[i];
 
-        if (self.rangehis[i] <= self.maxRangeStart) {
+        if (!filter && self.rangehis[i] <= self.maxRangeStart) {
             // This range ends before the range with the largest start begins,
             // so it can't possibly be chosen over any of the ranges we've
             // seen. All ranges below this one have a smaller end, so this
             // range and any below it can't be chosen.
             continue;
-        } else if (!filter || filter(el.peer)) {
+        }
+
+        if (!filter || filter(el.peer)) {
             // INLINE of TChannelPeer#getScore
             var lo = self.rangelos[i];
             var hi = self.rangehis[i];
