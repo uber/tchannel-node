@@ -27,12 +27,42 @@ var PeerHeap = require('./peer_heap.js');
 
 function TChannelSubPeers(channel, options) {
     TChannelPeersBase.call(this, channel, options);
+
+    var self = this;
     this.peerScoreThreshold = this.options.peerScoreThreshold || 0;
     this._heap = new PeerHeap(channel.random);
     this.choosePeerWithHeap = channel.choosePeerWithHeap;
+
+    this.currentConnectedPeers = 0;
+
+    this.boundOnOutConnectionIncrement = boundOnOutConnectionIncrement;
+    this.boundOnOutConnectionDecrement = boundOnOutConnectionDecrement;
+
+    function boundOnOutConnectionDecrement(_, peer) {
+        self.onOutConnectionDecrement(peer);
+    }
+    function boundOnOutConnectionIncrement(_, peer) {
+        self.onOutConnectionIncrement(peer);
+    }
 }
 
 inherits(TChannelSubPeers, TChannelPeersBase);
+
+TChannelSubPeers.prototype.onOutConnectionIncrement =
+function onOutConnectionIncrement(peer) {
+    var connCount = peer.countConnections('out');
+    if (connCount === 1) {
+        this.currentConnectedPeers++;
+    }
+};
+
+TChannelSubPeers.prototype.onOutConnectionDecrement =
+function onOutConnectionDecrement(peer) {
+    var connCount = peer.countConnections('out');
+    if (connCount === 0) {
+        this.currentConnectedPeers--;
+    }
+};
 
 TChannelSubPeers.prototype.close = function close(callback) {
     var self = this;
