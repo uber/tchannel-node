@@ -33,6 +33,9 @@ function TChannelSubPeers(channel, options) {
     this._heap = new PeerHeap(channel.random);
     this.choosePeerWithHeap = channel.choosePeerWithHeap;
 
+    this.hasMinConnections = typeof options.minConnections === 'number';
+    this.minConnections = options.minConnections;
+
     this.currentConnectedPeers = 0;
 
     this.boundOnOutConnectionIncrement = boundOnOutConnectionIncrement;

@@ -147,7 +147,7 @@ function countConnections(batchClient) {
     return conns.length;
 }
 
-function setup(cluster) {
+function setup(cluster, opts) {
     cluster.clients = cluster.channels.slice(0, 40);
     cluster.servers = cluster.channels.slice(40, 80);
 
@@ -167,7 +167,8 @@ function setup(cluster) {
             cluster.clients[i], cluster.serverHosts, {
                 delay: 40,
                 batchSize: 1,
-                totalRequests: 50
+                totalRequests: 50,
+                minConnections: opts.minConnections || null
             }
         ));
     }
