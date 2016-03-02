@@ -180,6 +180,7 @@ TChannelSubPeers.prototype.choosePeer = function choosePeer(req) {
     return self.chooseLinearPeer(req);
 };
 
+/*eslint max-statements: [2, 40]*/
 TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
     /* eslint complexity: [2, 15]*/
     var self = this;
@@ -198,6 +199,13 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
         var peer = self._map[hostPort];
 
         var shouldSkip = req && req.triedRemoteAddrs && req.triedRemoteAddrs[hostPort];
+        if (this.hasMinConnections) {
+            var notEnoughPeers = this.currentConnectedPeers < this.minConnections;
+            if (notEnoughPeers && peer.isConnected('out')) {
+                shouldSkip = true;
+            }
+        }
+
         if (!shouldSkip) {
             var score = peer.getScore(req);
 
@@ -232,7 +240,9 @@ TChannelSubPeers.prototype.chooseHeapPeer = function chooseHeapPeer(req) {
     var self = this;
 
     var peer;
-    if (req && req.triedRemoteAddrs) {
+    if ((req && req.triedRemoteAddrs) ||
+        (this.hasMinConnections && this.currentConnectedPeers < this.minConnections)
+    ) {
         peer = self._choosePeerSkipTried(req);
     } else {
         peer = self._heap.choose(self.peerScoreThreshold);
@@ -255,7 +265,16 @@ function _choosePeerSkipTried(req) {
     return self._heap.choose(self.peerScoreThreshold, filterTriedPeers);
 
     function filterTriedPeers(peer) {
-        return !req.triedRemoteAddrs[peer.hostPort];
+        var shouldSkip = req && req.triedRemoteAddrs && req.triedRemoteAddrs[peer.hostPort];
+
+        if (self.hasMinConnections) {
+            var notEnoughPeers = self.currentConnectedPeers < self.minConnections;
+            if (notEnoughPeers && peer.isConnected('out')) {
+                shouldSkip = true;
+            }
+        }
+
+        return !shouldSkip;
     }
 };
 
