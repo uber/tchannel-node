@@ -104,7 +104,7 @@ allocCluster.test('p2p requests from 40 -> 40', {
         cassert.equal(info.sum, 2000,
             'expected 2000 requests to be made'
         );
-        cassert.ok(info.median >= 50,
+        cassert.ok(info.median >= 49,
             'expected median (' + info.median + ') to be huge'
         );
         cassert.ok(info.max >= 100, 'expected maximum to be huge');
