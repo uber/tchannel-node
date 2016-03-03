@@ -120,6 +120,10 @@ LazyRelayInReq.prototype.clear = function clear() {
         this.peer.stopWaitingForIdentified(this.waitForIdentSlot);
     }
 
+    if (this.timeHeapHandle) {
+        this.timeHeapHandle.cancel();
+    }
+
     this.channel = null;
     this.conn = null;
     this.start = null;
@@ -628,6 +632,10 @@ LazyRelayOutReq.prototype.reset = function reset(conn, inreq) {
 };
 
 LazyRelayOutReq.prototype.clear = function clear() {
+    if (this.timeHeapHandle) {
+        this.timeHeapHandle.cancel();
+    }
+
     this.channel = null;
     this.conn = null;
     this.start = null;
