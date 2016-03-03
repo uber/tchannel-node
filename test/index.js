@@ -77,6 +77,7 @@ require('./relay-clamps-the-ttl.js');
 require('./relay-under-timeouts.js');
 require('./relay-kills-socket-after-timeouts.js');
 require('./object_pool.js');
+require('./peer-to-peer-load-balance.js');
 
 require('./trace/basic_server.js');
 require('./trace/server_2_requests.js');

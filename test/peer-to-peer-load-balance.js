@@ -215,7 +215,7 @@ allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
             info.p75 <= 65,
             'expected P75 (' + info.p75 + ') to be within 55 & 65'
         );
-        cassert.ok(info.p95 <= 90,
+        cassert.ok(info.p95 <= 95,
             'expected P95 (' + info.p95 + ') to be small'
         );
 
