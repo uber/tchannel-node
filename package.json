@@ -10,7 +10,7 @@
     "benchmark": "echo '!!! DEPRECATED: Better to just run `node benchmarks` directly' >&2; node benchmarks",
     "hyperbahn-link-test": "./test/link_hyperbahn.sh",
     "tcurl-link-test": "./test/link_tcurl.sh",
-    "check-benchmark": "node benchmarks -- -r 10000 -p 100",
+    "check-benchmark": "node benchmarks -- -r 10000 -p 750",
     "take-benchmark": "make -C benchmarks take",
     "take-relay-benchmark": "make -C benchmarks take_relay",
     "take-trace-benchmark": "amke -C benchmarks take_trace",
