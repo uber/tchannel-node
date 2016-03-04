@@ -39,33 +39,22 @@ function TChannelSubPeers(channel, options) {
 
     this.currentConnectedPeers = 0;
 
-    this.boundOnOutConnectionIncrement = boundOnOutConnectionIncrement;
-    this.boundOnOutConnectionDecrement = boundOnOutConnectionDecrement;
+    this.boundOnOutConnectionDelta = boundOnOutConnectionDelta;
 
-    function boundOnOutConnectionDecrement(_, peer) {
-        self.onOutConnectionDecrement(peer);
-    }
-    function boundOnOutConnectionIncrement(_, peer) {
-        self.onOutConnectionIncrement(peer);
+    function boundOnOutConnectionDelta(delta, peer) {
+        self.onOutConnectionDelta(peer, delta);
     }
 }
 
 inherits(TChannelSubPeers, TChannelPeersBase);
 
-TChannelSubPeers.prototype.onOutConnectionIncrement =
-function onOutConnectionIncrement(peer) {
+TChannelSubPeers.prototype.onOutConnectionDelta =
+function onOutConnectionDelta(peer, delta) {
     var connCount = peer.countConnections('out');
-    if (connCount === 1) {
+
+    if (delta === 1 && connCount === 1) {
         this.currentConnectedPeers++;
-    }
-
-    // this._auditCurrentConnectedPeers();
-};
-
-TChannelSubPeers.prototype.onOutConnectionDecrement =
-function onOutConnectionDecrement(peer) {
-    var connCount = peer.countConnections('out');
-    if (connCount === 0) {
+    } else if (delta === -1 && connCount === 0) {
         this.currentConnectedPeers--;
     }
 
@@ -114,8 +103,7 @@ TChannelSubPeers.prototype.add = function add(hostPort, options) {
         this.currentConnectedPeers++;
     }
 
-    peer.incrementOutConnectionEvent.on(self.boundOnOutConnectionIncrement);
-    peer.decrementOutConnectionEvent.on(self.boundOnOutConnectionDecrement);
+    peer.deltaOutConnectionEvent.on(self.boundOnOutConnectionDelta);
 
     self._map[hostPort] = peer;
     self._keys.push(hostPort);
@@ -146,10 +134,8 @@ TChannelSubPeers.prototype._delete = function _del(peer) {
         this.currentConnectedPeers--;
     }
 
-    peer.incrementOutConnectionEvent
-        .removeListener(self.boundOnOutConnectionIncrement);
-    peer.decrementOutConnectionEvent
-        .removeListener(self.boundOnOutConnectionDecrement);
+    peer.deltaOutConnectionEvent
+        .removeListener(self.boundOnOutConnectionDelta);
 
     delete self._map[peer.hostPort];
     popout(self._keys, index);
