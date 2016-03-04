@@ -122,7 +122,8 @@ function TChannel(options) {
     this.emitConnectionMetrics =
         typeof this.options.emitConnectionMetrics === 'boolean' ?
         this.options.emitConnectionMetrics : false;
-    this.choosePeerWithHeap = this.options.choosePeerWithHeap || false;
+    this.choosePeerWithHeap = typeof this.options.choosePeerWithHeap === 'boolean' ?
+        this.options.choosePeerWithHeap : true;
 
     this.setObservePeerScoreEvents(this.options.observePeerScoreEvents);
 
