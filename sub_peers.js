@@ -20,7 +20,6 @@
 
 'use strict';
 
-var assert = require('assert');
 var inherits = require('util').inherits;
 
 var TChannelPeersBase = require('./peers_base.js');
@@ -57,25 +56,6 @@ function onOutConnectionDelta(peer, delta) {
     } else if (delta === -1 && connCount === 0) {
         this.currentConnectedPeers--;
     }
-
-    // this._auditCurrentConnectedPeers();
-};
-
-TChannelSubPeers.prototype._auditCurrentConnectedPeers =
-function _auditCurrentConnectedPeers() {
-    var peers = this.values();
-    var count = 0;
-
-    for (var i = 0; i < peers.length; i++) {
-        var p = peers[i];
-
-        if (p.countConnections('out') > 0) {
-            count++;
-        }
-    }
-
-    assert(count !== this.currentConnectedPeers,
-        'expected ' + this.currentConnectedPeers + ' peers but got: ' + count);
 };
 
 TChannelSubPeers.prototype.close = function close(callback) {
