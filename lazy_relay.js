@@ -718,7 +718,9 @@ function emitError(err) {
     // handleFrameLazily has completed.
     process.nextTick(deferInReqOnError);
     function deferInReqOnError() {
-        self.inreq.onError(err);
+        if (self.inreq) {
+            self.inreq.onError(err);
+        }
     }
 };
 
