@@ -147,84 +147,22 @@ allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
 
         var statusTable = findServerHostDistribution(statuses);
 
-        checkConnections();
-        checkDistributions(statusTable);
+        cassert = verifyConnections(cluster, 10, 12);
+        cassert.report(assert, 'expected batch connections to be fine');
+
+        cassert = verifyDistributions(statusTable, {
+            min: 40,
+            sum: 2000,
+            median: [40, 60],
+            mean: [45, 55],
+            max: 120,
+            p75: [55, 65],
+            p95: 95,
+            variance: 400
+        });
+        cassert.report(assert, 'expected request distribution to be ok');
 
         assert.end();
-    }
-
-    function checkConnections() {
-        var cassert = CollapsedAssert();
-        var distribution = new metrics.Histogram();
-        for (var i = 0; i < cluster.batches.length; i++) {
-            var connCount = countConnections(cluster.batches[i]);
-            distribution.update(connCount);
-
-            cassert.ok(
-                connCount >= 10 &&
-                connCount <= 12,
-                'expected roughly 10 connections'
-            );
-        }
-
-        var info = distribution.printObj();
-        cassert.ok(info.min <= 12, 'expected roughly 10 conns');
-        cassert.ok(info.max >= 10, 'expected 10 conns');
-        cassert.ok(info.sum >= 400, 'expected at least 400 conns');
-        cassert.ok(info.p75 <= 12, 'expected p75 to be dcent');
-
-        cassert.report(assert, 'expected batch connections to be fine');
-    }
-
-    function checkDistributions(statusTable) {
-        var uniqHosts = Object.keys(statusTable);
-        // assert.ok(uniqHosts.length <= 35,
-        //     'Expected host reached (' + uniqHosts.length + ') to <= 35');
-
-        var distribution = new metrics.Histogram();
-        for (var i = 0; i < uniqHosts.length; i++) {
-            distribution.update(statusTable[uniqHosts[i]]);
-        }
-
-        var info = distribution.printObj();
-
-        var cassert = CollapsedAssert();
-        cassert.ok(info.min <= 40,
-            'expected minimum to be no more then 40'
-        );
-        cassert.equal(info.sum, 2000,
-            'expected 2000 requests to be made'
-        );
-        cassert.ok(
-            info.median >= 40 &&
-            info.median <= 60,
-            'expected median (' + info.median + ') to be within 40 & 60'
-        );
-
-        cassert.ok(
-            info.mean >= 45 &&
-            info.mean <= 55,
-            'expected mean (' + info.mean + ') to be within 45 & 55'
-        );
-
-        cassert.ok(info.max <= 120,
-            'expected maximum (' + info.max + ') to no more then 120'
-        );
-        cassert.ok(
-            info.p75 >= 55 &&
-            info.p75 <= 65,
-            'expected P75 (' + info.p75 + ') to be within 55 & 65'
-        );
-        cassert.ok(info.p95 <= 95,
-            'expected P95 (' + info.p95 + ') to be small'
-        );
-
-        cassert.ok(info.variance <= 400,
-            'expected variance (' + info.variance + ') to be small'
-        );
-        // console.log('conn distribution', info);
-
-        cassert.report(assert, 'expected request distribution to be ok');
     }
 });
 
@@ -256,6 +194,83 @@ function countConnections(batchClient) {
     }
 
     return conns.length;
+}
+
+function verifyConnections(cluster, min, max) {
+    var MIN = min;
+    var MAX = max;
+    var COUNT = cluster.batches.length;
+
+    var cassert = CollapsedAssert();
+    var distribution = new metrics.Histogram();
+    for (var i = 0; i < cluster.batches.length; i++) {
+        var connCount = countConnections(cluster.batches[i]);
+        distribution.update(connCount);
+
+        cassert.ok(
+            connCount >= MIN &&
+            connCount <= MAX,
+            'expected roughly 10 connections'
+        );
+    }
+
+    var info = distribution.printObj();
+    cassert.ok(info.min <= MAX, 'expected roughly 10 conns');
+    cassert.ok(info.max >= MIN, 'expected 10 conns');
+    cassert.ok(info.sum >= COUNT * MIN, 'expected at least 400 conns');
+    cassert.ok(info.p75 <= MAX, 'expected p75 to be dcent');
+
+    return cassert;
+}
+
+function verifyDistributions(statusTable, opts) {
+    var uniqHosts = Object.keys(statusTable);
+
+    var distribution = new metrics.Histogram();
+    for (var i = 0; i < uniqHosts.length; i++) {
+        distribution.update(statusTable[uniqHosts[i]]);
+    }
+
+    var info = distribution.printObj();
+
+    var cassert = CollapsedAssert();
+    cassert.ok(info.min <= opts.min,
+        'expected minimum to be no more then ' + opts.min
+    );
+    cassert.equal(info.sum, opts.sum,
+        'expected ' + opts.sum + ' requests to be made'
+    );
+    cassert.ok(
+        info.median >= opts.median[0] &&
+        info.median <= opts.median[1],
+        'expected median (' + info.median + ') to be within ' +
+            opts.median[0] + ' & ' + opts.median[1]
+    );
+
+    cassert.ok(
+        info.mean >= opts.mean[0] &&
+        info.mean <= opts.mean[1],
+        'expected mean (' + info.mean + ') to be within ' +
+            opts.mean[0] + ' & ' + opts.mean[1]
+    );
+
+    cassert.ok(info.max <= opts.max,
+        'expected maximum (' + info.max + ') to no more then ' + opts.max
+    );
+    cassert.ok(
+        info.p75 >= opts.p75[0] &&
+        info.p75 <= opts.p75[1],
+        'expected P75 (' + info.p75 + ') to be within ' +
+            opts.p75[0] + ' & ' + opts.p75[1]
+    );
+    cassert.ok(info.p95 <= opts.p95,
+        'expected P95 (' + info.p95 + ') to be small'
+    );
+
+    cassert.ok(info.variance <= opts.variance,
+        'expected variance (' + info.variance + ') to be small'
+    );
+    return cassert;
 }
 
 function setup(cluster, opts) {
