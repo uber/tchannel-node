@@ -159,20 +159,22 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
     var threshold = self.peerScoreThreshold;
 
     var selectedPeer = null;
+    var secondaryPeer = null;
     var selectedScore = 0;
+    var secondaryScore = 0;
+
+    var notEnoughPeers = false;
+    if (this.hasMinConnections) {
+        notEnoughPeers = this.currentConnectedPeers < this.minConnections;
+    }
+
     for (var i = 0; i < hosts.length; i++) {
         var hostPort = hosts[i];
         var peer = self._map[hostPort];
 
         var shouldSkip = req && req.triedRemoteAddrs && req.triedRemoteAddrs[hostPort];
-        if (this.hasMinConnections) {
-            var notEnoughPeers = this.currentConnectedPeers < this.minConnections;
-            if (notEnoughPeers && peer.isConnected('out')) {
-                shouldSkip = true;
-            }
-        }
-
         if (!shouldSkip) {
+            var isSecondary = notEnoughPeers && peer.isConnected('out');
             var score = peer.getScore(req);
 
             if (self.channel.topChannel.peerScoredEvent) {
@@ -183,11 +185,24 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
                 });
             }
 
-            var want = score > threshold &&
-                       (selectedPeer === null || score > selectedScore);
+            var want;
+            if (isSecondary) {
+                want = score > threshold && (
+                    secondaryPeer === null || score > secondaryScore
+                );
+            } else {
+                want = score > threshold &&
+                    (selectedPeer === null || score > selectedScore);
+            }
+
             if (want) {
-                selectedPeer = peer;
-                selectedScore = score;
+                if (isSecondary) {
+                    secondaryPeer = peer;
+                    secondaryScore = score;
+                } else {
+                    selectedPeer = peer;
+                    selectedScore = score;
+                }
             }
         }
     }
@@ -199,7 +214,7 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
         });
     }
 
-    return selectedPeer;
+    return selectedPeer || secondaryPeer;
 };
 
 TChannelSubPeers.prototype.chooseHeapPeer = function chooseHeapPeer(req) {
