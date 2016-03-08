@@ -235,48 +235,56 @@ function verifyDistributions(statusTable, opts) {
 
     var cassert = CollapsedAssert();
     cassert.ok(info.min <= opts.min,
-        'expected minimum to be no more then ' + opts.min
+        'expected minimum(' + info.min + ') to be no more then ' + opts.min
     );
     cassert.equal(info.sum, opts.sum,
-        'expected ' + opts.sum + ' requests to be made'
+        'expected sum(' + info.sum + ') to be ' + opts.sum
     );
     cassert.ok(
         info.median >= opts.median[0] &&
         info.median <= opts.median[1],
-        'expected median (' + info.median + ') to be within ' +
+        'expected median(' + info.median + ') to be within ' +
             opts.median[0] + ' & ' + opts.median[1]
     );
 
     cassert.ok(
         info.mean >= opts.mean[0] &&
         info.mean <= opts.mean[1],
-        'expected mean (' + info.mean + ') to be within ' +
+        'expected mean(' + info.mean + ') to be within ' +
             opts.mean[0] + ' & ' + opts.mean[1]
     );
 
     cassert.ok(info.max <= opts.max,
-        'expected maximum (' + info.max + ') to no more then ' + opts.max
+        'expected maximum(' + info.max + ') to no more then ' + opts.max
     );
     cassert.ok(
         info.p75 >= opts.p75[0] &&
         info.p75 <= opts.p75[1],
-        'expected P75 (' + info.p75 + ') to be within ' +
+        'expected P75(' + info.p75 + ') to be within ' +
             opts.p75[0] + ' & ' + opts.p75[1]
     );
     cassert.ok(info.p95 <= opts.p95,
-        'expected P95 (' + info.p95 + ') to be small'
+        'expected P95 (' + info.p95 + ') to be less than ' + opts.p95
     );
 
-    cassert.ok(info.variance <= opts.variance,
-        'expected variance (' + info.variance + ') to be small'
-    );
+    if (opts.variance) {
+        cassert.ok(info.variance <= opts.variance,
+            'expected variance(' + info.variance + ') to be less than ' + opts.variance
+        );
+    }
+
     return cassert;
 }
 
 function setup(cluster, opts) {
     opts = opts || {};
-    cluster.clients = cluster.channels.slice(0, 40);
-    cluster.servers = cluster.channels.slice(40, 80);
+    var NUM_CLIENTS = opts.clients || 40;
+    var NUM_SERVERS = opts.servers || cluster.channels.length - NUM_CLIENTS;
+
+    cluster.clients = cluster.channels.slice(0, NUM_CLIENTS);
+    cluster.servers = cluster.channels.slice(
+        NUM_CLIENTS, NUM_CLIENTS + NUM_SERVERS
+    );
 
     var i;
     for (i = 0; i < cluster.servers.length; i++) {
