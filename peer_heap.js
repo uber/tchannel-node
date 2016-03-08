@@ -46,25 +46,6 @@ function PeerHeap(peers, random) {
     this.maxRangeStart = 0;
 }
 
-PeerHeap.prototype.choose1 = function choose1(threshold, filter) {
-    var self = this;
-    if (self.array[0].range.lo >= threshold && (!filter || filter(self.array[0].peer))) {
-        return self.array[0].peer;
-    }
-};
-
-PeerHeap.prototype.choose2 = function choose2(threshold, filter) {
-    var self = this;
-    var prob1 = self.array[0].peer.getScore();
-    var prob2 = self.array[1].peer.getScore();
-
-    if (prob1 > threshold && prob1 >= prob2 && (!filter || filter(self.array[0].peer))) {
-        return self.array[0].peer;
-    } else if (prob2 > threshold && (!filter || filter(self.array[1].peer))) {
-        return self.array[1].peer;
-    }
-};
-
 /*eslint-disable complexity */
 /*eslint-disable max-statements */
 PeerHeap.prototype.choose = function choose(threshold, filter) {
@@ -116,9 +97,10 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
 
         var el = self.array[i];
 
-        if (self.rangehis[i] <= self.maxRangeStart &&
+        if (!el || (
+            self.rangehis[i] <= self.maxRangeStart &&
             (!filter && !notEnoughPeers)
-        ) {
+        )) {
             // This range ends before the range with the largest start begins,
             // so it can't possibly be chosen over any of the ranges we've
             // seen. All ranges below this one have a smaller end, so this
