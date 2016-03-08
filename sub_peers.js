@@ -30,13 +30,13 @@ function TChannelSubPeers(channel, options) {
 
     var self = this;
     this.peerScoreThreshold = this.options.peerScoreThreshold || 0;
-    this._heap = new PeerHeap(channel.random);
     this.choosePeerWithHeap = channel.choosePeerWithHeap;
 
     this.hasMinConnections = typeof options.minConnections === 'number';
     this.minConnections = options.minConnections;
 
     this.currentConnectedPeers = 0;
+    this._heap = new PeerHeap(this, channel.random);
 
     this.boundOnOutConnectionDelta = boundOnOutConnectionDelta;
 
@@ -221,9 +221,7 @@ TChannelSubPeers.prototype.chooseHeapPeer = function chooseHeapPeer(req) {
     var self = this;
 
     var peer;
-    if ((req && req.triedRemoteAddrs) ||
-        (this.hasMinConnections && this.currentConnectedPeers < this.minConnections)
-    ) {
+    if ((req && req.triedRemoteAddrs)) {
         peer = self._choosePeerSkipTried(req);
     } else {
         peer = self._heap.choose(self.peerScoreThreshold);
@@ -246,15 +244,7 @@ function _choosePeerSkipTried(req) {
     return self._heap.choose(self.peerScoreThreshold, filterTriedPeers);
 
     function filterTriedPeers(peer) {
-        var shouldSkip = req && req.triedRemoteAddrs && req.triedRemoteAddrs[peer.hostPort];
-
-        if (self.hasMinConnections) {
-            var notEnoughPeers = self.currentConnectedPeers < self.minConnections;
-            if (notEnoughPeers && peer.isConnected('out')) {
-                shouldSkip = true;
-            }
-        }
-
+        var shouldSkip = req.triedRemoteAddrs[peer.hostPort];
         return !shouldSkip;
     }
 };

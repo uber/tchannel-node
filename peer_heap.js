@@ -30,8 +30,10 @@ module.exports = PeerHeap;
 // peer list.
 var dfsStack = [0, 1, 2];
 
-function PeerHeap(random) {
+function PeerHeap(peers, random) {
     this.array = [];
+    this.peers = peers || null;
+    this.hasMinConnections = peers ? peers.hasMinConnections : false;
 
     this.random = random || Math.random;
     assert(typeof this.random === 'function', 'PeerHeap expected random fn');
@@ -72,17 +74,17 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         return null;
     }
 
-    if (self.array.length === 1) {
-        return self.choose1(threshold, filter);
-    }
-
-    if (self.array.length === 2) {
-        return self.choose2(threshold, filter);
-    }
-
+    var isSecondary = false;
     var chosenPeer = null;
+    var secondaryPeer = null;
     var highestProbability = 0;
+    var secondaryProbability = 0;
     var firstScore = self.array[0].peer.getScore();
+
+    var notEnoughPeers = false;
+    if (self.hasMinConnections) {
+        notEnoughPeers = self.peers.currentConnectedPeers < self.peers.minConnections;
+    }
 
     // Pointers into dfsStack
     var stackBegin = 0;
@@ -90,8 +92,18 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
 
     if (firstScore > threshold && (!filter || filter(self.array[0].peer))) {
         // Don't check first peer if it looks good, check its children though
-        chosenPeer = self.array[0].peer;
-        highestProbability = firstScore;
+
+        var firstPeer = self.array[0].peer;
+        isSecondary = notEnoughPeers && firstPeer.isConnected('out');
+
+        if (isSecondary) {
+            secondaryPeer = firstPeer;
+            secondaryProbability = firstScore;
+        } else {
+            chosenPeer = firstPeer;
+            highestProbability = firstScore;
+        }
+
         // The array is seeded with 0, 1, 2 so we just have to advance the
         // stack pointers
         stackBegin = 1;
@@ -104,7 +116,9 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
 
         var el = self.array[i];
 
-        if (!filter && self.rangehis[i] <= self.maxRangeStart) {
+        if (self.rangehis[i] <= self.maxRangeStart &&
+            (!filter && !notEnoughPeers)
+        ) {
             // This range ends before the range with the largest start begins,
             // so it can't possibly be chosen over any of the ranges we've
             // seen. All ranges below this one have a smaller end, so this
@@ -113,6 +127,8 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         }
 
         if (!filter || filter(el.peer)) {
+            isSecondary = notEnoughPeers && el.peer.isConnected('out');
+
             // INLINE of TChannelPeer#getScore
             var lo = self.rangelos[i];
             var hi = self.rangehis[i];
@@ -122,9 +138,18 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
             }
             var probability = lo + ((hi - lo) * rand);
 
-            if ((probability > highestProbability) && (probability > threshold)) {
-                highestProbability = probability;
-                chosenPeer = el.peer;
+            if (
+                (probability > threshold) &&
+                !isSecondary ? (probability > highestProbability) :
+                               (probability > secondaryProbability)
+            ) {
+                if (isSecondary) {
+                    secondaryProbability = probability;
+                    secondaryPeer = el.peer;
+                } else {
+                    highestProbability = probability;
+                    chosenPeer = el.peer;
+                }
             }
         }
 
@@ -140,7 +165,7 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         }
     }
 
-    return chosenPeer;
+    return chosenPeer || secondaryPeer;
 };
 /*eslint-enable complexity */
 /*eslint-enable max-statements */
