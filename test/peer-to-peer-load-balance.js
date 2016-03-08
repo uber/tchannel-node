@@ -43,7 +43,9 @@ allocCluster.test('p2p requests from 40 -> 40', {
 
         var statuses = [];
         for (var i = 0; i < results.length; i++) {
-            cassert.ifError(results[i].err);
+            cassert.ifError(results[i].err, 'expect no batch error');
+            cassert.ifError(results[i].value.errors.length > 0,
+                'expect zero errors in batch');
             statuses.push(results[i].value);
         }
         cassert.report(assert, 'expected no errors');
@@ -140,7 +142,9 @@ allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
 
         var statuses = [];
         for (var i = 0; i < results.length; i++) {
-            cassert.ifError(results[i].err);
+            cassert.ifError(results[i].err, 'expect no batch error');
+            cassert.ifError(results[i].value.errors.length > 0,
+                'expect zero errors in batch');
             statuses.push(results[i].value);
         }
         cassert.report(assert, 'expected no errors');
@@ -210,15 +214,21 @@ function verifyConnections(cluster, min, max) {
         cassert.ok(
             connCount >= MIN &&
             connCount <= MAX,
-            'expected roughly 10 connections'
+            'expected connections(' + connCount + ') to be ' +
+                '>= ' + MIN + ' and <= ' + MAX
         );
     }
 
     var info = distribution.printObj();
-    cassert.ok(info.min <= MAX, 'expected roughly 10 conns');
-    cassert.ok(info.max >= MIN, 'expected 10 conns');
-    cassert.ok(info.sum >= COUNT * MIN, 'expected at least 400 conns');
-    cassert.ok(info.p75 <= MAX, 'expected p75 to be dcent');
+    cassert.ok(info.min <= MAX,
+        'expected min connections(' + info.min + ') to be <= ' + MAX);
+    cassert.ok(info.max >= MIN,
+        'expected max conns(' + info.max + ') to be >= ' + MIN);
+    cassert.ok(info.sum >= COUNT * MIN,
+        'expected sum of conns(' + info.sum + ') to be at ' +
+            COUNT * MIN + ' conns');
+    cassert.ok(info.p75 <= MAX,
+        'expected p75(' + info.p75 + ') to be <= ' + MAX);
 
     return cassert;
 }
