@@ -170,6 +170,56 @@ allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
     }
 });
 
+allocCluster.test('p2p requests where minConns > no of servers', {
+    numPeers: 45,
+    channelOptions: {
+        choosePeerWithHeap: true
+    }
+}, function t(cluster, assert) {
+    setup(cluster, {
+        minConnections: 6,
+        servers: 5
+    });
+
+    collectParallel(cluster.batches, function runRequests(batch, _, cb) {
+        batch.sendRequests(cb);
+    }, onBatches);
+
+    /*eslint max-statements: [2, 40]*/
+    function onBatches(err, results) {
+        var cassert = CollapsedAssert();
+        cassert.ifError(err);
+
+        var statuses = [];
+        for (var i = 0; i < results.length; i++) {
+            cassert.ifError(results[i].err, 'expect no batch error');
+            cassert.ifError(results[i].value.errors.length > 0,
+                'expect zero errors in batch');
+
+            statuses.push(results[i].value);
+        }
+        cassert.report(assert, 'expected no errors');
+
+        var statusTable = findServerHostDistribution(statuses);
+
+        cassert = verifyConnections(cluster, 5, 5);
+        cassert.report(assert, 'expected batch connections to be fine');
+
+        cassert = verifyDistributions(statusTable, {
+            min: 395,
+            sum: 2000,
+            median: [380, 420],
+            mean: [395, 405],
+            max: 500,
+            p75: [400, 450],
+            p95: 475
+        });
+        cassert.report(assert, 'expected request distribution to be ok');
+
+        assert.end();
+    }
+});
+
 function findServerHostDistribution(statuses) {
     var statusTable = {};
     for (var i = 0; i < statuses.length; i++) {
