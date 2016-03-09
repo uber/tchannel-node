@@ -112,7 +112,7 @@ allocCluster.test('p2p requests from 40 -> 40', {
         cassert.ok(info.max >= 100, 'expected maximum to be huge');
         cassert.ok(info.p75 >= 50, 'expected P75 to be huge');
         cassert.ok(info.p95 > 80, 'expected P95 to be huge');
-        cassert.ok(info.variance >= 600,
+        cassert.ok(info.variance >= 500,
             'expected variance (' + info.variance + ') to be huge'
         );
         // console.log('conn distribution', info);
