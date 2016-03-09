@@ -265,7 +265,7 @@ allocCluster.test('p2p requests where half of servers down', {
 
         cassert = verifyDistributions(statusTable, {
             min: 495,
-            sum: [1990, 2000],
+            sum: [1985, 2000],
             median: [480, 520],
             mean: [495, 505],
             max: 600,
