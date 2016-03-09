@@ -214,8 +214,15 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
         });
     }
 
+    if (secondaryScore > selectedScore) {
+        selectedPeer.waitForIdentified(noop);
+        return secondaryPeer;
+    }
+
     return selectedPeer || secondaryPeer;
 };
+
+function noop() {}
 
 TChannelSubPeers.prototype.chooseHeapPeer = function chooseHeapPeer(req) {
     var self = this;
