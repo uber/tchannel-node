@@ -63,13 +63,17 @@ argv.pipeline = parseIntList(argv.pipeline);
 argv.sizes = parseIntList(argv.sizes);
 
 var DESTINATION_SERVER;
+var DESTINATION_PORT;
 var TRACE_SERVER;
 var CLIENT_PORT = argv.clientPort;
+var INSTANCES = 0;
 
 if (argv.relay) {
     DESTINATION_SERVER = '127.0.0.1:' + argv.relayServerPort;
 } else {
     DESTINATION_SERVER = '127.0.0.1:' + argv.benchPort;
+    DESTINATION_PORT = argv.benchPort;
+    INSTANCES = parseInt(argv.instances, 10);
 }
 
 if (argv.trace) {
@@ -171,9 +175,19 @@ Test.prototype.newClient = function newClient(id, callback) {
         };
     }
 
+    var peers = [DESTINATION_SERVER];
+    if (INSTANCES > 0) {
+        peers = [];
+        var basePort = DESTINATION_PORT;
+        for (var i = 0; i < INSTANCES; i++) {
+            peers.push('127.0.0.1:' + (basePort + i));
+        }
+    }
+
     var client = clientChan.makeSubChannel({
         serviceName: 'benchmark',
-        peers: [DESTINATION_SERVER]
+        peers: peers,
+        minConnections: INSTANCES > 0 ? 10 : 1
     });
     client.createTime = Date.now();
     clientChan.listen(port, '127.0.0.1', function listened(err) {

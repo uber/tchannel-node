@@ -2,6 +2,10 @@ torch-client-bench:
 	node index.js --relay --torch client --torchFile ./flame.raw --torchTime 10 \
 		-- --relay --skipPing -s 4096,16384 -p 1000 -m 3
 
+torch-client-only-bench:
+	node index.js --torch client --torchFile ./flame.raw --torchTime 10 \
+		-- --skipPing -s 4096,16384 -p 1000 -m 3
+
 torch-server-bench:
 	node index.js --relay --torch server --torchFile ./flame.raw --torchTime 10 \
 		-- --relay --skipPing -s 4096,16384 -p 1000,10000,20000
