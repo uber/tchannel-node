@@ -220,7 +220,7 @@ allocCluster.test('p2p requests where minConns > no of servers', {
     }
 });
 
-allocCluster.test.only('p2p requests where half of servers down', {
+allocCluster.test('p2p requests where half of servers down', {
     numPeers: 48,
     channelOptions: {
         choosePeerWithHeap: true
@@ -259,7 +259,6 @@ allocCluster.test.only('p2p requests where half of servers down', {
         cassert.report(assert, 'expected no errors');
 
         var statusTable = findServerHostDistribution(statuses);
-        console.log('tt?!', statusTable);
 
         cassert = verifyConnections(cluster, 4, 4);
         cassert.report(assert, 'expected batch connections to be fine');
