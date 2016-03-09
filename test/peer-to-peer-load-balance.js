@@ -223,7 +223,7 @@ allocCluster.test('p2p requests where minConns > no of servers', {
 allocCluster.test.only('p2p requests where half of servers down', {
     numPeers: 48,
     channelOptions: {
-        choosePeerWithHeap: false
+        choosePeerWithHeap: true
     }
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'resetting connection');
@@ -250,8 +250,9 @@ allocCluster.test.only('p2p requests where half of servers down', {
         var statuses = [];
         for (var i = 0; i < results.length; i++) {
             cassert.ifError(results[i].err, 'expect no batch error');
-            cassert.ifError(results[i].value.errors.length > 1,
-                'expect at most one error in batch');
+            cassert.ifError(results[i].value.errors.length > 2,
+                'expect at most two error in batch(' +
+                    results[i].value.errors.length + ')');
 
             statuses.push(results[i].value);
         }
