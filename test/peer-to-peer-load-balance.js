@@ -220,6 +220,64 @@ allocCluster.test('p2p requests where minConns > no of servers', {
     }
 });
 
+allocCluster.test.only('p2p requests where half of servers down', {
+    numPeers: 48,
+    channelOptions: {
+        choosePeerWithHeap: false
+    }
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'resetting connection');
+    setup(cluster, {
+        minConnections: 5,
+        servers: 8,
+        retryLimit: 2
+    });
+
+    // Close half the servers...
+    for (var j = 0; j < cluster.servers.length / 2; j++) {
+        cluster.servers[j * 2].close();
+    }
+
+    collectParallel(cluster.batches, function runRequests(batch, _, cb) {
+        batch.sendRequests(cb);
+    }, onBatches);
+
+    /*eslint max-statements: [2, 40]*/
+    function onBatches(err, results) {
+        var cassert = CollapsedAssert();
+        cassert.ifError(err);
+
+        var statuses = [];
+        for (var i = 0; i < results.length; i++) {
+            cassert.ifError(results[i].err, 'expect no batch error');
+            cassert.ifError(results[i].value.errors.length > 1,
+                'expect at most one error in batch');
+
+            statuses.push(results[i].value);
+        }
+        cassert.report(assert, 'expected no errors');
+
+        var statusTable = findServerHostDistribution(statuses);
+        console.log('tt?!', statusTable);
+
+        cassert = verifyConnections(cluster, 4, 4);
+        cassert.report(assert, 'expected batch connections to be fine');
+
+        cassert = verifyDistributions(statusTable, {
+            min: 495,
+            sum: [1990, 2000],
+            median: [480, 520],
+            mean: [495, 505],
+            max: 600,
+            p75: [500, 550],
+            p95: 575
+        });
+        cassert.report(assert, 'expected request distribution to be ok');
+
+        assert.end();
+    }
+});
+
 function findServerHostDistribution(statuses) {
     var statusTable = {};
     for (var i = 0; i < statuses.length; i++) {
@@ -297,9 +355,20 @@ function verifyDistributions(statusTable, opts) {
     cassert.ok(info.min <= opts.min,
         'expected minimum(' + info.min + ') to be no more then ' + opts.min
     );
-    cassert.equal(info.sum, opts.sum,
-        'expected sum(' + info.sum + ') to be ' + opts.sum
-    );
+
+    if (Array.isArray(opts.sum)) {
+        cassert.ok(
+            info.sum >= opts.sum[0] &&
+            info.sum <= opts.sum[1],
+            'expected sum(' + info.sum + ') to be within ' +
+                opts.sum[0] + ' & ' + opts.sum[1]
+        );
+    } else {
+        cassert.equal(info.sum, opts.sum,
+            'expected sum(' + info.sum + ') to be ' + opts.sum
+        );
+    }
+    
     cassert.ok(
         info.median >= opts.median[0] &&
         info.median <= opts.median[1],
@@ -363,7 +432,8 @@ function setup(cluster, opts) {
                 delay: 40,
                 batchSize: 1,
                 totalRequests: 50,
-                minConnections: opts.minConnections || null
+                minConnections: opts.minConnections || null,
+                retryLimit: opts.retryLimit || null
             }
         ));
     }

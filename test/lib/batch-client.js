@@ -68,6 +68,7 @@ function BatchClient(channel, hosts, options) {
         hasNoParent: true,
         timeout: self.timeout,
         retryFlags: options && options.retryFlags,
+        retryLimit: options && options.retryLimit ? options.retryLimit : 5,
         headers: {
             cn: 'client',
             as: 'raw'
