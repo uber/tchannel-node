@@ -237,6 +237,10 @@ allocCluster.test.only = function testClusterOnly(desc, opts, t) {
     test.only(desc, clusterTester(opts, t));
 };
 
+allocCluster.test.skip = function testClusterSkip(desc, opts, t) {
+    test.skip(desc, clusterTester(opts, t));
+};
+
 function connectChannels(channels, callback) {
     return parallel(channels.map(function (channel) {
         return function connectChannelToHosts(callback) {
