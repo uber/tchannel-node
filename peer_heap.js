@@ -147,10 +147,17 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         }
     }
 
+    if (secondaryProbability > highestProbability) {
+        chosenPeer.waitForIdentified(noop);
+        return secondaryPeer;
+    }
+
     return chosenPeer || secondaryPeer;
 };
 /*eslint-enable complexity */
 /*eslint-enable max-statements */
+
+function noop() {}
 
 PeerHeap.prototype.clear = function clear() {
     var self = this;
