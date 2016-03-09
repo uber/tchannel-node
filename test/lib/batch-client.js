@@ -55,7 +55,7 @@ function BatchClient(channel, hosts, options) {
     self.serviceName = 'server';
     self.endpoint = options.endpoint || 'echo';
     self.body = 'foobar';
-    self.timeout = 500;
+    self.timeout = options.timeout || 500;
 
     self.subChannel = self.channel.makeSubChannel({
         serviceName: self.serviceName,

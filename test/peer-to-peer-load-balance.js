@@ -431,6 +431,7 @@ function setup(cluster, opts) {
             cluster.clients[i], cluster.serverHosts, {
                 delay: 40,
                 batchSize: 1,
+                timeout: 1000,
                 totalRequests: 50,
                 minConnections: opts.minConnections || null,
                 retryLimit: opts.retryLimit || null
