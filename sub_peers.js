@@ -214,7 +214,7 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
         });
     }
 
-    if (secondaryScore > selectedScore) {
+    if (secondaryScore > selectedScore && selectedPeer) {
         selectedPeer.waitForIdentified(noop);
         return secondaryPeer;
     }
