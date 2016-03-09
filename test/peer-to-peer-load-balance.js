@@ -161,8 +161,8 @@ allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
             mean: [45, 55],
             max: 120,
             p75: [55, 70],
-            p95: 95,
-            variance: 450
+            p95: 100,
+            variance: 500
         });
         cassert.report(assert, 'expected request distribution to be ok');
 
