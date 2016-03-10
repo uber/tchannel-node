@@ -768,6 +768,11 @@ function handleFrameLazily(frame) {
     // - v2.Types.ErrorResponse
     var self = this;
 
+    // ObjectPool weird free() issue; bail early
+    if (!self.inreq) {
+        return;
+    }
+
     frame.setId(self.inreq.id);
     self.inreq.conn.writeToSocket(frame.buffer);
     if (frame.bodyRW.lazy.isFrameTerminal(frame)) {
