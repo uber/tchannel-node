@@ -679,6 +679,11 @@ LazyRelayOutReq.prototype.emitError =
 function emitError(err) {
     var self = this;
 
+    // ObjectPool weird free() issue; bail early
+    if (!self.channel) {
+        return;
+    }
+
     var now = self.channel.timers.now();
     var elapsed = now - self.start;
 
