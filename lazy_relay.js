@@ -679,6 +679,11 @@ LazyRelayOutReq.prototype.emitError =
 function emitError(err) {
     var self = this;
 
+    // ObjectPool weird free() issue; bail early
+    if (!self.channel) {
+        return;
+    }
+
     var now = self.channel.timers.now();
     var elapsed = now - self.start;
 
@@ -735,6 +740,11 @@ LazyRelayOutReq.prototype.onTimeout =
 function onTimeout(now) {
     var self = this;
 
+    // ObjectPool weird free() issue; bail early
+    if (!self.conn) {
+        return;
+    }
+
     self.conn.ops.checkLastTimeoutTime(now);
     self.conn.ops.popOutReq(self.id, self.extendLogInfo({
         info: 'lazy out request timed out',
@@ -757,6 +767,11 @@ function handleFrameLazily(frame) {
     // - v2.Types.CallResponseCont
     // - v2.Types.ErrorResponse
     var self = this;
+
+    // ObjectPool weird free() issue; bail early
+    if (!self.inreq) {
+        return;
+    }
 
     frame.setId(self.inreq.id);
     self.inreq.conn.writeToSocket(frame.buffer);

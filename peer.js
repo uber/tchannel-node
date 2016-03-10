@@ -431,6 +431,7 @@ function waitForIdentified(conn, callback) {
 TChannelPeer.prototype._waitForIdentified =
 function _waitForIdentified(conn, callback) {
     var self = this;
+    var called = false;
 
     // Setup an ident descriptor so we can stop waiting for identified later
     var slot = self.getIdentDescriptorSlot();
@@ -464,6 +465,12 @@ function _waitForIdentified(conn, callback) {
     }
 
     function finish(err) {
+        // Multiple events can trigger which causes double callback hilarity.
+        if (called) {
+            return;
+        }
+        called = true;
+
         self.stopWaitingForIdentified(slot);
         callback(err);
     }
