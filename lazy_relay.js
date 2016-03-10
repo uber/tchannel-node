@@ -740,6 +740,11 @@ LazyRelayOutReq.prototype.onTimeout =
 function onTimeout(now) {
     var self = this;
 
+    // ObjectPool weird free() issue; bail early
+    if (!self.conn) {
+        return;
+    }
+
     self.conn.ops.checkLastTimeoutTime(now);
     self.conn.ops.popOutReq(self.id, self.extendLogInfo({
         info: 'lazy out request timed out',
