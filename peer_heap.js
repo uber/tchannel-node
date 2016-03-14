@@ -120,11 +120,11 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
             }
             var probability = lo + ((hi - lo) * rand);
 
-            if (
-                (probability > threshold) &&
-                !isSecondary ? (probability > highestProbability) :
-                               (probability > secondaryProbability)
-            ) {
+            var isBestChoice = !isSecondary ?
+                (probability > highestProbability) :
+                (probability > secondaryProbability);
+
+            if ((probability > threshold) && isBestChoice) {
                 if (isSecondary) {
                     secondaryProbability = probability;
                     secondaryPeer = el.peer;
