@@ -265,6 +265,7 @@ function startClient(clientPort) {
         '--benchPort', String(self.ports.serverPort),
         '--relayServerPort', String(self.ports.relayServerPort),
         '--clientPort', String(clientPort),
+        '--instances', String(self.instanceCount),
         '--instanceNumber', String(self.benchCounter)
     ]);
     var benchProc = self.run(bench, args);

@@ -24,6 +24,19 @@ var parallel = require('run-parallel');
 var collectParallel = require('collect-parallel/array');
 var setTimeout = require('timers').setTimeout;
 
+/*
+    BatchClient takes a channel and a set of peers to talk
+    to.
+
+    It has a set of options including:
+        - totalRequests
+        - delay
+        - batchSize
+
+    If you want to do 100QPS you can set batchSize=1 and delay=10
+    If you want to do 1000QPS you can set batchSize=50 and delay=50
+
+*/
 module.exports = BatchClient;
 
 function BatchClient(channel, hosts, options) {
@@ -42,11 +55,12 @@ function BatchClient(channel, hosts, options) {
     self.serviceName = 'server';
     self.endpoint = options.endpoint || 'echo';
     self.body = 'foobar';
-    self.timeout = 500;
+    self.timeout = options.timeout || 500;
 
     self.subChannel = self.channel.makeSubChannel({
         serviceName: self.serviceName,
-        peers: self.hosts
+        peers: self.hosts,
+        minConnections: options.minConnections || null
     });
 
     self.requestOptions = {
@@ -54,6 +68,7 @@ function BatchClient(channel, hosts, options) {
         hasNoParent: true,
         timeout: self.timeout,
         retryFlags: options && options.retryFlags,
+        retryLimit: options && options.retryLimit ? options.retryLimit : 5,
         headers: {
             cn: 'client',
             as: 'raw'
