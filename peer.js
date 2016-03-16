@@ -68,6 +68,9 @@ function TChannelPeer(channel, hostPort, options) {
     this.boundOnPendingChange = onPendingChange;
     this.scoreRange = null;
 
+    this.nextConnAttemptTime = 0;
+    this.nextConnAttemptDelay = 0;
+
     this.waitForIdentifiedListeners = [];
 
     this.reportInterval = options.reportInterval || DEFAULT_REPORT_INTERVAL;
@@ -408,6 +411,45 @@ function connect(outOnly) {
 TChannelPeer.prototype.connectTo = function connectTo() {
     var self = this;
     return self.connect(true);
+};
+
+TChannelPeer.prototype.tryConnect = function tryConnect() {
+    var self = this;
+
+    var rightNow = Date.now();
+    if (rightNow < self.nextConnAttemptTime) {
+        return;
+    }
+
+    var conn = this.getOutConnection();
+    if (!conn || conn.direction !== 'out') {
+        conn = this.connectTo();
+    }
+
+    this.waitForIdentified(conn, onIdentified);
+
+    function onIdentified(err) {
+        if (!err) {
+            self.nextConnAttemptDelay = 0;
+            self.nextConnAttemptTime = 0;
+            return;
+        }
+
+        if (self.nextConnAttemptDelay === 0) {
+            self.nextConnAttemptDelay = 5000;
+        } else {
+            self.nextConnAttemptDelay *= 2;
+        }
+
+        var now = Date.now();
+        if (self.nextConnAttemptTime < now) {
+            // When in the past set next attempt to now + delay
+            self.nextConnAttemptTime = now + self.nextConnAttemptDelay;
+        } else {
+            // When in the future; go further in the future
+            self.nextConnAttemptTime += self.nextConnAttemptDelay;
+        }
+    }
 };
 
 TChannelPeer.prototype.waitForIdentified =

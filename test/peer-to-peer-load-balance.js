@@ -227,6 +227,7 @@ allocCluster.test('p2p requests where half of servers down', {
     }
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'resetting connection');
+
     setup(cluster, {
         minConnections: 5,
         servers: 8,
@@ -273,6 +274,10 @@ allocCluster.test('p2p requests where half of servers down', {
             p95: 600
         });
         cassert.report(assert, 'expected request distribution to be ok');
+
+        var logs = cluster.logger.items();
+        assert.ok(logs.length <= 280 + 160,
+            'expected conn reset logs (' + logs.length + ') to be <= 420');
 
         assert.end();
     }

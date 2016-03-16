@@ -148,7 +148,7 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
     }
 
     if (secondaryProbability > highestProbability && chosenPeer) {
-        chosenPeer.waitForIdentified(noop);
+        chosenPeer.tryConnect(noop);
         return secondaryPeer;
     }
 
