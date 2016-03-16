@@ -39,6 +39,8 @@ var PeerDrain = require('./drain.js').PeerDrain;
 var ObjectPool = require('./lib/object_pool');
 
 var DEFAULT_REPORT_INTERVAL = 1000;
+var INITIAL_CONN_ATTEMPT_DELAY = 5000;
+var CONN_ATTEMPT_DELAY_MULTIPLER = 2;
 
 /*eslint max-statements: [2, 40]*/
 function TChannelPeer(channel, hostPort, options) {
@@ -418,8 +420,8 @@ TChannelPeer.prototype.connectTo = function connectTo() {
 TChannelPeer.prototype.tryConnect = function tryConnect() {
     var self = this;
 
-    var rightNow = Date.now();
-    if (rightNow < self.nextConnAttemptTime) {
+    var connectTime = Date.now();
+    if (connectTime < self.nextConnAttemptTime) {
         return;
     }
 
@@ -438,15 +440,17 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
         }
 
         if (self.nextConnAttemptDelay === 0) {
-            self.nextConnAttemptDelay = 5000;
+            self.nextConnAttemptDelay = INITIAL_CONN_ATTEMPT_DELAY;
         } else {
-            self.nextConnAttemptDelay *= 2;
+            self.nextConnAttemptDelay *= CONN_ATTEMPT_DELAY_MULTIPLER;
+            // Add some amount of fuzz, +-100ms
+            self.nextConnAttemptDelay += Math.floor(100 * (Math.random() - 0.5));
         }
 
-        var now = Date.now();
-        if (self.nextConnAttemptTime < now) {
+        var afterConnect = Date.now();
+        if (self.nextConnAttemptTime < afterConnect) {
             // When in the past set next attempt to now + delay
-            self.nextConnAttemptTime = now + self.nextConnAttemptDelay;
+            self.nextConnAttemptTime = afterConnect + self.nextConnAttemptDelay;
         } else {
             // When in the future; go further in the future
             self.nextConnAttemptTime += self.nextConnAttemptDelay;
