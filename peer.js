@@ -68,7 +68,9 @@ function TChannelPeer(channel, hostPort, options) {
     this.boundOnPendingChange = onPendingChange;
     this.scoreRange = null;
 
+    // Timestamp when next conn attempt is allowed
     this.nextConnAttemptTime = 0;
+    // How long to delay conn attempt by on failure (ms)
     this.nextConnAttemptDelay = 0;
 
     this.waitForIdentifiedListeners = [];
