@@ -261,7 +261,7 @@ TChannelHTTP.prototype.sendRequest = function send(treq, hreq, start, options, c
             self.logger.error('Buffer read for arg2 failed', {
                 error: arg2res.err
             });
-            var fromBufferErr = errors.HTTPReqArg2fromoBufferError(arg2res.err, {
+            var fromBufferErr = errors.HTTPReqArg2fromBufferError(arg2res.err, {
                 arg2: res1
             });
             callback(fromBufferErr, null, null, null);
@@ -557,7 +557,7 @@ AsHTTPHandler.prototype.handleRequest = function handleRequest(req, buildRespons
             self.logger.error('Buffer read for arg2 failed', {
                 error: arg2res.err
             });
-            var fromBufferErr = errors.HTTPResArg2fromoBufferError(arg2res.err, {
+            var fromBufferErr = errors.HTTPResArg2fromBufferError(arg2res.err, {
                 arg2: arg2
             });
             sendError(fromBufferErr);
