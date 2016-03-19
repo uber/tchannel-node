@@ -110,7 +110,9 @@ function getClientChannelSync(options) {
             'channel already exists: ' + channelName);
     }
 
-    var initialPeers = this.readPeers(options.hostFilePath, options.hostList);
+    var initialPeers = this.readPeersSync(
+        options.hostFilePath, options.hostList
+    );
     if (!initialPeers) {
         return null;
     }
@@ -138,9 +140,13 @@ function getClientChannelSync(options) {
     }
 
     var subChan = this.tchannel.makeSubChannel(channelOptions);
-    subChan.addFileWatcher(options.hostFilePath);
+    this.addFileWatcher(subChan, options.hostFilePath);
 
     return subChan;
+};
+
+PeerToPeerClient.prototype.addFileWatcher =
+function addFileWatcher(subChan, hostFilePath) {
 };
 
 PeerToPeerClient.prototype.readPeersSync =
