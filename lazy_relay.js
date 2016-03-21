@@ -910,7 +910,7 @@ function _observeCallResFrame(frame, now) {
         self.inreq.circuit.state.onRequestHealthy();
     }
 
-    var res = frame.bodyRW.lazy.poolReadFlags(readRes, frame);
+    var res = frame.bodyRW.lazy.poolReadCode(readRes, frame);
     if (res.err) {
         self.logger.error('failed to read error frame code', self.extendLogInfo({
             error: res.err
@@ -918,8 +918,8 @@ function _observeCallResFrame(frame, now) {
         return;
     }
 
-    var flags = res.value;
-    var ok = flags === 0;
+    var code = res.value;
+    var ok = code === 0;
 
     if (ok) {
         self.channel.emitFastStat(
