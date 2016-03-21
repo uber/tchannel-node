@@ -650,6 +650,10 @@ CallResponse.RW.lazy.poolReadFlags = function poolReadFlags(destResult, frame) {
 CallResponse.RW.lazy.readFlags = allocifyPoolFn(CallResponse.RW.lazy.poolReadFlags, ReadResult);
 
 CallResponse.RW.lazy.codeOffset = CallResponse.RW.lazy.flagsOffset + 1;
+CallResponse.RW.lazy.poolReadCode = function poolReadCode(destResult, frame) {
+    // code:1
+    return bufrw.UInt8.poolReadFrom(destResult, frame.buffer, CallResponse.RW.lazy.codeOffset);
+};
 // TODO: readCode?
 
 CallResponse.RW.lazy.tracingOffset = CallResponse.RW.lazy.codeOffset + 1;
