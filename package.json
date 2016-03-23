@@ -28,7 +28,7 @@
     "url": "git@github.com:uber/tchannel-node"
   },
   "dependencies": {
-    "bufrw": "^1.1.0",
+    "bufrw": "^1.2.1",
     "crc": "^3.2.1",
     "error": "^7.0.1",
     "farmhash": "1.1.0",
@@ -43,7 +43,7 @@
     "safe-json-parse": "^4.0.0",
     "sse4_crc32": "4.1.1",
     "tape-cluster": "2.1.0",
-    "thriftrw": "^3.4.1",
+    "thriftrw": "^3.4.2",
     "xorshift": "^0.2.0",
     "xtend": "^4.0.0"
   },
