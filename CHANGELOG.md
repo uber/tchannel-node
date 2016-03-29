@@ -1,3 +1,35 @@
+# v3.6.24
+
+- Updated dependencies for compatibility with Node.js 4.
+- Changes the default for peer selection: now uses a heap to choose peers for
+  outbound requests. This can be configured with the `choosePeerWithHeap`
+  TChannel option.
+- Addresses a problem in lazy relay, which would read the response flags
+  instead of the response code, confusing stats.
+- Adds support for tryConnect() on peers, with back-off.
+- Ensures a minimum number of connections for each peer. The intent is to
+  eventually support a connections count goal.
+- Fixes a bug in the HTTP argument scheme regarding the Content-Length header.
+- Removes the special cases for the "self" peer. These interfaces have been
+  removed. External usage of these private interfaces is not expected.
+- Numerous performance improvements, particularly using object pooling and lazy
+  buffer slicing.
+
+Hyperbahn:
+
+- Adds a Hyperbahn::discover method to the Hyperbahn client, suitable for
+  querying available peers for a given service.
+- Now emits stats for error frames produced and forwarded.
+
+Thrift:
+
+- Relaxes the constraint that application exeptions in the Thrift arg scheme
+  must be instances of the JavaScript Error base type.
+- The Thrift argument scheme instance now exposes a `getServiceEndpoints`
+  method for introspecting methods.
+- ThriftRW upgraded to version 3.4.3, capturing fixes for lists of lists, and
+  maps with integer keys, and adds support for the i8 alias for the byte type.
+
 # v3.6.3
 
 - Added consistent host port validation in listen(), connect(), and init
