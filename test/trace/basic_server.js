@@ -163,3 +163,17 @@ test('basic tracing test', function (assert) {
         }, 10);
     });
 });
+
+test('modifying traceSample', function (assert){
+    var channel = new TChannel();
+    var subservice = channel.makeSubChannel({
+        serviceName: 'subservice'
+    });
+    assert.equal(channel.traceSample, 0.01);
+    assert.equal(subservice.traceSample, 0.01);
+
+    subservice.setTraceSample(0.99);
+    assert.equal(channel.traceSample, 0.99);
+    assert.equal(subservice.traceSample, 0.99);
+    assert.end();
+});

@@ -1060,4 +1060,13 @@ function setMaxTombstoneTTL(ttl) {
     }
 };
 
+TChannel.prototype.setTraceSample = function setTraceSample(traceSample) {
+    var self = this;
+
+    self.traceSample = traceSample;
+    if (self.topChannel && self.topChannel.traceSample !== traceSample) {
+        self.topChannel.setTraceSample(traceSample);
+    }
+};
+
 module.exports = TChannel;
