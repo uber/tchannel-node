@@ -1067,10 +1067,9 @@ TChannel.prototype.setTraceSample = function setTraceSample(traceSample) {
     var self = this;
     self.traceSample = traceSample;
 
-    var keys = Object.keys(self.subChannels);
-
     // Set traceSample on subchannels recursively.
     // Don't descend into trees that have already been updated.
+    var keys = Object.keys(self.subChannels);
     for (var i = 0; i < keys.length; i++) {
         var subChan = self.subChannels[keys[i]];
 
