@@ -1060,10 +1060,27 @@ function setMaxTombstoneTTL(ttl) {
     }
 };
 
+// Set the traceSample value consistently throughout ALL channels.
+// This should be consistent everywhere in a channel tree for a whole app instance.
+// Principle of least surprise applies.
 TChannel.prototype.setTraceSample = function setTraceSample(traceSample) {
     var self = this;
-
     self.traceSample = traceSample;
+
+    var keys = Object.keys(self.subChannels);
+
+    // Set traceSample on subchannels recursively.
+    // Don't descend into trees that have already been updated.
+    for (var i = 0; i < keys.length; i++) {
+        var subChan = self.subChannels[keys[i]];
+
+        if (subChan.traceSample !== traceSample) {
+            subChan.setTraceSample(traceSample);
+        }
+    }
+
+    // Traverse to parent channels.
+    // Skip if the parent channel has already been updated.
     if (self.topChannel && self.topChannel.traceSample !== traceSample) {
         self.topChannel.setTraceSample(traceSample);
     }

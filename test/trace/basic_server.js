@@ -169,11 +169,22 @@ test('modifying traceSample', function (assert){
     var subservice = channel.makeSubChannel({
         serviceName: 'subservice'
     });
+    var subsubservice1 = subservice.makeSubChannel({
+        serviceName: 'subsubservice1'
+    });
+    var subsubservice2 = subservice.makeSubChannel({
+        serviceName: 'subsubservice2'
+    });
     assert.equal(channel.traceSample, 0.01);
     assert.equal(subservice.traceSample, 0.01);
+    assert.equal(subsubservice1.traceSample, 0.01);
+    assert.equal(subsubservice2.traceSample, 0.01);
 
     subservice.setTraceSample(0.99);
+
     assert.equal(channel.traceSample, 0.99);
     assert.equal(subservice.traceSample, 0.99);
+    assert.equal(subsubservice1.traceSample, 0.99);
+    assert.equal(subsubservice2.traceSample, 0.99);
     assert.end();
 });
