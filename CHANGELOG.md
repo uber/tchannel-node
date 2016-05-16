@@ -1,3 +1,16 @@
+# vNEXT // FIXME
+
+- Introduces the `allowOptionalArguments` flag for `TChannelAsThrift`, so
+  services and clients can opt-in for the looser semantics for fields of Thrift
+  argument structs that are not explicitly optional or required.  Enabling this
+  flag makes argument fields optional by default (they were formerly required
+  by default, and optional was not possible to express).  Consequently,
+  existing IDL should change fields to required, or add null checks to existing
+  request handlers.
+- Adds another guard to prevent a dangling reference to a reclaimed Lazy Relay
+  Request from throwing an exception upon attempting to follow up with an error
+  frame.
+
 # v3.6.24
 
 - Updated dependencies for compatibility with Node.js 4.
