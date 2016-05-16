@@ -1,4 +1,4 @@
-# vNEXT // FIXME
+# v3.7.0
 
 - Introduces the `allowOptionalArguments` flag for `TChannelAsThrift`, so
   services and clients can opt-in for the looser semantics for fields of Thrift
