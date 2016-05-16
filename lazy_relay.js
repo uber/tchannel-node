@@ -453,6 +453,11 @@ LazyRelayInReq.prototype.sendErrorFrame =
 function sendErrorFrame(codeName, message) {
     var self = this;
 
+    // ObjectPool weird free() issue; bail early
+    if (!self.channel) {
+        return;
+    }
+
     var now = self.channel.timers.now();
     self._observeInboundErrorFrame(now, codeName);
 
