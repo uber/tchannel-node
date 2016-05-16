@@ -51,6 +51,7 @@ function TChannelAsThrift(opts) {
         strict: opts.strict,
         allowFilesystemAccess: true,
         allowIncludeAlias: opts.allowIncludeAlias,
+        allowOptionalArguments: opts.allowOptionalArguments,
         fs: opts.fs
     });
 
