@@ -24,6 +24,7 @@ var Buffer = require('buffer').Buffer;
 var assert = require('assert');
 var Result = require('bufrw/result');
 var cyclicStringify = require('json-stringify-safe');
+var extend = require('xtend');
 
 var errors = require('../errors.js');
 
@@ -63,7 +64,11 @@ function send(endpoint, head, body, callback) {
     var self = this;
 
     var outreq = self.channel.request(self.reqOptions);
-    self.tchannelJSON.send(outreq, endpoint, head, body, callback);
+    var headers = head;
+    if (self.reqOptions.defaultRequestHeaders) {
+        headers = extend(self.reqOptions.defaultRequestHeaders, head);
+    }
+    self.tchannelJSON.send(outreq, endpoint, headers, body, callback);
 };
 
 TChannelJSON.prototype.request = function request(reqOptions) {

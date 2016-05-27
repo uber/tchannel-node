@@ -412,6 +412,62 @@ allocCluster.test('logger set correctly in send and register functions', {
     });
 });
 
+allocCluster.test('request() supports baggage', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var server = cluster.channels[0].makeSubChannel({
+        serviceName: 'server'
+    });
+
+    var serverThrift = server.TChannelAsThrift({
+        channel: server,
+        entryPoint: path.join(__dirname, 'anechoic-chamber.thrift')
+    });
+    serverThrift.register('Chamber::echo', {}, okHandler);
+
+    var client = cluster.channels[1].makeSubChannel({
+        serviceName: 'server',
+        peers: [
+            cluster.channels[0].hostPort
+        ],
+        requestDefaults: {
+            headers: {
+                cn: 'wat'
+            }
+        }
+    });
+
+    var clientThrift = client.TChannelAsThrift({
+        channel: client,
+        entryPoint: path.join(__dirname, 'anechoic-chamber.thrift')
+    });
+
+    clientThrift.request({
+        serviceName: 'server',
+        hasNoParent: true,
+        defaultRequestHeaders: {key: 'value'}
+    }).send('Chamber::echo', {foo: 'bar'}, {
+        value: 10
+    }, function onResponse(err2, resp) {
+        assert.ifError(err2, 'should have no req error');
+
+        assert.ok(resp, 'expect response');
+        assert.equal(resp.body, 10, 'expect resp body');
+
+        assert.end();
+    });
+
+    function okHandler(opts, req, head, body, cb) {
+        assert.equal(head.foo, 'bar');
+        assert.equal(head.key, 'value');
+        return cb(null, {
+            ok: true,
+            head: head,
+            body: body.value
+        });
+    }
+});
+
 allocCluster.test('send with invalid types', {
     numPeers: 2
 }, function t(cluster, assert) {

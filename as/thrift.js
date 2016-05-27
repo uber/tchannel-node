@@ -26,6 +26,7 @@ var path = require('path');
 var bufrw = require('bufrw');
 var Result = require('bufrw/result');
 var thriftrw = require('thriftrw');
+var extend = require('xtend');
 
 var errors = require('../errors.js');
 var HeaderRW = require('../v2/header.js').header2;
@@ -527,7 +528,11 @@ function send(endpoint, head, body, callback) {
     var self = this;
 
     var outreq = self.channel.request(self.reqOptions);
-    self.tchannelThrift.send(outreq, endpoint, head, body, callback);
+    var headers = head;
+    if (self.reqOptions.defaultRequestHeaders) {
+        headers = extend(self.reqOptions.defaultRequestHeaders, head);
+    }
+    self.tchannelThrift.send(outreq, endpoint, headers, body, callback);
 };
 
 function health(tchannelThrift, req, head, body, callback) {
