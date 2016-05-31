@@ -78,6 +78,50 @@ allocCluster.test('getting an ok response', {
     });
 });
 
+allocCluster.test('request supports baseAppHeaders', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var tchannelJSON = makeTChannelJSONServer(cluster, {
+        okResponse: true
+    });
+
+    var server = cluster.channels[0].subChannels.server;
+    tchannelJSON.register(server, 'test', {}, testResponse);
+
+    var client = cluster.channels[1].subChannels.server;
+
+    tchannelJSON.request({
+        serviceName: 'server',
+        hasNoParent: true,
+        defaultRequestHeaders: {key: 'val'},
+        timeout: 1500
+    }).send('test', {
+        some: 'head'
+    }, {
+        some: 'body'
+    }, function onResponse(err, resp) {
+        assert.ifError(err);
+        assert.ok(resp.ok, 'response is ok');
+        assert.end();
+    });
+
+    function testResponse(opts, req, head, body, cb) {
+        assert.equal(head.key, 'val', 'default app header is present');
+        assert.equal(head.some, 'head', 'app header is present');
+
+        cb(null, {
+            ok: true,
+            head: null,
+            body: {
+                opts: opts,
+                head: head,
+                body: body,
+                serviceName: req.serviceName
+            }
+        });
+    }
+});
+
 allocCluster.test('sending using json request()', {
     numPeers: 2
 }, function t(cluster, assert) {
