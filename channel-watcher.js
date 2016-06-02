@@ -75,8 +75,7 @@ function _establishFileWatcher() {
     }, this._boundReload);
 };
 
-ChannelWatcher.prototype.stopWatching =
-function stopWatching() {
+ChannelWatcher.prototype.destroy = function destroy() {
     fs.unwatchFile(this.filePath, this._boundReload);
 };
 

@@ -46,7 +46,7 @@ allocCluster.test('add a peer and request', {
                 cn: 'wat'
             }
         },
-        hostsWatchFilePath: hostsfilePath
+        filePath: hostsfilePath
     });
 
     bob.request({
@@ -97,7 +97,7 @@ allocCluster.test('duplicate host entry', {
                 cn: 'wat'
             }
         },
-        hostsWatchFilePath: hostsfilePath
+        filePath: hostsfilePath
     });
 
     bob.request({
@@ -134,7 +134,7 @@ allocCluster.test('remove a peer and request', {
                 cn: 'wat'
             }
         },
-        hostsWatchFilePath: hostsfilePath
+        filePath: hostsfilePath
     });
 
     bob.request({

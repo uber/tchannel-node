@@ -266,6 +266,7 @@ function TChannel(options) {
     }
 
     this.maximumRelayTTL = MAXIMUM_TTL_ALLOWED;
+    this.watcher = null;
 
     function doSanitySweep() {
         self.sanityTimer = null;
@@ -604,11 +605,6 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
             }
         }
     }
-    if (options.hostsWatchFilePath) {
-        chan.channelWatcher = new ChannelWatcher(chan, {
-            filePath: options.hostsWatchFilePath
-        });
-    }
     self.subChannels[chan.serviceName] = chan;
 
     // Subchannels should not have tracers; all tracing goes
@@ -617,6 +613,12 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
 
     if (self.hostPort) {
         chan.hostPort = self.hostPort;
+    }
+
+    if (options.filePath) {
+        chan.watcher = new ChannelWatcher(chan, {
+            filePath: options.filePath
+        });
     }
 
     return chan;
@@ -926,6 +928,10 @@ TChannel.prototype.close = function close(callback) {
 
     var counter = 1;
 
+    if (self.watcher) {
+        self.watcher.destroy();
+    }
+
     if (self.batchStats) {
         ObjectPool.unref();
     }
@@ -933,10 +939,6 @@ TChannel.prototype.close = function close(callback) {
     if (self.sanityTimer) {
         self.timers.clearTimeout(self.sanityTimer);
         self.sanityTimer = null;
-    }
-
-    if (self.channelWatcher) {
-        self.channelWatcher.stopWatching();
     }
 
     if (self.serverSocket) {
