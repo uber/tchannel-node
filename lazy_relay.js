@@ -264,6 +264,11 @@ LazyRelayInReq.prototype.onTimeout =
 function onTimeout(now) {
     var self = this;
 
+    // ObjectPool weird free() issue; bail early
+    if (!self.channel) {
+        return;
+    }
+
     self.onError(errors.RequestTimeoutError({
         id: self.id,
         start: self.start,
