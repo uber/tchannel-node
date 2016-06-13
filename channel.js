@@ -67,7 +67,7 @@ var RetryFlags = require('./retry-flags.js');
 var TimeHeap = require('./time_heap');
 var CountedReadySignal = require('ready-signal/counted');
 var BatchStatsd = require('./lib/statsd.js');
-var ChannelWatcher = require('./channel-watcher.js');
+var ChannelWatcher = require('./peer-file-watcher.js');
 
 var TracingAgent = require('./trace/agent');
 
