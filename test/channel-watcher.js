@@ -31,12 +31,6 @@ allocCluster.test('make p2p requests', {
     numPeers: 5
 }, function t(cluster, assert) {
     setup(cluster);
-    cluster.logger.whitelist(
-        'info', 'ChannelWatcher: Loading peer list from file sync'
-    );
-    cluster.logger.whitelist(
-        'info', 'ChannelWatcher: Loaded peers'
-    );
 
     fs.writeFileSync(
         '/tmp/p2p-hosts.json',
@@ -75,28 +69,27 @@ allocCluster.test('make p2p requests', {
 });
 
 allocCluster.test('add a peer and request', {
-    numPeers: 2
+    numPeers: 5
 }, function t(cluster, assert) {
-    var steve = cluster.channels[0];
-    var bob = cluster.channels[1];
+    setup(cluster);
 
     var hostsfilePath = path.join(os.tmpdir(), 'channel-watch-test.json');
     fs.writeFileSync(hostsfilePath, JSON.stringify([]));
 
-    setupEcho(steve, 'steve');
-    bob = bob.makeSubChannel({
-        serviceName: 'steve',
+    var chan = cluster.client.makeSubChannel({
+        serviceName: 'server',
+        filePath: hostsfilePath,
+        refreshInterval: 500,
         requestDefaults: {
             headers: {
-                as: 'raw',
-                cn: 'wat'
+                cn: 'client',
+                as: 'raw'
             }
-        },
-        filePath: hostsfilePath
+        }
     });
 
-    bob.request({
-        serviceName: 'steve',
+    chan.request({
+        serviceName: 'server',
         hasNoParent: true
     }).send('echo', 'a', 'b', onResponse);
 
@@ -105,21 +98,23 @@ allocCluster.test('add a peer and request', {
         assert.equal(err.type, 'tchannel.no-peer-available',
             'expected no peer available');
 
-        fs.writeFileSync(hostsfilePath, JSON.stringify([cluster.hosts[0]]));
+        fs.writeFileSync(hostsfilePath, JSON.stringify([cluster.hosts[1]]));
+
         // wait for watch to reload the file
         setTimeout(function onDelay() {
-            bob.request({
-                serviceName: 'steve',
+            chan.request({
+                serviceName: 'server',
                 hasNoParent: true
             }).send('echo', 'a', 'b', onResponse2);
-        }, 6000);
+        }, 700);
     }
 
     function onResponse2(err, res, arg2, arg3) {
         assert.ifError(err, 'request with peer should not fail');
         assert.equal(res.ok, true, 'response should be ok');
         assert.equal(String(arg2), 'a', 'arg2 should be correct');
-        assert.equal(String(arg3), 'b', 'arg3 should be correct');
+        assert.equal(String(arg3), 'b server by 1',
+            'arg3 should be correct');
         assert.end();
     }
 });
@@ -127,34 +122,36 @@ allocCluster.test('add a peer and request', {
 allocCluster.test('duplicate host entry', {
     numPeers: 2
 }, function t(cluster, assert) {
-    var steve = cluster.channels[0];
-    var bob = cluster.channels[1];
+    setup(cluster);
 
     var hostsfilePath = path.join(os.tmpdir(), 'channel-watch-test.json');
-    fs.writeFileSync(hostsfilePath, JSON.stringify([cluster.hosts[0], cluster.hosts[0]]));
+    fs.writeFileSync(hostsfilePath, JSON.stringify([
+        cluster.hosts[1],
+        cluster.hosts[1]
+    ]));
 
-    setupEcho(steve, 'steve');
-    bob = bob.makeSubChannel({
-        serviceName: 'steve',
+    var chan = cluster.client.makeSubChannel({
+        serviceName: 'server',
+        filePath: hostsfilePath,
+        refreshInterval: 500,
         requestDefaults: {
             headers: {
-                as: 'raw',
-                cn: 'wat'
+                cn: 'client',
+                as: 'raw'
             }
-        },
-        filePath: hostsfilePath
+        }
     });
 
-    bob.request({
-        serviceName: 'steve',
+    chan.request({
+        serviceName: 'server',
         hasNoParent: true
-    }).send('echo', 'a', 'b', onResponse2);
+    }).send('echo', 'a', 'b', onResponse);
 
-    function onResponse2(err, res) {
+    function onResponse(err, res) {
         assert.ifError(err, 'request with peer should not fail');
         assert.equal(res.ok, true, 'response should be ok');
 
-        assert.equal(steve.peers.keys().length, 1,
+        assert.equal(chan.peers.keys().length, 1,
             'steve should only have one peer');
 
         assert.end();
@@ -164,26 +161,28 @@ allocCluster.test('duplicate host entry', {
 allocCluster.test('remove a peer and request', {
     numPeers: 2
 }, function t(cluster, assert) {
-    var steve = cluster.channels[0];
-    var bob = cluster.channels[1];
+    setup(cluster);
+
+    cluster.logger.whitelist('info', 'ChannelWatcher: Removing old peer');
+    cluster.logger.whitelist('info', 'draining peer');
 
     var hostsfilePath = path.join(os.tmpdir(), 'channel-watch-test.json');
-    fs.writeFileSync(hostsfilePath, JSON.stringify([cluster.hosts[0]]));
+    fs.writeFileSync(hostsfilePath, JSON.stringify([cluster.hosts[1]]));
 
-    setupEcho(steve, 'steve');
-    bob = bob.makeSubChannel({
-        serviceName: 'steve',
+    var chan = cluster.client.makeSubChannel({
+        serviceName: 'server',
+        filePath: hostsfilePath,
+        refreshInterval: 500,
         requestDefaults: {
             headers: {
-                as: 'raw',
-                cn: 'wat'
+                cn: 'client',
+                as: 'raw'
             }
-        },
-        filePath: hostsfilePath
+        }
     });
 
-    bob.request({
-        serviceName: 'steve',
+    chan.request({
+        serviceName: 'server',
         hasNoParent: true
     }).send('echo', 'a', 'b', onResponse);
 
@@ -191,16 +190,17 @@ allocCluster.test('remove a peer and request', {
         assert.ifError(err, 'request with peer should not fail');
         assert.equal(res.ok, true, 'response should be ok');
         assert.equal(String(arg2), 'a', 'arg2 should be correct');
-        assert.equal(String(arg3), 'b', 'arg3 should be correct');
+        assert.equal(String(arg3), 'b server by 1', 'arg3 should be correct');
 
         fs.writeFileSync(hostsfilePath, JSON.stringify([]));
+
         // wait for watch to reload the file
         setTimeout(function onDelay() {
-            bob.request({
+            chan.request({
                 serviceName: 'steve',
                 hasNoParent: true
             }).send('echo', 'a', 'b', onResponse2);
-        }, 6000);
+        }, 700);
     }
 
     function onResponse2(err) {
@@ -211,16 +211,6 @@ allocCluster.test('remove a peer and request', {
         assert.end();
     }
 });
-
-function setupEcho(channel, serviceName) {
-    var c = channel.makeSubChannel({
-        serviceName: serviceName
-    });
-    c.register('echo', function echo(req, res, arg2, arg3) {
-        res.headers.as = 'raw';
-        res.sendOk(arg2, arg3);
-    });
-}
 
 function sendRequests(channel, count, cb) {
     var responses = [];
@@ -254,6 +244,16 @@ function sendRequests(channel, count, cb) {
 }
 
 function setup(cluster) {
+    cluster.logger.whitelist(
+        'info', 'ChannelWatcher: Loading peer list from file sync'
+    );
+    cluster.logger.whitelist(
+        'info', 'ChannelWatcher: Loaded peers'
+    );
+    cluster.logger.whitelist(
+        'info', 'ChannelWatcher: Loading peer list from file async'
+    );
+
     cluster.client = cluster.channels[0];
 
     cluster.servers = cluster.channels.slice(1);

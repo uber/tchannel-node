@@ -30,6 +30,7 @@ function ChannelWatcher(channel, opts) {
     assert(channel.topChannel, 'must be a subChannel');
     this.channel = channel;
     this.filePath = opts.filePath;
+    this.refreshInterval = opts.refreshInterval || 5007;
     this.logger = channel.logger;
 
     this._boundReload = _boundReload;
@@ -70,7 +71,7 @@ function _establishFileWatcher() {
     // watchFile instead polls with stat. Not as performant as inotify, but
     // better than watches eventually failing.
     fs.watchFile(this.filePath, {
-        interval: 5007,
+        interval: this.refreshInterval,
         persistent: true
     }, this._boundReload);
 };

@@ -617,7 +617,8 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
 
     if (options.filePath) {
         chan.watcher = new ChannelWatcher(chan, {
-            filePath: options.filePath
+            filePath: options.filePath,
+            refreshInterval: options.refreshInterval
         });
     }
 
