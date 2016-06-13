@@ -67,7 +67,7 @@ var RetryFlags = require('./retry-flags.js');
 var TimeHeap = require('./time_heap');
 var CountedReadySignal = require('ready-signal/counted');
 var BatchStatsd = require('./lib/statsd.js');
-var ChannelWatcher = require('./peer-file-watcher.js');
+var PeerFileWatcher = require('./peer-file-watcher.js');
 
 var TracingAgent = require('./trace/agent');
 
@@ -616,7 +616,7 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
     }
 
     if (options.filePath) {
-        chan.watcher = new ChannelWatcher(chan, {
+        chan.watcher = new PeerFileWatcher(chan, {
             filePath: options.filePath,
             refreshInterval: options.refreshInterval
         });

@@ -24,7 +24,7 @@ var safeJSONParse = require('safe-json-parse/tuple');
 var fs = require('fs');
 var assert = require('assert');
 
-function ChannelWatcher(channel, opts) {
+function PeerFileWatcher(channel, opts) {
     var self = this;
 
     assert(channel.topChannel, 'must be a subChannel');
@@ -46,13 +46,13 @@ function ChannelWatcher(channel, opts) {
     }
 }
 
-ChannelWatcher.prototype._validateFilePath = function _validateFilePath() {
+PeerFileWatcher.prototype._validateFilePath = function _validateFilePath() {
     if (!fs.existsSync(this.filePath)) {
         assert(false, 'Peer hosts file does not exist: ' + this.filePath);
     }
 };
 
-ChannelWatcher.prototype._readPeerListFromFileSync =
+PeerFileWatcher.prototype._readPeerListFromFileSync =
 function _readPeerListFromFileSync() {
     var tuple = safeJSONParse(fs.readFileSync(this.filePath, 'utf8'));
     if (tuple[0]) {
@@ -61,7 +61,7 @@ function _readPeerListFromFileSync() {
     return tuple[1];
 };
 
-ChannelWatcher.prototype._establishFileWatcher =
+PeerFileWatcher.prototype._establishFileWatcher =
 function _establishFileWatcher() {
     // Use watchFile instead of watch here. watch uses inotify events,
     // but since we're getting renames every 30 seconds and the inode is
@@ -76,16 +76,16 @@ function _establishFileWatcher() {
     }, this._boundReload);
 };
 
-ChannelWatcher.prototype.destroy = function destroy() {
+PeerFileWatcher.prototype.destroy = function destroy() {
     fs.unwatchFile(this.filePath, this._boundReload);
 };
 
 /**
  * Load hosts from a JSON file and update peers in TChannel.
  */
-ChannelWatcher.prototype.reloadSync =
+PeerFileWatcher.prototype.reloadSync =
 function reloadSync() {
-    this.logger.info('ChannelWatcher: Loading peer list from file sync', {
+    this.logger.info('PeerFileWatcher: Loading peer list from file sync', {
         filePath: this.filePath
     });
 
@@ -93,10 +93,10 @@ function reloadSync() {
     this.updatePeers(newPeers);
 };
 
-ChannelWatcher.prototype.reload =
+PeerFileWatcher.prototype.reload =
 function reload() {
     var self = this;
-    this.logger.info('ChannelWatcher: Loading peer list from file async', {
+    this.logger.info('PeerFileWatcher: Loading peer list from file async', {
         filePath: this.filePath
     });
 
@@ -104,7 +104,7 @@ function reload() {
 
     function onPeers(err, newPeers) {
         if (err) {
-            self.logger.error('ChannelWatcher: Could not load peers file', {
+            self.logger.error('PeerFileWatcher: Could not load peers file', {
                 filePath: self.filePath,
                 error: err
             });
@@ -115,7 +115,7 @@ function reload() {
     }
 };
 
-ChannelWatcher.prototype._readPeerList =
+PeerFileWatcher.prototype._readPeerList =
 function _readPeerList(cb) {
     fs.readFile(this.filePath, 'utf8', onFile);
 
@@ -133,7 +133,7 @@ function _readPeerList(cb) {
     }
 };
 
-ChannelWatcher.prototype.updatePeers =
+PeerFileWatcher.prototype.updatePeers =
 function updatePeers(newPeers) {
     // Take a snapshot of current, existing peers. This is used to delete old
     // peers later.
@@ -151,7 +151,7 @@ function updatePeers(newPeers) {
     // Drain and delete existing peers that are not in the new peer list
     for (i = 0; i < oldPeers.length; i++) {
         if (newPeers.indexOf(oldPeers[i]) === -1) {
-            this.logger.info('ChannelWatcher: Removing old peer', {
+            this.logger.info('PeerFileWatcher: Removing old peer', {
                 peer: oldPeers[i]
             });
 
@@ -162,12 +162,12 @@ function updatePeers(newPeers) {
         }
     }
 
-    this.logger.info('ChannelWatcher: Loaded peers', {
+    this.logger.info('PeerFileWatcher: Loaded peers', {
         newPeers: newPeers
     });
 };
 
-ChannelWatcher.prototype.drainPeer = function drainPeer(peer) {
+PeerFileWatcher.prototype.drainPeer = function drainPeer(peer) {
     var self = this;
     if (peer.draining) {
         return;
@@ -183,7 +183,7 @@ ChannelWatcher.prototype.drainPeer = function drainPeer(peer) {
     function thenDeleteIt(err) {
         if (err) {
             self.logger.warn(
-                'ChannelWatcher: error closing peer, deleting anyhow',
+                'PeerFileWatcher: error closing peer, deleting anyhow',
                 peer.extendLogInfo(peer.draining.extendLogInfo({
                     error: err
                 }))
@@ -194,4 +194,4 @@ ChannelWatcher.prototype.drainPeer = function drainPeer(peer) {
     }
 };
 
-module.exports = ChannelWatcher;
+module.exports = PeerFileWatcher;
