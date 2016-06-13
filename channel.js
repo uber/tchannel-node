@@ -67,6 +67,7 @@ var RetryFlags = require('./retry-flags.js');
 var TimeHeap = require('./time_heap');
 var CountedReadySignal = require('ready-signal/counted');
 var BatchStatsd = require('./lib/statsd.js');
+var ChannelWatcher = require('./channel-watcher.js');
 
 var TracingAgent = require('./trace/agent');
 
@@ -603,6 +604,11 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
             }
         }
     }
+    if (options.hostsWatchFilePath) {
+        chan.channelWatcher = new ChannelWatcher(chan, {
+            filePath: options.hostsWatchFilePath
+        });
+    }
     self.subChannels[chan.serviceName] = chan;
 
     // Subchannels should not have tracers; all tracing goes
@@ -927,6 +933,10 @@ TChannel.prototype.close = function close(callback) {
     if (self.sanityTimer) {
         self.timers.clearTimeout(self.sanityTimer);
         self.sanityTimer = null;
+    }
+
+    if (self.channelWatcher) {
+        self.channelWatcher.stopWatching();
     }
 
     if (self.serverSocket) {

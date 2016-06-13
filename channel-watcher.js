@@ -27,7 +27,7 @@ var assert = require('assert');
 function ChannelWatcher(channel, opts) {
     var self = this;
 
-    assert(channel.rootChannel, 'must be a subChannel');
+    assert(channel.topChannel, 'must be a subChannel');
     this.channel = channel;
     this.filePath = opts.filePath;
     this.logger = channel.logger;
@@ -69,10 +69,15 @@ function _establishFileWatcher() {
     //
     // watchFile instead polls with stat. Not as performant as inotify, but
     // better than watches eventually failing.
-    fs.watchFile(this.peerFilePath, {
+    fs.watchFile(this.filePath, {
         interval: 5007,
         persistent: true
     }, this._boundReload);
+};
+
+ChannelWatcher.prototype.stopWatching =
+function stopWatching() {
+    fs.unwatchFile(this.filePath, this._boundReload);
 };
 
 /**
@@ -132,14 +137,14 @@ ChannelWatcher.prototype.updatePeers =
 function updatePeers(newPeers) {
     // Take a snapshot of current, existing peers. This is used to delete old
     // peers later.
-    var oldPeers = this.tchannel.peers.keys().slice();
+    var oldPeers = this.channel.peers.keys().slice();
 
     var i;
 
     // Load new peers; duplicates are ignored
     for (i = 0; i < newPeers.length; i++) {
         if (typeof newPeers[i] === 'string') {
-            this.tchannel.peers.add(newPeers[i]);
+            this.channel.peers.add(newPeers[i]);
         }
     }
 
@@ -150,8 +155,8 @@ function updatePeers(newPeers) {
                 peer: oldPeers[i]
             });
 
-            var peer = this.tchannel.peers.get(oldPeers[i]);
-            this.tchannel.peers.delete(oldPeers[i]);
+            var peer = this.channel.peers.get(oldPeers[i]);
+            this.channel.peers.delete(oldPeers[i]);
 
             this.drainPeer(peer);
         }
@@ -185,7 +190,7 @@ ChannelWatcher.prototype.drainPeer = function drainPeer(peer) {
             );
         }
 
-        self.channel.rootChannel.peers.delete(peer.hostPort);
+        self.channel.topChannel.peers.delete(peer.hostPort);
     }
 };
 
