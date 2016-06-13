@@ -68,7 +68,7 @@ allocCluster.test('make p2p requests', {
     }
 });
 
-allocCluster.test.only('changing the peer list', {
+allocCluster.test('changing the peer list', {
     numPeers: 7
 }, function t(cluster, assert) {
     setup(cluster);
