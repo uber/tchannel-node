@@ -57,7 +57,7 @@ function BatchClient(channel, hosts, options) {
     self.body = 'foobar';
     self.timeout = options.timeout || 500;
 
-    self.subChannel = self.channel.makeSubChannel({
+    self.subChannel = options.subChannel = self.channel.makeSubChannel({
         serviceName: self.serviceName,
         peers: self.hosts,
         minConnections: options.minConnections || null

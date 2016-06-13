@@ -28,6 +28,53 @@ var parallel = require('run-parallel');
 
 var allocCluster = require('./lib/alloc-cluster');
 
+allocCluster.test('make p2p requests', {
+    numPeers: 5
+}, function t(cluster, assert) {
+    setup(cluster);
+    cluster.logger.whitelist(
+        'info', 'ChannelWatcher: Loading peer list from file sync'
+    );
+    cluster.logger.whitelist(
+        'info', 'ChannelWatcher: Loaded peers'
+    );
+
+    fs.writeFileSync(
+        '/tmp/p2p-hosts.json',
+        JSON.stringify(cluster.serverHosts), 'utf8'
+    );
+
+    var chan = cluster.client.makeSubChannel({
+        serviceName: 'server',
+        filePath: '/tmp/p2p-hosts.json'
+    });
+
+    sendRequests(chan, 100, onResponse);
+    function onResponse(err, resps) {
+        assert.ifError(err);
+
+        var table = {};
+        for (var i = 0; i < resps.length; i++) {
+            var addr = resps[i].remoteAddr;
+
+            if (table[addr] === undefined) {
+                table[addr] = 1;
+            } else {
+                table[addr]++;
+            }
+        }
+
+        for (i = 0; i < cluster.serverHosts.length; i++) {
+            assert.equal(table[cluster.serverHosts[i]], 25,
+                'expected 25 requests to each downstream');
+        }
+
+        chan.close();
+        fs.unlinkSync('/tmp/p2p-hosts.json');
+        assert.end();
+    }
+});
+
 allocCluster.test('add a peer and request', {
     numPeers: 2
 }, function t(cluster, assert) {
@@ -74,7 +121,6 @@ allocCluster.test('add a peer and request', {
         assert.equal(res.ok, true, 'response should be ok');
         assert.equal(String(arg2), 'a', 'arg2 should be correct');
         assert.equal(String(arg3), 'b', 'arg3 should be correct');
-
         assert.end();
     }
 });
@@ -174,5 +220,61 @@ function setupEcho(channel, serviceName) {
     c.register('echo', function echo(req, res, arg2, arg3) {
         res.headers.as = 'raw';
         res.sendOk(arg2, arg3);
+    });
+}
+
+function sendRequests(channel, count, cb) {
+    var responses = [];
+
+    for (var i = 0; i < count; i++) {
+        channel.request({
+            serviceName: 'server',
+            hasNoParent: true,
+            timeout: 500,
+            headers: {
+                cn: 'client',
+                as: 'raw'
+            }
+        }).send('echo', 'a', 'body', onResponse);
+    }
+
+    function onResponse(err, resp) {
+        if (err) {
+            if (cb !== null) {
+                cb(err);
+                cb = null;
+            }
+            return;
+        }
+
+        responses.push(resp);
+        if (responses.length === count) {
+            cb(null, responses);
+        }
+    }
+}
+
+function setup(cluster) {
+    cluster.client = cluster.channels[0];
+
+    cluster.servers = cluster.channels.slice(1);
+    cluster.serverHosts = [];
+
+    for (var i = 0; i < cluster.servers.length; i++) {
+        cluster.serverHosts.push(cluster.servers[i].hostPort);
+        makeServer(cluster.servers[i], i);
+    }
+}
+
+function makeServer(channel, index) {
+    var chanNum = index + 1;
+
+    var serverChan = channel.makeSubChannel({
+        serviceName: 'server'
+    });
+
+    serverChan.register('echo', function echo(req, res, head, body) {
+        res.headers.as = 'raw';
+        res.sendOk(head, body + ' server by ' + chanNum);
     });
 }
