@@ -23,8 +23,7 @@
 var os = require('os');
 var fs = require('fs');
 var path = require('path');
-
-var parallel = require('run-parallel');
+var setTimeout = require('timers').setTimeout;
 
 var allocCluster = require('./lib/alloc-cluster');
 
@@ -108,7 +107,7 @@ allocCluster.test('add a peer and request', {
 
         fs.writeFileSync(hostsfilePath, JSON.stringify([cluster.hosts[0]]));
         // wait for watch to reload the file
-        setTimeout(function() {
+        setTimeout(function onDelay() {
             bob.request({
                 serviceName: 'steve',
                 hasNoParent: true
@@ -196,7 +195,7 @@ allocCluster.test('remove a peer and request', {
 
         fs.writeFileSync(hostsfilePath, JSON.stringify([]));
         // wait for watch to reload the file
-        setTimeout(function() {
+        setTimeout(function onDelay() {
             bob.request({
                 serviceName: 'steve',
                 hasNoParent: true
