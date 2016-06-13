@@ -615,9 +615,9 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
         chan.hostPort = self.hostPort;
     }
 
-    if (options.filePath) {
+    if (options.peerFile) {
         chan.watcher = new PeerFileWatcher(chan, {
-            filePath: options.filePath,
+            peerFile: options.peerFile,
             refreshInterval: options.refreshInterval
         });
     }

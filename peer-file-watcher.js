@@ -29,7 +29,7 @@ function PeerFileWatcher(channel, opts) {
 
     assert(channel.topChannel, 'must be a subChannel');
     this.channel = channel;
-    this.filePath = opts.filePath;
+    this.peerFile = opts.peerFile;
     this.refreshInterval = opts.refreshInterval || 5007;
     this.logger = channel.logger;
 
@@ -47,16 +47,16 @@ function PeerFileWatcher(channel, opts) {
 }
 
 PeerFileWatcher.prototype._validateFilePath = function _validateFilePath() {
-    if (!fs.existsSync(this.filePath)) {
-        assert(false, 'Peer hosts file does not exist: ' + this.filePath);
+    if (!fs.existsSync(this.peerFile)) {
+        assert(false, 'Peer hosts file does not exist: ' + this.peerFile);
     }
 };
 
 PeerFileWatcher.prototype._readPeerListFromFileSync =
 function _readPeerListFromFileSync() {
-    var tuple = safeJSONParse(fs.readFileSync(this.filePath, 'utf8'));
+    var tuple = safeJSONParse(fs.readFileSync(this.peerFile, 'utf8'));
     if (tuple[0]) {
-        assert(false, 'Invalid JSON for TChannel peer host file at ' + this.filePath);
+        assert(false, 'Invalid JSON for TChannel peer host file at ' + this.peerFile);
     }
     return tuple[1];
 };
@@ -70,14 +70,14 @@ function _establishFileWatcher() {
     //
     // watchFile instead polls with stat. Not as performant as inotify, but
     // better than watches eventually failing.
-    fs.watchFile(this.filePath, {
+    fs.watchFile(this.peerFile, {
         interval: this.refreshInterval,
         persistent: true
     }, this._boundReload);
 };
 
 PeerFileWatcher.prototype.destroy = function destroy() {
-    fs.unwatchFile(this.filePath, this._boundReload);
+    fs.unwatchFile(this.peerFile, this._boundReload);
 };
 
 /**
@@ -86,7 +86,7 @@ PeerFileWatcher.prototype.destroy = function destroy() {
 PeerFileWatcher.prototype.reloadSync =
 function reloadSync() {
     this.logger.info('PeerFileWatcher: Loading peer list from file sync', {
-        filePath: this.filePath
+        peerFile: this.peerFile
     });
 
     var newPeers = this._readPeerListFromFileSync();
@@ -97,7 +97,7 @@ PeerFileWatcher.prototype.reload =
 function reload() {
     var self = this;
     this.logger.info('PeerFileWatcher: Loading peer list from file async', {
-        filePath: this.filePath
+        peerFile: this.peerFile
     });
 
     this._readPeerList(onPeers);
@@ -105,7 +105,7 @@ function reload() {
     function onPeers(err, newPeers) {
         if (err) {
             self.logger.error('PeerFileWatcher: Could not load peers file', {
-                filePath: self.filePath,
+                peerFile: self.peerFile,
                 error: err
             });
             return;
@@ -117,7 +117,7 @@ function reload() {
 
 PeerFileWatcher.prototype._readPeerList =
 function _readPeerList(cb) {
-    fs.readFile(this.filePath, 'utf8', onFile);
+    fs.readFile(this.peerFile, 'utf8', onFile);
 
     function onFile(err, text) {
         if (err) {

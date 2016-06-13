@@ -40,7 +40,7 @@ allocCluster.test('make p2p requests', {
 
     var chan = cluster.client.makeSubChannel({
         serviceName: 'server',
-        filePath: '/tmp/p2p-hosts.json'
+        peerFile: '/tmp/p2p-hosts.json'
     });
 
     sendRequests(chan, 100, onResponse);
@@ -91,7 +91,7 @@ allocCluster.test('changing the peer list', {
 
     var chan = cluster.client.makeSubChannel({
         serviceName: 'server',
-        filePath: '/tmp/p2p-hosts.json',
+        peerFile: '/tmp/p2p-hosts.json',
         refreshInterval: 500,
         minConnections: 4
     });
@@ -170,7 +170,7 @@ allocCluster.test('add a peer and request', {
 
     var chan = cluster.client.makeSubChannel({
         serviceName: 'server',
-        filePath: hostsfilePath,
+        peerFile: hostsfilePath,
         refreshInterval: 500,
         requestDefaults: {
             headers: {
@@ -224,7 +224,7 @@ allocCluster.test('duplicate host entry', {
 
     var chan = cluster.client.makeSubChannel({
         serviceName: 'server',
-        filePath: hostsfilePath,
+        peerFile: hostsfilePath,
         refreshInterval: 500,
         requestDefaults: {
             headers: {
@@ -263,7 +263,7 @@ allocCluster.test('remove a peer and request', {
 
     var chan = cluster.client.makeSubChannel({
         serviceName: 'server',
-        filePath: hostsfilePath,
+        peerFile: hostsfilePath,
         refreshInterval: 500,
         requestDefaults: {
             headers: {
