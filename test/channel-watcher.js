@@ -24,6 +24,7 @@ var os = require('os');
 var fs = require('fs');
 var path = require('path');
 var setTimeout = require('timers').setTimeout;
+var setImmediate = require('timers').setImmediate;
 
 var allocCluster = require('./lib/alloc-cluster');
 
@@ -62,11 +63,102 @@ allocCluster.test('make p2p requests', {
                 'expected 25 requests to each downstream');
         }
 
-        chan.close();
         fs.unlinkSync('/tmp/p2p-hosts.json');
         assert.end();
     }
 });
+
+allocCluster.test.only('changing the peer list', {
+    numPeers: 7
+}, function t(cluster, assert) {
+    setup(cluster);
+
+    cluster.logger.whitelist('info', 'ChannelWatcher: Removing old peer');
+    cluster.logger.whitelist('info', 'draining peer');
+
+    var firstPeers = [];
+    var secondPeers = [];
+
+    for (var i = 0; i < 4; i++) {
+        firstPeers[i] = cluster.serverHosts[i];
+        secondPeers[i] = cluster.serverHosts[i + 2];
+    }
+
+    fs.writeFileSync(
+        '/tmp/p2p-hosts.json',
+        JSON.stringify(firstPeers), 'utf8'
+    );
+
+    var chan = cluster.client.makeSubChannel({
+        serviceName: 'server',
+        filePath: '/tmp/p2p-hosts.json',
+        refreshInterval: 500,
+        minConnections: 4
+    });
+
+    sendRequests(chan, 100, onResponse);
+
+    function onResponse(err, resps) {
+        assert.ifError(err);
+
+        var table = collectResponses(resps);
+
+        for (i = 0; i < firstPeers.length; i++) {
+            assert.equal(table[firstPeers[i]], 25,
+                'expected 25 requests to each of first peers');
+        }
+
+        fs.writeFileSync(
+            '/tmp/p2p-hosts.json',
+            JSON.stringify(secondPeers), 'utf8'
+        );
+
+        setTimeout(delay, 700);
+    }
+
+    function delay() {
+        rollingSendRequsets(chan, 100, onResponse2);
+    }
+
+    function onResponse2(err, resps) {
+        assert.ifError(err);
+
+        var table = collectResponses(resps);
+        var total = 0;
+
+        for (i = 0; i < secondPeers.length; i++) {
+            var count = table[secondPeers[i]];
+            assert.ok(
+                count > 12.5 && count < 37.5,
+                'expected between 12.5 & 37.5 requests (' + count +
+                ') to each of second peers'
+            );
+
+            total += table[secondPeers[i]];
+        }
+
+        assert.equal(total, 100, 'expected 100 reqs to 4 hosts');
+
+        fs.unlinkSync('/tmp/p2p-hosts.json');
+        assert.end();
+    }
+});
+
+function collectResponses(resps) {
+    var table = {};
+
+    for (var i = 0; i < resps.length; i++) {
+        var addr = resps[i].remoteAddr;
+
+        if (table[addr] === undefined) {
+            table[addr] = 1;
+        } else {
+            table[addr]++;
+        }
+    }
+
+    return table;
+}
 
 allocCluster.test('add a peer and request', {
     numPeers: 5
@@ -225,6 +317,47 @@ function sendRequests(channel, count, cb) {
                 as: 'raw'
             }
         }).send('echo', 'a', 'body', onResponse);
+    }
+
+    function onResponse(err, resp) {
+        if (err) {
+            if (cb !== null) {
+                cb(err);
+                cb = null;
+            }
+            return;
+        }
+
+        responses.push(resp);
+        if (responses.length === count) {
+            cb(null, responses);
+        }
+    }
+}
+
+function rollingSendRequsets(channel, count, cb) {
+    var responses = [];
+
+    var index = 0;
+
+    setImmediate(fireOnce);
+
+    function fireOnce() {
+        channel.request({
+            serviceName: 'server',
+            hasNoParent: true,
+            timeout: 500,
+            headers: {
+                cn: 'client',
+                as: 'raw'
+            }
+        }).send('echo', 'a', 'body', onResponse);
+
+        index++;
+
+        if (index < count) {
+            setImmediate(fireOnce);
+        }
     }
 
     function onResponse(err, resp) {
