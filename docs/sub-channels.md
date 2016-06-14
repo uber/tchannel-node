@@ -57,6 +57,14 @@ The `host:port` strings must be non-ephemeral hostPort as per the
 If you do not specify a `peers` array you must pass a `host`
 option for every outgoing request.
 
+### `options.peerFile`
+
+A filePath to read & watch that contains a JSON encoded array
+of host ports. A host port is a string that is `{ip}:{port}`.
+
+This is useful if you want to use tchannel in a p2p fashion
+and make requests based on a hostfile on disk.
+
 ## `var req = subChannel.request(options)`
 
 `request()` is used to initiate an outgoing request to another channel.
