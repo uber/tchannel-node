@@ -67,6 +67,7 @@ var RetryFlags = require('./retry-flags.js');
 var TimeHeap = require('./time_heap');
 var CountedReadySignal = require('ready-signal/counted');
 var BatchStatsd = require('./lib/statsd.js');
+var PeerFileWatcher = require('./peer-file-watcher.js');
 
 var TracingAgent = require('./trace/agent');
 
@@ -265,6 +266,7 @@ function TChannel(options) {
     }
 
     this.maximumRelayTTL = MAXIMUM_TTL_ALLOWED;
+    this.watcher = null;
 
     function doSanitySweep() {
         self.sanityTimer = null;
@@ -613,6 +615,13 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
         chan.hostPort = self.hostPort;
     }
 
+    if (options.peerFile) {
+        chan.watcher = new PeerFileWatcher(chan, {
+            peerFile: options.peerFile,
+            refreshInterval: options.refreshInterval
+        });
+    }
+
     return chan;
 };
 
@@ -919,6 +928,10 @@ TChannel.prototype.close = function close(callback) {
     self.destroyed = true;
 
     var counter = 1;
+
+    if (self.watcher) {
+        self.watcher.destroy();
+    }
 
     if (self.batchStats) {
         ObjectPool.unref();
