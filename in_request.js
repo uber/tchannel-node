@@ -169,7 +169,10 @@ TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
     var self = this;
     var timeoutError;
 
-    if (!self.res || self.res.state === States.Initial) {
+    if (!self.res ||
+        self.res.state === States.Initial ||
+        self.res.state === States.Streaming
+    ) {
         // TODO: send an error frame response?
         // TODO: emit error on self.res instead / in addition to?
         // TODO: should cancel any pending handler
