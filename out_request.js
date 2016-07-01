@@ -528,7 +528,9 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
         }));
     }
 
-    if (!self.res || self.res.state === States.Initial) {
+    if (!self.res || self.res.state === States.Initial ||
+        self.res.state === States.Streaming
+    ) {
         timeoutError = errors.RequestTimeoutError({
             id: self.id,
             start: self.start,
