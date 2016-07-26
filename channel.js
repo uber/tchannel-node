@@ -1073,4 +1073,12 @@ function setMaxTombstoneTTL(ttl) {
     }
 };
 
+TChannel.prototype.isUnhealthyError = function isUnhealthyError(err) {
+    if (!err) {
+        return false;
+    }
+    var codeName = errors.classify(err);
+    return errors.isUnhealthy(codeName);
+};
+
 module.exports = TChannel;

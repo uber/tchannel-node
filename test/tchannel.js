@@ -138,3 +138,14 @@ test('make socket: should throw for invalid destination', function t(assert) {
     server.quit(assert.end);
   });
 });
+
+
+test('isUnhealthyError classifies errors correctly', function t(assert) {
+  var channel = new TChannel();
+  assert.notOk(channel.isUnhealthyError(null));
+  assert.notOk(channel.isUnhealthyError(new Error()));
+  assert.equal(null, channel.isUnhealthyError({ type: 'unknown' }));
+  assert.ok(channel.isUnhealthyError({ isErrorFrame: true, codeName: 'Busy' }));
+  assert.ok(channel.isUnhealthyError({ type: 'tchannel.connection.timeout' }));
+  channel.quit(assert.end);
+});
