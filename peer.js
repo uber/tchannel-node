@@ -464,8 +464,7 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
             // When in the past set next attempt to now + delay
             self.nextConnAttemptTime = afterConnect + self.nextConnAttemptDelay;
         } else {
-            // When in the future; go further in the future
-            self.nextConnAttemptTime += self.nextConnAttemptDelay;
+            // When in the future; leave it alone.
         }
     }
 };
