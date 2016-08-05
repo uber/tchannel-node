@@ -41,6 +41,7 @@ var ObjectPool = require('./lib/object_pool');
 var DEFAULT_REPORT_INTERVAL = 1000;
 var INITIAL_CONN_ATTEMPT_DELAY = 5000;
 var CONN_ATTEMPT_DELAY_MULTIPLER = 2;
+var MAX_CONN_ATTEMPT_DELAY = 30 * 1000;
 
 /*eslint max-statements: [2, 40]*/
 function TChannelPeer(channel, hostPort, options) {
@@ -445,6 +446,10 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
             self.nextConnAttemptDelay *= CONN_ATTEMPT_DELAY_MULTIPLER;
             // Add some amount of fuzz, +-100ms
             self.nextConnAttemptDelay += Math.floor(100 * (Math.random() - 0.5));
+
+            self.nextConnAttemptDelay = Math.min(
+                self.nextConnAttemptDelay, MAX_CONN_ATTEMPT_DELAY
+            );
         }
 
         var afterConnect = Date.now();
