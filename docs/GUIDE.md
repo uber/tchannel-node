@@ -161,8 +161,7 @@ tcurl -p 127.0.0.1:4040 -t [DIR-TO-THRIFT] keyvalue KeyValue::put_v1 -3 '{"key":
 
 ### Setting up hyperbahn
 
-You need to setup hyperbahn locally. Hopefully you have documentation
-on how to set a local hyperbahn up.
+You need to setup hyperbahn locally. See the [running hyperbahn locally docs](https://github.com/uber/hyperbahn/blob/master/docs/running-locally.md)
 
 ### Registering with hyperbahn
 
