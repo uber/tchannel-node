@@ -75,6 +75,8 @@ function TChannelPeer(channel, hostPort, options) {
     this.nextConnAttemptTime = 0;
     // How long to delay conn attempt by on failure (ms)
     this.nextConnAttemptDelay = 0;
+    // Whether we are doing a connection attempt
+    this.hasConnectionAttempt = false;
 
     this.waitForIdentifiedListeners = [];
 
@@ -422,9 +424,12 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
     var self = this;
 
     var connectTime = Date.now();
-    if (connectTime < self.nextConnAttemptTime) {
+    if (connectTime < self.nextConnAttemptTime ||
+        self.hasConnectionAttempt
+    ) {
         return;
     }
+    self.hasConnectionAttempt = true;
 
     var conn = this.getOutConnection();
     if (!conn || conn.direction !== 'out') {
@@ -434,6 +439,8 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
     this.waitForIdentified(conn, onIdentified);
 
     function onIdentified(err) {
+        self.hasConnectionAttempt = false;
+
         if (!err) {
             self.nextConnAttemptDelay = 0;
             self.nextConnAttemptTime = 0;
