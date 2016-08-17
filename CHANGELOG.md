@@ -1,3 +1,23 @@
+# v3.8.1
+
+- Adds an `isUnhealthyError` method to TChannel for use in throttling (client
+  side rate limiting).
+
+# v3.8.0
+
+- Relaxes timeouts for streaming requests, so that a timeout will not apply
+  until the last fragment of the request has been received.
+
+# v3.7.3
+
+- Adds a file watcher, for binding a TChannel subchannel's peer list to the
+  contents of a file.
+
+# v3.7.1, v3.7.2
+
+- Adds support for baseAppHeaders in as/json and as/thrift.
+- Adds guards against common race condition in the lazy relay request object pool.
+
 # v3.7.0
 
 - Introduces the `allowOptionalArguments` flag for `TChannelAsThrift`, so
