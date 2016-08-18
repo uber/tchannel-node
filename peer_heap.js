@@ -30,7 +30,7 @@ module.exports = PeerHeap;
 // peer list.
 var dfsStack = [0, 1, 2];
 
-function PeerHeap(peers, random) {
+function PeerHeap(peers, random, logger) {
     this.array = [];
     this.peers = peers || null;
     this.hasMinConnections = peers ? peers.hasMinConnections : false;
@@ -44,6 +44,8 @@ function PeerHeap(peers, random) {
     this.rangelos = [];
 
     this.maxRangeStart = 0;
+
+    this.logger = logger;
 }
 
 /*eslint-disable complexity */
@@ -147,7 +149,18 @@ PeerHeap.prototype.choose = function choose(threshold, filter) {
         }
     }
 
-    if (secondaryProbability > highestProbability && chosenPeer) {
+    this.logger.info('ZJ PeerHeap.prototype.choose', {
+        secondaryProbability: secondaryProbability,
+        highestProbability: highestProbability,
+        chosenPeer: chosenPeer && {
+            nextConnAttemptTime: chosenPeer.nextConnAttemptTime,
+            nextConnAttemptDelay: chosenPeer.nextConnAttemptDelay,
+            hostPort: chosenPeer.hostPort
+        } || 'none',
+        tryConnect: Boolean(secondaryProbability > highestProbability && chosenPeer)
+    });
+
+    if (secondaryProbability > highestProbability && chosenPeer !== null) {
         chosenPeer.tryConnect(noop);
         return secondaryPeer;
     }

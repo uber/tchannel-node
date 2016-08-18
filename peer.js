@@ -41,6 +41,7 @@ var ObjectPool = require('./lib/object_pool');
 var DEFAULT_REPORT_INTERVAL = 1000;
 var INITIAL_CONN_ATTEMPT_DELAY = 5000;
 var CONN_ATTEMPT_DELAY_MULTIPLER = 2;
+var MAX_CONN_ATTEMP_DELAY = 30 * 100000;
 
 /*eslint max-statements: [2, 40]*/
 function TChannelPeer(channel, hostPort, options) {
@@ -83,6 +84,8 @@ function TChannelPeer(channel, hostPort, options) {
             onReport, this.reportInterval
         );
     }
+
+    this.logger.info('ZJ new TChannelPeer');
 
     this.setPreferConnectionDirection(options.preferConnectionDirection || 'any');
 
@@ -421,6 +424,14 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
     var self = this;
 
     var connectTime = Date.now();
+
+    self.logger.info('ZJ tryConnect', {
+        nextConnAttemptDelay: self.nextConnAttemptDelay,
+        nextConnAttemptTime: self.nextConnAttemptTime,
+        connectTime: connectTime,
+        hostPort: self.hostPort
+    });
+
     if (connectTime < self.nextConnAttemptTime) {
         return;
     }
@@ -434,6 +445,10 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
 
     function onIdentified(err) {
         if (!err) {
+            self.logger.info('ZJ onIdentified no err', {
+                nextConnAttemptDelay: self.nextConnAttemptDelay,
+                nextConnAttemptTime: self.nextConnAttemptTime
+            });
             self.nextConnAttemptDelay = 0;
             self.nextConnAttemptTime = 0;
             return;
@@ -441,13 +456,28 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
 
         if (self.nextConnAttemptDelay === 0) {
             self.nextConnAttemptDelay = INITIAL_CONN_ATTEMPT_DELAY;
+            self.logger.info('ZJ onIdentified initial attempt delay', {
+                nextConnAttemptDelay: self.nextConnAttemptDelay,
+                nextConnAttemptTime: self.nextConnAttemptTime
+            });
         } else {
             self.nextConnAttemptDelay *= CONN_ATTEMPT_DELAY_MULTIPLER;
             // Add some amount of fuzz, +-100ms
             self.nextConnAttemptDelay += Math.floor(100 * (Math.random() - 0.5));
+            self.logger.info('ZJ onIdentified following attempt delay', {
+                nextConnAttemptDelay: self.nextConnAttemptDelay,
+                nextConnAttemptTime: self.nextConnAttemptTime
+            });
         }
 
+        self.nextConnAttemptDelay = Math.min(self.nextConnAttemptDelay, MAX_CONN_ATTEMP_DELAY);
+
         var afterConnect = Date.now();
+        self.logger.info('ZJ onIdentified next attempt before', {
+            nextConnAttemptDelay: self.nextConnAttemptDelay,
+            nextConnAttemptTime: self.nextConnAttemptTime,
+            afterConnect: afterConnect
+        });
         if (self.nextConnAttemptTime < afterConnect) {
             // When in the past set next attempt to now + delay
             self.nextConnAttemptTime = afterConnect + self.nextConnAttemptDelay;
@@ -455,6 +485,11 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
             // When in the future; go further in the future
             self.nextConnAttemptTime += self.nextConnAttemptDelay;
         }
+        self.logger.info('ZJ onIdentified next attempt after', {
+            nextConnAttemptDelay: self.nextConnAttemptDelay,
+            nextConnAttemptTime: self.nextConnAttemptTime,
+            afterConnect: afterConnect
+        });
     }
 };
 

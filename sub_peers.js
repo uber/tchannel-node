@@ -29,6 +29,7 @@ function TChannelSubPeers(channel, options) {
     TChannelPeersBase.call(this, channel, options);
 
     var self = this;
+    this.logger = channel.logger;
     this.peerScoreThreshold = this.options.peerScoreThreshold || 0;
     this.choosePeerWithHeap = channel.choosePeerWithHeap;
 
@@ -36,7 +37,7 @@ function TChannelSubPeers(channel, options) {
     this.minConnections = options.minConnections;
 
     this.currentConnectedPeers = 0;
-    this._heap = new PeerHeap(this, channel.random);
+    this._heap = new PeerHeap(this, channel.random, channel.logger);
 
     this.boundOnOutConnectionDelta = boundOnOutConnectionDelta;
 
@@ -213,6 +214,17 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
             peer: selectedPeer
         });
     }
+
+    this.logger.info('ZJ TChannelSubPeers.prototype.chooseLinearPeer', {
+        secondaryScore: secondaryScore,
+        selectedScore: selectedScore,
+        selectedPeer: selectedPeer && {
+            nextConnAttemptTime: selectedPeer.nextConnAttemptTime,
+            nextConnAttemptDelay: selectedPeer.nextConnAttemptDelay,
+            hostPort: selectedPeer.hostPort
+        } || 'none',
+        tryConnect: Boolean(secondaryScore > selectedScore && selectedPeer !== null)
+    });
 
     if (secondaryScore > selectedScore && selectedPeer) {
         selectedPeer.tryConnect(noop);
