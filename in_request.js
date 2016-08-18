@@ -65,10 +65,6 @@ function TChannelInRequest(id, options) {
     this.err = null;
     this.circuit = null;
     this.flags = options.flags;
-
-    if (options.tracer) {
-        this.setupTracing(options);
-    }
 }
 
 inherits(TChannelInRequest, EventEmitter);
@@ -102,28 +98,6 @@ TChannelInRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     }
 
     return info;
-};
-
-TChannelInRequest.prototype.setupTracing = function setupTracing(options) {
-    var self = this;
-
-    self.span = options.tracer.setupNewSpan({
-        spanid: self.tracing.spanid,
-        traceid: self.tracing.traceid,
-        parentid: self.tracing.parentid,
-        flags: self.tracing.flags,
-        remoteName: options.hostPort,
-        serviceName: self.serviceName,
-        name: '' // fill this in later
-    });
-
-    self.span.annotateBinary('cn', self.callerName);
-    self.span.annotateBinary('as', self.headers.as);
-    if (self.connection) {
-        self.span.annotateBinary('src', self.connection.remoteName);
-    }
-
-    self.span.annotate('sr');
 };
 
 TChannelInRequest.prototype.handleFrame = function handleFrame(parts, isLast) {

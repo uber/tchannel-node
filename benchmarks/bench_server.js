@@ -78,10 +78,6 @@ function BenchServer(port) {
         })
     });
 
-    if (argv.trace) {
-        self.setupReporter();
-    }
-
     self.serverChan = self.server.makeSubChannel({
         serviceName: 'benchmark'
     });
@@ -90,25 +86,6 @@ function BenchServer(port) {
 
     self.registerEndpoints();
 }
-
-BenchServer.prototype.setupReporter = function setupReporter() {
-    var self = this;
-
-    var reporter = Reporter({
-        channel: self.server.makeSubChannel({
-            serviceName: 'tcollector',
-            peers: [argv.traceRelayHostPort]
-        }),
-        logger: self.server.logger,
-        callerName: 'my-server'
-    });
-
-    self.server.tracer.reporter = function report(span) {
-        reporter.report(span, {
-            timeout: 10 * 1000
-        });
-    };
-};
 
 BenchServer.prototype.registerEndpoints = function registerEndpoints() {
     var self = this;

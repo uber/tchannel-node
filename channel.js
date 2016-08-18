@@ -69,7 +69,7 @@ var CountedReadySignal = require('ready-signal/counted');
 var BatchStatsd = require('./lib/statsd.js');
 var PeerFileWatcher = require('./peer-file-watcher.js');
 
-var TracingAgent = require('./trace/agent');
+var Tracer = require('opentracing');
 
 var CONN_STALE_PERIOD = 1500;
 var SANITY_PERIOD = 10 * 1000;
@@ -204,23 +204,7 @@ function TChannel(options) {
     this.drainReason = '';
     this.drainExempt = null;
 
-    var trace = typeof this.options.trace === 'boolean' ?
-        this.options.trace : true;
-
-    if (trace) {
-        this.tracer = new TracingAgent({
-            logger: this.logger,
-            forceTrace: this.options.forceTrace,
-            serviceName: this.options.serviceNameOverwrite,
-            reporter: this.options.traceReporter
-        });
-    }
-
-    if (typeof this.options.traceSample === 'number') {
-        this.traceSample = this.options.traceSample;
-    } else {
-        this.traceSample = 0.01;
-    }
+    this.tracer = Tracer;
 
     // lazily created by .getServer (usually from .listen)
     this.serverSocket = null;
@@ -834,14 +818,6 @@ TChannel.prototype.request = function channelRequest(options) {
 
     var opts = new RequestOptions(self, options);
     self.fastRequestDefaults(opts);
-
-    if (opts.trace && opts.hasNoParent) {
-        if (Math.random() < self.traceSample) {
-            opts.trace = true;
-        } else {
-            opts.trace = false;
-        }
-    }
 
     return self._request(opts);
 };

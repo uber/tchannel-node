@@ -80,34 +80,23 @@ function TChannelOutRequest(id, options) {
     this.drained = false;
     this.drainReason = '';
 
-    if (options.channel.tracer && !this.forwardTrace) {
-        // new span with new ids
-        this.setupTracing(options);
-    }
+    // TODO - do this when building a span instead
+    this.checkForParent()
 }
 
 inherits(TChannelOutRequest, EventEmitter);
 
-TChannelOutRequest.prototype.type = 'tchannel.outgoing-request';
-
-TChannelOutRequest.prototype.setupTracing = function setupTracing(options) {
-    var self = this;
-
-    self.span = options.channel.tracer.setupNewSpan({
-        outgoing: true,
-        parentSpan: options.parent && options.parent.span,
-        hasNoParent: options.hasNoParent,
-        spanid: null,
-        traceid: null,
-        parentid: null,
-        flags: options.trace ? 1 : 0,
-        remoteName: self.remoteAddr,
-        serviceName: self.serviceName,
-        name: '' // fill this in later
-    });
-
-    self.tracing = self.span.getTracing();
+TChannelOutRequest.prototype.checkForParent = function checkForParent() {
+    if (!this.hasNoParent && !this.parent) {
+        throw errors.ParentRequired({
+            parentSpan: this.parentSpan,
+            hasNoParent: this.hasNoParent,
+            serviceName: this.serviceName
+        });
+    }
 };
+
+TChannelOutRequest.prototype.type = 'tchannel.outgoing-request';
 
 TChannelOutRequest.prototype._sendCallRequest = function _sendCallRequest(args, isLast) {
     var self = this;
@@ -331,9 +320,6 @@ TChannelOutRequest.prototype.sendCallRequestFrame = function sendCallRequestFram
     switch (self.state) {
         case States.Initial:
             self.start = self.channel.timers.now();
-            if (self.span) {
-                self.span.annotate('cs');
-            }
             self._sendCallRequest(args, isLast);
             if (isLast) {
                 self.state = States.Done;
@@ -418,11 +404,6 @@ TChannelOutRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
     }
 
     self.sendArg1(arg1);
-
-    if (self.span) {
-        self.span.annotateBinary('as', self.headers.as);
-        self.span.annotateBinary('cn', self.callerName);
-    }
 
     if (self.logical === false && self.retryCount === 0) {
         self.emitOutboundCallsSent();

@@ -310,10 +310,6 @@ function _buildResponse(req, options) {
     req.res.errorEvent.on(onError);
     req.res.finishEvent.on(opDone);
 
-    if (!req.forwardTrace) {
-        self.captureResponseSpans(req.res);
-    }
-
     return req.res;
 
     function opDone() {
@@ -325,27 +321,9 @@ function _buildResponse(req, options) {
     }
 };
 
-TChannelConnection.prototype.captureResponseSpans =
-function captureResponseSpans(res) {
-    var self = this;
-
-    res.spanEvent.on(handleSpanFromRes);
-
-    function handleSpanFromRes(span) {
-        self.handleSpanFromRes(span);
-    }
-};
-
 function isStringOrBuffer(x) {
     return typeof x === 'string' || Buffer.isBuffer(x);
 }
-
-TChannelConnection.prototype.handleSpanFromRes =
-function handleSpanFromRes(span) {
-    var self = this;
-
-    self.channel.tracer.report(span);
-};
 
 TChannelConnection.prototype.onResponseError =
 function onResponseError(err, req) {
@@ -717,13 +695,6 @@ TChannelConnection.prototype.onCallResponse = function onCallResponse(res) {
     if (!req) {
         self.logUnknownCallResponse(res);
         return;
-    }
-
-    if (self.tracer && !req.forwardTrace) {
-        // TODO: better annotations
-        req.span.annotate('cr');
-        self.tracer.report(req.span);
-        res.span = req.span;
     }
 
     req.emitResponse(res);

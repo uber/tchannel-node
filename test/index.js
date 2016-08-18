@@ -66,7 +66,6 @@ require('./ephemeral-client.js');
 require('./relay-to-dead.js');
 require('./time_heap.js');
 require('./balance_peer_requests.js');
-require('./tcollector-reporter.js');
 require('./pool-of-servers.js');
 require('./no_frag_arg1.js');
 require('./lazy_handler.js');
@@ -79,10 +78,6 @@ require('./relay-kills-socket-after-timeouts.js');
 require('./object_pool.js');
 require('./peer-to-peer-load-balance.js');
 require('./peer-file-watcher.js');
-
-require('./trace/basic_server.js');
-require('./trace/server_2_requests.js');
-require('./trace/outpeer_span_handle.js');
 
 require('./v2/frame.js');
 require('./v2/init.js');

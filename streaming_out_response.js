@@ -69,9 +69,6 @@ StreamingOutResponse.prototype.sendError = function sendError(codeString, messag
             attempted: 'send error frame: ' + codeString + ': ' + message
         }));
     } else {
-        if (self.span) {
-            self.span.annotate('ss');
-        }
         self.state = States.Error;
         self._argstream.finished = true;
         self.arg2.end();

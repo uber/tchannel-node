@@ -144,9 +144,6 @@ TChannelOutResponse.prototype.sendCallResponseFrame = function sendCallResponseF
         case States.Initial:
             self.start = self.timers.now();
             self._sendCallResponse(args, isLast);
-            if (self.span) {
-                self.span.annotate('ss');
-            }
             if (isLast) {
                 self.state = States.Done;
             } else {
@@ -251,9 +248,6 @@ TChannelOutResponse.prototype.sendError = function sendError(codeString, message
             errMessage: message
         }));
     } else {
-        if (self.span) {
-            self.span.annotate('ss');
-        }
         self.state = States.Error;
 
         self.codeString = codeString;

@@ -7,3 +7,5 @@ benchmarks/*.svg
 benchmarks/*.raw
 benchmarks/*.html
 benchmarks/*.folded
+.idea/
+tchannel-node.iml

@@ -30,7 +30,6 @@ var EventEmitter = require('events').EventEmitter;
 var safeJsonParse = require('safe-json-parse/tuple');
 var path = require('path');
 
-var Reporter = require('./tcollector/reporter.js');
 var TChannelJSON = require('./as/json.js');
 var TChannelThrift = require('./as/thrift.js');
 
@@ -98,7 +97,6 @@ function HyperbahnClient(options) {
     assert(options && options.tchannel, 'Must pass in a tchannel');
     assert(options && options.tchannel && !options.tchannel.topChannel,
         'Must pass in top level tchannel');
-    assert(options.tchannel.tracer, 'Top channel must have trace enabled');
     assert(options.serviceName, 'must pass in serviceName');
     if (Array.isArray(options.hostPortList)) {
         self.hostPortList = options.hostPortList;
@@ -116,8 +114,6 @@ function HyperbahnClient(options) {
     self.serviceName = options.serviceName;
     self.callerName = options.callerName || options.serviceName;
     self.tchannel = options.tchannel;
-    self.reportTracing = 'reportTracing' in options ?
-        options.reportTracing : true;
     self.hardFail = !!options.hardFail;
     self.advertiseInterval = options.advertiseInterval || DEFAULT_TTL;
     self.timeoutFuzz = self.advertiseInterval;
@@ -125,27 +121,6 @@ function HyperbahnClient(options) {
 
     self.logger = options.logger || self.tchannel.logger;
     self.statsd = options.statsd;
-
-    self.reporter = Reporter({
-        channel: self.getClientChannel({
-            serviceName: 'tcollector',
-            trace: false
-        }),
-        logger: self.logger,
-        callerName: self.callerName,
-        logWarnings: options.logTraceWarnings
-    });
-    self.tchannel.tracer.reporter = function report(span) {
-        if (self.reportTracing) {
-            self.reporter.report(span);
-        }
-    };
-
-    if (!self.reportTracing) {
-        self.logger.warn('HyperbahnClient tcollector tracing is OFF', {
-            service: self.serviceName
-        });
-    }
 
     self.hyperbahnChannel = self.tchannel.subChannels.hyperbahn ||
         self.tchannel.makeSubChannel({
@@ -233,9 +208,6 @@ function getClientChannel(options) {
             }
         }
     };
-    if ('trace' in options) {
-        channelOptions.trace = options.trace;
-    }
     if ('timeout' in options) {
         channelOptions.requestDefaults.timeout = options.timeout;
     }
