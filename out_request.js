@@ -81,7 +81,7 @@ function TChannelOutRequest(id, options) {
     this.drainReason = '';
 
     // TODO - do this when building a span instead
-    this.checkForParent()
+    this.checkForParent();
 }
 
 inherits(TChannelOutRequest, EventEmitter);

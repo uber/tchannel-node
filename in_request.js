@@ -188,4 +188,10 @@ TChannelInRequest.prototype.withArg23 = function withArg23(callback) {
     callback(null, self.arg2, self.arg3);
 };
 
+// TODO - make this do smart things
+TChannelInRequest.prototype.startSpan = function startSpan(head) {
+    var self = this;
+    self.span = self.channel.tracer.startSpan('TODO');
+};
+
 module.exports = TChannelInRequest;
