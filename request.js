@@ -497,8 +497,3 @@ TChannelRequest.prototype.maybeAppRetry = function maybeAppRetry(res) {
     }
 };
 
-// TODO - make this do smart things
-TChannelRequest.prototype.startSpan = function startSpan(head) {
-    var self = this;
-    self.span = self.channel.tracer.startSpan('TODO');
-};

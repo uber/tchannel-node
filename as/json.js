@@ -71,13 +71,6 @@ function send(endpoint, head, body, callback) {
     self.tchannelJSON.send(outreq, endpoint, headers, body, callback);
 };
 
-TChannelJSONRequest.prototype.startSpan =
-function startTrace(head) {
-    var self = this;
-    // generate a span object, optionally defining the parent span on it given the values in head
-    self.span = null;
-};
-
 TChannelJSON.prototype.request = function request(reqOptions) {
     var self = this;
 
@@ -98,10 +91,6 @@ TChannelJSON.prototype.send = function send(
 ) {
 
     var self = this;
-    if (req.trace) {
-        req.startSpan(head);
-    }
-
     if (!self.logger) {
         self.logger = req.channel.logger;
     }
@@ -131,12 +120,6 @@ TChannelJSON.prototype.send = function send(
     );
 
     function onResponse(err, resp, arg2, arg3) {
-        if (req.span) {
-            if (err) {
-                req.span.setTag('err', err);
-            }
-            req.span.finish();
-        }
         if (err) {
             return callback(err);
         }
@@ -208,19 +191,9 @@ TChannelJSON.prototype.register = function register(
         }
 
         var v = parseResult.value;
-        // TODO - check to see if we can start the span and just hold onto it here, finishing it in onResponse
-        if (req.trace) {
-            req.startSpan(v.head);
-        }
         handlerFunc(opts, req, v.head, v.body, onResponse);
 
         function onResponse(err, respObject) {
-            if (req.span) {
-                if (err) {
-                    req.span.setTag('err', err);
-                }
-                req.span.finish();
-            }
             if (err) {
                 self.logger.error('Got unexpected error in handler', {
                     endpoint: arg1,

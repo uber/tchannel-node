@@ -35,7 +35,6 @@
     "json-stringify-safe": "^5.0.0",
     "metrics": "^0.1.8",
     "minimist": "^1.1.0",
-    "opentracing": "^0.11.1",
     "process": "0.11.1",
     "raw-body": "^2.1.2",
     "ready-signal": "^1.1.1",

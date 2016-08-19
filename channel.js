@@ -69,8 +69,6 @@ var CountedReadySignal = require('ready-signal/counted');
 var BatchStatsd = require('./lib/statsd.js');
 var PeerFileWatcher = require('./peer-file-watcher.js');
 
-var Tracer = require('opentracing');
-
 var CONN_STALE_PERIOD = 1500;
 var SANITY_PERIOD = 10 * 1000;
 
@@ -203,8 +201,6 @@ function TChannel(options) {
     // set when draining (e.g. graceful shutdown)
     this.drainReason = '';
     this.drainExempt = null;
-
-    this.tracer = Tracer;
 
     // lazily created by .getServer (usually from .listen)
     this.serverSocket = null;
