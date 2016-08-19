@@ -32,7 +32,6 @@ process.title = 'nodejs-benchmarks-multi_bench';
 
 var readBenchConfig = require('./read-bench-config.js');
 var TChannel = require('../channel');
-var Reporter = require('../tcollector/reporter.js');
 var base2 = require('../test/lib/base2');
 var LCGStream = require('../test/lib/rng_stream');
 var errors = require('../errors.js');
@@ -64,7 +63,6 @@ argv.sizes = parseIntList(argv.sizes);
 
 var DESTINATION_SERVER;
 var DESTINATION_PORT;
-var TRACE_SERVER;
 var CLIENT_PORT = argv.clientPort;
 var INSTANCES = 0;
 
@@ -74,10 +72,6 @@ if (argv.relay) {
     DESTINATION_SERVER = '127.0.0.1:' + argv.benchPort;
     DESTINATION_PORT = argv.benchPort;
     INSTANCES = parseInt(argv.instances, 10);
-}
-
-if (argv.trace) {
-    TRACE_SERVER = '127.0.0.1:7037';
 }
 
 // -- test harness
@@ -157,23 +151,6 @@ Test.prototype.newClient = function newClient(id, callback) {
     //     desc: 'client:' + id,
     //     interval: 5000,
     // })).run();
-
-    if (argv.trace) {
-        var reporter = Reporter({
-            channel: clientChan.makeSubChannel({
-                serviceName: 'tcollector',
-                peers: [TRACE_SERVER]
-            }),
-            logger: clientChan.logger,
-            callerName: 'my-client'
-        });
-
-        clientChan.tracer.reporter = function report(span) {
-            reporter.report(span, {
-                timeout: 10 * 1000
-            });
-        };
-    }
 
     var peers = [DESTINATION_SERVER];
     if (INSTANCES > 0) {

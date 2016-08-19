@@ -79,14 +79,6 @@ by setting it to `false`. Tracing defaults to true.
 
 It's recommend you run with tracing permanently on.
 
-### `options.traceReporter`
-
-If you want to implement a custom reporter for tracing information
-then you can specifiy a `traceReporter` function.
-
-By default this is not needed; the hyperbahn client comes with
-a tcollector reporter that will be wired up for you.
-
 ### `channel.listen(port, host, callback?)`
 
 Starts listening on the given port and host.
