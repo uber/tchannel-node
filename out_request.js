@@ -261,6 +261,7 @@ TChannelOutRequest.prototype.emitResponse = function emitResponse(res) {
 
     self.res = res;
     self.res.span = self.span;
+    self.res.openSpan = self.openSpan;
 
     if (!self.res.streamed) {
         self.markEnd();

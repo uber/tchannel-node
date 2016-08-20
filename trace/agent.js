@@ -22,6 +22,7 @@
 
 var Span = require('./span');
 var errors = require('../errors.js');
+var openTracing = require('opentracing');
 
 module.exports = Agent;
 
@@ -42,6 +43,8 @@ function Agent(options) {
     if (options.reporter) {
         this.reporter = options.reporter;
     }
+
+    this.openTracer = options.openTracer || openTracing;
 }
 
 function compareTracingIds(id1, id2) {

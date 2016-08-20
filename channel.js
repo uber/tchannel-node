@@ -212,7 +212,8 @@ function TChannel(options) {
             logger: this.logger,
             forceTrace: this.options.forceTrace,
             serviceName: this.options.serviceNameOverwrite,
-            reporter: this.options.traceReporter
+            reporter: this.options.traceReporter,
+            openTracer: this.options.openTracer
         });
     }
 
@@ -1079,6 +1080,24 @@ TChannel.prototype.isUnhealthyError = function isUnhealthyError(err) {
     }
     var codeName = errors.classify(err);
     return errors.isUnhealthy(codeName);
+};
+
+// TODO - make this do smart things
+TChannel.prototype.startSpan = function startSpan(head) {
+    var self = this;
+    if (self.tracer) {
+        return self.tracer.openTracer.startSpan('TODO');
+    }
+    return null;
+};
+
+TChannel.prototype.finishSpan = function startSpan(openSpan, err) {
+    if (openSpan) {
+        if (err) {
+            openSpan.setTag('err', err);
+        }
+        openSpan.finish();
+    }
 };
 
 module.exports = TChannel;

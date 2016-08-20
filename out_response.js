@@ -53,6 +53,7 @@ function TChannelOutResponse(id, options) {
     self.checksum = options.checksum || null;
     self.ok = self.code === 0;
     self.span = options.span || null;
+    self.openSpan = options.openSpan || null;
     self.streamed = false;
     self._argstream = null;
     self.arg1 = null;

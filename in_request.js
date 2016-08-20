@@ -60,6 +60,7 @@ function TChannelInRequest(id, options) {
     this.arg3 = emptyBuffer;
     this.forwardTrace = false;
     this.span = null;
+    this.openSpan = null;
     this.start = this.channel.timers.now();
     this.res = null;
     this.err = null;

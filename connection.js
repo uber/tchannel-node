@@ -724,6 +724,7 @@ TChannelConnection.prototype.onCallResponse = function onCallResponse(res) {
         req.span.annotate('cr');
         self.tracer.report(req.span);
         res.span = req.span;
+        res.openSpan = req.openSpan;
     }
 
     req.emitResponse(res);
@@ -939,6 +940,7 @@ TChannelConnection.prototype.buildOutResponse = function buildOutResponse(req, o
 
     options.tracing = req.tracing;
     options.span = req.span;
+    options.openSpan = req.span;
     options.checksumType = req.checksum && req.checksum.type;
 
     // TODO: take over popInReq on req/res error?

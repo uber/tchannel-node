@@ -248,9 +248,12 @@ function register(channel, name, opts, handle, spec) {
         }
 
         var v = parseResult.value;
+
+        req.openSpan = req.channel.startSpan(v.head);
         handle(opts, req, v.head, v.body, handleThriftResponse);
 
         function handleThriftResponse(err, thriftRes) {
+            req.channel.finishSpan(req.openSpan, err);
             if (err) {
                 self.logger.error('Got unexpected error in handler', {
                     endpoint: name,
@@ -302,6 +305,8 @@ TChannelAsThrift.prototype.send =
 function send(request, endpoint, outHead, outBody, callback) {
     var self = this;
 
+    request.openSpan = request.channel.startSpan(outHead);
+
     self.logger = self.logger || request.channel.logger;
 
     assert(typeof endpoint === 'string', 'send requires endpoint');
@@ -330,6 +335,7 @@ function send(request, endpoint, outHead, outBody, callback) {
     );
 
     function handleResponse(err, res, arg2, arg3) {
+        request.channel.finishSpan(request.openSpan, err);
         if (err) {
             return callback(err);
         }
