@@ -249,7 +249,7 @@ function register(channel, name, opts, handle, spec) {
 
         var v = parseResult.value;
 
-        req.openSpan = req.channel.startSpan(v.head);
+        req.channel.startSpan(req, v.head);
         handle(opts, req, v.head, v.body, handleThriftResponse);
 
         function handleThriftResponse(err, thriftRes) {
@@ -305,7 +305,7 @@ TChannelAsThrift.prototype.send =
 function send(request, endpoint, outHead, outBody, callback) {
     var self = this;
 
-    request.openSpan = request.channel.startSpan(outHead);
+    request.channel.startSpan(request, outHead);
 
     self.logger = self.logger || request.channel.logger;
 

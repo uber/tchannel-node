@@ -91,7 +91,7 @@ TChannelJSON.prototype.send = function send(
 ) {
 
     var self = this;
-    req.openSpan = req.channel.startSpan(head);
+    req.channel.startSpan(req, head);
 
     if (!self.logger) {
         self.logger = req.channel.logger;
@@ -194,7 +194,7 @@ TChannelJSON.prototype.register = function register(
         }
 
         var v = parseResult.value;
-        req.openSpan = req.channel.startSpan(v.head);
+        req.channel.startSpan(req, v.head);
         handlerFunc(opts, req, v.head, v.body, onResponse);
 
         function onResponse(err, respObject) {

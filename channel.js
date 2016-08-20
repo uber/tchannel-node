@@ -1083,15 +1083,14 @@ TChannel.prototype.isUnhealthyError = function isUnhealthyError(err) {
 };
 
 // TODO - make this do smart things
-TChannel.prototype.startSpan = function startSpan(head) {
+TChannel.prototype.startSpan = function startSpan(req, head) {
     var self = this;
     if (self.tracer) {
-        return self.tracer.openTracer.startSpan('TODO');
+        req.openSpan = self.tracer.openTracer.startSpan('TODO');
     }
-    return null;
 };
 
-TChannel.prototype.finishSpan = function startSpan(openSpan, err) {
+TChannel.prototype.finishSpan = function endSpan(openSpan, err) {
     if (openSpan) {
         if (err) {
             openSpan.setTag('err', err);
