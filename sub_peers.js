@@ -36,7 +36,7 @@ function TChannelSubPeers(channel, options) {
     this.minConnections = options.minConnections;
 
     this.currentConnectedPeers = 0;
-    this._heap = new PeerHeap(this, channel.random);
+    this._heap = new PeerHeap(this, channel.random, channel.logger);
 
     this.boundOnOutConnectionDelta = boundOnOutConnectionDelta;
 
@@ -139,11 +139,20 @@ TChannelSubPeers.prototype.setChoosePeerWithHeap = function setChoosePeerWithHea
 TChannelSubPeers.prototype.choosePeer = function choosePeer(req) {
     var self = this;
 
-    if (self.choosePeerWithHeap) {
-        return self.chooseHeapPeer(req);
-    }
+    var peer = self.choosePeerWithHeap ?
+        self.chooseHeapPeer(req) : self.chooseLinearPeer(req);
 
-    return self.chooseLinearPeer(req);
+    this.logger.info('ZJ TChannelSubPeers.prototype.choosePeer', {
+        choosePeerWithHeap: self.choosePeerWithHeap,
+        peer: peer && {
+            nextConnAttemptTime: peer.nextConnAttemptTime,
+            nextConnAttemptDelay: peer.nextConnAttemptDelay,
+            hostPort: peer.hostPort
+        } || 'none',
+        triedRemoteAddrs: Boolean(req && req.triedRemoteAddrs)
+    });
+
+    return peer;
 };
 
 /*eslint max-statements: [2, 40]*/
@@ -213,6 +222,18 @@ TChannelSubPeers.prototype.chooseLinearPeer = function chooseLinearPeer(req) {
             peer: selectedPeer
         });
     }
+
+    this.logger.info('ZJ TChannelSubPeers.prototype.chooseLinearPeer', {
+        secondaryScore: secondaryScore,
+        selectedScore: selectedScore,
+        selectedPeer: selectedPeer && {
+            nextConnAttemptTime: selectedPeer.nextConnAttemptTime,
+            nextConnAttemptDelay: selectedPeer.nextConnAttemptDelay,
+            hostPort: selectedPeer.hostPort
+        } || 'none',
+        secondaryBigger: Boolean(secondaryScore > selectedScore),
+        tryConnect: Boolean(secondaryScore > selectedScore && selectedPeer)
+    });
 
     if (secondaryScore > selectedScore && selectedPeer) {
         selectedPeer.tryConnect(noop);

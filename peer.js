@@ -421,6 +421,14 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
     var self = this;
 
     var connectTime = Date.now();
+
+    this.logger.info('ZJ tryConnect', {
+        nextConnAttemptDelay: self.nextConnAttemptDelay,
+        nextConnAttemptTime: self.nextConnAttemptTime,
+        connectTime: connectTime,
+        hostPort: self.hostPort
+    });
+
     if (connectTime < self.nextConnAttemptTime) {
         return;
     }
