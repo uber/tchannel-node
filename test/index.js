@@ -83,6 +83,8 @@ require('./peer-file-watcher.js');
 require('./trace/basic_server.js');
 require('./trace/server_2_requests.js');
 require('./trace/outpeer_span_handle.js');
+require('./trace/basic_json_server.js');
+require('./trace/basic_thrift_server.js');
 
 require('./v2/frame.js');
 require('./v2/init.js');
