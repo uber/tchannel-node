@@ -122,7 +122,7 @@ TChannelJSON.prototype.send = function send(
     );
 
     function onResponse(err, resp, arg2, arg3) {
-        req.channel.finishSpan(req.openSpan, err);
+        req.channel.finishSpan(req, err);
         if (err) {
             return callback(err);
         }
@@ -198,7 +198,7 @@ TChannelJSON.prototype.register = function register(
         handlerFunc(opts, req, v.head, v.body, onResponse);
 
         function onResponse(err, respObject) {
-            req.channel.finishSpan(req.openSpan, err);
+            req.channel.finishSpan(req, err);
             if (err) {
                 self.logger.error('Got unexpected error in handler', {
                     endpoint: arg1,

@@ -253,7 +253,7 @@ function register(channel, name, opts, handle, spec) {
         handle(opts, req, v.head, v.body, handleThriftResponse);
 
         function handleThriftResponse(err, thriftRes) {
-            req.channel.finishSpan(req.openSpan, err);
+            req.channel.finishSpan(req, err);
             if (err) {
                 self.logger.error('Got unexpected error in handler', {
                     endpoint: name,
@@ -335,7 +335,7 @@ function send(request, endpoint, outHead, outBody, callback) {
     );
 
     function handleResponse(err, res, arg2, arg3) {
-        request.channel.finishSpan(request.openSpan, err);
+        request.channel.finishSpan(request, err);
         if (err) {
             return callback(err);
         }

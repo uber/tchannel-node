@@ -1090,12 +1090,12 @@ TChannel.prototype.startSpan = function startSpan(req, head) {
     }
 };
 
-TChannel.prototype.finishSpan = function endSpan(openSpan, err) {
-    if (openSpan) {
+TChannel.prototype.finishSpan = function finishSpan(req, err) {
+    if (req.openSpan) {
         if (err) {
-            openSpan.setTag('err', err);
+            req.openSpan.setTag('err', err);
         }
-        openSpan.finish();
+        req.openSpan.finish();
     }
 };
 

@@ -49,7 +49,7 @@ function TChannelInResponse(id, options) {
     self.headers = options.headers || {};
     self.ok = self.code === 0; // TODO: probably okay, but a bit jank
     self.span = options.span || null;
-    self.openSpan = options.openSpan || null;
+    self.openSpan = options.openSpan;
 
     self.streamed = false;
     self._argstream = null;
