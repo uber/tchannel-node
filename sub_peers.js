@@ -21,9 +21,13 @@
 'use strict';
 
 var inherits = require('util').inherits;
+var setTimeout = require('timers').setTimeout;
+var clearTimeout = require('timers').clearTimeout;
 
 var TChannelPeersBase = require('./peers_base.js');
 var PeerHeap = require('./peer_heap.js');
+
+var REFRESH_TIMER = 60 * 1000;
 
 function TChannelSubPeers(channel, options) {
     TChannelPeersBase.call(this, channel, options);
@@ -39,13 +43,39 @@ function TChannelSubPeers(channel, options) {
     this._heap = new PeerHeap(this, channel.random);
 
     this.boundOnOutConnectionDelta = boundOnOutConnectionDelta;
+    this.boundOnRefreshConnectedPeers = boundOnRefreshConnectedPeers;
+
+    this.refreshTimer = setTimeout(
+        this.boundOnRefreshConnectedPeers, REFRESH_TIMER
+    );
 
     function boundOnOutConnectionDelta(delta, peer) {
         self.onOutConnectionDelta(peer, delta);
     }
+
+    function boundOnRefreshConnectedPeers() {
+        this.refreshConnectedPeers();
+    }
 }
 
 inherits(TChannelSubPeers, TChannelPeersBase);
+
+TChannelSubPeers.prototype.refreshConnectedPeers =
+function refreshConnectedPeers() {
+    var peers = this.values();
+
+    var currentConnectedPeers = 0;
+    for (var i = 0; i < peers.length; i++) {
+        if (peers[i].countConnections('out') > 0) {
+            currentConnectedPeers++;
+        }
+    }
+
+    this.currentConnectedPeers = currentConnectedPeers;
+    this.refreshTimer = setTimeout(
+        this.boundOnRefreshConnectedPeers, REFRESH_TIMER
+    );
+};
 
 TChannelSubPeers.prototype.onOutConnectionDelta =
 function onOutConnectionDelta(peer, delta) {
@@ -61,6 +91,7 @@ function onOutConnectionDelta(peer, delta) {
 TChannelSubPeers.prototype.close = function close(callback) {
     var self = this;
 
+    clearTimeout(self.refreshTimer);
     var peers = self.values();
     TChannelPeersBase.prototype.close.call(self, peers, callback);
 };
