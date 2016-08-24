@@ -87,6 +87,11 @@ function TChannelPeer(channel, hostPort, options) {
         );
     }
 
+    this.connectionAttemptDelay = this.channel.connectionAttemptDelay ||
+        INITIAL_CONN_ATTEMPT_DELAY;
+    this.maxConnectionAttemptDelay = this.channel.maxConnectionAttemptDelay ||
+        MAX_CONN_ATTEMPT_DELAY;
+
     this.setPreferConnectionDirection(options.preferConnectionDirection || 'any');
 
     var self = this;
@@ -448,14 +453,14 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
         }
 
         if (self.nextConnAttemptDelay === 0) {
-            self.nextConnAttemptDelay = INITIAL_CONN_ATTEMPT_DELAY;
+            self.nextConnAttemptDelay = self.connectionAttemptDelay;
         } else {
             self.nextConnAttemptDelay *= CONN_ATTEMPT_DELAY_MULTIPLER;
             // Add some amount of fuzz, +-100ms
             self.nextConnAttemptDelay += Math.floor(100 * (Math.random() - 0.5));
 
             self.nextConnAttemptDelay = Math.min(
-                self.nextConnAttemptDelay, MAX_CONN_ATTEMPT_DELAY
+                self.nextConnAttemptDelay, self.maxConnectionAttemptDelay
             );
         }
 
