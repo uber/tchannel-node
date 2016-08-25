@@ -41,6 +41,7 @@ var ObjectPool = require('./lib/object_pool');
 var DEFAULT_REPORT_INTERVAL = 1000;
 var INITIAL_CONN_ATTEMPT_DELAY = 5000;
 var CONN_ATTEMPT_DELAY_MULTIPLER = 2;
+var MAX_CONN_ATTEMPT_DELAY = 30 * 1000;
 
 /*eslint max-statements: [2, 40]*/
 function TChannelPeer(channel, hostPort, options) {
@@ -74,6 +75,8 @@ function TChannelPeer(channel, hostPort, options) {
     this.nextConnAttemptTime = 0;
     // How long to delay conn attempt by on failure (ms)
     this.nextConnAttemptDelay = 0;
+    // Whether we are doing a connection attempt
+    this.hasConnectionAttempt = false;
 
     this.waitForIdentifiedListeners = [];
 
@@ -83,6 +86,11 @@ function TChannelPeer(channel, hostPort, options) {
             onReport, this.reportInterval
         );
     }
+
+    this.connectionAttemptDelay = this.channel.connectionAttemptDelay ||
+        INITIAL_CONN_ATTEMPT_DELAY;
+    this.maxConnectionAttemptDelay = this.channel.maxConnectionAttemptDelay ||
+        MAX_CONN_ATTEMPT_DELAY;
 
     this.setPreferConnectionDirection(options.preferConnectionDirection || 'any');
 
@@ -421,9 +429,12 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
     var self = this;
 
     var connectTime = Date.now();
-    if (connectTime < self.nextConnAttemptTime) {
+    if (connectTime < self.nextConnAttemptTime ||
+        self.hasConnectionAttempt
+    ) {
         return;
     }
+    self.hasConnectionAttempt = true;
 
     var conn = this.getOutConnection();
     if (!conn || conn.direction !== 'out') {
@@ -433,6 +444,8 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
     this.waitForIdentified(conn, onIdentified);
 
     function onIdentified(err) {
+        self.hasConnectionAttempt = false;
+
         if (!err) {
             self.nextConnAttemptDelay = 0;
             self.nextConnAttemptTime = 0;
@@ -440,11 +453,15 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
         }
 
         if (self.nextConnAttemptDelay === 0) {
-            self.nextConnAttemptDelay = INITIAL_CONN_ATTEMPT_DELAY;
+            self.nextConnAttemptDelay = self.connectionAttemptDelay;
         } else {
             self.nextConnAttemptDelay *= CONN_ATTEMPT_DELAY_MULTIPLER;
             // Add some amount of fuzz, +-100ms
             self.nextConnAttemptDelay += Math.floor(100 * (Math.random() - 0.5));
+
+            self.nextConnAttemptDelay = Math.min(
+                self.nextConnAttemptDelay, self.maxConnectionAttemptDelay
+            );
         }
 
         var afterConnect = Date.now();
@@ -452,8 +469,7 @@ TChannelPeer.prototype.tryConnect = function tryConnect() {
             // When in the past set next attempt to now + delay
             self.nextConnAttemptTime = afterConnect + self.nextConnAttemptDelay;
         } else {
-            // When in the future; go further in the future
-            self.nextConnAttemptTime += self.nextConnAttemptDelay;
+            // When in the future; leave it alone.
         }
     }
 };

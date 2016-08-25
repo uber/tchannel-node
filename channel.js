@@ -125,6 +125,8 @@ function TChannel(options) {
         this.options.emitConnectionMetrics : false;
     this.choosePeerWithHeap = typeof this.options.choosePeerWithHeap === 'boolean' ?
         this.options.choosePeerWithHeap : true;
+    this.connectionAttemptDelay = this.options.connectionAttemptDelay;
+    this.maxConnectionAttemptDelay = this.options.maxConnectionAttemptDelay;
 
     this.setObservePeerScoreEvents(this.options.observePeerScoreEvents);
 

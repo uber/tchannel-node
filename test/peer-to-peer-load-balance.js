@@ -21,6 +21,7 @@
 'use strict';
 
 var collectParallel = require('collect-parallel/array');
+var setTimeout = require('timers').setTimeout;
 var metrics = require('metrics');
 
 var allocCluster = require('./lib/alloc-cluster.js');
@@ -282,6 +283,132 @@ allocCluster.test('p2p requests where half of servers down', {
         assert.end();
     }
 });
+
+allocCluster.test('p2p requests where half the servers hickup', {
+    numPeers: 48,
+    channelOptions: {
+        choosePeerWithHeap: true,
+        connectionAttemptDelay: 100,
+        maxConnectionAttemptDelay: 1000
+    }
+}, function t(cluster, assert) {
+    cluster.logger.whitelist('info', 'resetting connection');
+
+    setup(cluster, {
+        minConnections: 8,
+        servers: 8,
+        retryLimit: 2
+    });
+
+    collectParallel(cluster.batches, function runRequests(batch, _, cb) {
+        batch.sendRequests(cb);
+    }, onWarmup);
+
+    function onWarmup(err, results) {
+        assert.ifError(err);
+
+        var cassert = verifyNoError(results);
+        cassert.report(assert, 'expected no errors');
+
+        cassert = verifyConnections(cluster, 8, 8);
+        cassert.report(assert, 'expected batch connections to be fine');
+
+        console.log('# --- sever connections');
+        severConnections();
+    }
+
+    function noop() {}
+
+    function severConnections() {
+        for (var i = 0; i < cluster.servers.length / 2; i++) {
+            var server = cluster.servers[i * 2];
+
+            var peers = server.peers.values();
+            for (var j = 0; j < peers.length; j++) {
+                var peer = peers[j];
+                peer.close(noop);
+            }
+
+            server._actualPort = server.serverSocket.address().port;
+            server._onServerSocketConnection = server.onServerSocketConnection;
+            server.onServerSocketConnection = destroySocket;
+        }
+
+        setTimeout(sendNextBatch, 500);
+    }
+
+    function destroySocket(sock) {
+        sock.destroy();
+    }
+
+    function sendNextBatch() {
+        collectParallel(cluster.batches, function runRequests(batch, _, cb) {
+            batch.sendRequests(cb);
+        }, onRequests);
+    }
+
+    function onRequests(err, results) {
+        assert.ifError(err);
+
+        var cassert = verifyNoError(results);
+        cassert.report(assert, 'expected no errors');
+
+        cassert = verifyConnections(cluster, 4, 5);
+        cassert.report(assert, 'expected batch connections to be fine');
+
+        console.log('# --- resurrect connections');
+        resurrectServers();
+    }
+
+    function resurrectServers() {
+        for (var i = 0; i < cluster.servers.length / 2; i++) {
+            var server = cluster.servers[i * 2];
+
+            server.onServerSocketConnection = server._onServerSocketConnection;
+        }
+
+        setTimeout(sendFinalBatch, 500);
+    }
+
+    function sendFinalBatch() {
+        collectParallel(cluster.batches, function runRequests(batch, _, cb) {
+            batch.sendRequests(cb);
+        }, onFinalRequests);
+    }
+
+    function onFinalRequests(err, results) {
+        assert.ifError(err);
+
+        var cassert = verifyNoError(results);
+        cassert.report(assert, 'expected no errors');
+
+        cassert = verifyConnections(cluster, 8, 8);
+        cassert.report(assert, 'expected batch connections to be fine');
+
+        assert.end();
+    }
+
+    // Close half the servers...
+    // for (var j = 0; j < cluster.servers.length / 2; j++) {
+    //     cluster.servers[j * 2].close();
+    // }
+
+});
+
+function verifyNoError(results) {
+    var cassert = CollapsedAssert();
+
+    var statuses = [];
+    for (var i = 0; i < results.length; i++) {
+        cassert.ifError(results[i].err, 'expect no batch error');
+        cassert.ifError(results[i].value.errors.length > 0,
+            'expect zero errors in batch');
+
+        statuses.push(results[i].value);
+    }
+
+    return cassert;
+}
 
 function findServerHostDistribution(statuses) {
     var statusTable = {};
