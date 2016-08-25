@@ -45,9 +45,13 @@ function TChannelSubPeers(channel, options) {
     this.boundOnOutConnectionDelta = boundOnOutConnectionDelta;
     this.boundOnRefreshConnectedPeers = boundOnRefreshConnectedPeers;
 
-    this.refreshTimer = setTimeout(
-        this.boundOnRefreshConnectedPeers, REFRESH_TIMER
-    );
+    this.refreshTimer = null;
+
+    if (this.hasMinConnections) {
+        this.refreshTimer = setTimeout(
+            this.boundOnRefreshConnectedPeers, REFRESH_TIMER
+        );
+    }
 
     function boundOnOutConnectionDelta(delta, peer) {
         self.onOutConnectionDelta(peer, delta);
@@ -91,7 +95,10 @@ function onOutConnectionDelta(peer, delta) {
 TChannelSubPeers.prototype.close = function close(callback) {
     var self = this;
 
-    clearTimeout(self.refreshTimer);
+    if (self.refreshTimer) {
+        clearTimeout(self.refreshTimer);
+    }
+
     var peers = self.values();
     TChannelPeersBase.prototype.close.call(self, peers, callback);
 };
