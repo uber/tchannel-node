@@ -125,7 +125,8 @@ allocCluster.test('p2p requests from 40 -> 40', {
 allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
     numPeers: 80,
     channelOptions: {
-        choosePeerWithHeap: true
+        choosePeerWithHeap: true,
+        refreshConnectedPeersDelay: 100
     }
 }, function t(cluster, assert) {
     setup(cluster, {

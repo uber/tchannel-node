@@ -46,10 +46,12 @@ function TChannelSubPeers(channel, options) {
     this.boundOnRefreshConnectedPeers = boundOnRefreshConnectedPeers;
 
     this.refreshTimer = null;
+    this.refreshConnectedPeersDelay = this.channel.refreshConnectedPeersDelay ||
+        REFRESH_TIMER;
 
     if (this.hasMinConnections) {
         this.refreshTimer = setTimeout(
-            this.boundOnRefreshConnectedPeers, REFRESH_TIMER
+            this.boundOnRefreshConnectedPeers, this.refreshConnectedPeersDelay
         );
     }
 
@@ -58,7 +60,7 @@ function TChannelSubPeers(channel, options) {
     }
 
     function boundOnRefreshConnectedPeers() {
-        this.refreshConnectedPeers();
+        self.refreshConnectedPeers();
     }
 }
 
@@ -77,7 +79,7 @@ function refreshConnectedPeers() {
 
     this.currentConnectedPeers = currentConnectedPeers;
     this.refreshTimer = setTimeout(
-        this.boundOnRefreshConnectedPeers, REFRESH_TIMER
+        this.boundOnRefreshConnectedPeers, this.refreshConnectedPeersDelay
     );
 };
 
