@@ -58,7 +58,7 @@ function TChannelSubPeers(channel, options) {
     }
 
     function boundOnRefreshConnectedPeers() {
-        this.refreshConnectedPeers();
+        self.refreshConnectedPeers();
     }
 }
 
