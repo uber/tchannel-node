@@ -56,6 +56,7 @@ var TChannelServiceNameHandler = require('./service-name-handler');
 var errors = require('./errors');
 var EventEmitter = require('./lib/event_emitter.js');
 var ObjectPool = require('./lib/object_pool');
+var InboundPending = require('./inbound-pending.js');
 
 var TChannelAsThrift = require('./as/thrift');
 var TChannelAsJSON = require('./as/json');
@@ -154,6 +155,8 @@ function TChannel(options) {
         // TODO: do we still need/want fuzzing?
         minTimeout: fuzzedMinTimeout
     });
+    this.inboundPending = this.options.inboundPending ||
+        new InboundPending(this);
 
     function fuzzedMinTimeout() {
         var fuzz = self.options.timeoutFuzz;
@@ -599,6 +602,7 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
 
     opts.topChannel = self;
     opts.timeHeap = self.timeHeap;
+    opts.inboundPending = self.inboundPending;
     var chan = TChannel(opts);
 
     if (options.peers) {

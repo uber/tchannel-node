@@ -280,6 +280,7 @@ Operations.prototype.addInReq = function addInReq(req) {
     req.operations = self;
     self.requests.in[req.id] = req;
     self.pending.in++;
+    self.connection.channel.inboundPending.increment();
 
     req.timeHeapHandle = self.connection.channel.timeHeap.update(req);
 
@@ -424,6 +425,7 @@ Operations.prototype.popInReq = function popInReq(id) {
 
     delete self.requests.in[id];
     self.pending.in--;
+    self.connection.channel.inboundPending.decrement();
 
     self.emitPendingChange(-1, 0, 0);
 
