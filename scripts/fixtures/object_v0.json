@@ -1,0 +1,102 @@
+{
+    "clientUUID": "0a1d0a54-395b-4333-8b39-bcb3fe21c936",
+    "paymentProfileUUID": "09cb50b3-3e28-4e64-9011-8fc3eeff4b1a",
+    "marketplace": "personal_transport",
+    "marketplaceInfo": {
+        "vehicleViewId": 88,
+        "useCredits": false,
+        "expenseInfo": {
+            "businessTrip": false,
+            "memo": "xx",
+            "code": "yy",
+            "expenseTrip": false
+        },
+        "extraPaymentData": {
+            "applePay": true
+        },
+        "fareEstimate": {
+            "fareString": "$1.11",
+            "minFare": 1,
+            "maxFare": 2,
+            "currencyCode": "USD",
+            "originAddress": "33 bar st",
+            "originLat": 44.3,
+            "originLng": 44.4,
+            "destinationAddress": "55 foo st",
+            "destinationLng": 44.33,
+            "destinationLat": 43.33
+        },
+        "surge": {
+            "id": 6663,
+            "uuid": "SURGE_UUID",
+            "type": "normal",
+            "multiplier": 1.5
+        }
+    },
+    "meta": {},
+    "waypoints": [
+        {
+            "uuid": "4319704b-fbad-4161-9038-635a3701819d",
+            "location": {
+                "latitude": 123.45,
+                "longitude": -23.1223
+            },
+            "capacity": {
+                "hamSadwiches": 1
+            },
+            "meta": {
+                "fun": "high"
+            },
+            "status": "PENDING",
+            "updated": 999,
+            "marketplace": "personal_transport",
+            "marketplaceInfo": {},
+            "jobUUID": "64ad3829-013a-4bd6-a02c-b7df5726c4ab",
+            "address": "1 1st st",
+            "tasks": [
+                {
+                    "completed": false,
+                    "marketplace": "personal_transport",
+                    "marketplaceInfo": {
+                        "taskType": "pickup"
+                    }
+                }
+            ]
+        },
+        {
+            "uuid": "01167a68-8ca2-4b4a-a9ea-dca51fb645a1",
+            "location": {
+                "latitude": 124.45,
+                "longitude": -26.1223
+            },
+            "capacity": {
+                "hamSadwiches": -1
+            },
+            "meta": {
+                "fun": "super-high"
+            },
+            "status": "PENDING",
+            "updated": 999,
+            "marketplace": "personal_transport",
+            "marketplaceInfo": {},
+            "jobUUID": "64ad3829-013a-4bd6-a02c-b7df5726c4ab",
+            "address": "2 2nd st",
+            "tasks": [
+                {
+                    "completed": false,
+                    "marketplace": "personal_transport",
+                    "marketplaceInfo": {
+                        "taskType": "dropoff"
+                    }
+                }
+            ]
+        }
+    ],
+    "status": "ACTIVE",
+    "stateChanges": [
+        {
+            "type": "CREATED",
+            "time": 999
+        }
+    ]
+}
