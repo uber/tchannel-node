@@ -8,7 +8,7 @@ torch-client-only-bench:
 
 torch-server-bench:
 	node index.js --relay --torch server --torchFile ./flame.raw --torchTime 10 \
-		-- --relay --skipPing -s 4096,16384 -p 1000,10000
+		-- --relay --skipPing -s 4096,16384 -p 1000
 
 torch-relay-bench:
 	node index.js --relay --torch relay --torchFile ./flame.raw --torchTime 10 \
@@ -16,7 +16,7 @@ torch-relay-bench:
 
 flame-torch-relay-bench:
 	node index.js --relay --torch relay --torchFile ./flame.html --torchTime 10 --torchType flame \
-		-- --relay --skipPing -s 4096,16384 -p 1000,10000
+		-- --relay --skipPing -s 4096,16384 -p 1000
 
 # torch-trace-bench:
 # 	node index.js --trace --relay --torch server --torchFile ./flame.raw \
@@ -35,12 +35,12 @@ top-benchmark:
 
 take:
 	node index.js --noEndpointOverhead -o $$(git rev-parse --short HEAD).json -- \
-		-m 5 -s 4,4096,16384 -p 1000,10000
+		-m 5 -s 4,4096,16384 -p 1000
 	ln -sf $$(git rev-parse --short HEAD).json $$(basename $$(git symbolic-ref HEAD)).json
 
 take_relay:
 	node index.js --relay --noEndpointOverhead -o relay-$$(git rev-parse --short HEAD).json \
-		-- --relay --skipPing -m 3 -s 4096,16384 -p 1000,10000
+		-- --relay --skipPing -m 3 -s 4096,16384 -p 1000
 	ln -sf relay-$$(git rev-parse --short HEAD).json relay-$$(basename $$(git symbolic-ref HEAD)).json
 
 take_trace:
