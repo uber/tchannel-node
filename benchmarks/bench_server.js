@@ -71,6 +71,8 @@ function BenchServer(port) {
             app: 'my-server'
         },
         trace: true,
+        logger: require('debug-logtron')('server'),
+        traceSample: argv.trace ? 1 : 0.01,
         emitConnectionMetrics: false,
         statsd: new Statsd({
             host: '127.0.0.1',
@@ -83,6 +85,7 @@ function BenchServer(port) {
     }
 
     self.serverChan = self.server.makeSubChannel({
+        traceSample: argv.trace ? 1 : 0.01,
         serviceName: 'benchmark'
     });
 

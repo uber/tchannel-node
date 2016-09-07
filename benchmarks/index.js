@@ -234,7 +234,7 @@ function startRelay(type) {
         '--benchRelayPort', String(self.ports.relayServerPort),
         '--traceRelayPort', String(self.ports.relayTraceServerPort),
         '--type', type,
-        '--instances', String(self.instanceCount),
+        '--instances', type === 'trace-relay' ? '1' : String(self.instanceCount),
         self.opts.trace ? '--trace' : '--no-trace',
         self.opts.debug ? '--debug' : '--no-debug'
     ]);
@@ -262,6 +262,7 @@ function startClient(clientPort) {
 
     var args = self.opts['--'];
     args = args.concat([
+        self.opts.trace ? '--trace' : '--no-trace',
         '--benchPort', String(self.ports.serverPort),
         '--relayServerPort', String(self.ports.relayServerPort),
         '--clientPort', String(clientPort),

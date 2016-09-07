@@ -26,6 +26,9 @@ process.title = 'nodejs-benchmarks-trace_server';
 var Statsd = require('uber-statsd-client');
 var Buffer = require('buffer').Buffer;
 
+var TRACE_SERVER_PORT = 7039;
+var STATSD_PORT = 7036;
+
 var TChannel = require('../channel');
 var server = TChannel({
     statTags: {
@@ -35,7 +38,7 @@ var server = TChannel({
     trace: false,
     statsd: new Statsd({
         host: '127.0.0.1',
-        port: 7036
+        port: STATSD_PORT
     })
 });
 
@@ -43,7 +46,7 @@ var tcollectorChan = server.makeSubChannel({
     serviceName: 'tcollector'
 });
 
-server.listen(7039, '127.0.0.1');
+server.listen(TRACE_SERVER_PORT, '127.0.0.1');
 
 tcollectorChan.register('TCollector::submit', function onSubmit(req, res) {
     var arg2 = new Buffer([0x00, 0x00]);

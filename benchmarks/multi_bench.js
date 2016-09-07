@@ -142,8 +142,10 @@ Test.prototype.newClient = function newClient(id, callback) {
         statTags: {
             app: 'my-client'
         },
+        logger: require('debug-logtron')('client'),
         emitConnectionMetrics: false,
         trace: true,
+        traceSample: argv.trace ? 1 : 0.01,
         statsd: new Statsd({
             host: '127.0.0.1',
             port: 7036
@@ -187,6 +189,7 @@ Test.prototype.newClient = function newClient(id, callback) {
     var client = clientChan.makeSubChannel({
         serviceName: 'benchmark',
         peers: peers,
+        traceSample: argv.trace ? 1 : 0.01,
         minConnections: INSTANCES > 0 ? 10 : 1
     });
     client.createTime = Date.now();
@@ -241,11 +244,14 @@ Test.prototype.stopClients = function stopClients(callback) {
     var self = this;
 
     var count = 1;
-    this.clients.forEach(function each(client) {
-        count++;
-        (client.topChannel || client).quit(closed);
-    });
-    closed();
+
+    setTimeout(function delayCloseByFudgeFactor() {
+        self.clients.forEach(function each(client) {
+            count++;
+            (client.topChannel || client).quit(closed);
+        });
+        closed();
+    }, 1000);
 
     function closed() {
         if (--count <= 0) {

@@ -28,6 +28,8 @@ var assert = require('assert');
 var TChannel = require('../channel.js');
 var RelayHandler = require('../relay_handler.js');
 
+var STATSD_PORT = 7036;
+
 var argv = readBenchConfig({
     boolean: ['trace']
 });
@@ -71,7 +73,7 @@ function RelayServer(opts) {
         trace: false,
         statsd: new Statsd({
             host: '127.0.0.1',
-            port: 7036
+            port: STATSD_PORT
         }),
         choosePeerWithHeap: true
     });
