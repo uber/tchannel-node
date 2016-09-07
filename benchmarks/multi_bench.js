@@ -244,11 +244,14 @@ Test.prototype.stopClients = function stopClients(callback) {
     var self = this;
 
     var count = 1;
-    this.clients.forEach(function each(client) {
-        count++;
-        (client.topChannel || client).quit(closed);
-    });
-    closed();
+
+    setTimeout(function delayCloseByFudgeFactor() {
+        self.clients.forEach(function each(client) {
+            count++;
+            (client.topChannel || client).quit(closed);
+        });
+        closed();
+    }, 1000);
 
     function closed() {
         if (--count <= 0) {
