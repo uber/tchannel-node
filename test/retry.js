@@ -25,6 +25,7 @@ var series = require('run-series');
 var parallel = require('run-parallel');
 var allocCluster = require('./lib/alloc-cluster');
 var TChannel = require('../channel');
+var MockTimers = require('time-mock');
 
 allocCluster.test('retries over conn failures', {
     numPeers: 3
@@ -173,6 +174,159 @@ allocCluster.test('request retries', {
     }
 });
 
+allocCluster.test('maxRetryRatio limits retries', {
+    numPeers: 4
+}, function t(cluster, assert) {
+    // chan 1 declines
+    cluster.channels[0]
+        .makeSubChannel({serviceName: 'tristan'})
+        .register('foo', declineFoo);
+
+    // chan 2 too busy
+    cluster.channels[1]
+        .makeSubChannel({serviceName: 'tristan'})
+        .register('foo', busyFoo);
+
+    // chan 3 unexpected error
+    cluster.channels[2]
+        .makeSubChannel({serviceName: 'tristan'})
+        .register('foo', unexpectedErrorFoo);
+
+    // success!
+    cluster.channels[3]
+        .makeSubChannel({serviceName: 'tristan'})
+        .register('foo', servedByFoo(4));
+
+    var client = TChannel({
+        timeoutFuzz: 0
+    });
+    var chan = client.makeSubChannel({
+        serviceName: 'tristan',
+        peers: cluster.hosts,
+        requestDefaults: {
+            headers: {
+                as: 'raw',
+                cn: 'wat'
+            },
+            serviceName: 'tristan'
+        },
+        enableMaxRetryRatio: true,
+        maxRetryRatio: 1.0,
+        timers: MockTimers(Date.now())
+    });
+
+    withConnectedClient(chan, cluster, onConnected);
+
+    function onConnected() {
+        series([
+            alwaysAllowRetries,
+            completelyDisabledRetries,
+            onlyAllowMaxThirtyPercentRetries,
+            retryCounterGetsResetAfterRateInterval
+        ], finish);
+
+        function alwaysAllowRetries(next) {
+            var req = chan.request({
+                hasNoParent: true,
+                timeout: 100
+            });
+            req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
+                var tries = req.outReqs.length;
+                assert.true(tries >= 1 && tries <= 4, 'expected 1 to 4 tries');
+                assert.equal(chan.retryRatioTracker.retryRateCounter.rps, tries - 1, "retry counts do not match");
+                assert.equal(chan.retryRatioTracker.requestRateCounter.rps, tries, "request counts do not match");
+                next();
+            });
+        }
+
+        function completelyDisabledRetries(next) {
+            resetRetryBudget(-1);
+
+            var req = chan.request({
+                hasNoParent: true
+            });
+            req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
+                assert.equal(req.outReqs.length, 1, 'expected 1 tries');
+                assert.equal(chan.retryRatioTracker.retryRateCounter.rps, 0, 'retry counts do not match');
+                assert.equal(chan.retryRatioTracker.requestRateCounter.rps, 1, 'try counts do not match');
+                next();
+            });
+        }
+
+        function onlyAllowMaxThirtyPercentRetries(next) {
+            var maxRetryRatio = 0.3;
+            resetRetryBudget(maxRetryRatio);
+
+            var totalChanReqs = 100;
+            var totalTries = 0;
+            var totalRetries = 0;
+            var makeRequestFuncs = [];
+            for (var i = 0; i < totalChanReqs; i++) {
+                makeRequestFuncs.push(function sendReq(subNext) {
+                    var req = chan.request({
+                        hasNoParent: true
+                    });
+                    req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
+                        var tries = req.outReqs.length;
+                        totalTries += tries
+                        totalRetries += tries - 1;
+                        subNext();
+                    });
+                });
+            }
+            series(makeRequestFuncs, function () {
+                // when send 100 requests to 4 peers of which 3 are bad,
+                // ~75 of them are expected to retry at least once
+                // by setting maxRetryRatio to 0.3,
+                // it means at most 30% requests could be retries
+                // let x be the retries, x/(100+x) <= 0.3, so x <= 43
+                assert.true(totalRetries >= 20 && totalRetries <= 43,
+                    'total retries exceed the max retry ratio');
+                assert.true(1.0 * totalRetries / totalTries < maxRetryRatio + 0.05, // for x=43
+                    'total retries exceed the max retry ratio');
+                assert.equal(totalRetries, chan.retryRatioTracker.retryRateCounter.rps, 'retry counts do not match');
+                assert.equal(totalTries, chan.retryRatioTracker.requestRateCounter.rps, 'try counts do not match');
+                next();
+            })
+        }
+
+        function retryCounterGetsResetAfterRateInterval(next) {
+            resetRetryBudget(1.0);
+
+            var makeRequestFuncs = [];
+            for (var i = 0; i < 10; i++) {
+                makeRequestFuncs.push(function sendReq(subNext) {
+                    var req = chan.request({
+                        hasNoParent: true
+                    });
+                    req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
+                        var tries = req.outReqs.length;
+                        assert.true(tries >= 1 && tries <= 4, 'expected 1 to 4 tries');
+                        assert.equal(chan.retryRatioTracker.retryRateCounter.rps, tries - 1, 'retry counts do not match');
+                        assert.equal(chan.retryRatioTracker.requestRateCounter.rps, tries, 'try counts do not match');
+                        chan.retryRatioTracker.timers.advance(1000); // to reset counters
+                        assert.equal(chan.retryRatioTracker.retryRateCounter.rps, 0, 'retry counter should be 0 after reset');
+                        assert.equal(chan.retryRatioTracker.requestRateCounter.rps, 0, 'try counter should be 0 after reset');
+                        subNext();
+                    });
+                });
+            }
+            series(makeRequestFuncs, next);
+        }
+
+        function finish() {
+            cluster.assertEmptyState(assert);
+            client.close();
+            assert.end();
+        }
+
+        function resetRetryBudget(newMaxRetryRatio) {
+            chan.maxRetryRatio = newMaxRetryRatio;
+            chan.retryRatioTracker.timers.advance(1000); // to cleanup counters;
+        }
+    }
+});
+
 allocCluster.test('request application retries', {
     numPeers: 2
 }, function t(cluster, assert) {
@@ -199,7 +353,10 @@ allocCluster.test('request application retries', {
                 as: 'raw',
                 cn: 'wat'
             }
-        }
+        },
+        // just to make sure maxRetryRatio isn't applied to app retry
+        enableMaxRetryRatio: true,
+        maxRetryRatio: -1
     });
     withConnectedClient(chan, cluster, onConnected);
 

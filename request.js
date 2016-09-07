@@ -273,6 +273,11 @@ function emitOutboundCallsSent() {
 TChannelRequest.prototype.resend = function resend() {
     var self = this;
 
+    if (self.channel.enableMaxRetryRatio) {
+        var isRetry = self.resendSanity < self.limit;
+        self.channel.retryRatioTracker.incrementRequest(isRetry);
+    }
+
     if (self.trackPending && self.checkPending()) {
         return;
     }
@@ -456,6 +461,22 @@ TChannelRequest.prototype.shouldRetryError = function shouldRetryError(err) {
     }
 
     if (self.options.retryFlags.never) {
+        return false;
+    }
+
+    if (self.channel.enableMaxRetryRatio &&
+        self.channel.retryRatioTracker.currentRetryRatio() > self.channel.maxRetryRatio) {
+        self.channel.emitFastStat(
+            'tchannel.outbound.calls.retries-rejected-by-max-retry-ratio',
+            'counter',
+            1,
+            new stat.OutboundCallsRetriesTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint,
+                self.outReqs.length - 1
+            )
+        );
         return false;
     }
 

@@ -56,6 +56,7 @@ var TChannelServiceNameHandler = require('./service-name-handler');
 var errors = require('./errors');
 var EventEmitter = require('./lib/event_emitter.js');
 var ObjectPool = require('./lib/object_pool');
+var RetryRatioTracker = require('./lib/retry_ratio_tracker');
 
 var TChannelAsThrift = require('./as/thrift');
 var TChannelAsJSON = require('./as/json');
@@ -86,6 +87,9 @@ var MAX_TOMBSTONE_TTL = 5000;
 // TODO restore spying
 // var Spy = require('./v2/spy');
 // var dumpEnabled = /\btchannel_dump\b/.test(process.env.NODE_DEBUG || '');
+
+var DEFAULT_ENABLE_MAX_RETRY_RATIO = false;
+var DEFAULT_MAX_RETRY_RATIO = 0.1;
 
 /*eslint-disable max-statements*/
 function TChannel(options) {
@@ -281,6 +285,13 @@ function TChannel(options) {
             return;
         }
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
+    }
+
+    this.enableMaxRetryRatio = this.options.enableMaxRetryRatio || DEFAULT_ENABLE_MAX_RETRY_RATIO;
+    if (this.enableMaxRetryRatio) {
+        this.maxRetryRatio = this.options.maxRetryRatio || DEFAULT_MAX_RETRY_RATIO;
+        this.retryRatioTracker = this.topChannel ?
+            RetryRatioTracker({ timers: this.timers }) : null;
     }
 }
 inherits(TChannel, EventEmitter);
@@ -945,6 +956,10 @@ TChannel.prototype.close = function close(callback) {
         self.sanityTimer = null;
     }
 
+    if (self.retryRatioTracker) {
+        self.retryRatioTracker.destroy();
+    }
+
     if (self.serverSocket) {
         ++counter;
         if (self.serverSocket.address()) {
@@ -1083,5 +1098,6 @@ TChannel.prototype.isUnhealthyError = function isUnhealthyError(err) {
     var codeName = errors.classify(err);
     return errors.isUnhealthy(codeName);
 };
+
 
 module.exports = TChannel;
