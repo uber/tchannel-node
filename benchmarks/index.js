@@ -234,7 +234,7 @@ function startRelay(type) {
         '--benchRelayPort', String(self.ports.relayServerPort),
         '--traceRelayPort', String(self.ports.relayTraceServerPort),
         '--type', type,
-        '--instances', String(self.instanceCount),
+        '--instances', type === 'trace-relay' ? '1' : String(self.instanceCount),
         self.opts.trace ? '--trace' : '--no-trace',
         self.opts.debug ? '--debug' : '--no-debug'
     ]);
