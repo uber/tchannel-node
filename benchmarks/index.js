@@ -262,6 +262,7 @@ function startClient(clientPort) {
 
     var args = self.opts['--'];
     args = args.concat([
+        self.opts.trace ? '--trace' : '--no-trace',
         '--benchPort', String(self.ports.serverPort),
         '--relayServerPort', String(self.ports.relayServerPort),
         '--clientPort', String(clientPort),
