@@ -197,6 +197,8 @@ allocCluster.test('maxRetryRatio limits retries', {
         .makeSubChannel({serviceName: 'tristan'})
         .register('foo', servedByFoo(4));
 
+    var mockTimers = MockTimers(Date.now());
+
     var client = TChannel({
         timeoutFuzz: 0
     });
@@ -212,7 +214,7 @@ allocCluster.test('maxRetryRatio limits retries', {
         },
         enableMaxRetryRatio: true,
         maxRetryRatio: 1.0,
-        timers: MockTimers(Date.now())
+        timers: mockTimers
     });
 
     withConnectedClient(chan, cluster, onConnected);
@@ -233,22 +235,21 @@ allocCluster.test('maxRetryRatio limits retries', {
             req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
                 var tries = req.outReqs.length;
                 assert.true(tries >= 1 && tries <= 4, 'expected 1 to 4 tries');
-                assert.equal(chan.retryRatioTracker.retryRateCounter.rps, tries - 1, "retry counts do not match");
-                assert.equal(chan.retryRatioTracker.requestRateCounter.rps, tries, "request counts do not match");
+                assert.equal(chan.retryRatioTracker.retryRateCounter.rate, tries - 1, "retry counts do not match");
+                assert.equal(chan.retryRatioTracker.requestRateCounter.rate, 1, "request counts do not match");
                 next();
             });
         }
 
         function completelyDisabledRetries(next) {
             resetRetryBudget(-1);
-
             var req = chan.request({
                 hasNoParent: true
             });
             req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
                 assert.equal(req.outReqs.length, 1, 'expected 1 tries');
-                assert.equal(chan.retryRatioTracker.retryRateCounter.rps, 0, 'retry counts do not match');
-                assert.equal(chan.retryRatioTracker.requestRateCounter.rps, 1, 'try counts do not match');
+                assert.equal(chan.retryRatioTracker.retryRateCounter.rate, 0, 'retry counts do not match');
+                assert.equal(chan.retryRatioTracker.requestRateCounter.rate, 1, 'try counts do not match');
                 next();
             });
         }
@@ -257,35 +258,28 @@ allocCluster.test('maxRetryRatio limits retries', {
             var maxRetryRatio = 0.3;
             resetRetryBudget(maxRetryRatio);
 
-            var totalChanReqs = 100;
-            var totalTries = 0;
+            var totalNonRetries = 100;
             var totalRetries = 0;
             var makeRequestFuncs = [];
-            for (var i = 0; i < totalChanReqs; i++) {
+            for (var i = 0; i < totalNonRetries; i++) {
                 makeRequestFuncs.push(function sendReq(subNext) {
                     var req = chan.request({
                         hasNoParent: true
                     });
                     req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
                         var tries = req.outReqs.length;
-                        totalTries += tries
                         totalRetries += tries - 1;
                         subNext();
                     });
                 });
             }
-            series(makeRequestFuncs, function () {
-                // when send 100 requests to 4 peers of which 3 are bad,
-                // ~75 of them are expected to retry at least once
-                // by setting maxRetryRatio to 0.3,
-                // it means at most 30% requests could be retries
-                // let x be the retries, x/(100+x) <= 0.3, so x <= 43
-                assert.true(totalRetries >= 20 && totalRetries <= 43,
+            series(makeRequestFuncs, function checkRetries() {
+                assert.true(totalRetries >= 25 && totalRetries <= 30,
                     'total retries exceed the max retry ratio');
-                assert.true(1.0 * totalRetries / totalTries < maxRetryRatio + 0.05, // for x=43
+                assert.true(1.0 * totalRetries / totalNonRetries <= maxRetryRatio,
                     'total retries exceed the max retry ratio');
-                assert.equal(totalRetries, chan.retryRatioTracker.retryRateCounter.rps, 'retry counts do not match');
-                assert.equal(totalTries, chan.retryRatioTracker.requestRateCounter.rps, 'try counts do not match');
+                assert.equal(totalRetries, chan.retryRatioTracker.retryRateCounter.rate, 'retry counts do not match');
+                assert.equal(totalNonRetries, chan.retryRatioTracker.requestRateCounter.rate, 'try counts do not match');
                 next();
             })
         }
@@ -302,11 +296,11 @@ allocCluster.test('maxRetryRatio limits retries', {
                     req.send('foo', '', 'hi', function done(err, res, arg2, arg3) {
                         var tries = req.outReqs.length;
                         assert.true(tries >= 1 && tries <= 4, 'expected 1 to 4 tries');
-                        assert.equal(chan.retryRatioTracker.retryRateCounter.rps, tries - 1, 'retry counts do not match');
-                        assert.equal(chan.retryRatioTracker.requestRateCounter.rps, tries, 'try counts do not match');
-                        chan.retryRatioTracker.timers.advance(1000); // to reset counters
-                        assert.equal(chan.retryRatioTracker.retryRateCounter.rps, 0, 'retry counter should be 0 after reset');
-                        assert.equal(chan.retryRatioTracker.requestRateCounter.rps, 0, 'try counter should be 0 after reset');
+                        assert.equal(chan.retryRatioTracker.retryRateCounter.rate, tries - 1, 'retry counts do not match');
+                        assert.equal(chan.retryRatioTracker.requestRateCounter.rate, 1, 'try counts do not match');
+                        mockTimers.advance(30 * 1000); // to reset counters
+                        assert.equal(chan.retryRatioTracker.retryRateCounter.rate, 0, 'retry counter should be 0 after reset');
+                        assert.equal(chan.retryRatioTracker.requestRateCounter.rate, 0, 'try counter should be 0 after reset');
                         subNext();
                     });
                 });
@@ -322,7 +316,7 @@ allocCluster.test('maxRetryRatio limits retries', {
 
         function resetRetryBudget(newMaxRetryRatio) {
             chan.maxRetryRatio = newMaxRetryRatio;
-            chan.retryRatioTracker.timers.advance(1000); // to cleanup counters;
+            mockTimers.advance(30 * 1000); // to cleanup counters;
         }
     }
 });

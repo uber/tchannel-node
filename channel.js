@@ -287,11 +287,16 @@ function TChannel(options) {
         self.sanityTimer = self.timers.setTimeout(doSanitySweep, SANITY_PERIOD);
     }
 
+    // for client retry budget
     this.enableMaxRetryRatio = this.options.enableMaxRetryRatio || DEFAULT_ENABLE_MAX_RETRY_RATIO;
-    if (this.enableMaxRetryRatio) {
-        this.maxRetryRatio = this.options.maxRetryRatio || DEFAULT_MAX_RETRY_RATIO;
-        this.retryRatioTracker = this.topChannel ?
-            RetryRatioTracker({ timers: this.timers }) : null;
+    this.maxRetryRatio = this.options.maxRetryRatio || DEFAULT_MAX_RETRY_RATIO;
+    this.retryRatioTracker = null;
+    if (this.enableMaxRetryRatio && this.topChannel) { // only track ratio in sub channel
+        this.retryRatioTracker = RetryRatioTracker({
+            rateCounterInterval: this.options.rateCounterInterval,
+            rateCounterNumOfBuckets: this.options.rateCounterNumOfBuckets,
+            timers: this.timers
+        });
     }
 }
 inherits(TChannel, EventEmitter);
@@ -1098,6 +1103,5 @@ TChannel.prototype.isUnhealthyError = function isUnhealthyError(err) {
     var codeName = errors.classify(err);
     return errors.isUnhealthy(codeName);
 };
-
 
 module.exports = TChannel;

@@ -274,7 +274,7 @@ TChannelRequest.prototype.resend = function resend() {
     var self = this;
 
     if (self.channel.enableMaxRetryRatio) {
-        var isRetry = self.resendSanity < self.limit;
+        var isRetry = self.outReqs.length > 0;
         self.channel.retryRatioTracker.incrementRequest(isRetry);
     }
 
@@ -465,7 +465,9 @@ TChannelRequest.prototype.shouldRetryError = function shouldRetryError(err) {
     }
 
     if (self.channel.enableMaxRetryRatio &&
-        self.channel.retryRatioTracker.currentRetryRatio() > self.channel.maxRetryRatio) {
+        self.channel.retryRatioTracker.isWarmedUp() &&
+        self.channel.retryRatioTracker.currentRetryRatio() >= self.channel.maxRetryRatio
+    ) {
         self.channel.emitFastStat(
             'tchannel.outbound.calls.retries-rejected-by-max-retry-ratio',
             'counter',
