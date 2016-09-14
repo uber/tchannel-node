@@ -289,10 +289,11 @@ function TChannel(options) {
 
     // for client retry budget
     this.enableMaxRetryRatio = this.options.enableMaxRetryRatio || DEFAULT_ENABLE_MAX_RETRY_RATIO;
-    this.maxRetryRatio = this.options.maxRetryRatio || DEFAULT_MAX_RETRY_RATIO;
+    this.maxRetryRatio = this.options.maxRetryRatio || DEFAULT_MAX_RETRY_RATIO; // retries to requests
+    assert(this.maxRetryRatio >= 0.0, 'maxRetryRatio must be non-negative');
     this.retryRatioTracker = null;
     if (this.enableMaxRetryRatio && this.topChannel) { // only track ratio in sub channel
-        this.retryRatioTracker = RetryRatioTracker({
+        this.retryRatioTracker = new RetryRatioTracker({
             rateCounterInterval: this.options.rateCounterInterval,
             rateCounterNumOfBuckets: this.options.rateCounterNumOfBuckets,
             timers: this.timers
@@ -615,6 +616,10 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
 
     opts.topChannel = self;
     opts.timeHeap = self.timeHeap;
+
+    opts.enableMaxRetryRatio = options.enableMaxRetryRatio;
+    opts.maxRetryRatio = options.maxRetryRatio;
+
     var chan = TChannel(opts);
 
     if (options.peers) {

@@ -202,6 +202,7 @@ allocCluster.test('maxRetryRatio limits retries', {
     var client = TChannel({
         timeoutFuzz: 0
     });
+
     var chan = client.makeSubChannel({
         serviceName: 'tristan',
         peers: cluster.hosts,
@@ -350,7 +351,7 @@ allocCluster.test('request application retries', {
         },
         // just to make sure maxRetryRatio isn't applied to app retry
         enableMaxRetryRatio: true,
-        maxRetryRatio: -1
+        maxRetryRatio: 0
     });
     withConnectedClient(chan, cluster, onConnected);
 
