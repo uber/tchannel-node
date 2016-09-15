@@ -45,7 +45,7 @@ function TChannelAsThrift(opts) {
     assert(opts, 'options required');
     assert(typeof opts === 'object', 'options must be object');
 
-    self.spec = new thriftrw.Thrift({
+    self.spec = opts.compiledSpec || new thriftrw.Thrift({
         entryPoint: opts.entryPoint,
         idls: opts.idls,
         source: opts.source,
