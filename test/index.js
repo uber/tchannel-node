@@ -73,6 +73,7 @@ require('./lazy_handler.js');
 require('./lazy_conn_handler.js');
 require('./chan_drain.js');
 require('./peer_drain.js');
+require('./rate_counter.js');
 require('./relay-clamps-the-ttl.js');
 require('./relay-under-timeouts.js');
 require('./relay-kills-socket-after-timeouts.js');
