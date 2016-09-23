@@ -1075,9 +1075,13 @@ function sanitySweep(callback) {
         }
 
         var connection = self.serverConnections[connectionKeys[index]];
-        connection.ops.sanitySweep(function opsSweepDone() {
+        if (!connection || !connection.ops) {
             setImmediate(deferNextConn);
-        });
+        } else {
+            connection.ops.sanitySweep(function opsSweepDone() {
+                setImmediate(deferNextConn);
+            });
+        }
 
         function deferNextConn() {
             nextConn(connectionKeys, index + 1, cb);
