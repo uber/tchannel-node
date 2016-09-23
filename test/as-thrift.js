@@ -606,6 +606,28 @@ allocCluster.test('expose service endpoints', {
     assert.end();
 });
 
+allocCluster.test('compiled thrift spec can be cached', {
+    numPeers: 2
+}, function t(cluster, assert) {
+    var expected = ['Chamber::echo', 'Chamber::echo_big'];
+
+    var tchannelAsThrift = makeTChannelThriftServer(cluster, {
+        okResponse: true
+    });
+    var endpoints = tchannelAsThrift.getServiceEndpoints();
+    assert.deepEqual(endpoints, expected);
+
+    var cachedTChannelAsThrift = cluster.channels[1].TChannelAsThrift({
+        compiledSpec: tchannelAsThrift.spec,
+        logParseFailures: false,
+        channel: cluster.channels[1].subChannels.server
+    });
+    var cachedEndpoints = cachedTChannelAsThrift.getServiceEndpoints();
+    assert.deepEqual(cachedEndpoints, expected);
+
+    assert.end();
+});
+
 function makeActualServer(channel, opts) {
     var server = channel.makeSubChannel({
         serviceName: 'server'
