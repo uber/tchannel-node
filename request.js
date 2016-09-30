@@ -248,6 +248,37 @@ TChannelRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
     self.start = self.channel.timers.now();
     self.resendSanity = self.limit;
 
+    // make sure it can also time out between sending request and receiving response
+    var timeoutTimer = self.channel.timers.setTimeout(function () {
+        self.channel.timers.clearTimeout(timeoutTimer);
+        if (!self.err) {
+            self.emitError(errors.RequestTimeoutError({
+                start: self.start,
+                elapsed: self.elapsed,
+                timeout: self.timeout,
+                message: 'ZJ timeout'
+            }));
+        }
+
+        self.channel.emitFastStat(
+            'tchannel.outbound.calls.timeout',
+            'counter',
+            1,
+            new stat.OutboundCallsSentTags(
+                self.serviceName,
+                self.callerName,
+                self.endpoint
+            )
+        );
+
+        self.channel.logger.info('ZJ timeout', {
+            start: self.start,
+            elapsed: self.elapsed,
+            timeout: self.timeout,
+            hasSelfErr: Boolean(self.err)
+        })
+    }, self.timeout);
+
     self.emitOutboundCallsSent();
 
     self.channel.services.onRequest(self);
