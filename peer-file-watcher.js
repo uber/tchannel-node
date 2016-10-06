@@ -90,7 +90,7 @@ function reloadSync() {
     });
 
     var newPeers = this._readPeerListFromFileSync();
-    this.updatePeers(newPeers);
+    this.channel.updatePeers(newPeers);
 };
 
 PeerFileWatcher.prototype.reload =
@@ -111,7 +111,7 @@ function reload() {
             return;
         }
 
-        self.updatePeers(newPeers);
+        self.channel.updatePeers(newPeers);
     }
 };
 
@@ -130,67 +130,6 @@ function _readPeerList(cb) {
         }
 
         cb(null, tuple[1]);
-    }
-};
-
-PeerFileWatcher.prototype.updatePeers =
-function updatePeers(newPeers) {
-    // Take a snapshot of current, existing peers. This is used to delete old
-    // peers later.
-    var oldPeers = this.channel.peers.keys().slice();
-
-    var i;
-
-    // Load new peers; duplicates are ignored
-    for (i = 0; i < newPeers.length; i++) {
-        if (typeof newPeers[i] === 'string') {
-            this.channel.peers.add(newPeers[i]);
-        }
-    }
-
-    // Drain and delete existing peers that are not in the new peer list
-    for (i = 0; i < oldPeers.length; i++) {
-        if (newPeers.indexOf(oldPeers[i]) === -1) {
-            this.logger.info('PeerFileWatcher: Removing old peer', {
-                peer: oldPeers[i]
-            });
-
-            var peer = this.channel.peers.get(oldPeers[i]);
-            this.channel.peers.delete(oldPeers[i]);
-
-            this.drainPeer(peer);
-        }
-    }
-
-    this.logger.info('PeerFileWatcher: Loaded peers', {
-        newPeers: newPeers
-    });
-};
-
-PeerFileWatcher.prototype.drainPeer = function drainPeer(peer) {
-    var self = this;
-    if (peer.draining) {
-        return;
-    }
-
-    peer.drain({
-        goal: peer.DRAIN_GOAL_CLOSE_PEER,
-        reason: 'peer has been removed from the peer list',
-        direction: 'both',
-        timeout: 5 * 1000
-    }, thenDeleteIt);
-
-    function thenDeleteIt(err) {
-        if (err) {
-            self.logger.warn(
-                'PeerFileWatcher: error closing peer, deleting anyhow',
-                peer.extendLogInfo(peer.draining.extendLogInfo({
-                    error: err
-                }))
-            );
-        }
-
-        self.channel.topChannel.peers.delete(peer.hostPort);
     }
 };
 

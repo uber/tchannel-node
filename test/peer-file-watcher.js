@@ -73,7 +73,7 @@ allocCluster.test('changing the peer list', {
 }, function t(cluster, assert) {
     setup(cluster);
 
-    cluster.logger.whitelist('info', 'ChannelWatcher: Removing old peer');
+    cluster.logger.whitelist('info', 'TChannel: Removing old peer');
     cluster.logger.whitelist('info', 'draining peer');
 
     var firstPeers = [];
