@@ -71,6 +71,8 @@ function TChannelPeer(channel, hostPort, options) {
     this.boundOnPendingChange = onPendingChange;
     this.scoreRange = null;
 
+    this.socketTimeout = options.socketTimeout || 0;
+
     // Timestamp when next conn attempt is allowed
     this.nextConnAttemptTime = 0;
     // How long to delay conn attempt by on failure (ms)
@@ -707,6 +709,11 @@ TChannelPeer.prototype.makeOutSocket = function makeOutSocket() {
         host: host,
         port: port
     });
+    if (self.socketTimeout > 0) {
+        socket.setTimeout(self.socketTimeout, function cb() {
+            socket.end();
+        });
+    }
     return socket;
 };
 
