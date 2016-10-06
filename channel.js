@@ -769,7 +769,11 @@ TChannel.prototype.drainPeer = function drainPeer(peer) {
             );
         }
 
-        self.topChannel.peers.delete(peer.hostPort);
+        if (self.topChannel) {
+            self.topChannel.peers.delete(peer.hostPort);
+        } else {
+            self.peers.delete(peer.hostPort);
+        }
     }
 };
 
