@@ -35,6 +35,7 @@ function TChannelSubPeers(channel, options) {
     var self = this;
     this.peerScoreThreshold = this.options.peerScoreThreshold || 0;
     this.choosePeerWithHeap = channel.choosePeerWithHeap;
+    this.socketInitTimeout = channel.initTimeout;
 
     this.hasMinConnections = typeof options.minConnections === 'number';
     this.minConnections = options.minConnections;
@@ -118,6 +119,7 @@ TChannelSubPeers.prototype.add = function add(hostPort, options) {
 
     peer = topChannel.peers.add(hostPort, options);
     peer.setPreferConnectionDirection(self.preferConnectionDirection);
+    peer.socketInitTimeout = this.socketInitTimeout;
 
     if (peer.countConnections('out') > 0) {
         this.currentConnectedPeers++;

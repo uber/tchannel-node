@@ -56,6 +56,7 @@ function TChannelPeer(channel, hostPort, options) {
     this.deltaOutConnectionEvent = this.defineEvent('deltaOutConnection');
 
     this.channel = channel;
+    this.socketInitTimeout = channel.initTimeout;
     this.logger = this.channel.logger;
     this.timers = this.channel.timers;
     this.random = this.channel.random;
@@ -713,7 +714,9 @@ TChannelPeer.prototype.makeOutSocket = function makeOutSocket() {
 TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
     var self = this;
     var chan = self.channel.topChannel || self.channel;
-    var conn = new TChannelConnection(chan, socket, 'out', self.hostPort);
+    var conn = new TChannelConnection(
+        chan, socket, 'out', self.hostPort, this.socketInitTimeout
+    );
     self.allocConnectionEvent.emit(self, conn);
     return conn;
 };
