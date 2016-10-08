@@ -328,6 +328,11 @@ TChannelRequest.prototype.resend = function resend() {
 
 TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
     var self = this;
+
+    if (self.checkTimeout()) {
+        return;
+    }
+
     var opts = {};
     var keys = Object.keys(self.options);
     for (var i = 0; i < keys.length; i++) {

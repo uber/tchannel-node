@@ -43,7 +43,8 @@ allocCluster.test('relaying to init timeout server', {
 
         var relayChan = relay.makeSubChannel({
             serviceName: 'dead-service',
-            peers: [deadHostPort]
+            peers: [deadHostPort],
+            initTimeout: 250
         });
         relayChan.handler = new RelayHandler(relayChan);
 

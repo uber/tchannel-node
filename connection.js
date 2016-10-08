@@ -38,7 +38,9 @@ var Operations = require('./operations');
 var CONNECTION_BASE_IDENTIFIER = 0;
 var MAX_PENDING_SOCKET_WRITE_REQ = 100;
 
-function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
+function TChannelConnection(
+    channel, socket, direction, socketRemoteAddr, socketInitTimeout
+) {
     assert(!channel.destroyed, 'refuse to create connection for destroyed channel');
 
     EventEmitter.call(this);
@@ -59,6 +61,7 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
     this.random = channel.random;
     this.timers = channel.timers;
     this.direction = direction;
+    this.socketInitTimeout = socketInitTimeout || this.channel.initTimeout;
     this.socketRemoteAddr = socketRemoteAddr;
     this.remoteName = null; // filled in by identify message
 
@@ -66,7 +69,7 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
         timers: this.timers,
         logger: this.logger,
         random: this.random,
-        initTimeout: this.channel.initTimeout,
+        initTimeout: this.socketInitTimeout,
         connectionStalePeriod: this.options.connectionStalePeriod,
         maxTombstoneTTL: this.options.maxTombstoneTTL,
         connection: this
@@ -835,7 +838,7 @@ TChannelConnection.prototype.start = function start() {
     }
 
     var now = self.timers.now();
-    var initOp = new InitOperation(self, now, self.channel.initTimeout);
+    var initOp = new InitOperation(self, now, self.socketInitTimeout);
     var initTo = self.channel.timeHeap.update(initOp, now);
 
     function onOutIdentified(init) {

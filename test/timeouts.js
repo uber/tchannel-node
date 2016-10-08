@@ -21,6 +21,8 @@
 'use strict';
 
 var TimeMock = require('time-mock');
+var setTimeout = require('timers').setTimeout;
+
 var allocCluster = require('./lib/alloc-cluster.js');
 var timers = TimeMock(Date.now());
 
@@ -104,6 +106,248 @@ allocCluster.test('requests will timeout', {
     }
     function timeout(/* head, body, hostInfo, cb */) {
         // do not call cb();
+    }
+});
+
+allocCluster.test('requests will timeout even for slow conn', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    var one = cluster.channels[0];
+    var two = cluster.channels[1];
+    var three = cluster.channels[2];
+
+    cluster.logger.whitelist(
+        'info', 'error for timed out outgoing response'
+    );
+    cluster.logger.whitelist(
+        'info', 'ignoring outresponse.send on a closed connection'
+    );
+    cluster.logger.whitelist(
+        'info', 'OutResponse.send() after inreq timed out'
+    );
+
+    // server
+    var sub = one.makeSubChannel({
+        serviceName: 'server'
+    });
+    sub.register('/normal-proxy', normalProxy);
+    sub.register('/slow-proxy', slowProxy);
+
+    one.connectionEvent.on(function onConnectionEvent(conn) {
+        var socket = conn.socket;
+
+        socket.pause();
+        setTimeout(function delaySocket() {
+            socket.resume();
+        }, 300);
+    });
+
+    // client
+    var twoSub = two.makeSubChannel({
+        serviceName: 'server',
+        peers: [one.hostPort]
+    });
+    var start = 0;
+
+    // make normal request
+    twoSub
+        .request({
+            serviceName: 'server',
+            hasNoParent: true,
+            headers: {
+                'as': 'raw',
+                cn: 'wat'
+            },
+            timeout: 450
+        })
+        .send('/normal-proxy', 'h', 'b', onResp);
+
+    function onResp(err, res, arg2, arg3) {
+        assert.ifError(err);
+
+        assert.equal(String(arg2), 'h');
+        assert.equal(String(arg3), 'b');
+
+        doSecond();
+    }
+
+    function doSecond() {
+        // another client
+        var threeSub = three.makeSubChannel({
+            serviceName: 'server',
+            peers: [one.hostPort]
+        });
+
+        // slow request
+        start = Date.now();
+        threeSub
+            .request({
+                serviceName: 'server',
+                hasNoParent: true,
+                headers: {
+                    'as': 'raw',
+                    cn: 'wat'
+                },
+                timeout: 450
+            })
+            .send('/slow-proxy', 'h', 'b', onTimeout);
+    }
+
+    function onTimeout(err) {
+        assert.ok(
+            (err && err.type) === 'tchannel.request.timeout' ||
+            (err && err.type) === 'tchannel.timeout',
+            'expected timeout error'
+        );
+
+        var delta = Date.now() - start;
+
+        if (typeof err.elapsed === 'number') {
+            assert.ok(err.elapsed < 600, 'expected timeout within 600ms');
+        }
+        assert.ok(delta < 600, 'expected timeout within 600ms');
+
+        if (delta > 600) {
+            console.log('d', delta);
+        }
+
+        setTimeout(function delay() {
+            cluster.assertEmptyState(assert);
+            assert.end();
+        }, 500);
+    }
+
+    function normalProxy(req, res, arg2, arg3) {
+        res.headers.as = 'raw';
+        res.sendOk(arg2, arg3);
+    }
+    function slowProxy(req, res, arg2, arg3) {
+        setTimeout(function respond() {
+            res.headers.as = 'raw';
+            res.sendOk(arg2, arg3);
+        }, 650);
+    }
+});
+
+allocCluster.test('requests will timeout with custom init timeout', {
+    numPeers: 3
+}, function t(cluster, assert) {
+    var one = cluster.channels[0];
+    var two = cluster.channels[1];
+    var three = cluster.channels[2];
+
+    cluster.logger.whitelist(
+        'info', 'error for timed out outgoing response'
+    );
+    cluster.logger.whitelist(
+        'info', 'ignoring outresponse.send on a closed connection'
+    );
+    cluster.logger.whitelist(
+        'info', 'OutResponse.send() after inreq timed out'
+    );
+    cluster.logger.whitelist(
+        'warn', ' Got a connection error'
+    );
+    cluster.logger.whitelist(
+        'warn', 'destroying due to init timeout'
+    );
+    cluster.logger.whitelist(
+        'warn', 'resetting connection'
+    );
+    cluster.logger.whitelist('warn', 'Got a connection error');
+
+    // server
+    var sub = one.makeSubChannel({
+        serviceName: 'server'
+    });
+    sub.register('/normal-proxy', normalProxy);
+
+    one.connectionEvent.on(function onConnectionEvent(conn) {
+        var socket = conn.socket;
+
+        socket.pause();
+        setTimeout(function delaySocket() {
+            socket.resume();
+        }, 1000);
+    });
+
+    // client
+    var twoSub = two.makeSubChannel({
+        serviceName: 'server',
+        peers: [one.hostPort]
+    });
+    var start = 0;
+
+    // make normal request
+    twoSub
+        .request({
+            serviceName: 'server',
+            hasNoParent: true,
+            headers: {
+                'as': 'raw',
+                cn: 'wat'
+            },
+            timeout: 2000
+        })
+        .send('/normal-proxy', 'h', 'b', onResp);
+
+    function onResp(err, res, arg2, arg3) {
+        assert.ifError(err);
+
+        assert.equal(String(arg2), 'h');
+        assert.equal(String(arg3), 'b');
+
+        doSecond();
+    }
+
+    function doSecond() {
+        // another client
+        var threeSub = three.makeSubChannel({
+            serviceName: 'server',
+            peers: [one.hostPort],
+            initTimeout: 450
+        });
+
+        start = Date.now();
+        // slow request
+        threeSub
+            .request({
+                serviceName: 'server',
+                hasNoParent: true,
+                headers: {
+                    'as': 'raw',
+                    cn: 'wat'
+                },
+                timeout: 2000
+            })
+            .send('/normal-proxy', 'h', 'b', onTimeout);
+    }
+
+    function onTimeout(err, res, arg2, arg3) {
+        assert.ok(
+            (err && err.type) === 'tchannel.connection.timeout',
+            'expected timeout error'
+        );
+
+        var delta = Date.now() - start;
+
+        if (typeof err.elapsed === 'number') {
+            assert.ok(err.elapsed < 600, 'expected timeout within 600ms');
+        }
+        assert.ok(delta < 600, 'expected timeout within 600ms');
+        if (delta >= 600) {
+            console.log('d', delta);
+        }
+
+        setTimeout(function delay() {
+            cluster.assertEmptyState(assert);
+            assert.end();
+        }, 500);
+    }
+
+    function normalProxy(req, res, arg2, arg3) {
+        res.headers.as = 'raw';
+        res.sendOk(arg2, arg3);
     }
 });
 
@@ -266,12 +510,12 @@ allocCluster.test('requests can succeed after timeout per attempt', {
         assert.end();
     }
 
-    function normalProxy(req, res, arg2, arg3) {
+    function normalProxy(req2, res, arg2, arg3) {
         res.headers.as = 'raw';
         res.sendOk(arg2, arg3);
     }
     var count = 0;
-    function timeout(req, res, arg2, arg3) {
+    function timeout(req2, res, arg2, arg3) {
         count++;
         if (count === 2) {
             res.headers.as = 'raw';
