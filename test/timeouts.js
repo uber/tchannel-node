@@ -305,7 +305,7 @@ allocCluster.test('requests will timeout with custom init timeout', {
         var threeSub = three.makeSubChannel({
             serviceName: 'server',
             peers: [one.hostPort],
-            initTimeout: 500
+            initTimeout: 450
         });
 
         start = Date.now();
@@ -335,8 +335,7 @@ allocCluster.test('requests will timeout with custom init timeout', {
             assert.ok(err.elapsed < 600, 'expected timeout within 600ms');
         }
         assert.ok(delta < 600, 'expected timeout within 600ms');
-
-        if (delta > 600) {
+        if (delta >= 600) {
             console.log('d', delta);
         }
 
