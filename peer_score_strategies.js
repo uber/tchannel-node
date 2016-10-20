@@ -144,12 +144,12 @@ PreferIncoming.prototype.getScoreRange = function getScoreRange() {
     switch (tier) {
         default:
             /* falls through */
-        case PreferIncoming.ONLY_OUTGOING:
-            /* falls through */
         case PreferIncoming.UNCONNECTED:
-            /* falls through */
+            return new Range(0.0, 0.1);
+        case PreferIncoming.ONLY_OUTGOING:
+            return new Range(0.1, 0.2);
         case PreferIncoming.FRESH_INCOMING:
-            return new Range(0.1, 0.4);
+            return new Range(0.2, 0.4);
         case PreferIncoming.READY_INCOMING:
             return new Range(0.4, 1.0);
     }
