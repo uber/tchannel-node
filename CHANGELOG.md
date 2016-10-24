@@ -1,4 +1,29 @@
-# v3.8.1
+# v3.9.3
+
+- Check whether requests time out while waiting for connection identification.
+
+# v3.9.2
+
+- Refactor: move updatePeer and drainPeer up to TChannel level.
+
+# v3.9.1
+
+- Add option to pass pre-compiled thrift spec to TChannelAsThrift.
+
+# v3.9.0
+
+- Support per-client retry budget to avoid excessive retries overwhelming server.
+- Fixup benchmarks Makefile to work out of box.
+
+# v3.8.4, v3.8.5 (bugfix)
+
+- Improve the connection backoff logic.
+
+# v3.8.3
+
+- Adds the request object as an argument to `isBusy(req)`.
+
+# v3.8.1, v3.8.2 (bugfix)
 
 - Adds an `isUnhealthyError` method to TChannel for use in throttling (client
   side rate limiting).
