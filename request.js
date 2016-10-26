@@ -84,13 +84,13 @@ function RequestOperation(req, timeout, peer, waitForIdentifiedSlot) {
     this.req = req;
     this.timeout = timeout;
     this.peer = peer;
-    this.waitForIdentifiedSlot = waitForIdentifiedSlot;
+    this.waitForIdentifiedSlot =
+        typeof waitForIdentifiedSlot === 'number' ?
+        waitForIdentifiedSlot : -1;
 }
 
 RequestOperation.prototype.onTimeout = function onTimeout(now) {
-    if (this.waitForIdentifiedSlot !== null &&
-        this.waitForIdentifiedSlot !== -1
-    ) {
+    if (this.waitForIdentifiedSlot !== -1) {
         this.peer.stopWaitingForIdentified(this.waitForIdentifiedSlot);
     }
 
