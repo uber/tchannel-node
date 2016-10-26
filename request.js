@@ -80,6 +80,23 @@ inherits(TChannelRequest, EventEmitter);
 TChannelRequest.defaultRetryLimit = 5;
 TChannelRequest.defaultTimeout = 100;
 
+function RequestOperation(req, timeout, peer, waitForIdentifiedSlot) {
+    this.req = req;
+    this.timeout = timeout;
+    this.peer = peer;
+    this.waitForIdentifiedSlot =
+        typeof waitForIdentifiedSlot === 'number' ?
+        waitForIdentifiedSlot : -1;
+}
+
+RequestOperation.prototype.onTimeout = function onTimeout(now) {
+    if (this.waitForIdentifiedSlot !== -1) {
+        this.peer.stopWaitingForIdentified(this.waitForIdentifiedSlot);
+    }
+
+    this.req.checkTimeout();
+};
+
 TChannelRequest.prototype.type = 'tchannel.request';
 
 TChannelRequest.prototype.emitError = function emitError(err) {
@@ -304,9 +321,25 @@ TChannelRequest.prototype.resend = function resend() {
         return;
     }
 
-    peer.waitForIdentified(onIdentified);
+    var conn = peer.getInConnection(true);
+    var reqTimeout;
+    if (conn && conn.remoteName && !conn.closing) {
+        self.onIdentified(peer);
+    } else {
+        var waitForIdentifiedSlot = peer.waitForIdentified(onIdentified);
+
+        var now = self.channel.timers.now();
+        self.elapsed = now - self.start;
+        var timeout = self.timeout - self.elapsed;
+        var reqOp = new RequestOperation(
+            self, timeout, peer, waitForIdentifiedSlot
+        );
+        reqTimeout = self.channel.timeHeap.update(reqOp, now);
+    }
 
     function onIdentified(err) {
+        reqTimeout.cancel();
+
         if (err) {
             /* emulate outReq failure */
 
