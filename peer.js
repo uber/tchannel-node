@@ -555,6 +555,11 @@ function stopWaitingForIdentified(slot) {
 
     var descriptor = this.waitForIdentifiedListeners[slot];
     this.waitForIdentifiedListeners[slot] = null;
+
+    if (!descriptor || !descriptor.conn) {
+        return;
+    }
+
     var conn = descriptor.conn;
 
     conn.errorEvent.removeListener(descriptor.error);
