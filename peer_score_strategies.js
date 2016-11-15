@@ -60,12 +60,12 @@ PreferOutgoing.prototype.getScoreRange = function getScoreRange() {
     switch (tier) {
         default:
             /* falls through */
+        case PreferOutgoing.UNCONNECTED:
+            return new Range(0.1, 0.2);
         case PreferOutgoing.ONLY_INCOMING:
             /* falls through */
-        case PreferOutgoing.UNCONNECTED:
-            /* falls through */
         case PreferOutgoing.FRESH_OUTGOING:
-            return new Range(0.1, 0.4);
+            return new Range(0.2, 0.4);
         case PreferOutgoing.READY_OUTGOING:
             return new Range(0.4, 1.0);
     }
@@ -102,9 +102,9 @@ NoPreference.prototype.getScoreRange = function getScoreRange() {
         default:
             /* falls through */
         case NoPreference.UNCONNECTED:
-            /* falls through */
+            return new Range(0.1, 0.2);
         case NoPreference.CONNECTED:
-            return new Range(0.1, 0.4);
+            return new Range(0.2, 0.4);
         case NoPreference.IDENTIFIED:
             return new Range(0.4, 1.0);
     }
@@ -144,12 +144,12 @@ PreferIncoming.prototype.getScoreRange = function getScoreRange() {
     switch (tier) {
         default:
             /* falls through */
+        case PreferIncoming.UNCONNECTED:
+            return new Range(0.1, 0.2);
         case PreferIncoming.ONLY_OUTGOING:
             /* falls through */
-        case PreferIncoming.UNCONNECTED:
-            /* falls through */
         case PreferIncoming.FRESH_INCOMING:
-            return new Range(0.1, 0.4);
+            return new Range(0.2, 0.4);
         case PreferIncoming.READY_INCOMING:
             return new Range(0.4, 1.0);
     }
