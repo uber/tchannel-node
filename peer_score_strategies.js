@@ -53,7 +53,8 @@ PreferOutgoing.prototype.getTier = function getTier() {
 
 PreferOutgoing.prototype.getScoreRange = function getScoreRange() {
     // space:
-    //   [0.1, 0.4)  peers with no identified outgoing connection
+    //   [0.1, 0.2)  peers with zero connections
+    //   [0.2, 0.4)  peers with no identified outgoing connection
     //   [0.4, 1.0)  identified outgoing connections
     var tier = this.getTier();
     this.lastTier = tier;
@@ -94,7 +95,8 @@ NoPreference.prototype.getTier = function getTier() {
 
 NoPreference.prototype.getScoreRange = function getScoreRange() {
     // space:
-    //   (0.1, 0.4]  peers with no identified connection
+    //   [0.1, 0.2)  peers with zero connections
+    //   (0.2, 0.4]  peers with no identified connection
     //   (0.4, 1.0]  identified connections
     var tier = this.getTier();
     this.lastTier = tier;
@@ -137,8 +139,9 @@ PreferIncoming.prototype.getTier = function getTier() {
 
 PreferIncoming.prototype.getScoreRange = function getScoreRange() {
     // space:
-    //   [0.1, 0.4)  peers with no identified outgoing connection
-    //   [0.4, 1.0)  identified outgoing connections
+    //   [0.1, 0.2)  peers with zero connections
+    //   [0.2, 0.4)  peers with no identified incoming connection
+    //   [0.4, 1.0)  identified incoming connections
     var tier = this.getTier();
     this.lastTier = tier;
     switch (tier) {
