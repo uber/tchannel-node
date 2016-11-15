@@ -562,9 +562,9 @@ function setup(cluster, opts) {
     for (i = 0; i < cluster.clients.length; i++) {
         cluster.batches.push(new BatchClient(
             cluster.clients[i], cluster.serverHosts, {
-                delay: 40,
-                batchSize: 1,
-                timeout: 1000,
+                delay: 200,
+                batchSize: 2,
+                timeout: 1500,
                 totalRequests: 50,
                 minConnections: opts.minConnections || null,
                 retryLimit: opts.retryLimit || null

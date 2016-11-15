@@ -21,6 +21,7 @@
 'use strict';
 
 var parallel = require('run-parallel');
+var setImmediate = require('timers').setImmediate;
 
 var BatchClient = require('./lib/batch-client.js');
 var allocCluster = require('./lib/alloc-cluster.js');
@@ -36,6 +37,7 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
 
     var clientChannel = cluster.client.makeSubChannel({
         serviceName: 'server',
+        minConnections: 4,
         peers: cluster.servers.map(getHostPort)
     });
 
@@ -51,7 +53,15 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
             }
         });
 
-        callReqThunks.push(req.send.bind(req, 'echo', 'a', 'b'));
+        callReqThunks.push(sendRequestThunk(req));
+    }
+
+    function sendRequestThunk(request) {
+        return function sendRequest(cb) {
+            setImmediate(function delayed() {
+                request.send('echo', 'a', 'b', cb);
+            });
+        };
     }
 
     parallel(callReqThunks, onResults);
@@ -76,7 +86,10 @@ allocCluster.test('sending requests to servers synchronously has perfect distrib
         for (var k = 0; k < keys.length; k++) {
             var count = byServer[keys[k]];
 
-            assert.equal(count, 50, 'count for ' + keys[k] + ' is ' + count);
+            assert.ok(
+                count >= 35 && count <= 65,
+                'count for ' + keys[k] + ' is ' + count
+            );
         }
         assert.end();
     }

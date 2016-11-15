@@ -53,19 +53,20 @@ PreferOutgoing.prototype.getTier = function getTier() {
 
 PreferOutgoing.prototype.getScoreRange = function getScoreRange() {
     // space:
-    //   [0.1, 0.4)  peers with no identified outgoing connection
+    //   [0.1, 0.2)  peers with zero connections
+    //   [0.2, 0.4)  peers with no identified outgoing connection
     //   [0.4, 1.0)  identified outgoing connections
     var tier = this.getTier();
     this.lastTier = tier;
     switch (tier) {
         default:
             /* falls through */
+        case PreferOutgoing.UNCONNECTED:
+            return new Range(0.1, 0.2);
         case PreferOutgoing.ONLY_INCOMING:
             /* falls through */
-        case PreferOutgoing.UNCONNECTED:
-            /* falls through */
         case PreferOutgoing.FRESH_OUTGOING:
-            return new Range(0.1, 0.4);
+            return new Range(0.2, 0.4);
         case PreferOutgoing.READY_OUTGOING:
             return new Range(0.4, 1.0);
     }
@@ -94,7 +95,8 @@ NoPreference.prototype.getTier = function getTier() {
 
 NoPreference.prototype.getScoreRange = function getScoreRange() {
     // space:
-    //   (0.1, 0.4]  peers with no identified connection
+    //   [0.1, 0.2)  peers with zero connections
+    //   (0.2, 0.4]  peers with no identified connection
     //   (0.4, 1.0]  identified connections
     var tier = this.getTier();
     this.lastTier = tier;
@@ -102,9 +104,9 @@ NoPreference.prototype.getScoreRange = function getScoreRange() {
         default:
             /* falls through */
         case NoPreference.UNCONNECTED:
-            /* falls through */
+            return new Range(0.1, 0.2);
         case NoPreference.CONNECTED:
-            return new Range(0.1, 0.4);
+            return new Range(0.2, 0.4);
         case NoPreference.IDENTIFIED:
             return new Range(0.4, 1.0);
     }
@@ -137,19 +139,20 @@ PreferIncoming.prototype.getTier = function getTier() {
 
 PreferIncoming.prototype.getScoreRange = function getScoreRange() {
     // space:
-    //   [0.1, 0.4)  peers with no identified outgoing connection
-    //   [0.4, 1.0)  identified outgoing connections
+    //   [0.1, 0.2)  peers with zero connections
+    //   [0.2, 0.4)  peers with no identified incoming connection
+    //   [0.4, 1.0)  identified incoming connections
     var tier = this.getTier();
     this.lastTier = tier;
     switch (tier) {
         default:
             /* falls through */
+        case PreferIncoming.UNCONNECTED:
+            return new Range(0.1, 0.2);
         case PreferIncoming.ONLY_OUTGOING:
             /* falls through */
-        case PreferIncoming.UNCONNECTED:
-            /* falls through */
         case PreferIncoming.FRESH_INCOMING:
-            return new Range(0.1, 0.4);
+            return new Range(0.2, 0.4);
         case PreferIncoming.READY_INCOMING:
             return new Range(0.4, 1.0);
     }

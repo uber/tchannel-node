@@ -40,6 +40,7 @@ allocCluster.test('make p2p requests', {
 
     var chan = cluster.client.makeSubChannel({
         serviceName: 'server',
+        minConnections: 4,
         peerFile: '/tmp/p2p-hosts.json'
     });
 
@@ -59,8 +60,12 @@ allocCluster.test('make p2p requests', {
         }
 
         for (i = 0; i < cluster.serverHosts.length; i++) {
-            assert.equal(table[cluster.serverHosts[i]], 25,
-                'expected 25 requests to each downstream');
+            var count = table[cluster.serverHosts[i]];
+            assert.ok(
+                count > 12.5 && count < 37.5,
+                'expected between 12.5 & 37.5 requests (' + count +
+                ') to each of first peers'
+            );
         }
 
         fs.unlinkSync('/tmp/p2p-hosts.json');
@@ -104,8 +109,12 @@ allocCluster.test('changing the peer list', {
         var table = collectResponses(resps);
 
         for (i = 0; i < firstPeers.length; i++) {
-            assert.equal(table[firstPeers[i]], 25,
-                'expected 25 requests to each of first peers');
+            var count = table[cluster.serverHosts[i]];
+            assert.ok(
+                count > 12.5 && count < 37.5,
+                'expected between 12.5 & 37.5 requests (' + count +
+                ') to each of first peers'
+            );
         }
 
         fs.writeFileSync(
@@ -308,15 +317,21 @@ function sendRequests(channel, count, cb) {
     var responses = [];
 
     for (var i = 0; i < count; i++) {
-        channel.request({
-            serviceName: 'server',
-            hasNoParent: true,
-            timeout: 500,
-            headers: {
-                cn: 'client',
-                as: 'raw'
-            }
-        }).send('echo', 'a', 'body', onResponse);
+        scheduleSend();
+    }
+
+    function scheduleSend() {
+        setImmediate(function delayed() {
+            channel.request({
+                serviceName: 'server',
+                hasNoParent: true,
+                timeout: 500,
+                headers: {
+                    cn: 'client',
+                    as: 'raw'
+                }
+            }).send('echo', 'a', 'body', onResponse);
+        });
     }
 
     function onResponse(err, resp) {
@@ -378,13 +393,16 @@ function rollingSendRequsets(channel, count, cb) {
 
 function setup(cluster) {
     cluster.logger.whitelist(
-        'info', 'ChannelWatcher: Loading peer list from file sync'
+        'info', 'PeerFileWatcher: Loading peer list from file sync'
     );
     cluster.logger.whitelist(
-        'info', 'ChannelWatcher: Loaded peers'
+        'info', 'TChannel: Loaded peers'
     );
     cluster.logger.whitelist(
-        'info', 'ChannelWatcher: Loading peer list from file async'
+        'info', 'PeerFileWatcher: Loading peer list from file async'
+    );
+    cluster.logger.whitelist(
+        'info', 'TChannel: Removing old peer'
     );
 
     cluster.client = cluster.channels[0];
