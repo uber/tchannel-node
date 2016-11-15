@@ -1,3 +1,26 @@
+
+# v3.9.8
+
+- Improvement: Ensure that peer selection strategy does not
+    fully connect to all peers in the peer list. This will reduce
+    file descriptor usage and means each sub channel either has
+    1+(n incoming) connected peers or `minConnection` number of connected
+    peers. 
+
+# v3.9.7
+
+- Bug fix: Fix uncaught where wait for identifier is null.
+
+# v3.9.6
+
+- Bump thriftrw to 3.8.0
+
+# v3.9.4
+
+- Bug fix: Ensure that per-request timeout is respected in the
+    connection init phase
+- Bug fix: Fix uncaught exception where there are no connections 
+
 # v3.9.3
 
 - Check whether requests time out while waiting for connection identification.
