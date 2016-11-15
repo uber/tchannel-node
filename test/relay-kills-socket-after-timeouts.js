@@ -69,6 +69,7 @@ allocCluster.test('send some requests to timed out peer through relay', {
         retryFlags: {
             never: true
         },
+        // minConnections: 10,
         batchSize: BATCH_SIZE,
         delay: 100,
         totalRequests: TOTAL_REQUESTS
@@ -85,7 +86,7 @@ allocCluster.test('send some requests to timed out peer through relay', {
         assert.ifError(err);
 
         var EXPECTED = TOTAL_REQUESTS * 0.1;
-        var EXPECTED_REMAINDER = TOTAL_REQUESTS * 0.5;
+        var EXPECTED_REMAINDER = (TOTAL_REQUESTS - EXPECTED) * 0.5;
         testContext.populateResults(r);
 
         assert.equal(testContext.serverCounts[1], testContext.errors.length,
@@ -93,17 +94,17 @@ allocCluster.test('send some requests to timed out peer through relay', {
 
         assert.ok(
             testContext.serverCounts[0] > EXPECTED_REMAINDER * 0.85 &&
-            testContext.serverCounts[0] < EXPECTED_REMAINDER * 1.15,
+            testContext.serverCounts[0] < EXPECTED_REMAINDER * 1.2,
             'Expected healthy server to take majority of requests, ' +
                 'count (' + testContext.serverCounts[0] + ') should be > ' +
-                EXPECTED_REMAINDER * 0.85 + ' and < ' + EXPECTED_REMAINDER * 1.15
+                EXPECTED_REMAINDER * 0.85 + ' and < ' + EXPECTED_REMAINDER * 1.2
         );
         assert.ok(
             testContext.serverCounts[2] > EXPECTED_REMAINDER * 0.85 &&
-            testContext.serverCounts[2] < EXPECTED_REMAINDER * 1.15,
+            testContext.serverCounts[2] < EXPECTED_REMAINDER * 1.2,
             'Expected healthy server to take majority of requests, ' +
             'count (' + testContext.serverCounts[2] + ') should be > ' +
-                EXPECTED_REMAINDER * 0.85 + ' and < ' + EXPECTED_REMAINDER * 1.15
+                EXPECTED_REMAINDER * 0.85 + ' and < ' + EXPECTED_REMAINDER * 1.2
         );
 
         assert.ok(
@@ -158,7 +159,10 @@ allocCluster.test('send a lot of requests to timed out peer through relay', {
     // Not much to do here lol
     cluster.logger.whitelist('warn', 'stale tombstone');
 
-    var testContext = TimeoutTestContext(cluster);
+    var testContext = TimeoutTestContext(cluster, {
+        expectedConnectionResets: 20,
+        allowMultipleConnectionResets: true
+    });
 
     setupRelayMesh(cluster);
     setupServerEndpoints(cluster, testContext);
@@ -185,8 +189,8 @@ allocCluster.test('send a lot of requests to timed out peer through relay', {
     function onResults(err, r) {
         assert.ifError(err);
 
-        var EXPECTED = TOTAL_REQUESTS * 0.02;
-        var EXPECTED_REMAINDER = TOTAL_REQUESTS * 0.5;
+        var EXPECTED = TOTAL_REQUESTS * 0.08;
+        var EXPECTED_REMAINDER = (TOTAL_REQUESTS - EXPECTED) * 0.5;
         testContext.populateResults(r);
 
         assert.equal(testContext.serverCounts[1], testContext.errors.length,
@@ -247,9 +251,9 @@ allocCluster.test('send a lot of requests to timed out peer through relay', {
     }
 });
 
-function TimeoutTestContext(cluster) {
+function TimeoutTestContext(cluster, opts) {
     if (!(this instanceof TimeoutTestContext)) {
-        return new TimeoutTestContext(cluster);
+        return new TimeoutTestContext(cluster, opts);
     }
 
     var self = this;
@@ -264,6 +268,11 @@ function TimeoutTestContext(cluster) {
     };
     self.results = null;
     self.errors = null;
+
+    self.expectedConnectionResets = opts ?
+        opts.expectedConnectionResets : 3;
+    self.allowMultipleConnectionResets = opts ?
+        opts.allowMultipleConnectionResets : false;
 
     var relays = self.cluster.channels.slice(1, 4);
     for (var i = 0; i < relays.length; i++) {
@@ -341,13 +350,13 @@ function checkConnTimeoutLogs() {
         cassert.equal(self.hostPorts.timeoutServer, logMeta.remoteName,
             'expected dead connection to be timeout server');
 
-        var isValidClose = (
-            logMeta.connClosing === false &&
-            seenRelays.indexOf(logMeta.hostPort) === -1
-        ) || (
-            logMeta.connClosing === true &&
-            seenRelays.indexOf(logMeta.hostPort) > -1
-        );
+        var isValidClose;
+        if (logMeta.connClosing) {
+            isValidClose = seenRelays.indexOf(logMeta.hostPort) > -1;
+        } else {
+            isValidClose = self.allowMultipleConnectionResets ?
+                true : seenRelays.indexOf(logMeta.hostPort) === -1;
+        }
 
         cassert.equal(isValidClose, true,
             'each connection should only close once');
@@ -376,12 +385,19 @@ function checkConnTimeoutLogs() {
             'expected conn error remote to be timeout server');
     }
 
-    cassert.ok(connResetLogs.length <= 3,
-        'expected only three unique connections to be reset');
-    cassert.ok(seenGUIDs.length <= 3,
-        'expected only three unique sockets to be closed at most');
-    cassert.ok(connErrorLogs.length <= 3,
-        'expected only three connection errors');
+    // console.log('connResetLogs.length', connResetLogs.length);
+
+    var expectedConnErrors = self.expectedConnectionResets;
+
+    cassert.ok(connResetLogs.length <= expectedConnErrors,
+        'expected only ' + expectedConnErrors + ' unique connections ' +
+        'to be reset but got (' + connResetLogs.length + ')');
+    cassert.ok(seenGUIDs.length <= expectedConnErrors,
+        'expected only ' + expectedConnErrors + ' unique sockets ' +
+        'to be closed at most but got (' + seenGUIDs.length + ')');
+    cassert.ok(connErrorLogs.length <= expectedConnErrors,
+        'expected only ' + expectedConnErrors + ' connection errors ' +
+        'but got (' + connErrorLogs.length + ')');
 
     return cassert;
 };
@@ -505,6 +521,7 @@ function setupRelayMesh(cluster) {
 
         var relayToServer = relay.makeSubChannel({
             serviceName: 'server',
+            minConnections: 3,
             peers: peers.slice()
         });
         relayToServer.setPreferConnectionDirection('out');
