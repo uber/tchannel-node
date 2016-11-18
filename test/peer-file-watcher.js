@@ -321,7 +321,7 @@ function sendRequests(channel, count, cb) {
     }
 
     function scheduleSend() {
-        setImmediate(function delayed() {
+        setTimeout(function delayed() {
             channel.request({
                 serviceName: 'server',
                 hasNoParent: true,
@@ -331,7 +331,7 @@ function sendRequests(channel, count, cb) {
                     as: 'raw'
                 }
             }).send('echo', 'a', 'body', onResponse);
-        });
+        }, Math.random() * 1000);
     }
 
     function onResponse(err, resp) {
