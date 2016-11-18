@@ -60,6 +60,7 @@
     "format-stack": "4.1.1",
     "hexer": "^1.4.5",
     "istanbul": "^0.3.13",
+    "itape": "^1.9.1",
     "lb_pool": "^1.4.0",
     "ldjson-stream": "^1.2.1",
     "loadtest": "1.2.14",
