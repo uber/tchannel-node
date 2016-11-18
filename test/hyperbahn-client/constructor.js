@@ -108,7 +108,7 @@ test('create HyperbahnClient with bad hostPortFile', function t(assert) {
             serviceName: 'foo',
             hostPortFile: '~~~~~'
         });
-    }, /Read host port list failed with Error: ENOENT, no such file or directory \'~~~~~\'/);
+    }, /Read host port list failed with Error: ENOENT[,:] no such file or directory/);
 
     tchannel.close();
     assert.end();
