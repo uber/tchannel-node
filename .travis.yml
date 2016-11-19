@@ -13,3 +13,11 @@ env:
 - TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=tcurl-link-test
 
 script: npm run $NPM_TEST_SCRIPT
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.8
+
