@@ -1,6 +1,7 @@
 language: node_js
 node_js:
-  - "0.10"
+  - "0.10.32"
+  - "4.4.7"
 before_install: npm i npm@latest -g
 env:
 # NOTE: node_js has no support for varying the test script thru build matrix,
