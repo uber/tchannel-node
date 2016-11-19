@@ -11,11 +11,9 @@ env:
 - TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=travis
 - TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=hyperbahn-link-test
 - TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=tcurl-link-test
+- CXX=g++-4.8
 
 script: npm run $NPM_TEST_SCRIPT
-
-env:
-  - CXX=g++-4.8
 
 addons:
   apt:
