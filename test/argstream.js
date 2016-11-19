@@ -36,6 +36,7 @@
  */
 
 var extend = require('xtend');
+var assert = require('assert');
 var test = require('tape');
 var util = require('util');
 
@@ -226,25 +227,53 @@ function writeFrames(frames, s, callback) {
     function eachFrame(i) {
         var stream = s['arg' + writingArg];
         if (i >= frames.length) {
-            if (stream) stream.end();
+            if (stream) {
+                console.log('end(' + writingArg + ')');
+                stream.end();
+            }
             return;
         }
         var frame = frames[i];
         if (!stream) return callback(new Error('ran out of arg streams'));
-        for (var j = 0; j < frame.length; j++) {
-            if (j > 0) {
-                stream.end();
-                stream = s['arg' + (++writingArg)];
-                if (!stream) return callback(new Error('ran out of arg streams'));
-            }
-            if (j === frame.length - 1 && i === frames.length - 1) {
-                stream.end(frame[j]);
+
+        if (frame.length === 0) {
+            setImmediate(eachFrame, i+1);
+            return;
+        } else if (frame.length === 1) {
+            if (i === frames.length - 1) {
+                stream.end(frame[0]);
                 writingArg++;
             } else {
-                stream.write(frame[j]);
+                stream.write(frame[0]);
             }
+
+            setImmediate(eachFrame, i+1);
+            return;
+        } else if (frame.length !== 2) {
+            // console.log('frame?', frame.length);
         }
-        setImmediate(eachFrame, i+1);
+
+        assert(frame.length === 2,
+            'only support frame of length 2');
+
+        stream.write(frame[0]);
+
+        stream.end();
+        stream = s['arg' + (++writingArg)];
+        if (!stream) return callback(new Error('ran out of arg streams'));
+
+        setImmediate(delayedWrite);
+
+        function delayedWrite() {
+            if (i === frames.length - 1) {
+                stream.end(frame[1]);
+                writingArg++;
+            } else {
+                stream.write(frame[1]);
+            }
+
+            setImmediate(eachFrame, i+1);
+        }
     }
 }
 
