@@ -1,18 +1,18 @@
 language: node_js
 node_js:
   - "0.10.32"
-  - "4.4.7"
 before_install: npm i npm@latest -g
 env:
 # NOTE: node_js has no support for varying the test script thru build matrix,
 # so for now we just drive it by env:
-- CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
-- CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=hyperbahn-link-test
-- CXX=g++-4.8 TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=travis
-- CXX=g++-4.8 TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=hyperbahn-link-test
-- CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=tcurl-link-test
+- CXX=g++-4.8 VERSION=0.10.32 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
+- CXX=g++-4.8 VERSION=4.4.7 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
+- CXX=g++-4.8 VERSION=0.10.32 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=hyperbahn-link-test
+- CXX=g++-4.8 VERSION=0.10.32 TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=travis
+- CXX=g++-4.8 VERSION=0.10.32 TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=hyperbahn-link-test
+- CXX=g++-4.8 VERSION=0.10.32 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=tcurl-link-test
 
-script: npm run $NPM_TEST_SCRIPT
+script: nvm install $VERSION && nvm use $VERSION && npm run $NPM_TEST_SCRIPT
 
 addons:
   apt:
