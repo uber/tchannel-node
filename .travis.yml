@@ -12,7 +12,7 @@ env:
 - CXX=g++-4.8 VERSION=0.10.32 TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=hyperbahn-link-test
 - CXX=g++-4.8 VERSION=0.10.32 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=tcurl-link-test
 
-script: nvm install $VERSION && nvm use $VERSION && npm run $NPM_TEST_SCRIPT
+script: nvm install $VERSION && nvm use $VERSION && npm rebuild && npm run $NPM_TEST_SCRIPT
 
 addons:
   apt:
