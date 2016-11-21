@@ -29,7 +29,7 @@ var BatchClient = require('./lib/batch-client.js');
 var CollapsedAssert = require('./lib/collapsed-assert.js');
 
 allocCluster.test('p2p requests from 40 -> 40', {
-    numPeers: 80
+    numPeers: 40
 }, function t(cluster, assert) {
     setup(cluster);
 
@@ -104,8 +104,8 @@ allocCluster.test('p2p requests from 40 -> 40', {
         cassert.ok(info.min <= 50,
             'expected minimum to be no more then 50'
         );
-        cassert.equal(info.sum, 2000,
-            'expected 2000 requests to be made'
+        cassert.equal(info.sum, 1000,
+            'expected 1000 requests to be made'
         );
         cassert.ok(info.median >= 48,
             'expected median (' + info.median + ') to be larger then 49'
@@ -123,7 +123,7 @@ allocCluster.test('p2p requests from 40 -> 40', {
 });
 
 allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
-    numPeers: 80,
+    numPeers: 40,
     channelOptions: {
         choosePeerWithHeap: true,
         refreshConnectedPeersDelay: 100
@@ -158,11 +158,11 @@ allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
 
         cassert = verifyDistributions(statusTable, {
             min: 40,
-            sum: 2000,
+            sum: 1000,
             median: [40, 60],
             mean: [45, 55],
             max: 120,
-            p75: [55, 70],
+            p75: [50, 70],
             p95: 100,
             variance: 500
         });
@@ -173,7 +173,7 @@ allocCluster.test('p2p requests from 40 -> 40 with minConnections', {
 });
 
 allocCluster.test('p2p requests where minConns > no of servers', {
-    numPeers: 45,
+    numPeers: 25,
     channelOptions: {
         choosePeerWithHeap: true
     }
@@ -209,12 +209,12 @@ allocCluster.test('p2p requests where minConns > no of servers', {
 
         cassert = verifyDistributions(statusTable, {
             min: 395,
-            sum: 2000,
-            median: [380, 420],
-            mean: [395, 405],
-            max: 500,
-            p75: [400, 450],
-            p95: 475
+            sum: 1000,
+            median: [180, 220],
+            mean: [195, 205],
+            max: 300,
+            p75: [200, 250],
+            p95: 275
         });
         cassert.report(assert, 'expected request distribution to be ok');
 
@@ -223,7 +223,7 @@ allocCluster.test('p2p requests where minConns > no of servers', {
 });
 
 allocCluster.test('p2p requests where half of servers down', {
-    numPeers: 48,
+    numPeers: 28,
     channelOptions: {
         choosePeerWithHeap: true
     }
@@ -268,12 +268,12 @@ allocCluster.test('p2p requests where half of servers down', {
 
         cassert = verifyDistributions(statusTable, {
             min: 495,
-            sum: [1985, 2000],
-            median: [480, 520],
-            mean: [495, 505],
-            max: 600,
-            p75: [500, 575],
-            p95: 600
+            sum: [985, 1000],
+            median: [230, 270],
+            mean: [245, 255],
+            max: 350,
+            p75: [250, 300],
+            p95: 350
         });
         cassert.report(assert, 'expected request distribution to be ok');
 
@@ -286,7 +286,7 @@ allocCluster.test('p2p requests where half of servers down', {
 });
 
 allocCluster.test('p2p requests where half the servers hickup', {
-    numPeers: 48,
+    numPeers: 28,
     channelOptions: {
         choosePeerWithHeap: true,
         connectionAttemptDelay: 100,
@@ -540,7 +540,7 @@ function verifyDistributions(statusTable, opts) {
 
 function setup(cluster, opts) {
     opts = opts || {};
-    var NUM_CLIENTS = opts.clients || 40;
+    var NUM_CLIENTS = opts.clients || 20;
     var NUM_SERVERS = opts.servers || cluster.channels.length - NUM_CLIENTS;
 
     cluster.clients = cluster.channels.slice(0, NUM_CLIENTS);
