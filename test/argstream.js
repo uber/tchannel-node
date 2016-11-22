@@ -228,7 +228,6 @@ function writeFrames(frames, s, callback) {
         var stream = s['arg' + writingArg];
         if (i >= frames.length) {
             if (stream) {
-                console.log('end(' + writingArg + ')');
                 stream.end();
             }
             return;

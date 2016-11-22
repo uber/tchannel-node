@@ -321,6 +321,7 @@ function sendRequests(channel, count, cb) {
     }
 
     function scheduleSend() {
+        // Evenly schedule N requests over the next second
         setTimeout(function delayed() {
             channel.request({
                 serviceName: 'server',

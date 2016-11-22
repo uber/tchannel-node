@@ -557,9 +557,11 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 function getSocketBuffer(socket) {
     var writableState = socket._writableState;
 
+    // node >=4 has getBuffer()
     if (typeof writableState.getBuffer === 'function') {
         return writableState.getBuffer();
     } else {
+        // Node 0.10 has `.buffer`
         return writableState.buffer;
     }
 }
