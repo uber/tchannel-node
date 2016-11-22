@@ -143,6 +143,7 @@ allocCluster.test('send some requests to timed out peer through relay', {
         cassert = testContext.checkConnTimeoutLogs();
         cassert.report(assert, 'the connection timeout logs are correct');
 
+        cluster.logger.popLogs('stale tombstone');
         assert.ok(cluster.logger.isEmpty(), 'should have no logs');
 
         assert.end();
