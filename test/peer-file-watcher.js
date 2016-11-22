@@ -29,7 +29,7 @@ var setImmediate = require('timers').setImmediate;
 var allocCluster = require('./lib/alloc-cluster');
 
 allocCluster.test('make p2p requests', {
-    numPeers: 6
+    numPeers: 5
 }, function t(cluster, assert) {
     setup(cluster);
 
@@ -44,7 +44,7 @@ allocCluster.test('make p2p requests', {
         peerFile: '/tmp/p2p-hosts.json'
     });
 
-    setTimeout(function(){sendRequests(chan, 100, onResponse)}, 100);
+    sendRequests(chan, 100, onResponse)
     function onResponse(err, resps) {
         assert.ifError(err);
 
@@ -74,7 +74,7 @@ allocCluster.test('make p2p requests', {
 });
 
 allocCluster.test('changing the peer list', {
-    numPeers: 7
+    numPeers: 5
 }, function t(cluster, assert) {
     setup(cluster);
 
@@ -84,7 +84,7 @@ allocCluster.test('changing the peer list', {
     var firstPeers = [];
     var secondPeers = [];
 
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 2; i++) {
         firstPeers[i] = cluster.serverHosts[i];
         secondPeers[i] = cluster.serverHosts[i + 2];
     }
@@ -101,7 +101,7 @@ allocCluster.test('changing the peer list', {
         minConnections: 4
     });
 
-    sendRequests(chan, 100, onResponse);
+    setTimeout(function() {sendRequests(chan, 100, onResponse);}, 2000);
 
     function onResponse(err, resps) {
         assert.ifError(err);
@@ -111,8 +111,8 @@ allocCluster.test('changing the peer list', {
         for (i = 0; i < firstPeers.length; i++) {
             var count = table[cluster.serverHosts[i]];
             assert.ok(
-                count > 12.5 && count < 37.5,
-                'expected between 12.5 & 37.5 requests (' + count +
+                count > 40 && count < 60,
+                'expected between 40 & 60 requests (' + count +
                 ') to each of first peers'
             );
         }
@@ -138,8 +138,8 @@ allocCluster.test('changing the peer list', {
         for (i = 0; i < secondPeers.length; i++) {
             var count = table[secondPeers[i]];
             assert.ok(
-                count > 12.5 && count < 37.5,
-                'expected between 12.5 & 37.5 requests (' + count +
+                count > 40 && count < 60,
+                'expected between 40 & 60 requests (' + count +
                 ') to each of second peers'
             );
 
