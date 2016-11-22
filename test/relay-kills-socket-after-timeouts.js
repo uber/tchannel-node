@@ -45,12 +45,15 @@ allocCluster.test('send some requests to timed out peer through relay', {
     // Not much to do here lol
     cluster.logger.whitelist('warn', 'stale tombstone');
 
-    var testContext = TimeoutTestContext(cluster);
+    var testContext = TimeoutTestContext(cluster, {
+        expectedConnectionResets: 11,
+        allowMultipleConnectionResets: true
+    });
 
     setupRelayMesh(cluster);
     setupServerEndpoints(cluster, testContext);
 
-    var BATCH_SIZE = 20;
+    var BATCH_SIZE = 10;
     var TOTAL_REQUESTS = 500;
 
     var relays = cluster.channels.slice(1, 4);
@@ -71,7 +74,7 @@ allocCluster.test('send some requests to timed out peer through relay', {
         },
         // minConnections: 10,
         batchSize: BATCH_SIZE,
-        delay: 100,
+        delay: 200,
         totalRequests: TOTAL_REQUESTS
     });
     batchClient.warmUp(onWarm);
@@ -140,6 +143,7 @@ allocCluster.test('send some requests to timed out peer through relay', {
         cassert = testContext.checkConnTimeoutLogs();
         cassert.report(assert, 'the connection timeout logs are correct');
 
+        cluster.logger.popLogs('stale tombstone');
         assert.ok(cluster.logger.isEmpty(), 'should have no logs');
 
         assert.end();
@@ -160,22 +164,22 @@ allocCluster.test('send a lot of requests to timed out peer through relay', {
     cluster.logger.whitelist('warn', 'stale tombstone');
 
     var testContext = TimeoutTestContext(cluster, {
-        expectedConnectionResets: 20,
+        expectedConnectionResets: 33,
         allowMultipleConnectionResets: true
     });
 
     setupRelayMesh(cluster);
     setupServerEndpoints(cluster, testContext);
 
-    var BATCH_SIZE = 20;
-    var TOTAL_REQUESTS = 2500;
+    var BATCH_SIZE = 10;
+    var TOTAL_REQUESTS = 1500;
 
     var batchClient = setupBatchClient(cluster, {
         retryFlags: {
             never: true
         },
         batchSize: BATCH_SIZE,
-        delay: 100,
+        delay: 200,
         totalRequests: TOTAL_REQUESTS
     });
     batchClient.warmUp(onWarm);
@@ -189,7 +193,7 @@ allocCluster.test('send a lot of requests to timed out peer through relay', {
     function onResults(err, r) {
         assert.ifError(err);
 
-        var EXPECTED = TOTAL_REQUESTS * 0.08;
+        var EXPECTED = TOTAL_REQUESTS * 0.12;
         var EXPECTED_REMAINDER = (TOTAL_REQUESTS - EXPECTED) * 0.5;
         testContext.populateResults(r);
 

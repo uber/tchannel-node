@@ -554,19 +554,31 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
     }
 };
 
+function getSocketBuffer(socket) {
+    var writableState = socket._writableState;
+
+    // node >=4 has getBuffer()
+    if (typeof writableState.getBuffer === 'function') {
+        return writableState.getBuffer();
+    } else {
+        // Node 0.10 has `.buffer`
+        return writableState.buffer;
+    }
+}
+
 TChannelConnection.prototype.writeToSocket =
 function writeToSocket(buf) {
     var self = this;
 
-    if (self.socket._writableState.buffer.length >
-        MAX_PENDING_SOCKET_WRITE_REQ
-    ) {
+    var buffer = getSocketBuffer(self.socket);
+
+    if (buffer.length > MAX_PENDING_SOCKET_WRITE_REQ) {
         var error = errors.SocketWriteFullError({
-            pendingWrites: self.socket._writableState.buffer.length
+            pendingWrites: buffer.length
         });
         self.logger.warn('resetting connection due to write backup',
             self.extendLogInfo({
-                pendingWrites: self.socket._writableState.buffer.length,
+                pendingWrites: buffer.length,
                 totalFastBufferBytes: self.socket._writableState.length,
                 lastBufferLength: buf.length,
                 error: error

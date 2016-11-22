@@ -572,6 +572,7 @@ function testRequester(assert, baseOptions) {
         }
 
         options = extend(baseOptions, options);
+        options.agent = new http.Agent({ keepAlive: true });
         var req = http.request(options, onResponse);
 
         if (!options.host) throw new Error('no host specified');
@@ -599,6 +600,10 @@ function testRequester(assert, baseOptions) {
         function onEnd() {
             if (expected.body) {
                 assert.equal(String(buf.read()), expected.body, 'expected body');
+            }
+
+            if (typeof options.agent.destroy === 'function') {
+                options.agent.destroy();
             }
             callback(null);
         }

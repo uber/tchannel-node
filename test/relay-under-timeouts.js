@@ -27,7 +27,7 @@ var allocCluster = require('./lib/alloc-cluster');
 var RelayHandler = require('../relay_handler');
 var CollapsedAssert = require('./lib/collapsed-assert');
 
-allocCluster.test('sending a 1000 requests through eager relay', {
+allocCluster.test('sending a 500 requests through eager relay', {
     numPeers: 3
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'expected error while forwarding');
@@ -43,9 +43,9 @@ allocCluster.test('sending a 1000 requests through eager relay', {
     relay.setLazyRelaying(false);
 
     var batchClient = BatchClient(client, [relay.hostPort], {
-        totalRequests: 1000,
-        batchSize: 50,
-        delay: 50,
+        totalRequests: 500,
+        batchSize: 25,
+        delay: 100,
         endpoint: 'bleed'
     });
     batchClient.sendRequests(onResults);
@@ -53,7 +53,7 @@ allocCluster.test('sending a 1000 requests through eager relay', {
     function onResults(err, data) {
         assert.ifError(err);
 
-        assert.equal(data.errors.length + data.results.length, 1000);
+        assert.equal(data.errors.length + data.results.length, 500);
 
         var cassert = CollapsedAssert();
 
@@ -68,7 +68,7 @@ allocCluster.test('sending a 1000 requests through eager relay', {
 
         cassert.report(assert, 'all response are errors');
 
-        setTimeout(finish, 750);
+        setTimeout(finish, 1250);
     }
 
     function finish() {
@@ -76,7 +76,7 @@ allocCluster.test('sending a 1000 requests through eager relay', {
     }
 });
 
-allocCluster.test('sending a 1000 requests through lazy relay', {
+allocCluster.test('sending a 500 requests through lazy relay', {
     numPeers: 3
 }, function t(cluster, assert) {
     cluster.logger.whitelist('info', 'expected error while forwarding');
@@ -92,9 +92,9 @@ allocCluster.test('sending a 1000 requests through lazy relay', {
     relay.setLazyRelaying(true);
 
     var batchClient = BatchClient(client, [relay.hostPort], {
-        totalRequests: 1000,
-        batchSize: 50,
-        delay: 50,
+        totalRequests: 500,
+        batchSize: 25,
+        delay: 100,
         endpoint: 'bleed'
     });
     batchClient.sendRequests(onResults);
@@ -102,7 +102,7 @@ allocCluster.test('sending a 1000 requests through lazy relay', {
     function onResults(err, data) {
         assert.ifError(err);
 
-        assert.equal(data.errors.length + data.results.length, 1000);
+        assert.equal(data.errors.length + data.results.length, 500);
 
         var cassert = CollapsedAssert();
 
@@ -141,9 +141,9 @@ allocCluster.test('sending N requests to black hole with eager relay', {
     relay.setLazyRelaying(false);
 
     var batchClient = BatchClient(client, [relay.hostPort], {
-        totalRequests: 1000,
-        batchSize: 50,
-        delay: 50,
+        totalRequests: 250,
+        batchSize: 25,
+        delay: 100,
         endpoint: 'silent'
     });
     batchClient.sendRequests(onResults);
@@ -151,7 +151,7 @@ allocCluster.test('sending N requests to black hole with eager relay', {
     function onResults(err, data) {
         assert.ifError(err);
 
-        assert.equal(data.errors.length + data.results.length, 1000);
+        assert.equal(data.errors.length + data.results.length, 250);
 
         var cassert = CollapsedAssert();
 
@@ -190,9 +190,9 @@ allocCluster.test('sending N requests to black hole with lazy relay', {
     relay.setLazyRelaying(true);
 
     var batchClient = BatchClient(client, [relay.hostPort], {
-        totalRequests: 1000,
-        batchSize: 50,
-        delay: 50,
+        totalRequests: 250,
+        batchSize: 25,
+        delay: 100,
         endpoint: 'silent'
     });
     batchClient.sendRequests(onResults);
@@ -200,7 +200,7 @@ allocCluster.test('sending N requests to black hole with lazy relay', {
     function onResults(err, data) {
         assert.ifError(err);
 
-        assert.equal(data.errors.length + data.results.length, 1000);
+        assert.equal(data.errors.length + data.results.length, 250);
 
         var cassert = CollapsedAssert();
 

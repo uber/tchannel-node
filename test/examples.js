@@ -77,7 +77,10 @@ test('running as_example1.js', function t(assert) {
         assert.equal(stderr, '');
 
         assert.ok(stdout.indexOf(
-            'got resp { ok: true,'
+            'got resp'
+        ) >= 0);
+        assert.ok(stdout.indexOf(
+            ' ok: true,'
         ) >= 0);
         assert.ok(stdout.indexOf(
             '  head: { head: \'object\' },'
