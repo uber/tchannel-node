@@ -45,7 +45,7 @@
     "safe-json-parse": "^4.0.0",
     "sse4_crc32": "4.1.1",
     "tape-cluster": "2.1.0",
-    "thriftrw": "^3.8.0",
+    "thriftrw": "^3.10.0",
     "xorshift": "^0.2.0",
     "xtend": "^4.0.0"
   },
