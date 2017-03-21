@@ -12,8 +12,11 @@ The following documents are core to tchannel
 
  - [channel](./channel.md)
  - [sub-channels](./sub-channels.md)
+ - [requests](./requests.md)
+ - [handlers](./handlers.md)
  - [hyperbahn](./hyperbahn.md)
  - [as-thrift](./as-thrift.md)
+ - [as-json](./as-json.md)
 
 
 ## Extra topics
@@ -26,4 +29,3 @@ that are available.
  - [peer-to-peer](./peer-to-peer.md)
  - [statsd](./statsd.md)
  - [streaming](./streaming.md)
-
