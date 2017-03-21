@@ -1,11 +1,18 @@
 # TChannel
 
-Below we document the interface of tchannel itself; This includes
+Below we document the interface of tchannel itself.
 
- - `makeSubChannel`
- - `request().send()`
- - `register()`
+ - `TChannel(options)`
  - `listen()`
+ - `close()`
+
+ The channel supports additional methods for making subchannels, and off those
+ sub-channels sending and handling requests.
+
+ - [sub-channels](./sub-channels.md)
+ - [requests](./requests.md)
+ - [handlers](./handlers.md)
+
 
 ## Stability: stable
 
