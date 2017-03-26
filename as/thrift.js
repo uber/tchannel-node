@@ -561,7 +561,7 @@ function thriftIDL(tchannelThrift, req, head, body, callback) {
 // TODO proper Thriftify result union that reifies as the selected field.
 function onlyKey(object) {
     for (var name in object) {
-        if (object[name] !== null) {
+        if (object[name] != null) {
             return name;
         }
     }
