@@ -1,3 +1,16 @@
+# vNEXT
+
+- Bug Fix: Handles undefined default value in thrift response structs
+    when a thrift exception occurs
+
+# v3.9.10
+
+- Improvement: Pass defaultAsUndefined flag to thriftrw to allow for
+    undefined to be used as the default value in thrift structs
+
+# v3.9.9
+
+- Improvement: Add support for Node 4
 
 # v3.9.8
 
