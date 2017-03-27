@@ -1,4 +1,4 @@
-# vNEXT
+# v3.9.11
 
 - Bug Fix: Handles undefined default value in thrift response structs
     when a thrift exception occurs
