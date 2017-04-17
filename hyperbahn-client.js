@@ -292,7 +292,6 @@ function newRequest(opts) {
         timeout: (opts && opts.timeout) || self.defaultTimeout,
         hasNoParent: true,
         trace: false,
-        retryLimit: 1,
         headers: {
             cn: self.callerName
         }
