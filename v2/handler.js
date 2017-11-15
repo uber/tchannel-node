@@ -895,7 +895,9 @@ TChannelV2Handler.prototype.onReqError = function onReqError(err, req) {
 TChannelV2Handler.prototype.onResError = function onResError(err, res) {
     // TODO: wrap errors to clarify "errors on responses to req..." ?
     var req = this.connection.ops.getOutReq(res.id);
-    req.errorEvent.emit(req, err);
+    if (req) {
+        req.errorEvent.emit(req, err);
+    }
 };
 
 TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame) {
