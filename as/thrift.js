@@ -335,13 +335,24 @@ function send(request, endpoint, outHead, outBody, callback) {
             return callback(err);
         }
 
-        var parseResult = self._parse({
-            head: arg2,
-            body: arg3,
-            ok: res.ok,
-            endpoint: endpoint,
-            direction: 'in.response'
-        });
+        try {
+            var parseResult = self._parse({
+                head: arg2,
+                body: arg3,
+                ok: res.ok,
+                endpoint: endpoint,
+                direction: 'in.response'
+            });
+        } catch (e) {
+            var messageObj = {
+                endpoint: endpoint,
+                requestHead: stringifyResult.value.head,
+                requestBody: stringifyResult.value.body,
+                responseBody: arg3 && arg3.toString(),
+                originalStackTrace: e.stack,
+            };
+            throw new Error(JSON.stringify(messageObj));
+        }
 
         if (parseResult.err) {
             return callback(parseResult.err);
