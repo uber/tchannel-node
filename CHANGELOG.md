@@ -1,3 +1,7 @@
+# v3.9.12
+
+- Update depencencies to support Node.js 9 and newer.
+
 # v3.9.11
 
 - Bug Fix: Handles undefined default value in thrift response structs
