@@ -29,7 +29,7 @@ test('running example1.js', function t(assert) {
 
     function onChild(err, stdout, stderr) {
         assert.ifError(err);
-        assert.equal(stderr, '');
+        assert.equal(filterDeprecationWarnings(stderr), '');
 
         assert.ok(stdout.indexOf(
             'func1 responding with a small delay { arg2: \'arg 1\', arg3: \'arg 2\' }'
@@ -50,7 +50,7 @@ test('running example2.js', function t(assert) {
 
     function onChild(err, stdout, stderr) {
         assert.ifError(err);
-        assert.equal(stderr, '');
+        assert.equal(filterDeprecationWarnings(stderr), '');
 
         assert.ok(stdout.indexOf(
             'server got ping req from { remoteAddr: \'127.0.0.1:4041\' }'
@@ -74,7 +74,7 @@ test('running as_example1.js', function t(assert) {
 
     function onChild(err, stdout, stderr) {
         assert.ifError(err);
-        assert.equal(stderr, '');
+        assert.equal(filterDeprecationWarnings(stderr), '');
 
         assert.ok(stdout.indexOf(
             'got resp'
@@ -101,7 +101,7 @@ test('running send_test.js', function t(assert) {
 
     function onChild(err, stdout, stderr) {
         assert.ifError(err);
-        assert.equal(stderr, '');
+        assert.equal(filterDeprecationWarnings(stderr), '');
 
         [
             'server got ping req from 127.0.0.1:',
@@ -133,4 +133,15 @@ function spawnExample(exampleName, cb) {
     var file = path.join(__dirname, '..', 'examples', exampleName);
 
     exec('node ' + file, cb);
+}
+
+function filterDeprecationWarnings(stderr) {
+  var result = [];
+  var lines = stderr.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    if (!/DeprecationWarning/.test(lines[i])) {
+      result.push(lines[i]);
+    }
+  }
+  return result.join('\n');
 }
