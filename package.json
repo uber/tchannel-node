@@ -76,6 +76,9 @@
     "uber-licence": "^2.0.0",
     "uber-statsd-client": "1.3.2"
   },
+  "engines": {
+    "node": ">=8"
+  },
   "pre-commit": [],
   "pre-commit.silent": true
 }
