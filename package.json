@@ -56,7 +56,7 @@
     "collect-parallel": "^1.0.1",
     "debug-logtron": "5.1.1",
     "duplexer": "^0.1.1",
-    "eslint": "0.24.0",
+    "eslint": "6.6.0",
     "eslint-config-perf-standard": "1.0.0",
     "faucet": "0.0.1",
     "format-stack": "4.1.1",
