@@ -83,13 +83,13 @@ test('running as_example1.js', function t(assert) {
             ' ok: true,'
         ) >= 0);
         assert.ok(stdout.indexOf(
-            '  head: { head: \'object\' },'
+            '  head: { head: \'object\''
         ) >= 0);
         assert.ok(stdout.indexOf(
-            '  body: { body: \'object\' },'
+            '  body: { body: \'object\''
         ) >= 0);
         assert.ok(stdout.indexOf(
-            '  headers: { as: \'json\' } }'
+            '  headers: { as: \'json\''
         ) >= 0);
 
         assert.end();
