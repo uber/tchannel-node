@@ -125,10 +125,10 @@ allocCluster.test('chan.drain server with a few incoming', {
         }
 
         for (var i = 0; i < res.length; i++) {
-            assert.equal(
-                res[i].err && res[i].err.type,
-                'tchannel.declined',
-                'res[' + i + ']: expected declined');
+            var msg = res[i].err && res[i].err.type;
+            assert.ok(
+                msg === 'tchannel.declined' || msg === 'tchanne.connection.reset',
+                'res[' + i + ']: expected declined or connection.reset');
             assert.equal(res[i].value, null, 'res[' + i + ']: no value');
         }
 
@@ -218,7 +218,8 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBRes, finish));
 
         function checkADecline(desc, res, i) {
-            assert.equal(res.err && res.err.type, 'tchannel.declined',
+            var msg = res.err && res.err.type;
+            assert.ok(msg === 'tchannel.declined' || msg === 'tchannel.connection.reset',
                          desc + 'expected declined');
             assert.equal(res.value, null,
                          desc + 'no value');
