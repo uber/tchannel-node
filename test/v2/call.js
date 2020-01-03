@@ -27,6 +27,10 @@ var Call = require('../../v2/call.js');
 var Checksum = require('../../v2/checksum.js');
 var Tracing = require('../../v2/tracing.js');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 var testTracing = new Tracing(
     [66051, 67438087],
     [134810123, 202182159],
@@ -37,7 +41,7 @@ var testTracing = new Tracing(
 var testReq = new Call.Request(
     0, 1024, testTracing, 'apache', {key: 'val'},
     Checksum.Types.Farm32,
-    [Buffer('on'), Buffer('to'), Buffer('te')]
+    [bufferFrom('on'), bufferFrom('to'), bufferFrom('te')]
 );
 
 var testReqBytes = [
@@ -83,7 +87,7 @@ test('Call.Request.RW: read/write payload', testRW.cases(Call.Request.RW, [
 var testRes = new Call.Response(
     0, Call.Response.Codes.OK, testTracing, {key: 'val'},
     Checksum.Types.Farm32,
-    [Buffer('ON'), Buffer('TO'), Buffer('TE')]
+    [bufferFrom('ON'), bufferFrom('TO'), bufferFrom('TE')]
 );
 
 var testResBytes = [

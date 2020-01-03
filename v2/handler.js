@@ -46,12 +46,16 @@ var WriteResult = require('bufrw').WriteResult;
 var v2 = require('./index');
 var errors = require('../errors');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+
 var TCHANNEL_LANGUAGE = 'node';
 var TCHANNEL_LANGUAGE_VERSION = process.version.slice(1);
 var TCHANNEL_VERSION = require('../package.json').version;
 
 var SERVER_TIMEOUT_DEFAULT = 100;
-var GLOBAL_WRITE_BUFFER = new Buffer(v2.Frame.MaxSize);
+var GLOBAL_WRITE_BUFFER = bufferAlloc(v2.Frame.MaxSize);
 
 module.exports = TChannelV2Handler;
 
@@ -129,7 +133,7 @@ TChannelV2Handler.prototype.write = function write() {
 
 TChannelV2Handler.prototype.writeCopy = function writeCopy(buffer, start, end) {
     // TODO: Optimize, allocating SlowBuffer here is slow
-    var copy = new Buffer(end - start);
+    var copy = bufferAlloc(end - start);
     buffer.copy(copy, 0, start, end);
     this.write(copy);
 };
@@ -141,7 +145,7 @@ TChannelV2Handler.prototype.pushFrame = function pushFrame(frame) {
     var err = res.err;
     if (err) {
         if (!Buffer.isBuffer(err.buffer)) {
-            var bufCopy = new Buffer(res.offset);
+            var bufCopy = bufferAlloc(res.offset);
             writeBuffer.copy(bufCopy, 0, 0, res.offset);
             err.buffer = bufCopy;
         }

@@ -24,9 +24,13 @@ var test = require('tape');
 var Checksum = require('../../v2/checksum.js');
 var testRW = require('bufrw/test_rw');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 var args = ['arg1', 'arg2', 'arg3'];
-var parts = args.map(function mapArg(arg) {return Buffer(arg);});
-var uparts = args.map(function mapArg(arg) {return Buffer(arg.toUpperCase());});
+var parts = args.map(function mapArg(arg) {return bufferFrom(arg);});
+var uparts = args.map(function mapArg(arg) {return bufferFrom(arg.toUpperCase());});
 
 var CRC32Hash = 0x8c38c3af;
 var Farm32Hash = 0xeed86ea9;

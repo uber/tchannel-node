@@ -31,6 +31,10 @@ var allocCluster = require('./lib/alloc-cluster');
 
 var TCollectorReporter = require('../tcollector/reporter');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 var tcollectorSpec = fs.readFileSync(
     path.join(__dirname, '..', 'tcollector', 'tcollector.thrift'),
     'utf8'
@@ -46,7 +50,7 @@ test('test of thriftify spec', function t1(assert) {
 
     var span = {span: {
         'name': '/top_level_endpoint',
-        'traceId': new Buffer([
+        'traceId': bufferFrom([
             235,
             53,
             247,
@@ -56,7 +60,7 @@ test('test of thriftify spec', function t1(assert) {
             117,
             13
         ]),
-        'parentId': new Buffer([
+        'parentId': bufferFrom([
             0,
             0,
             0,
@@ -66,7 +70,7 @@ test('test of thriftify spec', function t1(assert) {
             0,
             0
         ]),
-        'id': new Buffer([
+        'id': bufferFrom([
             235,
             53,
             247,

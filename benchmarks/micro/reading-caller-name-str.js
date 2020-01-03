@@ -29,8 +29,12 @@ var Buffer = require('buffer').Buffer;
 /*eslint no-console: 0*/
 var v2 = require('../../v2/index.js');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 var spanId = [0, 1];
-var CN_BUFFER = new Buffer('cn');
+var CN_BUFFER = bufferFrom('cn');
 var parentId = [2, 3];
 var traceId = [4, 5];
 var tracing = new v2.Tracing(

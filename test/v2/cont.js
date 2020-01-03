@@ -25,9 +25,13 @@ var testRW = require('bufrw/test_rw');
 var Cont = require('../../v2/cont.js');
 var Checksum = require('../../v2/checksum.js');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 var testReqCont = new Cont.RequestCont(
     0, Checksum.Types.Farm32,
-    [Buffer('on'), Buffer('to'), Buffer('te')]
+    [bufferFrom('on'), bufferFrom('to'), bufferFrom('te')]
 );
 
 var testReqContBytes = [
@@ -58,7 +62,7 @@ test('Cont.RequestCont.RW: read/write payload', testRW.cases(Cont.RequestCont.RW
 
 var testResCont = new Cont.ResponseCont(
     0, Checksum.Types.Farm32,
-    [Buffer('ON'), Buffer('TO'), Buffer('TE')]
+    [bufferFrom('ON'), bufferFrom('TO'), bufferFrom('TE')]
 );
 
 var testResContBytes = [

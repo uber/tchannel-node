@@ -24,6 +24,11 @@ var util = require('util');
 
 var base2 = require('./base2');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+var emptyBuffer = bufferAlloc(0);
+
 module.exports = StreamCheck;
 
 function StreamCheck(name, assert, expected) {
@@ -35,7 +40,7 @@ function StreamCheck(name, assert, expected) {
 
 StreamCheck.prototype.verifyChunk = function verifyChunk(offset, gotChunk) {
     var self = this;
-    var expectedChunk = self.expected.read(gotChunk.length) || Buffer(0);
+    var expectedChunk = self.expected.read(gotChunk.length) || emptyBuffer;
     self.assert.deepEqual(gotChunk, expectedChunk, util.format(
         self.name + ': expected chunk %s bytes @%s',
         base2.pretty(gotChunk.length, 'B'),

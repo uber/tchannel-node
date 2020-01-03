@@ -27,6 +27,10 @@ var setTimeout = require('timers').setTimeout;
 var allocCluster = require('./lib/alloc-cluster.js');
 var RelayHandler = require('../relay_handler');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 allocCluster.test('request() with zero timeout (client)', {
     numPeers: 2
 }, function t(cluster, assert) {
@@ -405,6 +409,6 @@ function sendCallRequestFrame(conn, ttl, onWrite) {
     // Assign length of frame
     callFrameBytes[1] = callFrameBytes.length;
 
-    var buffer = new Buffer(callFrameBytes);
+    var buffer = bufferFrom(callFrameBytes);
     conn.socket.write(buffer, onWrite);
 }

@@ -28,6 +28,13 @@ var Checksum = require('./checksum');
 var Flags = require('./call_flags');
 var errors = require('../errors');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+var emptyBuffer = bufferAlloc(0);
+
 var Base = bufrw.Base;
 var LengthResult = bufrw.LengthResult;
 
@@ -158,9 +165,9 @@ ArgsRW.prototype.writeFragmentInto = function writeFragmentInto(destResult, body
     var remain = buffer.length - offset;
 
     do {
-        var arg = body.args[i] || Buffer(0);
+        var arg = body.args[i] || emptyBuffer;
         if (!Buffer.isBuffer(arg)) {
-            arg = new Buffer(arg);
+            arg = bufferFrom(arg);
         }
         var min = this.overhead + arg.length ? 1 : 0;
         if (remain < min) break;

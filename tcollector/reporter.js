@@ -24,6 +24,10 @@ var path = require('path');
 var assert = require('assert');
 var Buffer = require('buffer').Buffer;
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+
 module.exports = TCollectorTraceReporter;
 
 function TCollectorTraceReporter(options) {
@@ -66,7 +70,7 @@ TCollectorTraceReporter.ipToInt = function ipToInt(ip) {
 };
 
 TCollectorTraceReporter.intIdToBuffer = function intIdToBuffer(id) {
-    var buf = new Buffer(8);
+    var buf = bufferAlloc(8);
     buf.writeUInt32BE(id[0], 0);
     buf.writeUInt32BE(id[1], 4);
     return buf;

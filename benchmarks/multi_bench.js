@@ -28,6 +28,10 @@ var setTimeout = require('timers').setTimeout;
 var Buffer = require('buffer').Buffer;
 var console = require('console');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 process.title = 'nodejs-benchmarks-multi_bench';
 
 var readBenchConfig = require('./read-bench-config.js');
@@ -85,7 +89,7 @@ if (argv.trace) {
 function Test(args) {
     this.args = args;
 
-    this.arg1 = new Buffer(args.command);
+    this.arg1 = bufferFrom(args.command);
     this.arg2 = args.arg2 || null;
     this.arg3 = args.arg3 || null;
 

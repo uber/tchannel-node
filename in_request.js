@@ -28,7 +28,10 @@ var Buffer = require('buffer').Buffer;
 var errors = require('./errors');
 var States = require('./reqres_states');
 
-var emptyBuffer = Buffer(0);
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+var emptyBuffer = bufferAlloc(0);
 
 function TChannelInRequest(id, options) {
     /*eslint max-statements: [2, 40]*/

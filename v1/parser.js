@@ -22,7 +22,10 @@
 
 module.exports = TChannelParser;
 
-var emptyBuffer = new Buffer(0);
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+var emptyBuffer = bufferAlloc(0);
 
 var TChannelFrame = require('./frame');
 
@@ -46,7 +49,7 @@ function TChannelParser(connection) {
     this.state = states.readType;
 
     this.tmpInt = null;
-    this.tmpIntBuf = new Buffer(4);
+    this.tmpIntBuf = bufferAlloc(4);
     this.tmpIntPos = 0;
     this.tmpStr = null;
     this.tmpStrPos = 0;
@@ -92,7 +95,7 @@ TChannelParser.prototype.readStr = function (len) {
             this.pos += len;
             this.tmpStrPos = len;
         } else {
-            this.tmpStr = new Buffer(len);
+            this.tmpStr = bufferAlloc(len);
             this.chunk.copy(this.tmpStr, 0, this.pos, this.chunk.length);
             this.tmpStrPos = this.chunk.length - this.pos;
             this.pos += (this.chunk.length - this.pos);

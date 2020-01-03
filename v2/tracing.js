@@ -26,11 +26,15 @@
 var bufrw = require('bufrw');
 var Buffer = require('buffer').Buffer;
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+
 module.exports = Tracing;
 
-var emptySpanId = Buffer(8);
-var emptyParentId = Buffer(8);
-var emptyTraceId = Buffer(8);
+var emptySpanId = bufferAlloc(8);
+var emptyParentId = bufferAlloc(8);
+var emptyTraceId = bufferAlloc(8);
 emptySpanId.fill(0);
 emptyParentId.fill(0);
 emptyTraceId.fill(0);

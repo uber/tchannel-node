@@ -25,11 +25,15 @@ process.title = 'nodejs-benchmarks-trace_server';
 
 var Statsd = require('uber-statsd-client');
 var Buffer = require('buffer').Buffer;
+var TChannel = require('../channel');
+
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
 
 var TRACE_SERVER_PORT = 7039;
 var STATSD_PORT = 7036;
 
-var TChannel = require('../channel');
 var server = TChannel({
     statTags: {
         app: 'tcollector'
@@ -49,9 +53,9 @@ var tcollectorChan = server.makeSubChannel({
 server.listen(TRACE_SERVER_PORT, '127.0.0.1');
 
 tcollectorChan.register('TCollector::submit', function onSubmit(req, res) {
-    var arg2 = new Buffer([0x00, 0x00]);
+    var arg2 = bufferFrom([0x00, 0x00]);
     // 0c00 0002 0001 0100 00
-    var arg3 = new Buffer([
+    var arg3 = bufferFrom([
         0x0c, 0x00, 0x00, 0x02,
         0x00, 0x01, 0x01, 0x00,
         0x00

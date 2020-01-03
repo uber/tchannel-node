@@ -24,10 +24,14 @@ var testRW = require('bufrw/test_rw');
 var Frame = require('../../v2/frame.js');
 var TestBody = require('./lib/test_body.js');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 TestBody.testWith('Frame.RW: read/write payload', testRW.cases(Frame.RW, [
 
     [
-        new Frame(0x01020304, TestBody(Buffer('doge'))), [
+        new Frame(0x01020304, TestBody(bufferFrom('doge'))), [
             0x00, 0x15,             // size:2:
             TestBody.TypeCode,      // type:1
             0x00,                   // reserved:1
@@ -40,7 +44,7 @@ TestBody.testWith('Frame.RW: read/write payload', testRW.cases(Frame.RW, [
     ],
 
     [
-        new Frame(0x01020304, TestBody(Buffer('cat'))),[
+        new Frame(0x01020304, TestBody(bufferFrom('cat'))),[
             0x00, 0x14,             // size:2:
             TestBody.TypeCode,      // type:1
             0x00,                   // reserved:1

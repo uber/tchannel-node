@@ -23,6 +23,10 @@
 var inherits = require('util').inherits;
 var Readable = require('stream').Readable;
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+
 function IterStream(rw, options) {
     if (!(this instanceof IterStream)) {
         return new IterStream(options);
@@ -48,7 +52,7 @@ IterStream.prototype._read = function _read(size) {
         return;
     }
     var count = Math.ceil(size / self._rw.width);
-    var buf = new Buffer(self._rw.width * count);
+    var buf = bufferAlloc(self._rw.width * count);
     var offset = 0;
     for (var i = 0; i < count; i++) {
         var n = self._next();

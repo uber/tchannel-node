@@ -28,6 +28,10 @@ var extend = require('xtend');
 
 var errors = require('../errors.js');
 
+// Node.js deprecated Buffer for Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 module.exports = TChannelJSON;
 
 function TChannelJSON(options) {
@@ -114,9 +118,9 @@ TChannelJSON.prototype.send = function send(
     req.headers.as = 'json';
 
     req.send(
-        new Buffer(endpoint),
-        new Buffer(stringifyResult.value.head || ''),
-        new Buffer(stringifyResult.value.body || ''),
+        bufferFrom(endpoint),
+        bufferFrom(stringifyResult.value.head || ''),
+        bufferFrom(stringifyResult.value.body || ''),
         onResponse
     );
 

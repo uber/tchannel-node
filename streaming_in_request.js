@@ -29,7 +29,11 @@ var Buffer = require('buffer').Buffer;
 var States = require('./reqres_states');
 var InArgStream = require('./argstream').InArgStream;
 
-var emptyBuffer = Buffer(0);
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+
+var emptyBuffer = bufferAlloc(0);
 
 function StreamingInRequest(id, options) {
     InRequest.call(this, id, options);
