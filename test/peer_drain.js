@@ -123,14 +123,12 @@ allocCluster.test('peer.drain server with a few incoming', {
     }
 
     function onSecondReq(err, res) {
-        console.log('declined!!!', err);
-
         running = false;
 
-        assert.equal(
-            err && err.type,
-            'tchannel.declined',
-            'err: expected declined');
+        var type = err && err.type;
+        assert.ok(
+            type === 'tchannel.declined' || type === 'tchannel.connection.reset',
+            'err: expected declined or connection reset');
         assert.equal(res && res.value, null, 'res: no value');
 
         outstanding--;
@@ -257,8 +255,9 @@ allocCluster.test('peer.drain server with a few incoming (with exempt service)',
         clientB.request().send('echo', 'such', 'mess' + reqN, checkBRes);
 
         function checkADecline(err, res) {
-            assert.equal(err && err.type, 'tchannel.declined',
-                         'service:a expected declined');
+            var type = err && err.type;
+            assert.ok(type === 'tchannel.declined' || type === 'tchannel.connection.reset',
+                      'service:a expected declined');
             assert.equal(res, null,
                          'service:a no value');
             finish();

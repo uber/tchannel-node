@@ -125,9 +125,9 @@ allocCluster.test('chan.drain server with a few incoming', {
         }
 
         for (var i = 0; i < res.length; i++) {
-            var msg = res[i].err && res[i].err.type;
+            var type = res[i].err && res[i].err.type;
             assert.ok(
-                msg === 'tchannel.declined' || msg === 'tchanne.connection.reset',
+                type === 'tchannel.declined' || type === 'tchannel.connection.reset',
                 'res[' + i + ']: expected declined or connection.reset');
             assert.equal(res[i].value, null, 'res[' + i + ']: no value');
         }
@@ -218,8 +218,8 @@ allocCluster.test('chan.drain server with a few incoming (with exempt service)',
         collectParallel(clients.b, sendOne, checkSendsDone('service:b', checkBRes, finish));
 
         function checkADecline(desc, res, i) {
-            var msg = res.err && res.err.type;
-            assert.ok(msg === 'tchannel.declined' || msg === 'tchannel.connection.reset',
+            var type = res.err && res.err.type;
+            assert.ok(type === 'tchannel.declined' || type === 'tchannel.connection.reset',
                          desc + 'expected declined');
             assert.equal(res.value, null,
                          desc + 'no value');
@@ -720,7 +720,9 @@ allocCluster.test('incoming connection during chan.drain', {
             reqN++;
             assert.comment('--- sending request ' + reqN);
             client2.request().send('echo', 'such', 'mess' + reqN, function afterDrainSendsDone(err, res) {
-                assert.equal(err && err.type, 'tchannel.declined', 'expected declined');
+                var type = err && err.type;
+                assert.ok(type === 'tchannel.declined' || type === 'tchannel.connection.reset',
+                    'expected declined or connection reset');
                 assert.equal(res, null, 'res: no value');
 
                 finish();

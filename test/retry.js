@@ -146,6 +146,7 @@ allocCluster.test('request retries', {
         for (var i = 0; i < reqErrors.length; i++) {
             assert.ok(
                 reqErrors[i].err.type === 'tchannel.declined' ||
+                reqErrors[i].err.type === 'tchannel.connection.reset' ||
                 reqErrors[i].err.type === 'tchannel.busy' ||
                 reqErrors[i].err.type === 'tchannel.unexpected',
                 'expected error request'

@@ -404,7 +404,8 @@ allocCluster.test('eager relay emits no peer stat', {
         hasNoParent: true
     }).send('echo', 'foo', 'bar', function done(err, res, arg2, arg3) {
         assert.ok(err, 'expected err');
-        assert.equal(err.type, 'tchannel.declined');
+        var type = err.type;
+        assert.ok(type === 'tchannel.declined' || type === 'tchannel.connection.reset');
 
         twoClient.topChannel.close();
 

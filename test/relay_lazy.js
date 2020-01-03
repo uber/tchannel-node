@@ -250,7 +250,9 @@ allocCluster.test('lazy relay an error frame', {
             cn: 'wat'
         }
     }).send('decline', 'foo', 'bar', function done(err, res, arg2, arg3) {
-        assert.equal(err.type, 'tchannel.declined', 'expected declined error');
+        var type = err.type;
+        assert.ok(type === 'tchannel.declined' || type === 'tchannel.connection.reset',
+            'expected declined or connection reset');
 
         assert.ok(cluster.logger.items().length >= 1, 'expected some logs');
         client.close();
