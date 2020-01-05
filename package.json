@@ -4,6 +4,7 @@
   "author": "mranney@uber.com",
   "version": "3.9.13",
   "scripts": {
+    "postinstall": "bash scripts/postinstall.sh",
     "lint": "eslint $(git ls-files | grep '.js$')",
     "travis": "npm run check-licence && npm run lint -s && npm run travis-cover -s && npm run check-benchmark -s",
     "test": "npm run check-licence && npm run lint -s && npm run cover -s && npm run check-benchmark -s",
@@ -33,7 +34,6 @@
     "bufrw": "^1.2.1",
     "crc": "3.2.1",
     "error": "^7.0.1",
-    "farmhash": "1.1.0",
     "json-stringify-safe": "^5.0.0",
     "metrics": "^0.1.8",
     "minimist": "^1.1.0",
@@ -43,7 +43,6 @@
     "run-parallel": "^1.1.0",
     "run-series": "^1.1.2",
     "safe-json-parse": "^4.0.0",
-    "sse4_crc32": "^5.3.0",
     "tape-cluster": "2.1.0",
     "thriftrw": "^3.11.0",
     "xorshift": "^0.2.0",
