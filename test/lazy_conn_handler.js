@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,10 @@ var ReadResult = require('bufrw').ReadResult;
 
 var v2 = require('../v2/index.js');
 var allocCluster = require('./lib/alloc-cluster.js');
+
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
 
 allocCluster.test('connection.handler: lazy call handling', 2, function t(cluster, assert) {
     var one = cluster.channels[0];
@@ -62,7 +66,7 @@ allocCluster.test('connection.handler: lazy call handling', 2, function t(cluste
         if (res.err) {
             throw res.err;
         }
-        assert.deepEqual(res.value, Buffer('such'), 'expected called arg1');
+        assert.deepEqual(res.value, bufferFrom('such'), 'expected called arg1');
 
         this.sendCallBodies(frame.id, new v2.CallResponse(
             0,                       // flags
@@ -106,8 +110,8 @@ allocCluster.test('connection.handler: lazy call handling', 2, function t(cluste
             return;
         }
 
-        assert.deepEqual(res.arg2, Buffer('yeah'), 'expected res arg2');
-        assert.deepEqual(res.arg3, Buffer('lol'), 'expected res arg3');
+        assert.deepEqual(res.arg2, bufferFrom('yeah'), 'expected res arg2');
+        assert.deepEqual(res.arg3, bufferFrom('lol'), 'expected res arg3');
 
         assert.end();
     }

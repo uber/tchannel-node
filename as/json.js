@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,10 @@ var cyclicStringify = require('json-stringify-safe');
 var extend = require('xtend');
 
 var errors = require('../errors.js');
+
+// Node.js deprecated Buffer for Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
 
 module.exports = TChannelJSON;
 
@@ -114,9 +118,9 @@ TChannelJSON.prototype.send = function send(
     req.headers.as = 'json';
 
     req.send(
-        new Buffer(endpoint),
-        new Buffer(stringifyResult.value.head || ''),
-        new Buffer(stringifyResult.value.body || ''),
+        bufferFrom(endpoint),
+        bufferFrom(stringifyResult.value.head || ''),
+        bufferFrom(stringifyResult.value.body || ''),
         onResponse
     );
 

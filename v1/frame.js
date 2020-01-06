@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,12 @@
 var farmhash = require('farmhash');
 var Header = require('./header');
 
-var emptyBuffer = Buffer(0);
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+var emptyBuffer = bufferAlloc(0);
 
 module.exports = TChannelFrame;
 
@@ -50,14 +55,14 @@ TChannelFrame.prototype.set = function (arg1, arg2, arg3) {
     if (Buffer.isBuffer(arg1)) {
         this.arg1 = arg1;
     } else {
-        this.arg1 = new Buffer(arg1.toString());
+        this.arg1 = bufferFrom(arg1.toString());
     }
     this.header.arg1len = this.arg1.length;
 
     if (Buffer.isBuffer(arg2)) {
         this.arg2 = arg2;
     } else if (typeof arg2 === 'string') {
-        this.arg2 = new Buffer(arg2);
+        this.arg2 = bufferFrom(arg2);
     } else if (arg2 === null || arg2 === undefined) {
         this.arg2 = emptyBuffer;
     } else {
@@ -68,7 +73,7 @@ TChannelFrame.prototype.set = function (arg1, arg2, arg3) {
     if (Buffer.isBuffer(arg3)) {
         this.arg3 = arg3;
     } else if (typeof arg3 === 'string') {
-        this.arg3 = new Buffer(arg3);
+        this.arg3 = bufferFrom(arg3);
     } else if (arg3 === null || arg3 === undefined) {
         this.arg3 = emptyBuffer;
     } else {
@@ -104,7 +109,7 @@ TChannelFrame.prototype.verifyChecksum = function () {
 
 TChannelFrame.prototype.toBuffer = function () {
     var header = this.header;
-    var buf = new Buffer(25 + header.arg1len + header.arg2len + header.arg3len);
+    var buf = bufferAlloc(25 + header.arg1len + header.arg2len + header.arg3len);
     var offset = 0;
 
     buf.writeUInt8(header.type, offset, true);

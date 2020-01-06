@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,13 @@ var writeRes = new WriteResult();
 var TestBody = require('./lib/test_body.js');
 var v2 = require('../../v2/index.js');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+var emptyBuffer = bufferAlloc(0);
+
 var Bytes = [
     0x00, 0x15,             // size: 2
     0x03,                   // type: 1
@@ -46,7 +53,7 @@ var Bytes = [
 ];
 var _lazyFrame = new v2.LazyFrame(
     0x15, 0x03, 0x01,
-    new Buffer(Bytes)
+    bufferFrom(Bytes)
 );
 _lazyFrame.bodyRW = v2.Frame.Types[0x03].RW;
 
@@ -57,7 +64,7 @@ test('LazyFrame.RW: read/write', testRW.cases(v2.LazyFrame.RW, [
 ]));
 
 TestBody.testWith('LazyFrame.readFrom, invalid type', function t(assert) {
-    var res = v2.LazyFrame.RW.readFrom(new Buffer([
+    var res = v2.LazyFrame.RW.readFrom(bufferFrom([
         0x00, 0x15,             // size: 2
         0x50,                   // type: 1
         0x00,                   // reserved:1
@@ -77,7 +84,7 @@ TestBody.testWith('LazyFrame.readFrom, invalid type', function t(assert) {
 });
 
 TestBody.testWith('LazyFrame.readBody', function t(assert) {
-    var frame = v2.LazyFrame.RW.readFrom(new Buffer([
+    var frame = v2.LazyFrame.RW.readFrom(bufferFrom([
         0x00, 0x15,             // size: 2
         0x00,                   // type: 1
         0x00,                   // reserved:1
@@ -94,14 +101,14 @@ TestBody.testWith('LazyFrame.readBody', function t(assert) {
     assert.ok(bodyRes.value);
 
     assert.deepEqual(
-        bodyRes.value.payload, new Buffer([0x64, 0x6f, 0x67, 0x65])
+        bodyRes.value.payload, bufferFrom([0x64, 0x6f, 0x67, 0x65])
     );
 
     assert.end();
 });
 
 TestBody.testWith('LazyFrame.setId', function t(assert) {
-    var frame = v2.LazyFrame.RW.readFrom(new Buffer([
+    var frame = v2.LazyFrame.RW.readFrom(bufferFrom([
         0x00, 0x15,             // size: 2
         0x00,                   // type: 1
         0x00,                   // reserved:1
@@ -118,12 +125,12 @@ TestBody.testWith('LazyFrame.setId', function t(assert) {
 
     assert.equal(frame.id, 0x04);
 
-    var buffer = new Buffer(frame.size);
+    var buffer = bufferAlloc(frame.size);
     v2.LazyFrame.RW.writeInto(frame, buffer, 0);
 
     assert.deepEqual(
         buffer,
-        new Buffer([
+        bufferFrom([
             0x00, 0x15,             // size: 2
             0x00,                   // type: 1
             0x00,                   // reserved:1

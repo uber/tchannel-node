@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,9 +29,13 @@ var Buffer = require('buffer').Buffer;
 /*eslint no-console: 0*/
 var v2 = require('../../v2/index.js');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 var spanId = [0, 1];
-var CN_BUFFER = new Buffer('cn');
-var RD_BUFFER = new Buffer('rd');
+var CN_BUFFER = bufferFrom('cn');
+var RD_BUFFER = bufferFrom('rd');
 var parentId = [2, 3];
 var traceId = [4, 5];
 var tracing = new v2.Tracing(

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,14 +35,19 @@ var header = require('./header');
 var Tracing = require('./tracing');
 var Frame = require('./frame');
 var CallFlags = require('./call_flags');
+
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 var argsrw = new ArgsRW();
 
 var ReadResult = bufrw.ReadResult;
 var WriteResult = bufrw.WriteResult;
 var readRes = new ReadResult(); // shared read result
 
-var CN_VALUE = new Buffer('cn').readUInt16BE(0, false);
-var RD_VALUE = new Buffer('rd').readUInt16BE(0, false);
+var CN_VALUE = bufferFrom('cn').readUInt16BE(0, false);
+var RD_VALUE = bufferFrom('rd').readUInt16BE(0, false);
 
 var ResponseCodes = {
     OK: 0x00,

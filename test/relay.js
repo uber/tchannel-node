@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -227,7 +227,8 @@ allocCluster.test('relay an error frame', {
             cn: 'wat'
         }
     }).send('decline', 'foo', 'bar', function done(err, res, arg2, arg3) {
-        assert.equal(err.type, 'tchannel.declined', 'expected declined error');
+        var type = err.type;
+        assert.ok(type === 'tchannel.declined' || type === 'tchannel.connection.reset', 'expected declined error');
 
         assert.ok(cluster.logger.items().length >= 1);
         client.close();

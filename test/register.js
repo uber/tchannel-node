@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,10 @@
 var parallel = require('run-parallel');
 var Buffer = require('buffer').Buffer;
 var allocCluster = require('./lib/alloc-cluster.js');
+
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
 
 allocCluster.test('register() with different results', {
     numPeers: 2,
@@ -60,7 +64,7 @@ allocCluster.test('register() with different results', {
 
     oneSub.register('/buffer-head', function buffer(req, res) {
         res.headers.as = 'raw';
-        res.sendOk(new Buffer('abc'), null);
+        res.sendOk(bufferFrom('abc'), null);
     });
     oneSub.register('/string-head', function string(req, res) {
         res.headers.as = 'raw';
@@ -81,7 +85,7 @@ allocCluster.test('register() with different results', {
 
     oneSub.register('/buffer-body', function buffer(req, res) {
         res.headers.as = 'raw';
-        res.sendOk(null, new Buffer('abc'));
+        res.sendOk(null, bufferFrom('abc'));
     });
     oneSub.register('/string-body', function string(req, res) {
         res.headers.as = 'raw';

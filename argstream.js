@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +45,11 @@ var setImmediate = require('timers').setImmediate;
 var clearImmediate = require('timers').clearImmediate;
 
 var errors = require('./errors');
+
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferAlloc = Buffer.alloc || Buffer;
+var emptyBuffer = bufferAlloc(0);
 
 function ArgStream() {
     EventEmitter.call(this);
@@ -138,7 +143,7 @@ function OutArgStream() {
     ArgStream.call(this);
     this._flushImmed = null;
     this.finished = false;
-    this.frame = [Buffer(0)];
+    this.frame = [emptyBuffer];
     this.currentArgN = 2;
 
     var self = this;
@@ -189,7 +194,7 @@ OutArgStream.prototype._handleFrameChunk = function _handleFrameChunk(n, chunk) 
         self.frame.push(chunk);
     } else if (chunk === null) {
         if (++self.currentArgN <= 3) {
-            self.frame.push(Buffer(0));
+            self.frame.push(emptyBuffer);
         }
     } else {
         self._appendFrameChunk(chunk);
@@ -228,7 +233,7 @@ OutArgStream.prototype._flushParts = function _flushParts(isLast) {
     }
     isLast = Boolean(isLast);
     var frame = self.frame;
-    self.frame = [Buffer(0)];
+    self.frame = [emptyBuffer];
     if (frame.length) {
         self.frameEvent.emit(self, [frame, isLast]);
     }

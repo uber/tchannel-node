@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,9 @@ var util = require('util');
 var TestSearch = require('./lib/test_search');
 var argstream = require('../argstream');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
 
 // Useful for verifying the searcher
 test.skip('setup sanity', argSearchTest(function t(state, assert) {
@@ -93,7 +96,7 @@ test('argstream', function t(assert) {
                 assert.fail(util.format('unexpected frame %s: ', gotI, parts));
             } else {
                 assert.deepEqual(parts, expected.map(function(part) {
-                    return new Buffer(part);
+                    return bufferFrom(part);
                 }), 'expected frame ' + gotI);
             }
         });

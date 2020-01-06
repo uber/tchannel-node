@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,10 @@ var allocCluster = require('./lib/alloc-cluster.js');
 var EndpointHandler = require('../endpoint-handler');
 var TChannel = require('../channel.js');
 
+// Node.js deprecated Buffer in favor of Buffer.alloc and Buffer.from.
+// istanbul ignore next
+var bufferFrom = Buffer.from || Buffer;
+
 allocCluster.test('request().send() to a server', 2, function t(cluster, assert) {
     var one = cluster.channels[0];
     var two = cluster.channels[1];
@@ -47,7 +51,7 @@ allocCluster.test('request().send() to a server', 2, function t(cluster, assert)
     parallelSendTest(two.subChannels.server, [
         {
             name: 'bufferOp',
-            op: Buffer('foo'),
+            op: bufferFrom('foo'),
             opts: {
                 serviceName: 'server'
             },
@@ -75,7 +79,7 @@ allocCluster.test('request().send() to a server', 2, function t(cluster, assert)
             opts: {
                 serviceName: 'server'
             },
-            reqHead: Buffer('abc'),
+            reqHead: bufferFrom('abc'),
             reqBody: null,
             resHead: 'abc',
             resBody: ''
@@ -136,7 +140,7 @@ allocCluster.test('request().send() to a server', 2, function t(cluster, assert)
                 serviceName: 'server'
             },
             reqHead: null,
-            reqBody: Buffer('abc'),
+            reqBody: bufferFrom('abc'),
             resHead: '',
             resBody: 'abc'
         },

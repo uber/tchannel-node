@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -216,7 +216,7 @@ allocHTTPTest('as/http can bridge a service using lbpool (non-streaming)', {
             headers: {
                 'Content-Type': 'text/plain',
                 'X-Test-Header': 'test header one, test header two',
-                'Set-Cookie': [ 'test cookie one', 'test cookie two'],
+                'Set-Cookie': [ 'test cookie one, test cookie two'],
                 'Max-Forwards': '5'
             }
         }, 'hello world', {
@@ -230,7 +230,7 @@ allocHTTPTest('as/http can bridge a service using lbpool (non-streaming)', {
                     headers: {
                         'content-type': 'text/plain',
                         'x-test-header': 'test header one, test header two',
-                        'set-cookie': [ 'test cookie one', 'test cookie two'],
+                        'set-cookie': [ 'test cookie one, test cookie two'],
                         'max-forwards': '5',
                         host:  egressHost,
                         connection: 'keep-alive',
