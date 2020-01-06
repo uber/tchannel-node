@@ -1,3 +1,8 @@
+# v3.10.0
+
+- Now builds properly in versions of Node.js as old as 0.10 and as new as
+  Node.js 12.
+
 # v3.9.12
 
 - Update depencencies to support Node.js 9 and newer.
