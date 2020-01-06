@@ -2,7 +2,7 @@
   "name": "tchannel",
   "description": "network multiplexing and framing protocol for RPC or parser drag racing",
   "author": "mranney@uber.com",
-  "version": "3.9.13",
+  "version": "3.10.0",
   "scripts": {
     "postinstall": "bash scripts/postinstall.sh",
     "lint": "eslint $(git ls-files | grep '.js$')",
