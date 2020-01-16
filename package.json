@@ -36,7 +36,7 @@
     "farmhash": "^3.0.0",
     "json-stringify-safe": "^5.0.1",
     "metrics": "^0.1.21",
-    "minimist": "^1.1.0",
+    "minimist": "^1.2.0",
     "process": "^0.11.10",
     "raw-body": "^2.1.2",
     "ready-signal": "^1.1.1",
