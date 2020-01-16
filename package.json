@@ -58,7 +58,7 @@
     "eslint-config-perf-standard": "1.0.0",
     "faucet": "0.0.1",
     "format-stack": "^4.1.1",
-    "hexer": "^1.4.5",
+    "hexer": "^1.5.0",
     "istanbul": "^0.3.13",
     "itape": "^1.9.1",
     "lb_pool": "^1.6.3",
