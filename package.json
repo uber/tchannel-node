@@ -34,7 +34,7 @@
     "crc": "^3.8.0",
     "error": "^7.0.1",
     "farmhash": "^3.0.0",
-    "json-stringify-safe": "^5.0.0",
+    "json-stringify-safe": "^5.0.1",
     "metrics": "^0.1.8",
     "minimist": "^1.1.0",
     "process": "^0.11.10",
