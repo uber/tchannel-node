@@ -2,6 +2,8 @@ language: node_js
 
 jobs:
   include:
+    - node_js: "10"
+      env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
     - node_js: "12"
       env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
     - node_js: "12"
