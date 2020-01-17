@@ -1,6 +1,7 @@
 node_modules/
 TODO.md
 coverage/
+.nyc_output/
 benchmarks/*.json
 node/
 benchmarks/*.svg
