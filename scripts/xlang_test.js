@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
