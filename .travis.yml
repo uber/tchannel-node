@@ -2,23 +2,17 @@ language: node_js
 
 jobs:
   include:
+    - node_js: "10"
+      env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
     - node_js: "12"
       env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
-    - node_js: "5"
-      env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
-    - node_js: "4"
-      env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
-    - node_js: "3"
-      env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
-    - node_js: "0.10"
-      env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=travis
-    # - node_js: "0.10"
-    #   env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=hyperbahn-link-test
-    - node_js: "0.10"
+    - node_js: "12"
       env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=travis
-    # - node_js: "0.10"
+    # - node_js: "12"
+    #   env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=hyperbahn-link-test
+    # - node_js: "12"
     #   env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG=test/config/with_lazy_relay.json NPM_TEST_SCRIPT=hyperbahn-link-test
-    # - node_js: "0.10"
+    # - node_js: "12"
     #   env: CXX=g++-4.8 TCHANNEL_TEST_CONFIG= NPM_TEST_SCRIPT=tcurl-link-test
 
 script: npm run $NPM_TEST_SCRIPT
@@ -30,4 +24,3 @@ addons:
     packages:
     - gcc-4.8
     - g++-4.8
-
