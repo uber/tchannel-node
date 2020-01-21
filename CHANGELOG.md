@@ -1,3 +1,14 @@
+# v4.0.0
+
+- This major version upgrades all dependencies to the most recent working major
+  version, including binary dependencies.
+  This is a measure of last resort since the last version of v3 attempted
+  to use a postinstall hook to install different versions of some binary
+  dependencies so that a single version train would work for both old
+  and new Node.js versions.
+  This plan failed because some build systems would prune the versions
+  installed by the postinstall hook.
+
 # v3.10.1
 
 - This is the first patch release after master diverged for release 4.0.0.
