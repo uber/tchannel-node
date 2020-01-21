@@ -1,3 +1,10 @@
+# v3.10.1
+
+- This is the first patch release after master diverged for release 4.0.0.
+  This change reintroduces explicit versions of binary dependencies since the
+  postinstall hook interfered with some build systems because these binary
+  dependencies would be pruned.
+
 # v3.10.0
 
 - Now builds properly in versions of Node.js as old as 0.10 and as new as
