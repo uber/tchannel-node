@@ -615,7 +615,7 @@ TChannel.prototype.makeSubChannel = function makeSubChannel(options) {
     }
 
     opts.topChannel = self;
-    opts.timeHeap = self.timeHeap;
+    opts.timeHeap = options.timeHeap || self.timeHeap;
 
     opts.enableMaxRetryRatio = options.enableMaxRetryRatio;
     opts.maxRetryRatio = options.maxRetryRatio;
