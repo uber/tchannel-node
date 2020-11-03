@@ -54,12 +54,9 @@ function TChannelAsThrift(opts) {
         allowIncludeAlias: opts.allowIncludeAlias,
         allowOptionalArguments: opts.allowOptionalArguments,
         defaultAsUndefined: opts.defaultAsUndefined,
+        releaseSources: true,
         fs: opts.fs
     });
-
-    var sources = self.spec.getSources();
-    self.thriftFileName = sources.entryPoint;
-    self.thriftSource = sources.idls[sources.entryPoint];
 
     self.logger = opts.logger;
 
@@ -148,7 +145,8 @@ function registerMeta(metaSource) {
     var self = this;
 
     var metaSpec = new thriftrw.Thrift({
-        source: metaSource
+        source: metaSource,
+        releaseSources: true
     });
 
     self.register(self.channel, 'Meta::health', self, health, metaSpec);

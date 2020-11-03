@@ -39,7 +39,8 @@ var tcollectorSpec = fs.readFileSync(
 test('test of thriftify spec', function t1(assert) {
     var thriftSpec = new thriftrw.Thrift({
         source: tcollectorSpec,
-        strict: false
+        strict: false,
+        releaseSources: true
     });
 
     var argsType = thriftSpec.getType('TCollector::submit_args');
