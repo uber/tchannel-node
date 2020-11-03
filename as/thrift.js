@@ -150,7 +150,6 @@ function registerMeta(metaSource) {
     });
 
     self.register(self.channel, 'Meta::health', self, health, metaSpec);
-    self.register(self.channel, 'Meta::thriftIDL', self, thriftIDL, metaSpec);
 };
 
 TChannelAsThrift.prototype.request = function request(reqOptions) {
@@ -546,13 +545,6 @@ function health(tchannelThrift, req, head, body, callback) {
             ok: status.ok,
             message: status.message
         }
-    });
-}
-
-function thriftIDL(tchannelThrift, req, head, body, callback) {
-    return callback(null, {
-        ok: true,
-        body: tchannelThrift.spec.getSources()
     });
 }
 
