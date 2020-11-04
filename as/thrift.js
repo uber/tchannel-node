@@ -54,6 +54,7 @@ function TChannelAsThrift(opts) {
         allowIncludeAlias: opts.allowIncludeAlias,
         allowOptionalArguments: opts.allowOptionalArguments,
         defaultAsUndefined: opts.defaultAsUndefined,
+        // Release IDL sources, asts after parsing
         releaseSources: true,
         fs: opts.fs
     });
