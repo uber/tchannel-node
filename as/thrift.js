@@ -54,12 +54,10 @@ function TChannelAsThrift(opts) {
         allowIncludeAlias: opts.allowIncludeAlias,
         allowOptionalArguments: opts.allowOptionalArguments,
         defaultAsUndefined: opts.defaultAsUndefined,
+        // Release IDL sources, asts after parsing
+        releaseSources: true,
         fs: opts.fs
     });
-
-    var sources = self.spec.getSources();
-    self.thriftFileName = sources.entryPoint;
-    self.thriftSource = sources.idls[sources.entryPoint];
 
     self.logger = opts.logger;
 
@@ -148,11 +146,11 @@ function registerMeta(metaSource) {
     var self = this;
 
     var metaSpec = new thriftrw.Thrift({
-        source: metaSource
+        source: metaSource,
+        releaseSources: true
     });
 
     self.register(self.channel, 'Meta::health', self, health, metaSpec);
-    self.register(self.channel, 'Meta::thriftIDL', self, thriftIDL, metaSpec);
 };
 
 TChannelAsThrift.prototype.request = function request(reqOptions) {
@@ -548,13 +546,6 @@ function health(tchannelThrift, req, head, body, callback) {
             ok: status.ok,
             message: status.message
         }
-    });
-}
-
-function thriftIDL(tchannelThrift, req, head, body, callback) {
-    return callback(null, {
-        ok: true,
-        body: tchannelThrift.spec.getSources()
     });
 }
 
