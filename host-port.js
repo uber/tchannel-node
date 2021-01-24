@@ -26,17 +26,13 @@ module.exports.validateHostPort = validateHostPort;
 module.exports.validateHost = validateHost;
 module.exports.validatePort = validatePort;
 
-function validateHost(host, allowEmphemeral) {
+function validateHost(host) {
     if (typeof host !== 'string') {
         return 'Expected host to be a string';
     }
 
     if (!validIPv4.test(host)) {
         return 'Expected host to contain IPv4';
-    }
-
-    if (!allowEmphemeral && host === '0.0.0.0') {
-        return 'Expected host to not be 0.0.0.0';
     }
 
     return null;
