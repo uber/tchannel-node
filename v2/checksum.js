@@ -25,7 +25,6 @@
 var assert = require('assert');
 var farm32 = require('farmhash').fingerprint32;
 var crc32 = require('crc').crc32;
-var crc32c = require('sse4_crc32').calculate;
 var bufrw = require('bufrw');
 var bufrwErrors = require('bufrw/errors');
 var errors = require('../errors');
@@ -46,9 +45,6 @@ function Checksum(type, val) {
         case 0x02:
             this._compute = this._computeFarm32;
             break;
-        case 0x03:
-            this._compute = this._computeCrc32C;
-            break;
         default:
             assert(false, 'invalid checksum type ' + this.type);
     }
@@ -67,7 +63,6 @@ Checksum.objOrType = function objOrType(arg) {
         case 0x00:
         case 0x01:
         case 0x02:
-        case 0x03:
             return new Checksum(arg);
         default:
             assert(false, 'expected a Checksum object or a valid checksum type');
@@ -80,7 +75,6 @@ Checksum.offsetWidth = function offsetWidth(type) {
             return 0;
         case 0x01:
         case 0x02:
-        case 0x03:
             return 4;
         default:
             assert(false, 'expected valid checksum type');
@@ -91,7 +85,6 @@ Checksum.Types = Object.create(null);
 Checksum.Types.None = 0x00;
 Checksum.Types.CRC32 = 0x01;
 Checksum.Types.Farm32 = 0x02;
-Checksum.Types.CRC32C = 0x03;
 
 // csumtype:1 (csum:4){0,1}
 
@@ -99,7 +92,6 @@ var rwCases = Object.create(null);
 rwCases[Checksum.Types.None] = bufrw.Null;
 rwCases[Checksum.Types.CRC32] = bufrw.UInt32BE;
 rwCases[Checksum.Types.Farm32] = bufrw.UInt32BE;
-rwCases[Checksum.Types.CRC32C] = bufrw.UInt32BE;
 
 Checksum.RW = bufrw.Switch(bufrw.UInt8, rwCases, {
     cons: Checksum,
@@ -148,10 +140,6 @@ Checksum.prototype._computeNone = function _computeNone() {
 Checksum.prototype._computeCrc32 = function _computeCrc32(arg, prior) {
     if (prior === 0) prior = undefined;
     return crc32(arg, prior);
-};
-
-Checksum.prototype._computeCrc32C = function _computeCrc32C(arg, prior) {
-    return crc32c(arg, prior);
 };
 
 Checksum.prototype._computeFarm32 = function _computeFarm32(arg, prior) {

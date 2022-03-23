@@ -816,7 +816,7 @@ TChannelV2Handler.prototype.buildOutRequest = function buildOutRequest(options) 
     var id = this.nextFrameId();
 
     if (options.checksumType === null) {
-        options.checksumType = v2.Checksum.Types.CRC32C;
+        options.checksumType = v2.Checksum.Types.CRC32;
     }
     if (!options.checksum) {
         options.checksum = new v2.Checksum(options.checksumType);
