@@ -1,3 +1,5 @@
+This project is no longer active. See https://github.com/uber/tchannel-node/issues/372
+
 # TChannel
 
 network multiplexing and framing protocol for RPC
